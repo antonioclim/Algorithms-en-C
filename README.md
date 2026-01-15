@@ -1,4 +1,4 @@
-# 📚 Alternative Laboratory Kit for Programming Techniques and Algorithms
+# 📚 Alternative Laboratory Kit for Algorithms & Data Structures using C
 
 > **⚠️ IMPORTANT NOTICE**  
 > This is an **alternative, non-formal learning kit** designed to supplement and extend the official "Programming Techniques and Algorithms" curriculum. It is **not** an official course material and should be used for self-study, practice, and deeper exploration of data structures and algorithms concepts.
