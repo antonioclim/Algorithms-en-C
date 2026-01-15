@@ -1,0 +1,2 @@
+# Test input for exercise 2 (expression trees)
+# No input needed - exercise uses hardcoded expressions

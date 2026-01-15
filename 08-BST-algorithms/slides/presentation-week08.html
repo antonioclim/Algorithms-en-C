@@ -1,0 +1,1843 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Week 08: Binary Search Trees | ATP Course</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/c.min.js"></script>
+    <style>
+        :root {
+            --bg-primary: #0d1117;
+            --bg-secondary: #161b22;
+            --bg-tertiary: #21262d;
+            --text-primary: #e6edf3;
+            --text-secondary: #8b949e;
+            --accent-blue: #58a6ff;
+            --accent-green: #3fb950;
+            --accent-yellow: #d29922;
+            --accent-red: #f85149;
+            --accent-purple: #a371f7;
+            --border-color: #30363d;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans', Helvetica, Arial, sans-serif;
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.6;
+            overflow: hidden;
+        }
+
+        /* Progress Bar */
+        .progress-bar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 4px;
+            background: linear-gradient(90deg, var(--accent-blue), var(--accent-purple));
+            transition: width 0.3s ease;
+            z-index: 1000;
+        }
+
+        /* Slide Container */
+        .slides-container {
+            width: 100vw;
+            height: 100vh;
+            position: relative;
+        }
+
+        .slide {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            padding: 60px 80px;
+            display: none;
+            opacity: 0;
+            transition: opacity 0.4s ease;
+            overflow-y: auto;
+        }
+
+        .slide.active {
+            display: block;
+            opacity: 1;
+        }
+
+        /* Typography */
+        h1 {
+            font-size: 2.8em;
+            color: var(--accent-blue);
+            margin-bottom: 20px;
+            font-weight: 600;
+        }
+
+        h2 {
+            font-size: 2.2em;
+            color: var(--accent-blue);
+            margin-bottom: 25px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid var(--border-color);
+        }
+
+        h3 {
+            font-size: 1.5em;
+            color: var(--accent-green);
+            margin: 20px 0 15px 0;
+        }
+
+        p {
+            font-size: 1.2em;
+            color: var(--text-primary);
+            margin-bottom: 15px;
+        }
+
+        ul, ol {
+            margin-left: 30px;
+            margin-bottom: 20px;
+        }
+
+        li {
+            font-size: 1.15em;
+            margin-bottom: 12px;
+            color: var(--text-primary);
+        }
+
+        /* Title Slide */
+        .title-slide {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+        }
+
+        .title-slide h1 {
+            font-size: 3.5em;
+            margin-bottom: 10px;
+        }
+
+        .title-slide .subtitle {
+            font-size: 2em;
+            color: var(--accent-green);
+            margin-bottom: 30px;
+        }
+
+        .title-slide .course-info {
+            font-size: 1.3em;
+            color: var(--text-secondary);
+        }
+
+        .title-slide .week-badge {
+            background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
+            padding: 15px 40px;
+            border-radius: 50px;
+            font-size: 1.8em;
+            font-weight: 600;
+            margin-bottom: 30px;
+        }
+
+        /* Code Blocks */
+        .code-block {
+            background-color: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            margin: 20px 0;
+            overflow: hidden;
+        }
+
+        .code-header {
+            background-color: var(--bg-tertiary);
+            padding: 10px 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .code-header span {
+            color: var(--text-secondary);
+            font-size: 0.9em;
+        }
+
+        .lang-badge {
+            background-color: var(--accent-blue);
+            color: var(--bg-primary);
+            padding: 3px 10px;
+            border-radius: 4px;
+            font-size: 0.8em;
+            font-weight: 600;
+        }
+
+        .code-block pre {
+            margin: 0;
+            padding: 20px;
+            overflow-x: auto;
+        }
+
+        .code-block code {
+            font-family: 'JetBrains Mono', 'Fira Code', 'Consolas', monospace;
+            font-size: 0.95em;
+            line-height: 1.5;
+        }
+
+        /* Info Boxes */
+        .info-box {
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+            border-left: 4px solid;
+        }
+
+        .info-box.note {
+            background-color: rgba(88, 166, 255, 0.1);
+            border-color: var(--accent-blue);
+        }
+
+        .info-box.warning {
+            background-color: rgba(210, 153, 34, 0.1);
+            border-color: var(--accent-yellow);
+        }
+
+        .info-box.danger {
+            background-color: rgba(248, 81, 73, 0.1);
+            border-color: var(--accent-red);
+        }
+
+        .info-box.success {
+            background-color: rgba(63, 185, 80, 0.1);
+            border-color: var(--accent-green);
+        }
+
+        .info-box-title {
+            font-weight: 600;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        /* Two Column Layout */
+        .two-columns {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 40px;
+            margin: 20px 0;
+        }
+
+        .column {
+            background-color: var(--bg-secondary);
+            padding: 25px;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+        }
+
+        /* Tree Diagram */
+        .tree-diagram {
+            font-family: 'JetBrains Mono', monospace;
+            background-color: var(--bg-secondary);
+            padding: 25px;
+            border-radius: 8px;
+            margin: 20px 0;
+            overflow-x: auto;
+            white-space: pre;
+            line-height: 1.4;
+            font-size: 1em;
+            color: var(--accent-green);
+        }
+
+        /* Table Styles */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            background-color: var(--bg-secondary);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        th, td {
+            padding: 15px 20px;
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        th {
+            background-color: var(--bg-tertiary);
+            color: var(--accent-blue);
+            font-weight: 600;
+        }
+
+        tr:last-child td {
+            border-bottom: none;
+        }
+
+        tr:hover {
+            background-color: var(--bg-tertiary);
+        }
+
+        /* Quote Box */
+        .quote-box {
+            background: linear-gradient(135deg, var(--bg-secondary), var(--bg-tertiary));
+            border-left: 4px solid var(--accent-purple);
+            padding: 25px 30px;
+            margin: 30px 0;
+            border-radius: 0 8px 8px 0;
+        }
+
+        .quote-box blockquote {
+            font-size: 1.3em;
+            font-style: italic;
+            color: var(--text-primary);
+            margin-bottom: 15px;
+        }
+
+        .quote-box .attribution {
+            color: var(--text-secondary);
+            font-size: 1em;
+        }
+
+        /* Summary Boxes */
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            margin: 20px 0;
+        }
+
+        .summary-box {
+            background-color: var(--bg-secondary);
+            padding: 20px;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            text-align: center;
+        }
+
+        .summary-box .icon {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .summary-box h4 {
+            color: var(--accent-blue);
+            margin-bottom: 10px;
+        }
+
+        /* Navigation */
+        .navigation {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            display: flex;
+            gap: 10px;
+            z-index: 100;
+        }
+
+        .nav-btn {
+            background-color: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+            padding: 12px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1em;
+            transition: all 0.2s ease;
+        }
+
+        .nav-btn:hover {
+            background-color: var(--accent-blue);
+            color: var(--bg-primary);
+        }
+
+        .nav-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* Slide Counter */
+        .slide-counter {
+            position: fixed;
+            bottom: 30px;
+            left: 30px;
+            color: var(--text-secondary);
+            font-size: 1em;
+            z-index: 100;
+        }
+
+        /* Highlight */
+        .highlight {
+            color: var(--accent-yellow);
+            font-weight: 600;
+        }
+
+        .highlight-blue {
+            color: var(--accent-blue);
+        }
+
+        .highlight-green {
+            color: var(--accent-green);
+        }
+
+        .highlight-red {
+            color: var(--accent-red);
+        }
+
+        /* Key Points */
+        .key-point {
+            display: flex;
+            align-items: flex-start;
+            gap: 15px;
+            margin: 15px 0;
+            padding: 15px;
+            background-color: var(--bg-secondary);
+            border-radius: 8px;
+        }
+
+        .key-point .number {
+            background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
+            color: white;
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            flex-shrink: 0;
+        }
+
+        /* Complexity Badge */
+        .complexity {
+            display: inline-block;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.9em;
+            font-weight: 600;
+            margin: 5px;
+        }
+
+        .complexity.best {
+            background-color: var(--accent-green);
+            color: var(--bg-primary);
+        }
+
+        .complexity.average {
+            background-color: var(--accent-yellow);
+            color: var(--bg-primary);
+        }
+
+        .complexity.worst {
+            background-color: var(--accent-red);
+            color: white;
+        }
+
+        /* Profile Card */
+        .profile-card {
+            display: flex;
+            gap: 30px;
+            background-color: var(--bg-secondary);
+            padding: 30px;
+            border-radius: 12px;
+            margin: 20px 0;
+        }
+
+        .profile-card .avatar {
+            width: 150px;
+            height: 150px;
+            background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 4em;
+            flex-shrink: 0;
+        }
+
+        .profile-card .bio h3 {
+            margin-top: 0;
+        }
+
+        /* Keyboard Hints */
+        kbd {
+            background-color: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            padding: 3px 8px;
+            font-family: monospace;
+            font-size: 0.9em;
+        }
+
+        /* Animation for slides */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .slide.active {
+            animation: fadeIn 0.4s ease;
+        }
+    </style>
+</head>
+<body>
+    <div class="progress-bar" id="progressBar"></div>
+    
+    <div class="slides-container" id="slidesContainer">
+        
+        <!-- Slide 1: Title -->
+        <div class="slide title-slide active">
+            <div class="week-badge">Week 08</div>
+            <h1>Binary Search Trees</h1>
+            <div class="subtitle">Efficient Dynamic Ordered Data</div>
+            <div class="course-info">
+                <p>Algorithms and Programming Techniques (ATP)</p>
+                <p>Academy of Economic Studies — CSIE Bucharest</p>
+            </div>
+        </div>
+
+        <!-- Slide 2: Learning Objectives -->
+        <div class="slide">
+            <h2>🎯 Learning Objectives</h2>
+            <div class="key-point">
+                <div class="number">1</div>
+                <div><strong>Remember</strong> the fundamental properties that distinguish a BST from a general binary tree</div>
+            </div>
+            <div class="key-point">
+                <div class="number">2</div>
+                <div><strong>Understand</strong> the relationship between tree balance and algorithmic complexity</div>
+            </div>
+            <div class="key-point">
+                <div class="number">3</div>
+                <div><strong>Apply</strong> recursive and iterative algorithms for search, insertion and deletion</div>
+            </div>
+            <div class="key-point">
+                <div class="number">4</div>
+                <div><strong>Analyse</strong> time and space complexity under best, average and worst cases</div>
+            </div>
+            <div class="key-point">
+                <div class="number">5</div>
+                <div><strong>Evaluate</strong> different deletion strategies and their implications for balance</div>
+            </div>
+            <div class="key-point">
+                <div class="number">6</div>
+                <div><strong>Create</strong> a complete BST implementation with traversals and validation</div>
+            </div>
+        </div>
+
+        <!-- Slide 3: Historical Timeline -->
+        <div class="slide">
+            <h2>📜 Historical Context</h2>
+            <p>The evolution of tree-based searching spans several decades of computer science research:</p>
+            <table>
+                <tr>
+                    <th>Year</th>
+                    <th>Event</th>
+                    <th>Significance</th>
+                </tr>
+                <tr>
+                    <td>1956</td>
+                    <td>Booth & Booth's work on binary trees</td>
+                    <td>Early formalisation of tree structures</td>
+                </tr>
+                <tr>
+                    <td>1960</td>
+                    <td>Binary search tree concept crystallises</td>
+                    <td>Combining binary search with dynamic structures</td>
+                </tr>
+                <tr>
+                    <td>1962</td>
+                    <td>AVL trees (Adelson-Velsky & Landis)</td>
+                    <td>First self-balancing BST</td>
+                </tr>
+                <tr>
+                    <td>1972</td>
+                    <td>Red-Black trees (Bayer)</td>
+                    <td>Practical balancing with relaxed constraints</td>
+                </tr>
+                <tr>
+                    <td>1973</td>
+                    <td>Knuth's "Art of Computer Programming" Vol. 3</td>
+                    <td>Definitive analysis of BST behaviour</td>
+                </tr>
+            </table>
+        </div>
+
+        <!-- Slide 4: Key Figure -->
+        <div class="slide">
+            <h2>👤 Key Figure: Donald Knuth</h2>
+            <div class="profile-card">
+                <div class="avatar">🎓</div>
+                <div class="bio">
+                    <h3>Donald Ervin Knuth (1938–)</h3>
+                    <p>Professor Emeritus at Stanford University, Knuth is widely regarded as the "father of the analysis of algorithms". His monumental work <em>The Art of Computer Programming</em> remains the definitive reference for fundamental algorithms.</p>
+                    <p><span class="highlight-blue">Contributions:</span> Algorithm analysis, TeX, METAFONT, literate programming</p>
+                    <p><span class="highlight-green">Awards:</span> Turing Award (1974), National Medal of Science</p>
+                </div>
+            </div>
+            <div class="quote-box">
+                <blockquote>"Science is what we understand well enough to explain to a computer. Art is everything else we do."</blockquote>
+                <div class="attribution">— Donald Knuth</div>
+            </div>
+        </div>
+
+        <!-- Slide 5: What is a BST? -->
+        <div class="slide">
+            <h2>📚 What is a Binary Search Tree?</h2>
+            <div class="two-columns">
+                <div class="column">
+                    <h3>Definition</h3>
+                    <p>A <span class="highlight">Binary Search Tree</span> is a binary tree where:</p>
+                    <ul>
+                        <li>Every node contains a <strong>key</strong> (and optional data)</li>
+                        <li>All keys in the <span class="highlight-blue">left subtree</span> are <strong>less than</strong> the node's key</li>
+                        <li>All keys in the <span class="highlight-green">right subtree</span> are <strong>greater than</strong> the node's key</li>
+                        <li>This property holds <strong>recursively</strong> for all nodes</li>
+                    </ul>
+                </div>
+                <div class="column">
+                    <h3>The BST Invariant</h3>
+                    <div class="tree-diagram">
+         50
+        /  \
+      30    70
+     /  \   / \
+   20  40 60  80
+
+For node 50:
+  Left subtree: {20,30,40} < 50 ✓
+  Right subtree: {60,70,80} > 50 ✓
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 6: BST vs Binary Tree -->
+        <div class="slide">
+            <h2>🔍 BST vs General Binary Tree</h2>
+            <div class="two-columns">
+                <div class="column">
+                    <h3>✅ Valid BST</h3>
+                    <div class="tree-diagram">
+        50
+       /  \
+     30    70
+    /  \
+  20    40
+                    </div>
+                    <p>Every node satisfies the BST property. In-order traversal yields: 20, 30, 40, 50, 70</p>
+                </div>
+                <div class="column">
+                    <h3>❌ Invalid BST</h3>
+                    <div class="tree-diagram">
+        50
+       /  \
+     30    70
+    /  \
+  20    60  ← Violation!
+                    </div>
+                    <p>Node 60 is in left subtree of 50, but 60 > 50. This violates the BST property.</p>
+                </div>
+            </div>
+            <div class="info-box note">
+                <div class="info-box-title">💡 Key Insight</div>
+                <p>The BST property must hold for <em>all</em> ancestors, not just the immediate parent.</p>
+            </div>
+        </div>
+
+        <!-- Slide 7: Node Structure -->
+        <div class="slide">
+            <h2>🧱 BST Node Structure</h2>
+            <div class="code-block">
+                <div class="code-header">
+                    <span>Basic BST Node Definition</span>
+                    <span class="lang-badge">C</span>
+                </div>
+                <pre><code class="language-c">typedef struct BSTNode {
+    int key;                    /* The search key */
+    struct BSTNode *left;       /* Pointer to left child (smaller keys) */
+    struct BSTNode *right;      /* Pointer to right child (larger keys) */
+} BSTNode;
+
+/* Alternative: Node with parent pointer (useful for deletion) */
+typedef struct BSTNodeWithParent {
+    int key;
+    void *data;                 /* Optional: associated data */
+    struct BSTNodeWithParent *left;
+    struct BSTNodeWithParent *right;
+    struct BSTNodeWithParent *parent;  /* Enables upward traversal */
+} BSTNodeWithParent;</code></pre>
+            </div>
+            <p>The minimal BST node requires only 24 bytes on a 64-bit system: 4 bytes for the integer key plus padding and two 8-byte pointers.</p>
+        </div>
+
+        <!-- Slide 8: Creating Nodes -->
+        <div class="slide">
+            <h2>🔨 Creating BST Nodes</h2>
+            <div class="code-block">
+                <div class="code-header">
+                    <span>Node Creation Function</span>
+                    <span class="lang-badge">C</span>
+                </div>
+                <pre><code class="language-c">/**
+ * Creates a new BST node with the given key.
+ * @param key The key value for the new node
+ * @return Pointer to the new node, or NULL if allocation fails
+ */
+BSTNode *bst_create_node(int key) {
+    BSTNode *node = (BSTNode *)malloc(sizeof(BSTNode));
+    if (node == NULL) {
+        fprintf(stderr, "Error: Memory allocation failed\n");
+        return NULL;
+    }
+    
+    node->key = key;
+    node->left = NULL;
+    node->right = NULL;
+    
+    return node;
+}</code></pre>
+            </div>
+            <div class="info-box warning">
+                <div class="info-box-title">⚠️ Always Check malloc</div>
+                <p>Never assume memory allocation succeeds. Handle NULL returns gracefully.</p>
+            </div>
+        </div>
+
+        <!-- Slide 9: Search Operation - Concept -->
+        <div class="slide">
+            <h2>🔎 Search Operation</h2>
+            <p>Searching in a BST exploits the ordering property to eliminate half the remaining nodes at each step.</p>
+            <div class="tree-diagram">
+Search for 40:
+
+Step 1:     [50]          50 > 40 → go LEFT
+           /    \
+        (30)    70
+
+Step 2:      50           30 < 40 → go RIGHT
+            /  \
+         [30]   70
+            \
+            (40)
+
+Step 3:      50           Found! Return node
+            /  \
+          30    70
+            \
+            [40] ✓
+            </div>
+            <p>Each comparison eliminates one subtree, giving <span class="highlight">O(log n)</span> average-case complexity.</p>
+        </div>
+
+        <!-- Slide 10: Search - Recursive Implementation -->
+        <div class="slide">
+            <h2>🔎 Search: Recursive Implementation</h2>
+            <div class="code-block">
+                <div class="code-header">
+                    <span>Recursive Search</span>
+                    <span class="lang-badge">C</span>
+                </div>
+                <pre><code class="language-c">/**
+ * Recursively searches for a key in the BST.
+ * @param root The root of the tree/subtree
+ * @param key The key to search for
+ * @return Pointer to the node if found, NULL otherwise
+ */
+BSTNode *bst_search_recursive(BSTNode *root, int key) {
+    /* Base case: empty tree or found */
+    if (root == NULL || root->key == key) {
+        return root;
+    }
+    
+    /* Key is smaller: search left subtree */
+    if (key < root->key) {
+        return bst_search_recursive(root->left, key);
+    }
+    
+    /* Key is larger: search right subtree */
+    return bst_search_recursive(root->right, key);
+}</code></pre>
+            </div>
+            <p><strong>Time:</strong> O(h) where h = height | <strong>Space:</strong> O(h) for recursion stack</p>
+        </div>
+
+        <!-- Slide 11: Search - Iterative Implementation -->
+        <div class="slide">
+            <h2>🔎 Search: Iterative Implementation</h2>
+            <div class="code-block">
+                <div class="code-header">
+                    <span>Iterative Search (Preferred for Production)</span>
+                    <span class="lang-badge">C</span>
+                </div>
+                <pre><code class="language-c">/**
+ * Iteratively searches for a key in the BST.
+ * More efficient than recursive version (no stack overhead).
+ * @param root The root of the tree
+ * @param key The key to search for
+ * @return Pointer to the node if found, NULL otherwise
+ */
+BSTNode *bst_search_iterative(BSTNode *root, int key) {
+    BSTNode *current = root;
+    
+    while (current != NULL) {
+        if (key == current->key) {
+            return current;  /* Found */
+        }
+        if (key < current->key) {
+            current = current->left;   /* Go left */
+        } else {
+            current = current->right;  /* Go right */
+        }
+    }
+    
+    return NULL;  /* Not found */
+}</code></pre>
+            </div>
+            <p><strong>Time:</strong> O(h) | <strong>Space:</strong> <span class="highlight-green">O(1)</span> — No recursion overhead!</p>
+        </div>
+
+        <!-- Slide 12: Insert Operation - Concept -->
+        <div class="slide">
+            <h2>➕ Insert Operation</h2>
+            <p>Insertion follows the search path until finding a NULL position for the new node.</p>
+            <div class="tree-diagram">
+Insert 45 into the tree:
+
+Start:       50            45 < 50 → go LEFT
+            /  \
+          30    70
+         /  \
+       20    40
+
+Step:        50            45 > 30 → go RIGHT
+            /  \
+         [30]   70
+         /  \
+       20    40
+
+Step:        50            45 > 40 → go RIGHT
+            /  \
+          30    70         40->right is NULL
+         /  \              Insert here!
+       20   [40]
+               \
+               (45)  ← New node
+            </div>
+        </div>
+
+        <!-- Slide 13: Insert - Implementation -->
+        <div class="slide">
+            <h2>➕ Insert: Implementation</h2>
+            <div class="code-block">
+                <div class="code-header">
+                    <span>Recursive Insertion</span>
+                    <span class="lang-badge">C</span>
+                </div>
+                <pre><code class="language-c">/**
+ * Inserts a new key into the BST.
+ * @param root The root of the tree
+ * @param key The key to insert
+ * @return The root of the tree (may change if tree was empty)
+ */
+BSTNode *bst_insert(BSTNode *root, int key) {
+    /* Base case: empty position found */
+    if (root == NULL) {
+        return bst_create_node(key);
+    }
+    
+    /* Recursive case: find correct position */
+    if (key < root->key) {
+        root->left = bst_insert(root->left, key);
+    } else if (key > root->key) {
+        root->right = bst_insert(root->right, key);
+    }
+    /* key == root->key: duplicate, do nothing (or handle as needed) */
+    
+    return root;
+}</code></pre>
+            </div>
+            <div class="info-box note">
+                <div class="info-box-title">💡 Duplicate Handling</div>
+                <p>Standard BSTs ignore duplicates. Some implementations allow them in the right subtree.</p>
+            </div>
+        </div>
+
+        <!-- Slide 14: Traversals Overview -->
+        <div class="slide">
+            <h2>🚶 Tree Traversals</h2>
+            <p>Three standard depth-first traversal orders, each with distinct applications:</p>
+            <table>
+                <tr>
+                    <th>Traversal</th>
+                    <th>Order</th>
+                    <th>Application</th>
+                </tr>
+                <tr>
+                    <td><span class="highlight-blue">In-order</span></td>
+                    <td>Left → Node → Right</td>
+                    <td>Produces sorted output, BST validation</td>
+                </tr>
+                <tr>
+                    <td><span class="highlight-green">Pre-order</span></td>
+                    <td>Node → Left → Right</td>
+                    <td>Tree copying, serialisation, prefix notation</td>
+                </tr>
+                <tr>
+                    <td><span class="highlight-yellow">Post-order</span></td>
+                    <td>Left → Right → Node</td>
+                    <td>Tree deletion, postfix notation, memory cleanup</td>
+                </tr>
+            </table>
+            <div class="tree-diagram">
+        50
+       /  \
+     30    70
+    /  \
+  20    40
+
+In-order:   20, 30, 40, 50, 70  (sorted!)
+Pre-order:  50, 30, 20, 40, 70
+Post-order: 20, 40, 30, 70, 50
+            </div>
+        </div>
+
+        <!-- Slide 15: In-order Traversal -->
+        <div class="slide">
+            <h2>📋 In-order Traversal</h2>
+            <div class="code-block">
+                <div class="code-header">
+                    <span>In-order Traversal (LNR)</span>
+                    <span class="lang-badge">C</span>
+                </div>
+                <pre><code class="language-c">/**
+ * In-order traversal: Left, Node, Right
+ * For BST: visits nodes in ascending key order
+ */
+void bst_inorder(BSTNode *root) {
+    if (root == NULL) {
+        return;
+    }
+    
+    bst_inorder(root->left);      /* L: Process left subtree */
+    printf("%d ", root->key);     /* N: Process current node */
+    bst_inorder(root->right);     /* R: Process right subtree */
+}
+
+/* Usage example */
+void print_sorted(BSTNode *root) {
+    printf("Sorted keys: ");
+    bst_inorder(root);
+    printf("\n");
+}</code></pre>
+            </div>
+            <div class="info-box success">
+                <div class="info-box-title">✅ Key Property</div>
+                <p>In-order traversal of a valid BST always produces keys in <strong>sorted order</strong>. This property is used to validate BSTs.</p>
+            </div>
+        </div>
+
+        <!-- Slide 16: Pre-order and Post-order -->
+        <div class="slide">
+            <h2>📋 Pre-order & Post-order Traversals</h2>
+            <div class="two-columns">
+                <div class="column">
+                    <h3>Pre-order (NLR)</h3>
+                    <div class="code-block">
+                        <div class="code-header">
+                            <span>Tree Copying</span>
+                            <span class="lang-badge">C</span>
+                        </div>
+                        <pre><code class="language-c">void bst_preorder(BSTNode *root) {
+    if (root == NULL) return;
+    
+    printf("%d ", root->key);
+    bst_preorder(root->left);
+    bst_preorder(root->right);
+}</code></pre>
+                    </div>
+                    <p>Processes root first — ideal for <em>copying</em> trees.</p>
+                </div>
+                <div class="column">
+                    <h3>Post-order (LRN)</h3>
+                    <div class="code-block">
+                        <div class="code-header">
+                            <span>Tree Deletion</span>
+                            <span class="lang-badge">C</span>
+                        </div>
+                        <pre><code class="language-c">void bst_free(BSTNode *root) {
+    if (root == NULL) return;
+    
+    bst_free(root->left);
+    bst_free(root->right);
+    free(root);  /* Free after children */
+}</code></pre>
+                    </div>
+                    <p>Processes root last — essential for <em>safe deletion</em>.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 17: Find Min and Max -->
+        <div class="slide">
+            <h2>🔢 Finding Minimum and Maximum</h2>
+            <p>The BST property guarantees that the minimum is in the leftmost node and maximum in the rightmost.</p>
+            <div class="two-columns">
+                <div class="column">
+                    <h3>Find Minimum</h3>
+                    <div class="code-block">
+                        <div class="code-header">
+                            <span>Leftmost Node</span>
+                            <span class="lang-badge">C</span>
+                        </div>
+                        <pre><code class="language-c">BSTNode *bst_find_min(BSTNode *root) {
+    if (root == NULL) {
+        return NULL;
+    }
+    
+    /* Keep going left */
+    while (root->left != NULL) {
+        root = root->left;
+    }
+    
+    return root;
+}</code></pre>
+                    </div>
+                </div>
+                <div class="column">
+                    <h3>Find Maximum</h3>
+                    <div class="code-block">
+                        <div class="code-header">
+                            <span>Rightmost Node</span>
+                            <span class="lang-badge">C</span>
+                        </div>
+                        <pre><code class="language-c">BSTNode *bst_find_max(BSTNode *root) {
+    if (root == NULL) {
+        return NULL;
+    }
+    
+    /* Keep going right */
+    while (root->right != NULL) {
+        root = root->right;
+    }
+    
+    return root;
+}</code></pre>
+                    </div>
+                </div>
+            </div>
+            <p><strong>Time Complexity:</strong> O(h) — follows a single path from root to leaf.</p>
+        </div>
+
+        <!-- Slide 18: Deletion - Overview -->
+        <div class="slide">
+            <h2>➖ Deletion: Three Cases</h2>
+            <p>Deletion is the most complex BST operation, requiring handling of three distinct cases:</p>
+            <div class="summary-grid">
+                <div class="summary-box">
+                    <div class="icon">🍂</div>
+                    <h4>Case 1: Leaf Node</h4>
+                    <p>No children</p>
+                    <p class="highlight-green">Simply remove the node</p>
+                </div>
+                <div class="summary-box">
+                    <div class="icon">🌿</div>
+                    <h4>Case 2: One Child</h4>
+                    <p>Left OR right child</p>
+                    <p class="highlight-yellow">Replace with child</p>
+                </div>
+                <div class="summary-box">
+                    <div class="icon">🌳</div>
+                    <h4>Case 3: Two Children</h4>
+                    <p>Both children exist</p>
+                    <p class="highlight-red">Replace with successor</p>
+                </div>
+            </div>
+            <div class="info-box note">
+                <div class="info-box-title">💡 In-order Successor</div>
+                <p>The <strong>in-order successor</strong> is the smallest node in the right subtree — the next node in sorted order.</p>
+            </div>
+        </div>
+
+        <!-- Slide 19: Deletion - Case 1 -->
+        <div class="slide">
+            <h2>➖ Deletion Case 1: Leaf Node</h2>
+            <div class="tree-diagram">
+Delete 20 (leaf node):
+
+Before:         After:
+    50             50
+   /  \           /  \
+  30   70       30    70
+ /  \          /  \
+20   40       X   40
+
+Simply set parent's pointer to NULL and free the node.
+            </div>
+            <div class="code-block">
+                <div class="code-header">
+                    <span>Handling Leaf Deletion</span>
+                    <span class="lang-badge">C</span>
+                </div>
+                <pre><code class="language-c">/* Within bst_delete function */
+if (root->left == NULL && root->right == NULL) {
+    /* Case 1: Leaf node - simply free and return NULL */
+    free(root);
+    return NULL;
+}</code></pre>
+            </div>
+        </div>
+
+        <!-- Slide 20: Deletion - Case 2 -->
+        <div class="slide">
+            <h2>➖ Deletion Case 2: One Child</h2>
+            <div class="tree-diagram">
+Delete 30 (has only left child):
+
+Before:               After:
+    50                   50
+   /  \                 /  \
+  30   70             20    70
+ /
+20
+
+Replace 30 with its only child (20).
+The BST property is preserved!
+            </div>
+            <div class="code-block">
+                <div class="code-header">
+                    <span>Handling One-Child Deletion</span>
+                    <span class="lang-badge">C</span>
+                </div>
+                <pre><code class="language-c">/* Within bst_delete function */
+if (root->left == NULL) {
+    /* Case 2a: Only right child - replace with right child */
+    BSTNode *temp = root->right;
+    free(root);
+    return temp;
+}
+if (root->right == NULL) {
+    /* Case 2b: Only left child - replace with left child */
+    BSTNode *temp = root->left;
+    free(root);
+    return temp;
+}</code></pre>
+            </div>
+        </div>
+
+        <!-- Slide 21: Deletion - Case 3 -->
+        <div class="slide">
+            <h2>➖ Deletion Case 3: Two Children</h2>
+            <div class="tree-diagram">
+Delete 50 (has two children):
+
+Step 1: Find in-order successor (smallest in right subtree)
+        Successor of 50 is 60
+
+Step 2: Copy successor's key to node being deleted
+
+Step 3: Delete the successor (which has at most one child)
+
+Before:              After:
+    50                  60
+   /  \                /  \
+  30   70            30    70
+      /  \                   \
+     60   80                  80
+            </div>
+            <div class="info-box warning">
+                <div class="info-box-title">⚠️ Alternative: In-order Predecessor</div>
+                <p>You can also use the <em>largest node in the left subtree</em>. Both preserve the BST property.</p>
+            </div>
+        </div>
+
+        <!-- Slide 22: Deletion - Complete Implementation -->
+        <div class="slide">
+            <h2>➖ Deletion: Complete Implementation</h2>
+            <div class="code-block">
+                <div class="code-header">
+                    <span>Complete BST Delete Function</span>
+                    <span class="lang-badge">C</span>
+                </div>
+                <pre><code class="language-c">BSTNode *bst_delete(BSTNode *root, int key) {
+    if (root == NULL) return NULL;
+    
+    /* Navigate to the node to delete */
+    if (key < root->key) {
+        root->left = bst_delete(root->left, key);
+    } else if (key > root->key) {
+        root->right = bst_delete(root->right, key);
+    } else {
+        /* Found the node to delete */
+        
+        /* Case 1 & 2: Zero or one child */
+        if (root->left == NULL) {
+            BSTNode *temp = root->right;
+            free(root);
+            return temp;
+        }
+        if (root->right == NULL) {
+            BSTNode *temp = root->left;
+            free(root);
+            return temp;
+        }
+        
+        /* Case 3: Two children - find in-order successor */
+        BSTNode *successor = bst_find_min(root->right);
+        root->key = successor->key;  /* Copy successor's key */
+        root->right = bst_delete(root->right, successor->key);
+    }
+    return root;
+}</code></pre>
+            </div>
+        </div>
+
+        <!-- Slide 23: Complexity Analysis -->
+        <div class="slide">
+            <h2>⏱️ Complexity Analysis</h2>
+            <table>
+                <tr>
+                    <th>Operation</th>
+                    <th>Best Case</th>
+                    <th>Average Case</th>
+                    <th>Worst Case</th>
+                </tr>
+                <tr>
+                    <td>Search</td>
+                    <td><span class="complexity best">O(1)</span></td>
+                    <td><span class="complexity average">O(log n)</span></td>
+                    <td><span class="complexity worst">O(n)</span></td>
+                </tr>
+                <tr>
+                    <td>Insert</td>
+                    <td><span class="complexity best">O(1)</span></td>
+                    <td><span class="complexity average">O(log n)</span></td>
+                    <td><span class="complexity worst">O(n)</span></td>
+                </tr>
+                <tr>
+                    <td>Delete</td>
+                    <td><span class="complexity best">O(1)</span></td>
+                    <td><span class="complexity average">O(log n)</span></td>
+                    <td><span class="complexity worst">O(n)</span></td>
+                </tr>
+                <tr>
+                    <td>Traversal</td>
+                    <td><span class="complexity average">O(n)</span></td>
+                    <td><span class="complexity average">O(n)</span></td>
+                    <td><span class="complexity average">O(n)</span></td>
+                </tr>
+            </table>
+            <div class="info-box danger">
+                <div class="info-box-title">🚨 Worst Case: Degenerate Tree</div>
+                <p>Inserting sorted data (1, 2, 3, 4, 5...) creates a linked list, degrading all operations to O(n).</p>
+            </div>
+        </div>
+
+        <!-- Slide 24: Balanced vs Degenerate -->
+        <div class="slide">
+            <h2>⚖️ Balanced vs Degenerate Trees</h2>
+            <div class="two-columns">
+                <div class="column">
+                    <h3>✅ Balanced Tree</h3>
+                    <div class="tree-diagram">
+       4
+      / \
+     2   6
+    / \ / \
+   1  3 5  7
+
+Height: 3 (log₂8 ≈ 3)
+Search: O(log n)
+                    </div>
+                    <p>Random insertions typically produce near-balanced trees.</p>
+                </div>
+                <div class="column">
+                    <h3>❌ Degenerate Tree</h3>
+                    <div class="tree-diagram">
+   1
+    \
+     2
+      \
+       3
+        \
+         4 ...
+
+Height: n
+Search: O(n)
+                    </div>
+                    <p>Sorted insertions create worst-case behaviour.</p>
+                </div>
+            </div>
+            <p class="highlight-blue">Solution: Self-balancing trees (AVL, Red-Black) — covered next week!</p>
+        </div>
+
+        <!-- Slide 25: BST Validation -->
+        <div class="slide">
+            <h2>✅ BST Validation</h2>
+            <p>Common interview question: verify whether a binary tree satisfies the BST property.</p>
+            <div class="code-block">
+                <div class="code-header">
+                    <span>Validate BST Using Range Checking</span>
+                    <span class="lang-badge">C</span>
+                </div>
+                <pre><code class="language-c">#include &lt;limits.h&gt;
+
+/**
+ * Helper function that checks if all nodes fall within [min, max] range.
+ */
+int is_bst_helper(BSTNode *node, int min, int max) {
+    if (node == NULL) {
+        return 1;  /* Empty tree is valid */
+    }
+    
+    /* Check current node violates range constraint */
+    if (node->key <= min || node->key >= max) {
+        return 0;
+    }
+    
+    /* Recursively check subtrees with updated ranges */
+    return is_bst_helper(node->left, min, node->key) &&
+           is_bst_helper(node->right, node->key, max);
+}
+
+int bst_is_valid(BSTNode *root) {
+    return is_bst_helper(root, INT_MIN, INT_MAX);
+}</code></pre>
+            </div>
+        </div>
+
+        <!-- Slide 26: Height Calculation -->
+        <div class="slide">
+            <h2>📏 Calculating Tree Height</h2>
+            <div class="code-block">
+                <div class="code-header">
+                    <span>Recursive Height Calculation</span>
+                    <span class="lang-badge">C</span>
+                </div>
+                <pre><code class="language-c">/**
+ * Calculates the height of the BST.
+ * Height = length of longest path from root to any leaf.
+ * An empty tree has height -1, a single node has height 0.
+ */
+int bst_height(BSTNode *root) {
+    if (root == NULL) {
+        return -1;  /* Convention: empty tree has height -1 */
+    }
+    
+    int left_height = bst_height(root->left);
+    int right_height = bst_height(root->right);
+    
+    /* Height = 1 + max(left_height, right_height) */
+    if (left_height > right_height) {
+        return 1 + left_height;
+    } else {
+        return 1 + right_height;
+    }
+}
+
+/* Alternative macro for maximum */
+#define MAX(a, b) ((a) > (b) ? (a) : (b))
+int bst_height_v2(BSTNode *root) {
+    if (root == NULL) return -1;
+    return 1 + MAX(bst_height_v2(root->left), bst_height_v2(root->right));
+}</code></pre>
+            </div>
+        </div>
+
+        <!-- Slide 27: Counting Nodes -->
+        <div class="slide">
+            <h2>🔢 Counting Nodes and Leaves</h2>
+            <div class="two-columns">
+                <div class="column">
+                    <h3>Count All Nodes</h3>
+                    <div class="code-block">
+                        <div class="code-header">
+                            <span>Total Node Count</span>
+                            <span class="lang-badge">C</span>
+                        </div>
+                        <pre><code class="language-c">int bst_count_nodes(BSTNode *root) {
+    if (root == NULL) {
+        return 0;
+    }
+    
+    return 1 + 
+           bst_count_nodes(root->left) + 
+           bst_count_nodes(root->right);
+}</code></pre>
+                    </div>
+                </div>
+                <div class="column">
+                    <h3>Count Leaf Nodes</h3>
+                    <div class="code-block">
+                        <div class="code-header">
+                            <span>Leaf Node Count</span>
+                            <span class="lang-badge">C</span>
+                        </div>
+                        <pre><code class="language-c">int bst_count_leaves(BSTNode *root) {
+    if (root == NULL) {
+        return 0;
+    }
+    
+    /* Leaf: no children */
+    if (root->left == NULL && 
+        root->right == NULL) {
+        return 1;
+    }
+    
+    return bst_count_leaves(root->left) + 
+           bst_count_leaves(root->right);
+}</code></pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 28: Common Mistakes -->
+        <div class="slide">
+            <h2>⚠️ Common Mistakes</h2>
+            <div class="info-box danger">
+                <div class="info-box-title">❌ Mistake 1: Only Checking Parent</div>
+                <pre><code class="language-c">/* WRONG: Only checks immediate parent */
+int is_bst_wrong(BSTNode *root) {
+    if (root == NULL) return 1;
+    if (root->left && root->left->key > root->key) return 0;
+    if (root->right && root->right->key < root->key) return 0;
+    return is_bst_wrong(root->left) && is_bst_wrong(root->right);
+}
+/* Fails for: 50 -> left: 30 -> right: 60 (60 > 50 but in left subtree!) */</code></pre>
+            </div>
+            <div class="info-box danger">
+                <div class="info-box-title">❌ Mistake 2: Memory Leak in Deletion</div>
+                <pre><code class="language-c">/* WRONG: Overwrites pointer without freeing */
+if (root->left == NULL) {
+    root = root->right;  /* Memory leak! Original node not freed */
+    return root;
+}</code></pre>
+            </div>
+            <div class="info-box danger">
+                <div class="info-box-title">❌ Mistake 3: Not Updating Parent's Pointer</div>
+                <pre><code class="language-c">/* WRONG: Caller doesn't receive updated tree */
+void bst_insert_wrong(BSTNode *root, int key) {
+    /* Changes local copy, original pointer unchanged */
+}</code></pre>
+            </div>
+        </div>
+
+        <!-- Slide 29: Memory Model -->
+        <div class="slide">
+            <h2>🧠 Memory Layout</h2>
+            <div class="tree-diagram">
+Stack:                              Heap:
+┌──────────────────┐       ┌────────────────────────────┐
+│ BSTNode *root ───────────►│ BSTNode                    │
+│                  │       │   key: 50                  │
+│                  │       │   left ─────────────┐      │
+│                  │       │   right ────────────│───┐  │
+└──────────────────┘       └─────────────────────│───│──┘
+                                                 │   │
+                           ┌─────────────────────▼───│──┐
+                           │ BSTNode                 │  │
+                           │   key: 30               │  │
+                           │   left ───► [20]        │  │
+                           │   right ───► [40]       │  │
+                           └─────────────────────────│──┘
+                                                     │
+                           ┌─────────────────────────▼──┐
+                           │ BSTNode                    │
+                           │   key: 70                  │
+                           │   left: NULL               │
+                           │   right: NULL              │
+                           └────────────────────────────┘
+
+Each malloc(sizeof(BSTNode)) allocates ~24 bytes (64-bit system):
+  - 4 bytes: int key
+  - 4 bytes: padding
+  - 8 bytes: left pointer
+  - 8 bytes: right pointer
+            </div>
+        </div>
+
+        <!-- Slide 30: Debugging with GDB -->
+        <div class="slide">
+            <h2>🔧 Debugging BSTs with GDB</h2>
+            <div class="code-block">
+                <div class="code-header">
+                    <span>Useful GDB Commands for Trees</span>
+                    <span class="lang-badge">bash</span>
+                </div>
+                <pre><code class="language-bash"># Compile with debug symbols
+gcc -g -Wall -o bst bst.c
+
+# Start GDB
+gdb ./bst
+
+# Set breakpoint at function
+(gdb) break bst_insert
+(gdb) run
+
+# Print node contents
+(gdb) print *root
+(gdb) print root->key
+(gdb) print root->left->key
+
+# Print entire structure
+(gdb) ptype BSTNode
+
+# Watch variable changes
+(gdb) watch root->key
+
+# Step through recursion
+(gdb) step     # Enter function
+(gdb) next     # Skip over function call
+(gdb) finish   # Run until current function returns
+
+# Visualise call stack
+(gdb) backtrace</code></pre>
+            </div>
+        </div>
+
+        <!-- Slide 31: Valgrind Memory Checking -->
+        <div class="slide">
+            <h2>🔍 Memory Checking with Valgrind</h2>
+            <div class="code-block">
+                <div class="code-header">
+                    <span>Detecting Memory Leaks</span>
+                    <span class="lang-badge">bash</span>
+                </div>
+                <pre><code class="language-bash"># Full memory leak check
+valgrind --leak-check=full ./bst
+
+# Example output for a program with leaks:
+==12345== HEAP SUMMARY:
+==12345==   in use at exit: 72 bytes in 3 blocks
+==12345==   total heap usage: 10 allocs, 7 frees, 240 bytes allocated
+==12345== 
+==12345== 72 bytes in 3 blocks are definitely lost in loss record 1 of 1
+==12345==    at 0x4C2FB0F: malloc (in /usr/lib/valgrind/...)
+==12345==    by 0x108751: bst_create_node (bst.c:15)
+==12345==    by 0x1087A3: bst_insert (bst.c:28)
+
+# A clean run shows:
+==12345== All heap blocks were freed -- no leaks are possible</code></pre>
+            </div>
+            <div class="info-box success">
+                <div class="info-box-title">✅ Always Run Valgrind</div>
+                <p>Make it a habit to check for memory leaks before submitting any assignment.</p>
+            </div>
+        </div>
+
+        <!-- Slide 32: Best Practices -->
+        <div class="slide">
+            <h2>✨ Best Practices</h2>
+            <div class="two-columns">
+                <div class="column">
+                    <h3>✅ Do</h3>
+                    <ul>
+                        <li>Always check malloc return value</li>
+                        <li>Use iterative search for production code</li>
+                        <li>Free all nodes with post-order traversal</li>
+                        <li>Return new root from insert/delete functions</li>
+                        <li>Test with edge cases (empty tree, single node)</li>
+                        <li>Run Valgrind to detect memory leaks</li>
+                        <li>Document complexity guarantees</li>
+                    </ul>
+                </div>
+                <div class="column">
+                    <h3>❌ Don't</h3>
+                    <ul>
+                        <li>Assume malloc always succeeds</li>
+                        <li>Modify pointers without returning them</li>
+                        <li>Delete nodes without freeing memory</li>
+                        <li>Only check parent for BST validation</li>
+                        <li>Forget to handle duplicate keys</li>
+                        <li>Use recursion with very deep trees</li>
+                        <li>Rely on global root variables</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 33: Industrial Use Cases -->
+        <div class="slide">
+            <h2>🏭 BSTs in Industry</h2>
+            <div class="summary-grid">
+                <div class="summary-box">
+                    <div class="icon">🗄️</div>
+                    <h4>Databases</h4>
+                    <p>B-Trees for indexing in PostgreSQL, MySQL, SQLite</p>
+                </div>
+                <div class="summary-box">
+                    <div class="icon">🐧</div>
+                    <h4>Operating Systems</h4>
+                    <p>Red-Black trees in Linux kernel for memory management</p>
+                </div>
+                <div class="summary-box">
+                    <div class="icon">📚</div>
+                    <h4>Standard Libraries</h4>
+                    <p>C++ std::map, std::set use Red-Black trees</p>
+                </div>
+                <div class="summary-box">
+                    <div class="icon">📁</div>
+                    <h4>File Systems</h4>
+                    <p>Btrfs, ext4 extent trees for file block mapping</p>
+                </div>
+                <div class="summary-box">
+                    <div class="icon">🌐</div>
+                    <h4>Network Routing</h4>
+                    <p>Trie/radix trees for IP routing tables</p>
+                </div>
+                <div class="summary-box">
+                    <div class="icon">🎮</div>
+                    <h4>Game Development</h4>
+                    <p>Spatial indexing, collision detection</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 34: Laboratory Preview -->
+        <div class="slide">
+            <h2>🔬 Laboratory Exercises</h2>
+            <div class="two-columns">
+                <div class="column">
+                    <h3>Exercise 1: Basic Operations</h3>
+                    <ul>
+                        <li>Implement BST node structure</li>
+                        <li>Create node allocation function</li>
+                        <li>Implement search (iterative)</li>
+                        <li>Implement insertion (recursive)</li>
+                        <li>Implement find min/max</li>
+                        <li>Implement all three traversals</li>
+                        <li>Implement tree deallocation</li>
+                        <li>Create BST validation function</li>
+                    </ul>
+                    <p><strong>8 TODO markers</strong></p>
+                </div>
+                <div class="column">
+                    <h3>Exercise 2: Advanced Operations</h3>
+                    <ul>
+                        <li>Implement deletion (all 3 cases)</li>
+                        <li>Implement height calculation</li>
+                        <li>Implement node counting</li>
+                        <li>Implement leaf counting</li>
+                        <li>Implement range search</li>
+                        <li>Find kth smallest element</li>
+                        <li>Find lowest common ancestor</li>
+                        <li>Visual tree printing</li>
+                    </ul>
+                    <p><strong>12 TODO markers</strong></p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 35: Key Takeaways -->
+        <div class="slide">
+            <h2>📌 Key Takeaways</h2>
+            <div class="summary-grid">
+                <div class="summary-box">
+                    <div class="icon">🔑</div>
+                    <h4>BST Property</h4>
+                    <p>Left subtree < node < right subtree, recursively</p>
+                </div>
+                <div class="summary-box">
+                    <div class="icon">⏱️</div>
+                    <h4>Complexity</h4>
+                    <p>O(log n) average, O(n) worst case</p>
+                </div>
+                <div class="summary-box">
+                    <div class="icon">📋</div>
+                    <h4>In-order</h4>
+                    <p>Produces sorted output</p>
+                </div>
+                <div class="summary-box">
+                    <div class="icon">➖</div>
+                    <h4>Deletion</h4>
+                    <p>Three cases: leaf, one child, two children</p>
+                </div>
+                <div class="summary-box">
+                    <div class="icon">⚖️</div>
+                    <h4>Balance Matters</h4>
+                    <p>Degenerate trees are essentially linked lists</p>
+                </div>
+                <div class="summary-box">
+                    <div class="icon">🧹</div>
+                    <h4>Memory</h4>
+                    <p>Post-order traversal for safe deletion</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 36: Resources -->
+        <div class="slide">
+            <h2>📖 Recommended Resources</h2>
+            <div class="two-columns">
+                <div class="column">
+                    <h3>📚 Books</h3>
+                    <ul>
+                        <li><strong>CLRS</strong> — Introduction to Algorithms, Ch. 12</li>
+                        <li><strong>Sedgewick</strong> — Algorithms, Section 3.2</li>
+                        <li><strong>Knuth</strong> — TAOCP Vol. 3, Section 6.2</li>
+                    </ul>
+                    <h3>🎥 Videos</h3>
+                    <ul>
+                        <li>MIT 6.006 Lecture 5: BSTs</li>
+                        <li>Stanford CS166: BSTs and Beyond</li>
+                    </ul>
+                </div>
+                <div class="column">
+                    <h3>🌐 Online</h3>
+                    <ul>
+                        <li><a href="https://visualgo.net/en/bst" style="color: var(--accent-blue)">VisuAlgo BST</a> — Interactive visualisation</li>
+                        <li><a href="https://www.cs.usfca.edu/~galles/visualization/BST.html" style="color: var(--accent-blue)">USFCA Visualisation</a></li>
+                        <li>GeeksforGeeks BST series</li>
+                    </ul>
+                    <h3>💻 Practice</h3>
+                    <ul>
+                        <li>LeetCode #98: Validate BST</li>
+                        <li>LeetCode #230: Kth Smallest</li>
+                        <li>LeetCode #235: Lowest Common Ancestor</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 37: Questions -->
+        <div class="slide title-slide">
+            <h1>❓ Questions?</h1>
+            <div class="subtitle">Binary Search Trees</div>
+            <div class="course-info">
+                <p>Navigate: <kbd>←</kbd> <kbd>→</kbd> or <kbd>Space</kbd></p>
+                <p><kbd>Home</kbd> First slide | <kbd>End</kbd> Last slide</p>
+            </div>
+        </div>
+
+        <!-- Slide 38: Next Week Preview -->
+        <div class="slide">
+            <h2>🔮 Next Week: AVL Trees</h2>
+            <div class="two-columns">
+                <div class="column">
+                    <h3>Preview Topics</h3>
+                    <ul>
+                        <li>Balance factor: height(left) - height(right)</li>
+                        <li>AVL property: |balance factor| ≤ 1</li>
+                        <li>Single rotations: Left-Left, Right-Right</li>
+                        <li>Double rotations: Left-Right, Right-Left</li>
+                        <li>Guaranteed O(log n) for all operations</li>
+                    </ul>
+                </div>
+                <div class="column">
+                    <h3>Why Self-Balancing?</h3>
+                    <div class="tree-diagram">
+Before rotation:    After LL rotation:
+      30                  20
+     /                   /  \
+   20                  10    30
+   /
+ 10
+                    </div>
+                    <p>Eliminates O(n) worst case!</p>
+                </div>
+            </div>
+            <div class="info-box success">
+                <div class="info-box-title">🎯 Preparation</div>
+                <p>Master BST operations thoroughly — AVL trees build directly upon them.</p>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Navigation -->
+    <div class="slide-counter">
+        <span id="currentSlide">1</span> / <span id="totalSlides">38</span>
+    </div>
+    
+    <div class="navigation">
+        <button class="nav-btn" id="prevBtn" onclick="prevSlide()">← Previous</button>
+        <button class="nav-btn" id="nextBtn" onclick="nextSlide()">Next →</button>
+    </div>
+
+    <script>
+        let currentSlide = 0;
+        const slides = document.querySelectorAll('.slide');
+        const totalSlides = slides.length;
+        const progressBar = document.getElementById('progressBar');
+        const currentSlideEl = document.getElementById('currentSlide');
+        const totalSlidesEl = document.getElementById('totalSlides');
+        const prevBtn = document.getElementById('prevBtn');
+        const nextBtn = document.getElementById('nextBtn');
+
+        totalSlidesEl.textContent = totalSlides;
+
+        function showSlide(index) {
+            slides.forEach(slide => slide.classList.remove('active'));
+            slides[index].classList.add('active');
+            
+            // Update progress bar
+            const progress = ((index + 1) / totalSlides) * 100;
+            progressBar.style.width = progress + '%';
+            
+            // Update counter
+            currentSlideEl.textContent = index + 1;
+            
+            // Update button states
+            prevBtn.disabled = index === 0;
+            nextBtn.disabled = index === totalSlides - 1;
+        }
+
+        function nextSlide() {
+            if (currentSlide < totalSlides - 1) {
+                currentSlide++;
+                showSlide(currentSlide);
+            }
+        }
+
+        function prevSlide() {
+            if (currentSlide > 0) {
+                currentSlide--;
+                showSlide(currentSlide);
+            }
+        }
+
+        function goToSlide(index) {
+            if (index >= 0 && index < totalSlides) {
+                currentSlide = index;
+                showSlide(currentSlide);
+            }
+        }
+
+        // Keyboard navigation
+        document.addEventListener('keydown', function(e) {
+            switch(e.key) {
+                case 'ArrowRight':
+                case ' ':
+                    e.preventDefault();
+                    nextSlide();
+                    break;
+                case 'ArrowLeft':
+                    e.preventDefault();
+                    prevSlide();
+                    break;
+                case 'Home':
+                    e.preventDefault();
+                    goToSlide(0);
+                    break;
+                case 'End':
+                    e.preventDefault();
+                    goToSlide(totalSlides - 1);
+                    break;
+            }
+        });
+
+        // Initialise highlight.js
+        hljs.highlightAll();
+
+        // Show first slide
+        showSlide(0);
+    </script>
+</body>
+</html>

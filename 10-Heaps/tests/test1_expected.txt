@@ -1,0 +1,31 @@
+
+╔═══════════════════════════════════════════════════════════════╗
+║     EXERCISE 1: Generic Priority Queue Implementation         ║
+╚═══════════════════════════════════════════════════════════════╝
+
+Test 1: Basic operations (max-heap)
+────────────────────────────────────
+  Inserting: 5 3 8 1 9 4 7 2 6 
+  Extracting: 9 8 7 6 5 4 3 2 1 
+  PASSED
+
+Test 2: Min-heap operations
+────────────────────────────────────
+  Inserting: 5 3 8 1 9 4 
+  Extracting: 1 3 4 5 8 9 
+  PASSED
+
+Test 3: Dynamic resizing
+────────────────────────────────────
+  Inserting 20 elements into capacity-4 queue...
+  PASSED
+
+Test 4: Peek operation
+────────────────────────────────────
+  PASSED
+
+════════════════════════════════════════════════════════════════
+Results: 4/4 tests passed
+
+✓ All tests passed! Your priority queue implementation is correct.
+

@@ -1,0 +1,1948 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Week 09: AVL Trees | Algorithms and Programming Techniques</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/c.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-primary: #0d1117;
+            --bg-secondary: #161b22;
+            --bg-tertiary: #21262d;
+            --text-primary: #e6edf3;
+            --text-secondary: #8b949e;
+            --accent-blue: #58a6ff;
+            --accent-green: #3fb950;
+            --accent-yellow: #d29922;
+            --accent-red: #f85149;
+            --accent-purple: #a371f7;
+            --border-color: #30363d;
+        }
+
+        body {
+            font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, 'Helvetica Neue', Arial, sans-serif;
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            overflow: hidden;
+            height: 100vh;
+        }
+
+        /* Progress Bar */
+        .progress-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background-color: var(--bg-tertiary);
+            z-index: 1000;
+        }
+
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, var(--accent-blue), var(--accent-purple));
+            transition: width 0.3s ease;
+        }
+
+        /* Slide Container */
+        .slides-container {
+            height: 100vh;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .slide {
+            display: none;
+            height: 100vh;
+            padding: 60px 80px;
+            overflow-y: auto;
+            animation: fadeIn 0.4s ease;
+        }
+
+        .slide.active {
+            display: flex;
+            flex-direction: column;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Typography */
+        h1 {
+            font-size: 2.8em;
+            font-weight: 600;
+            margin-bottom: 20px;
+            color: var(--text-primary);
+        }
+
+        h2 {
+            font-size: 2.2em;
+            font-weight: 600;
+            margin-bottom: 25px;
+            color: var(--accent-blue);
+            border-bottom: 2px solid var(--border-color);
+            padding-bottom: 10px;
+        }
+
+        h3 {
+            font-size: 1.5em;
+            font-weight: 500;
+            margin: 20px 0 15px 0;
+            color: var(--accent-green);
+        }
+
+        p {
+            font-size: 1.2em;
+            line-height: 1.7;
+            margin-bottom: 15px;
+            color: var(--text-secondary);
+        }
+
+        /* Title Slide */
+        .title-slide {
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            background: radial-gradient(ellipse at center, var(--bg-secondary) 0%, var(--bg-primary) 100%);
+        }
+
+        .title-slide h1 {
+            font-size: 3.5em;
+            margin-bottom: 10px;
+            background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .title-slide .subtitle {
+            font-size: 2em;
+            color: var(--text-secondary);
+            margin-bottom: 30px;
+        }
+
+        .title-slide .course-info {
+            font-size: 1.2em;
+            color: var(--text-secondary);
+            margin-top: 40px;
+        }
+
+        .title-slide .week-badge {
+            display: inline-block;
+            background: var(--accent-purple);
+            color: white;
+            padding: 10px 30px;
+            border-radius: 25px;
+            font-size: 1.3em;
+            margin-bottom: 20px;
+        }
+
+        /* Lists */
+        ul, ol {
+            margin: 15px 0 15px 30px;
+            font-size: 1.15em;
+            line-height: 1.8;
+        }
+
+        li {
+            margin-bottom: 10px;
+            color: var(--text-secondary);
+        }
+
+        li::marker {
+            color: var(--accent-blue);
+        }
+
+        /* Code Blocks */
+        .code-block {
+            background: var(--bg-secondary);
+            border-radius: 8px;
+            margin: 20px 0;
+            overflow: hidden;
+            border: 1px solid var(--border-color);
+        }
+
+        .code-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 15px;
+            background: var(--bg-tertiary);
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .code-header span {
+            color: var(--text-secondary);
+            font-size: 0.9em;
+        }
+
+        .lang-badge {
+            background: var(--accent-blue);
+            color: var(--bg-primary);
+            padding: 3px 10px;
+            border-radius: 4px;
+            font-weight: 600;
+            font-size: 0.85em;
+        }
+
+        .code-block pre {
+            margin: 0;
+            padding: 20px;
+            overflow-x: auto;
+        }
+
+        .code-block code {
+            font-family: 'Fira Code', 'Consolas', 'Monaco', monospace;
+            font-size: 0.95em;
+            line-height: 1.5;
+        }
+
+        /* ASCII Art / Diagrams */
+        .diagram {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+            font-family: 'Fira Code', monospace;
+            font-size: 0.95em;
+            white-space: pre;
+            overflow-x: auto;
+            color: var(--accent-green);
+        }
+
+        /* Info Boxes */
+        .info-box {
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+            border-left: 4px solid;
+        }
+
+        .info-box.tip {
+            background: rgba(63, 185, 80, 0.1);
+            border-color: var(--accent-green);
+        }
+
+        .info-box.warning {
+            background: rgba(210, 153, 34, 0.1);
+            border-color: var(--accent-yellow);
+        }
+
+        .info-box.danger {
+            background: rgba(248, 81, 73, 0.1);
+            border-color: var(--accent-red);
+        }
+
+        .info-box.note {
+            background: rgba(88, 166, 255, 0.1);
+            border-color: var(--accent-blue);
+        }
+
+        .info-box-title {
+            font-weight: 600;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .info-box.tip .info-box-title { color: var(--accent-green); }
+        .info-box.warning .info-box-title { color: var(--accent-yellow); }
+        .info-box.danger .info-box-title { color: var(--accent-red); }
+        .info-box.note .info-box-title { color: var(--accent-blue); }
+
+        /* Tables */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            font-size: 1em;
+        }
+
+        th, td {
+            padding: 12px 15px;
+            text-align: left;
+            border: 1px solid var(--border-color);
+        }
+
+        th {
+            background: var(--bg-tertiary);
+            color: var(--accent-blue);
+            font-weight: 600;
+        }
+
+        tr:nth-child(even) {
+            background: var(--bg-secondary);
+        }
+
+        /* Two Column Layout */
+        .two-columns {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin: 20px 0;
+        }
+
+        .column {
+            background: var(--bg-secondary);
+            padding: 20px;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+        }
+
+        /* Key Figure Card */
+        .figure-card {
+            display: flex;
+            gap: 30px;
+            background: var(--bg-secondary);
+            padding: 30px;
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+            margin: 20px 0;
+        }
+
+        .figure-photo {
+            width: 200px;
+            height: 200px;
+            background: var(--bg-tertiary);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-secondary);
+            font-size: 0.9em;
+            flex-shrink: 0;
+        }
+
+        .figure-info h3 {
+            color: var(--accent-purple);
+            margin-top: 0;
+        }
+
+        .figure-quote {
+            font-style: italic;
+            color: var(--accent-yellow);
+            padding: 15px;
+            background: var(--bg-tertiary);
+            border-radius: 8px;
+            margin-top: 15px;
+            border-left: 3px solid var(--accent-yellow);
+        }
+
+        /* Summary Boxes */
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin: 20px 0;
+        }
+
+        .summary-box {
+            background: var(--bg-secondary);
+            padding: 20px;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            text-align: center;
+        }
+
+        .summary-box .icon {
+            font-size: 2em;
+            margin-bottom: 10px;
+        }
+
+        .summary-box h4 {
+            color: var(--accent-blue);
+            margin-bottom: 10px;
+        }
+
+        /* Navigation */
+        .nav-container {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            display: flex;
+            gap: 10px;
+            z-index: 100;
+        }
+
+        .nav-btn {
+            width: 50px;
+            height: 50px;
+            border: none;
+            border-radius: 8px;
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            cursor: pointer;
+            font-size: 1.2em;
+            border: 1px solid var(--border-color);
+            transition: all 0.2s ease;
+        }
+
+        .nav-btn:hover {
+            background: var(--accent-blue);
+            color: var(--bg-primary);
+        }
+
+        .nav-btn:disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+        }
+
+        /* Slide Counter */
+        .slide-counter {
+            position: fixed;
+            bottom: 25px;
+            left: 30px;
+            font-size: 1em;
+            color: var(--text-secondary);
+            z-index: 100;
+        }
+
+        /* Keyboard Shortcuts */
+        .shortcuts {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            font-size: 0.85em;
+            color: var(--text-secondary);
+            background: var(--bg-secondary);
+            padding: 10px 15px;
+            border-radius: 6px;
+            opacity: 0.7;
+        }
+
+        kbd {
+            background: var(--bg-tertiary);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: monospace;
+            border: 1px solid var(--border-color);
+        }
+
+        /* Complexity Table */
+        .complexity-table {
+            margin: 20px 0;
+        }
+
+        .complexity-table th {
+            background: var(--accent-purple);
+            color: white;
+        }
+
+        .complexity-good { color: var(--accent-green); font-weight: bold; }
+        .complexity-ok { color: var(--accent-yellow); font-weight: bold; }
+        .complexity-bad { color: var(--accent-red); font-weight: bold; }
+
+        /* Rotation Animation */
+        .rotation-diagram {
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            margin: 30px 0;
+        }
+
+        .tree-before, .tree-after {
+            background: var(--bg-secondary);
+            padding: 20px;
+            border-radius: 8px;
+            font-family: monospace;
+            white-space: pre;
+        }
+
+        .arrow {
+            font-size: 2em;
+            color: var(--accent-blue);
+        }
+
+        /* Highlight */
+        .highlight {
+            background: rgba(88, 166, 255, 0.2);
+            padding: 2px 6px;
+            border-radius: 4px;
+        }
+
+        .highlight-green {
+            background: rgba(63, 185, 80, 0.2);
+            padding: 2px 6px;
+            border-radius: 4px;
+        }
+
+        .highlight-yellow {
+            background: rgba(210, 153, 34, 0.2);
+            padding: 2px 6px;
+            border-radius: 4px;
+        }
+
+        /* Flex grow for slide content */
+        .slide-content {
+            flex: 1;
+            overflow-y: auto;
+        }
+
+        /* Questions slide */
+        .questions-slide {
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+        }
+
+        .questions-slide h1 {
+            font-size: 4em;
+            margin-bottom: 30px;
+        }
+
+        /* Responsive */
+        @media (max-width: 1200px) {
+            .slide {
+                padding: 40px;
+            }
+            .two-columns {
+                grid-template-columns: 1fr;
+            }
+            .summary-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="progress-container">
+        <div class="progress-bar" id="progressBar"></div>
+    </div>
+
+    <div class="shortcuts">
+        <kbd>←</kbd> <kbd>→</kbd> Navigate &nbsp;|&nbsp; <kbd>Home</kbd> <kbd>End</kbd> Jump
+    </div>
+
+    <div class="slides-container" id="slidesContainer">
+        
+        <!-- Slide 1: Title -->
+        <div class="slide title-slide active">
+            <div class="week-badge">WEEK 09</div>
+            <h1>AVL Trees</h1>
+            <div class="subtitle">Self-Balancing Binary Search Trees</div>
+            <p style="font-size: 1.3em; color: var(--text-secondary);">
+                Guaranteed O(log n) operations through automatic rebalancing
+            </p>
+            <div class="course-info">
+                <strong>Algorithms and Programming Techniques</strong><br>
+                Academy of Economic Studies, Bucharest
+            </div>
+        </div>
+
+        <!-- Slide 2: Learning Objectives -->
+        <div class="slide">
+            <h2>🎯 Learning Objectives</h2>
+            <div class="slide-content">
+                <p>By the end of this session, you will be able to:</p>
+                <ol>
+                    <li><strong>Remember</strong> the AVL balance invariant and the four rotation types</li>
+                    <li><strong>Understand</strong> why AVL trees guarantee O(log n) height bound</li>
+                    <li><strong>Apply</strong> insertion and deletion algorithms with correct rebalancing</li>
+                    <li><strong>Analyse</strong> time and space complexity of AVL operations</li>
+                    <li><strong>Evaluate</strong> trade-offs between AVL and other self-balancing trees</li>
+                    <li><strong>Create</strong> a complete AVL tree library in C</li>
+                </ol>
+                <div class="info-box tip">
+                    <div class="info-box-title">💡 Key Insight</div>
+                    <p>AVL trees solve the fundamental weakness of BSTs: degradation to O(n) on sorted input.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 3: The Problem with BSTs -->
+        <div class="slide">
+            <h2>The Problem: Unbalanced BSTs</h2>
+            <div class="slide-content">
+                <p>Standard BSTs can degenerate into linked lists with sorted input:</p>
+                <div class="two-columns">
+                    <div class="column">
+                        <h3>Random Insertion</h3>
+                        <div class="diagram">    50
+   /  \
+  30   70
+ / \   / \
+20 40 60 80
+
+Height: 3
+Nodes: 7
+Search: O(log n)</div>
+                    </div>
+                    <div class="column">
+                        <h3>Sorted Insertion (1,2,3,4,5,6,7)</h3>
+                        <div class="diagram">1
+ \
+  2
+   \
+    3
+     \
+      4
+       \
+        5...
+
+Height: 6
+Nodes: 7
+Search: O(n) ❌</div>
+                    </div>
+                </div>
+                <div class="info-box danger">
+                    <div class="info-box-title">⚠️ Critical Issue</div>
+                    <p>Sorted data is common in practice: timestamps, auto-increment IDs, alphabetical names...</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 4: Historical Context -->
+        <div class="slide">
+            <h2>📜 Historical Context</h2>
+            <div class="slide-content">
+                <p>AVL trees emerged from Soviet computer science during the Cold War era:</p>
+                <ul>
+                    <li><strong>1962</strong> — Adelson-Velsky and Landis publish "An algorithm for the organisation of information"</li>
+                    <li>First self-balancing BST ever invented</li>
+                    <li>Predates Red-Black trees (1978) by 16 years</li>
+                    <li>Published in Soviet journal <em>Doklady Akademii Nauk SSSR</em></li>
+                </ul>
+                <div class="figure-card">
+                    <div class="figure-photo">[Photo Placeholder]<br>G.M. Adelson-Velsky</div>
+                    <div class="figure-info">
+                        <h3>Georgy Adelson-Velsky (1922–2014)</h3>
+                        <p>Soviet mathematician and computer scientist. Led the team that created Kaissa, the first program to win the World Computer Chess Championship (1974). Pioneered bitboard representation in chess engines.</p>
+                        <div class="figure-quote">
+                            "The complexity of the algorithm is determined not by the problem itself, but by the structure we impose upon its solution."
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 5: AVL Definition -->
+        <div class="slide">
+            <h2>AVL Tree Definition</h2>
+            <div class="slide-content">
+                <p>An <span class="highlight">AVL tree</span> is a binary search tree where:</p>
+                <div class="info-box note">
+                    <div class="info-box-title">📐 The AVL Invariant</div>
+                    <p style="font-size: 1.3em; text-align: center;">
+                        For <strong>every</strong> node: |height(left) - height(right)| ≤ 1
+                    </p>
+                </div>
+                <h3>Balance Factor</h3>
+                <p>The <strong>balance factor</strong> (BF) of a node is:</p>
+                <div class="code-block">
+                    <div class="code-header">
+                        <span>Balance Factor Formula</span>
+                        <span class="lang-badge">Definition</span>
+                    </div>
+                    <pre><code>balance_factor(node) = height(left_subtree) - height(right_subtree)
+
+Valid BF values in AVL tree: { -1, 0, +1 }
+
++1 → Left-heavy
+ 0 → Perfectly balanced
+-1 → Right-heavy</code></pre>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 6: Balance Factor Examples -->
+        <div class="slide">
+            <h2>Balance Factor Examples</h2>
+            <div class="slide-content">
+                <div class="diagram">                 50 (bf=0)
+                /  \
+         30 (bf=+1)  70 (bf=-1)
+         /              \
+      20 (bf=0)        80 (bf=0)
+
+    Convention: height(NULL) = -1
+
+    Calculating bf(30):
+      height(left of 30) = height(20) = 0
+      height(right of 30) = height(NULL) = -1
+      bf(30) = 0 - (-1) = +1 ✓
+
+    Calculating bf(70):
+      height(left of 70) = height(NULL) = -1
+      height(right of 70) = height(80) = 0
+      bf(70) = (-1) - 0 = -1 ✓</div>
+                <div class="info-box tip">
+                    <div class="info-box-title">💡 Height Convention</div>
+                    <p>Empty subtree (NULL) has height -1. A single node has height 0.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 7: Height Bound -->
+        <div class="slide">
+            <h2>The Height Guarantee</h2>
+            <div class="slide-content">
+                <p>AVL trees provide a mathematical guarantee on maximum height:</p>
+                <div class="info-box note">
+                    <div class="info-box-title">📊 Height Bound</div>
+                    <p style="font-size: 1.2em;">
+                        For n nodes: <strong>h ≤ 1.44 × log₂(n)</strong>
+                    </p>
+                </div>
+                <table class="complexity-table">
+                    <tr>
+                        <th>Tree Type</th>
+                        <th>Worst-Case Height</th>
+                        <th>n = 1,000,000</th>
+                    </tr>
+                    <tr>
+                        <td>Perfect BST</td>
+                        <td class="complexity-good">log₂(n)</td>
+                        <td>20</td>
+                    </tr>
+                    <tr>
+                        <td>AVL Tree</td>
+                        <td class="complexity-good">1.44 × log₂(n)</td>
+                        <td>29</td>
+                    </tr>
+                    <tr>
+                        <td>Red-Black Tree</td>
+                        <td class="complexity-ok">2 × log₂(n)</td>
+                        <td>40</td>
+                    </tr>
+                    <tr>
+                        <td>Unbalanced BST</td>
+                        <td class="complexity-bad">n</td>
+                        <td>1,000,000</td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+
+        <!-- Slide 8: Fibonacci Trees -->
+        <div class="slide">
+            <h2>Fibonacci Trees and the Golden Ratio</h2>
+            <div class="slide-content">
+                <p>The height bound comes from <em>minimally balanced</em> AVL trees:</p>
+                <div class="code-block">
+                    <div class="code-header">
+                        <span>Minimum Nodes for Height h</span>
+                        <span class="lang-badge">Formula</span>
+                    </div>
+                    <pre><code>N(h) = N(h-1) + N(h-2) + 1    (Fibonacci-like recurrence)
+
+N(0) = 1
+N(1) = 2
+N(2) = 4
+N(3) = 7
+N(4) = 12
+N(5) = 20
+...</code></pre>
+                </div>
+                <div class="diagram">Height 3 Fibonacci Tree (minimum 7 nodes):
+
+        4
+       / \
+      2   6
+     /   / \
+    1   5   7
+   /
+  0
+
+Every node has bf = +1 (maximally unbalanced whilst legal)</div>
+                <p>The golden ratio φ = (1+√5)/2 ≈ 1.618 naturally appears: N(h) ≈ φ^(h+2)/√5</p>
+            </div>
+        </div>
+
+        <!-- Slide 9: Node Structure -->
+        <div class="slide">
+            <h2>AVL Node Structure in C</h2>
+            <div class="slide-content">
+                <div class="code-block">
+                    <div class="code-header">
+                        <span>AVL Node Definition</span>
+                        <span class="lang-badge">C</span>
+                    </div>
+                    <pre><code class="language-c">typedef struct AVLNode {
+    int key;                    /* The stored value */
+    int height;                 /* Height of this subtree */
+    struct AVLNode *left;       /* Left child */
+    struct AVLNode *right;      /* Right child */
+} AVLNode;
+
+/* Create a new node */
+AVLNode *avl_create_node(int key) {
+    AVLNode *node = malloc(sizeof(AVLNode));
+    if (node == NULL) {
+        fprintf(stderr, "Memory allocation failed\n");
+        exit(EXIT_FAILURE);
+    }
+    node->key = key;
+    node->height = 0;           /* Leaf has height 0 */
+    node->left = NULL;
+    node->right = NULL;
+    return node;
+}</code></pre>
+                </div>
+                <div class="info-box tip">
+                    <div class="info-box-title">💡 Design Choice</div>
+                    <p>Storing height (not balance factor) simplifies recalculation after rotations.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 10: Utility Functions -->
+        <div class="slide">
+            <h2>Utility Functions</h2>
+            <div class="slide-content">
+                <div class="code-block">
+                    <div class="code-header">
+                        <span>Height and Balance Factor</span>
+                        <span class="lang-badge">C</span>
+                    </div>
+                    <pre><code class="language-c">/* Get height (handles NULL safely) */
+int height(AVLNode *node) {
+    if (node == NULL) return -1;
+    return node->height;
+}
+
+/* Calculate balance factor */
+int balance_factor(AVLNode *node) {
+    if (node == NULL) return 0;
+    return height(node->left) - height(node->right);
+}
+
+/* Update height after modification */
+void update_height(AVLNode *node) {
+    int left_h = height(node->left);
+    int right_h = height(node->right);
+    node->height = 1 + (left_h > right_h ? left_h : right_h);
+}
+
+/* Maximum of two integers */
+int max(int a, int b) {
+    return (a > b) ? a : b;
+}</code></pre>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 11: Right Rotation -->
+        <div class="slide">
+            <h2>Right Rotation (LL Case)</h2>
+            <div class="slide-content">
+                <p>Applied when a node is <span class="highlight">left-heavy (+2)</span> and its left child is left-heavy or balanced:</p>
+                <div class="rotation-diagram">
+                    <div class="tree-before">      y (bf=+2)
+     / \
+    x   C
+   / \
+  A   B</div>
+                    <div class="arrow">→</div>
+                    <div class="tree-after">    x
+   / \
+  A   y
+     / \
+    B   C</div>
+                </div>
+                <div class="code-block">
+                    <div class="code-header">
+                        <span>Right Rotation Implementation</span>
+                        <span class="lang-badge">C</span>
+                    </div>
+                    <pre><code class="language-c">AVLNode *rotate_right(AVLNode *y) {
+    AVLNode *x = y->left;       /* x becomes new root */
+    AVLNode *B = x->right;      /* B will move */
+    
+    /* Perform rotation */
+    x->right = y;
+    y->left = B;
+    
+    /* Update heights (order matters!) */
+    update_height(y);           /* y is now lower */
+    update_height(x);           /* x is now root */
+    
+    return x;                   /* Return new root */
+}</code></pre>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 12: Left Rotation -->
+        <div class="slide">
+            <h2>Left Rotation (RR Case)</h2>
+            <div class="slide-content">
+                <p>Applied when a node is <span class="highlight">right-heavy (-2)</span> and its right child is right-heavy or balanced:</p>
+                <div class="rotation-diagram">
+                    <div class="tree-before">  x (bf=-2)
+ / \
+A   y
+   / \
+  B   C</div>
+                    <div class="arrow">→</div>
+                    <div class="tree-after">    y
+   / \
+  x   C
+ / \
+A   B</div>
+                </div>
+                <div class="code-block">
+                    <div class="code-header">
+                        <span>Left Rotation Implementation</span>
+                        <span class="lang-badge">C</span>
+                    </div>
+                    <pre><code class="language-c">AVLNode *rotate_left(AVLNode *x) {
+    AVLNode *y = x->right;      /* y becomes new root */
+    AVLNode *B = y->left;       /* B will move */
+    
+    /* Perform rotation */
+    y->left = x;
+    x->right = B;
+    
+    /* Update heights (order matters!) */
+    update_height(x);           /* x is now lower */
+    update_height(y);           /* y is now root */
+    
+    return y;                   /* Return new root */
+}</code></pre>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 13: Left-Right Rotation -->
+        <div class="slide">
+            <h2>Left-Right Rotation (LR Case)</h2>
+            <div class="slide-content">
+                <p>When node is left-heavy (+2) but left child is <span class="highlight-yellow">right-heavy (-1)</span>:</p>
+                <div class="rotation-diagram">
+                    <div class="tree-before">    z (bf=+2)
+   / \
+  x   D
+ / \
+A   y
+   / \
+  B   C</div>
+                    <div class="arrow">→</div>
+                    <div class="tree-after">      y
+     / \
+    x   z
+   / \ / \
+  A  B C  D</div>
+                </div>
+                <div class="code-block">
+                    <div class="code-header">
+                        <span>Two-Step Process</span>
+                        <span class="lang-badge">C</span>
+                    </div>
+                    <pre><code class="language-c">/* LR Case: Left child is right-heavy */
+/* Step 1: Left rotate the left child */
+node->left = rotate_left(node->left);
+/* Step 2: Right rotate the node */
+return rotate_right(node);</code></pre>
+                </div>
+                <div class="info-box warning">
+                    <div class="info-box-title">⚠️ Order Matters</div>
+                    <p>Always rotate the child first, then the parent. Reversing the order breaks the tree.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 14: Right-Left Rotation -->
+        <div class="slide">
+            <h2>Right-Left Rotation (RL Case)</h2>
+            <div class="slide-content">
+                <p>When node is right-heavy (-2) but right child is <span class="highlight-yellow">left-heavy (+1)</span>:</p>
+                <div class="rotation-diagram">
+                    <div class="tree-before">  x (bf=-2)
+ / \
+A   z
+   / \
+  y   D
+ / \
+B   C</div>
+                    <div class="arrow">→</div>
+                    <div class="tree-after">      y
+     / \
+    x   z
+   / \ / \
+  A  B C  D</div>
+                </div>
+                <div class="code-block">
+                    <div class="code-header">
+                        <span>Two-Step Process</span>
+                        <span class="lang-badge">C</span>
+                    </div>
+                    <pre><code class="language-c">/* RL Case: Right child is left-heavy */
+/* Step 1: Right rotate the right child */
+node->right = rotate_right(node->right);
+/* Step 2: Left rotate the node */
+return rotate_left(node);</code></pre>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 15: Rotation Decision Table -->
+        <div class="slide">
+            <h2>Rotation Decision Table</h2>
+            <div class="slide-content">
+                <table>
+                    <tr>
+                        <th>Node BF</th>
+                        <th>Child BF</th>
+                        <th>Case</th>
+                        <th>Action</th>
+                    </tr>
+                    <tr>
+                        <td>+2 (left-heavy)</td>
+                        <td>+1 or 0 (left child)</td>
+                        <td>LL</td>
+                        <td>Right rotation</td>
+                    </tr>
+                    <tr>
+                        <td>+2 (left-heavy)</td>
+                        <td>-1 (left child)</td>
+                        <td>LR</td>
+                        <td>Left-Right rotation</td>
+                    </tr>
+                    <tr>
+                        <td>-2 (right-heavy)</td>
+                        <td>-1 or 0 (right child)</td>
+                        <td>RR</td>
+                        <td>Left rotation</td>
+                    </tr>
+                    <tr>
+                        <td>-2 (right-heavy)</td>
+                        <td>+1 (right child)</td>
+                        <td>RL</td>
+                        <td>Right-Left rotation</td>
+                    </tr>
+                </table>
+                <div class="info-box tip">
+                    <div class="info-box-title">💡 Memory Aid</div>
+                    <p><strong>LL</strong> → rotate <strong>Right</strong> (opposite direction)<br>
+                    <strong>RR</strong> → rotate <strong>Left</strong> (opposite direction)<br>
+                    <strong>LR</strong> → rotate <strong>Left</strong> then <strong>Right</strong> (same letters)<br>
+                    <strong>RL</strong> → rotate <strong>Right</strong> then <strong>Left</strong> (same letters)</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 16: Rebalance Function -->
+        <div class="slide">
+            <h2>The Rebalance Function</h2>
+            <div class="slide-content">
+                <div class="code-block">
+                    <div class="code-header">
+                        <span>Complete Rebalancing Logic</span>
+                        <span class="lang-badge">C</span>
+                    </div>
+                    <pre><code class="language-c">AVLNode *rebalance(AVLNode *node) {
+    if (node == NULL) return NULL;
+    
+    update_height(node);
+    int bf = balance_factor(node);
+    
+    /* Left-heavy */
+    if (bf > 1) {
+        if (balance_factor(node->left) < 0) {
+            /* LR Case */
+            node->left = rotate_left(node->left);
+        }
+        /* LL Case (or LR after first rotation) */
+        return rotate_right(node);
+    }
+    
+    /* Right-heavy */
+    if (bf < -1) {
+        if (balance_factor(node->right) > 0) {
+            /* RL Case */
+            node->right = rotate_right(node->right);
+        }
+        /* RR Case (or RL after first rotation) */
+        return rotate_left(node);
+    }
+    
+    /* Already balanced */
+    return node;
+}</code></pre>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 17: AVL Insert -->
+        <div class="slide">
+            <h2>AVL Insertion Algorithm</h2>
+            <div class="slide-content">
+                <div class="code-block">
+                    <div class="code-header">
+                        <span>Recursive Insertion with Rebalancing</span>
+                        <span class="lang-badge">C</span>
+                    </div>
+                    <pre><code class="language-c">AVLNode *avl_insert(AVLNode *node, int key) {
+    /* 1. Standard BST insertion */
+    if (node == NULL) {
+        return avl_create_node(key);
+    }
+    
+    if (key < node->key) {
+        node->left = avl_insert(node->left, key);
+    } else if (key > node->key) {
+        node->right = avl_insert(node->right, key);
+    } else {
+        /* Duplicate key - no insertion */
+        return node;
+    }
+    
+    /* 2. Rebalance on the way back up */
+    return rebalance(node);
+}</code></pre>
+                </div>
+                <div class="info-box note">
+                    <div class="info-box-title">📌 Key Point</div>
+                    <p>Rebalancing happens during recursion unwinding. At most <strong>one</strong> rotation (single or double) is needed per insertion.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 18: Insert Trace Example -->
+        <div class="slide">
+            <h2>Insertion Trace: LL Case</h2>
+            <div class="slide-content">
+                <p>Inserting sequence: <span class="highlight">30, 20, 10</span></p>
+                <div class="two-columns">
+                    <div class="column">
+                        <h3>Step-by-Step</h3>
+                        <div class="diagram">Insert 30:     Insert 20:     Insert 10:
+    30             30 (bf=+1)     30 (bf=+2) ❌
+                  /              /
+                 20            20 (bf=+1)
+                              /
+                             10
+
+After Right Rotation:
+      20
+     /  \
+   10    30</div>
+                    </div>
+                    <div class="column">
+                        <h3>Balance Factors</h3>
+                        <ul>
+                            <li>After insert 10: bf(30) = +2 ⚠️</li>
+                            <li>Check left child: bf(20) = +1</li>
+                            <li>Case: LL (left-left)</li>
+                            <li>Action: Right rotation on 30</li>
+                            <li>Result: All bf ∈ {-1, 0, +1} ✓</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 19: Insert Trace LR Case -->
+        <div class="slide">
+            <h2>Insertion Trace: LR Case</h2>
+            <div class="slide-content">
+                <p>Inserting sequence: <span class="highlight">30, 10, 20</span></p>
+                <div class="diagram">Insert 30:     Insert 10:     Insert 20:
+    30             30 (bf=+1)     30 (bf=+2) ❌
+                  /              /
+                 10            10 (bf=-1)
+                                 \
+                                  20
+
+Step 1: Left rotate on 10:     Step 2: Right rotate on 30:
+        30                             20
+       /                              /  \
+      20                            10    30
+     /
+    10
+
+Final: All balance factors = 0 ✓</div>
+            </div>
+        </div>
+
+        <!-- Slide 20: AVL Delete Overview -->
+        <div class="slide">
+            <h2>AVL Deletion: Overview</h2>
+            <div class="slide-content">
+                <p>Deletion follows BST rules, then rebalances:</p>
+                <ol>
+                    <li><strong>Leaf node:</strong> Simply remove</li>
+                    <li><strong>One child:</strong> Replace with child</li>
+                    <li><strong>Two children:</strong> Replace with inorder successor (or predecessor), delete successor</li>
+                </ol>
+                <div class="info-box warning">
+                    <div class="info-box-title">⚠️ Key Difference from Insertion</div>
+                    <p>Deletion may require <strong>multiple rotations</strong> (up to O(log n)) as imbalance can propagate up the tree.</p>
+                </div>
+                <div class="code-block">
+                    <div class="code-header">
+                        <span>Finding Minimum (Inorder Successor)</span>
+                        <span class="lang-badge">C</span>
+                    </div>
+                    <pre><code class="language-c">AVLNode *avl_find_min(AVLNode *node) {
+    while (node->left != NULL) {
+        node = node->left;
+    }
+    return node;
+}</code></pre>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 21: AVL Delete Implementation -->
+        <div class="slide">
+            <h2>AVL Deletion Implementation</h2>
+            <div class="slide-content">
+                <div class="code-block">
+                    <div class="code-header">
+                        <span>Recursive Deletion</span>
+                        <span class="lang-badge">C</span>
+                    </div>
+                    <pre><code class="language-c">AVLNode *avl_delete(AVLNode *node, int key) {
+    if (node == NULL) return NULL;
+    
+    /* 1. Standard BST deletion */
+    if (key < node->key) {
+        node->left = avl_delete(node->left, key);
+    } else if (key > node->key) {
+        node->right = avl_delete(node->right, key);
+    } else {
+        /* Found the node to delete */
+        if (node->left == NULL || node->right == NULL) {
+            /* 0 or 1 child */
+            AVLNode *temp = node->left ? node->left : node->right;
+            free(node);
+            return temp;
+        }
+        /* 2 children: replace with inorder successor */
+        AVLNode *successor = avl_find_min(node->right);
+        node->key = successor->key;
+        node->right = avl_delete(node->right, successor->key);
+    }
+    
+    /* 2. Rebalance */
+    return rebalance(node);
+}</code></pre>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 22: Search Operations -->
+        <div class="slide">
+            <h2>Search Operations</h2>
+            <div class="slide-content">
+                <div class="code-block">
+                    <div class="code-header">
+                        <span>Search, Find Min, Find Max</span>
+                        <span class="lang-badge">C</span>
+                    </div>
+                    <pre><code class="language-c">/* Search for a key */
+AVLNode *avl_search(AVLNode *node, int key) {
+    if (node == NULL || node->key == key) {
+        return node;
+    }
+    if (key < node->key) {
+        return avl_search(node->left, key);
+    }
+    return avl_search(node->right, key);
+}
+
+/* Find maximum key */
+AVLNode *avl_find_max(AVLNode *node) {
+    if (node == NULL) return NULL;
+    while (node->right != NULL) {
+        node = node->right;
+    }
+    return node;
+}
+
+/* Check if key exists */
+bool avl_contains(AVLNode *node, int key) {
+    return avl_search(node, key) != NULL;
+}</code></pre>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 23: Traversals -->
+        <div class="slide">
+            <h2>Tree Traversals</h2>
+            <div class="slide-content">
+                <div class="code-block">
+                    <div class="code-header">
+                        <span>Inorder Traversal (Sorted Output)</span>
+                        <span class="lang-badge">C</span>
+                    </div>
+                    <pre><code class="language-c">void avl_inorder(AVLNode *node) {
+    if (node == NULL) return;
+    avl_inorder(node->left);
+    printf("%d ", node->key);
+    avl_inorder(node->right);
+}
+
+/* Preorder: Root, Left, Right */
+void avl_preorder(AVLNode *node) {
+    if (node == NULL) return;
+    printf("%d ", node->key);
+    avl_preorder(node->left);
+    avl_preorder(node->right);
+}
+
+/* Postorder: Left, Right, Root */
+void avl_postorder(AVLNode *node) {
+    if (node == NULL) return;
+    avl_postorder(node->left);
+    avl_postorder(node->right);
+    printf("%d ", node->key);
+}</code></pre>
+                </div>
+                <div class="info-box tip">
+                    <div class="info-box-title">💡 Inorder Property</div>
+                    <p>Inorder traversal of any BST (including AVL) produces keys in <strong>sorted order</strong>.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 24: Memory Management -->
+        <div class="slide">
+            <h2>Memory Management</h2>
+            <div class="slide-content">
+                <div class="code-block">
+                    <div class="code-header">
+                        <span>Destroying the Tree</span>
+                        <span class="lang-badge">C</span>
+                    </div>
+                    <pre><code class="language-c">/* Free all nodes (postorder traversal) */
+void avl_destroy(AVLNode *node) {
+    if (node == NULL) return;
+    avl_destroy(node->left);
+    avl_destroy(node->right);
+    free(node);
+}
+
+/* Usage */
+int main(void) {
+    AVLNode *root = NULL;
+    
+    root = avl_insert(root, 50);
+    root = avl_insert(root, 30);
+    root = avl_insert(root, 70);
+    /* ... more operations ... */
+    
+    /* Clean up - ESSENTIAL! */
+    avl_destroy(root);
+    root = NULL;  /* Prevent dangling pointer */
+    
+    return 0;
+}</code></pre>
+                </div>
+                <div class="info-box danger">
+                    <div class="info-box-title">⚠️ Memory Leaks</div>
+                    <p>Always call <code>avl_destroy()</code> before program exit. Use Valgrind to verify: <code>valgrind --leak-check=full ./program</code></p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 25: Complexity Analysis -->
+        <div class="slide">
+            <h2>Complexity Analysis</h2>
+            <div class="slide-content">
+                <table class="complexity-table">
+                    <tr>
+                        <th>Operation</th>
+                        <th>AVL Tree</th>
+                        <th>Unbalanced BST</th>
+                        <th>Sorted Array</th>
+                    </tr>
+                    <tr>
+                        <td>Search</td>
+                        <td class="complexity-good">O(log n)</td>
+                        <td class="complexity-bad">O(n)</td>
+                        <td class="complexity-good">O(log n)</td>
+                    </tr>
+                    <tr>
+                        <td>Insert</td>
+                        <td class="complexity-good">O(log n)</td>
+                        <td class="complexity-bad">O(n)</td>
+                        <td class="complexity-bad">O(n)</td>
+                    </tr>
+                    <tr>
+                        <td>Delete</td>
+                        <td class="complexity-good">O(log n)</td>
+                        <td class="complexity-bad">O(n)</td>
+                        <td class="complexity-bad">O(n)</td>
+                    </tr>
+                    <tr>
+                        <td>Min/Max</td>
+                        <td class="complexity-good">O(log n)</td>
+                        <td class="complexity-bad">O(n)</td>
+                        <td class="complexity-good">O(1)</td>
+                    </tr>
+                    <tr>
+                        <td>Successor</td>
+                        <td class="complexity-good">O(log n)</td>
+                        <td class="complexity-bad">O(n)</td>
+                        <td class="complexity-good">O(1)</td>
+                    </tr>
+                </table>
+                <h3>Space Complexity</h3>
+                <p><strong>O(n)</strong> for storing n nodes. Each node requires constant space for key, height and two pointers.</p>
+            </div>
+        </div>
+
+        <!-- Slide 26: AVL vs Red-Black Trees -->
+        <div class="slide">
+            <h2>AVL vs Red-Black Trees</h2>
+            <div class="slide-content">
+                <table>
+                    <tr>
+                        <th>Aspect</th>
+                        <th>AVL Tree</th>
+                        <th>Red-Black Tree</th>
+                    </tr>
+                    <tr>
+                        <td>Balance Strictness</td>
+                        <td>Height diff ≤ 1</td>
+                        <td>Height diff ≤ 2×</td>
+                    </tr>
+                    <tr>
+                        <td>Max Height</td>
+                        <td>1.44 × log₂(n)</td>
+                        <td>2 × log₂(n)</td>
+                    </tr>
+                    <tr>
+                        <td>Rotations per Insert</td>
+                        <td>≤ 2</td>
+                        <td>≤ 2</td>
+                    </tr>
+                    <tr>
+                        <td>Rotations per Delete</td>
+                        <td>O(log n)</td>
+                        <td>≤ 3</td>
+                    </tr>
+                    <tr>
+                        <td>Lookup Speed</td>
+                        <td>Faster ✓</td>
+                        <td>Slightly slower</td>
+                    </tr>
+                    <tr>
+                        <td>Insert/Delete Speed</td>
+                        <td>Slower</td>
+                        <td>Faster ✓</td>
+                    </tr>
+                </table>
+                <div class="info-box note">
+                    <div class="info-box-title">📌 When to Use Which</div>
+                    <p><strong>AVL:</strong> Read-heavy workloads, databases, lookup tables<br>
+                    <strong>Red-Black:</strong> Write-heavy workloads, C++ std::map, Java TreeMap</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 27: Common Mistakes -->
+        <div class="slide">
+            <h2>⚠️ Common Mistakes</h2>
+            <div class="slide-content">
+                <div class="info-box danger">
+                    <div class="info-box-title">❌ Mistake 1: Wrong Update Order</div>
+                    <pre style="margin: 10px 0; background: var(--bg-tertiary); padding: 10px; border-radius: 4px;">/* WRONG: updating root before child */
+update_height(x);  /* x is new root */
+update_height(y);  /* y is now child - too late! */
+
+/* CORRECT: update child first */
+update_height(y);  /* y is now child */
+update_height(x);  /* x is new root */</pre>
+                </div>
+                <div class="info-box danger">
+                    <div class="info-box-title">❌ Mistake 2: Forgetting to Return New Root</div>
+                    <pre style="margin: 10px 0; background: var(--bg-tertiary); padding: 10px; border-radius: 4px;">/* WRONG */
+rebalance(node);  /* Return value ignored! */
+
+/* CORRECT */
+node = rebalance(node);  /* Capture new root */</pre>
+                </div>
+                <div class="info-box danger">
+                    <div class="info-box-title">❌ Mistake 3: Wrong Double Rotation Order</div>
+                    <pre style="margin: 10px 0; background: var(--bg-tertiary); padding: 10px; border-radius: 4px;">/* WRONG: rotating parent before child */
+rotate_right(node);
+rotate_left(node->left);  /* Tree is broken! */
+
+/* CORRECT: rotate child first */
+node->left = rotate_left(node->left);
+return rotate_right(node);</pre>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 28: More Common Mistakes -->
+        <div class="slide">
+            <h2>⚠️ More Common Mistakes</h2>
+            <div class="slide-content">
+                <div class="info-box warning">
+                    <div class="info-box-title">❌ Mistake 4: Not Checking for NULL</div>
+                    <pre style="margin: 10px 0; background: var(--bg-tertiary); padding: 10px; border-radius: 4px;">/* WRONG: direct access without check */
+int bf = node->left->height - node->right->height;
+/* Crashes if left or right is NULL! */
+
+/* CORRECT: use helper function */
+int bf = height(node->left) - height(node->right);
+/* height() returns -1 for NULL */</pre>
+                </div>
+                <div class="info-box warning">
+                    <div class="info-box-title">❌ Mistake 5: Memory Leak on Deletion</div>
+                    <pre style="margin: 10px 0; background: var(--bg-tertiary); padding: 10px; border-radius: 4px;">/* WRONG: losing reference to node */
+if (node->left == NULL) {
+    return node->right;  /* node is leaked! */
+}
+
+/* CORRECT: free before returning */
+if (node->left == NULL) {
+    AVLNode *temp = node->right;
+    free(node);
+    return temp;
+}</pre>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 29: Debugging with GDB -->
+        <div class="slide">
+            <h2>🔧 Debugging AVL Trees</h2>
+            <div class="slide-content">
+                <h3>Essential GDB Commands</h3>
+                <div class="code-block">
+                    <div class="code-header">
+                        <span>GDB Session Example</span>
+                        <span class="lang-badge">GDB</span>
+                    </div>
+                    <pre><code>$ gcc -g -Wall -o avl avl.c
+$ gdb ./avl
+
+(gdb) break avl_insert       # Stop at insertion
+(gdb) break rotate_right     # Stop at rotation
+(gdb) run
+
+(gdb) print node->key        # Inspect node
+(gdb) print node->height
+(gdb) print balance_factor(node)
+
+(gdb) backtrace              # Show call stack
+(gdb) step                   # Step into function
+(gdb) next                   # Step over function
+
+# Print tree structure
+(gdb) call avl_inorder(root)</code></pre>
+                </div>
+                <h3>Valgrind for Memory Errors</h3>
+                <div class="code-block">
+                    <div class="code-header">
+                        <span>Memory Check</span>
+                        <span class="lang-badge">Shell</span>
+                    </div>
+                    <pre><code>$ valgrind --leak-check=full --show-leak-kinds=all ./avl</code></pre>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 30: Validation Function -->
+        <div class="slide">
+            <h2>Tree Validation</h2>
+            <div class="slide-content">
+                <div class="code-block">
+                    <div class="code-header">
+                        <span>Verify AVL Property</span>
+                        <span class="lang-badge">C</span>
+                    </div>
+                    <pre><code class="language-c">/* Returns height if valid, -2 if invalid */
+int avl_validate(AVLNode *node) {
+    if (node == NULL) return -1;
+    
+    int left_h = avl_validate(node->left);
+    int right_h = avl_validate(node->right);
+    
+    /* Check for invalid subtrees */
+    if (left_h == -2 || right_h == -2) return -2;
+    
+    /* Check BST property */
+    if (node->left && node->left->key >= node->key) return -2;
+    if (node->right && node->right->key <= node->key) return -2;
+    
+    /* Check AVL balance */
+    int bf = left_h - right_h;
+    if (bf < -1 || bf > 1) {
+        printf("Imbalance at node %d: bf=%d\n", node->key, bf);
+        return -2;
+    }
+    
+    /* Check stored height */
+    int expected_h = 1 + (left_h > right_h ? left_h : right_h);
+    if (node->height != expected_h) {
+        printf("Wrong height at %d: stored=%d, actual=%d\n",
+               node->key, node->height, expected_h);
+        return -2;
+    }
+    
+    return expected_h;
+}</code></pre>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 31: Pretty Print -->
+        <div class="slide">
+            <h2>Visualising the Tree</h2>
+            <div class="slide-content">
+                <div class="code-block">
+                    <div class="code-header">
+                        <span>Pretty Print Function</span>
+                        <span class="lang-badge">C</span>
+                    </div>
+                    <pre><code class="language-c">void avl_print_helper(AVLNode *node, int depth, char prefix) {
+    if (node == NULL) return;
+    
+    avl_print_helper(node->right, depth + 1, '/');
+    
+    for (int i = 0; i < depth; i++) printf("    ");
+    printf("%c--[%d](h=%d,bf=%d)\n", 
+           prefix, node->key, node->height, balance_factor(node));
+    
+    avl_print_helper(node->left, depth + 1, '\\');
+}
+
+void avl_print(AVLNode *root) {
+    printf("\n=== AVL Tree ===\n");
+    avl_print_helper(root, 0, '-');
+    printf("================\n");
+}
+
+/* Output example:
+    /--[70](h=0,bf=0)
+---[50](h=2,bf=0)
+        /--[40](h=0,bf=0)
+    \--[30](h=1,bf=0)
+        \--[20](h=0,bf=0)
+*/</code></pre>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 32: Best Practices -->
+        <div class="slide">
+            <h2>✅ Best Practices</h2>
+            <div class="slide-content">
+                <div class="two-columns">
+                    <div class="column" style="border-left: 4px solid var(--accent-green);">
+                        <h3 style="color: var(--accent-green);">Do</h3>
+                        <ul>
+                            <li>Always use helper functions for height/balance</li>
+                            <li>Update heights bottom-up after rotations</li>
+                            <li>Return the new root from all modifying functions</li>
+                            <li>Test with sorted input to trigger all cases</li>
+                            <li>Validate tree structure after operations</li>
+                            <li>Use Valgrind to check for memory leaks</li>
+                            <li>Free memory with postorder traversal</li>
+                        </ul>
+                    </div>
+                    <div class="column" style="border-left: 4px solid var(--accent-red);">
+                        <h3 style="color: var(--accent-red);">Don't</h3>
+                        <ul>
+                            <li>Access node members without NULL check</li>
+                            <li>Ignore return values from insert/delete</li>
+                            <li>Update heights before rotating</li>
+                            <li>Forget to free deleted nodes</li>
+                            <li>Assume the root never changes</li>
+                            <li>Mix up rotation order in double rotations</li>
+                            <li>Test only with random data</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 33: Industrial Applications -->
+        <div class="slide">
+            <h2>🏭 Real-World Applications</h2>
+            <div class="slide-content">
+                <div class="summary-grid">
+                    <div class="summary-box">
+                        <div class="icon">🗄️</div>
+                        <h4>Databases</h4>
+                        <p>Index structures (B-trees use similar balancing)</p>
+                    </div>
+                    <div class="summary-box">
+                        <div class="icon">💾</div>
+                        <h4>Memory Allocators</h4>
+                        <p>Managing free blocks in jemalloc, tcmalloc</p>
+                    </div>
+                    <div class="summary-box">
+                        <div class="icon">📁</div>
+                        <h4>File Systems</h4>
+                        <p>Directory indexing in ext4, NTFS</p>
+                    </div>
+                    <div class="summary-box">
+                        <div class="icon">🌐</div>
+                        <h4>Networking</h4>
+                        <p>IP routing tables in high-speed routers</p>
+                    </div>
+                    <div class="summary-box">
+                        <div class="icon">⚙️</div>
+                        <h4>Compilers</h4>
+                        <p>Symbol tables for variable/function lookup</p>
+                    </div>
+                    <div class="summary-box">
+                        <div class="icon">🎮</div>
+                        <h4>Game Engines</h4>
+                        <p>Spatial indexing, collision detection</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 34: Laboratory Preview -->
+        <div class="slide">
+            <h2>💻 Laboratory Exercises</h2>
+            <div class="slide-content">
+                <div class="two-columns">
+                    <div class="column">
+                        <h3>Exercise 1: AVL Foundation</h3>
+                        <ul>
+                            <li>Define AVLNode structure</li>
+                            <li>Implement height/balance utilities</li>
+                            <li>Implement all four rotations</li>
+                            <li>Implement insert with rebalancing</li>
+                            <li>Test all rotation cases</li>
+                        </ul>
+                        <p style="color: var(--accent-yellow);">8-12 TODO markers</p>
+                    </div>
+                    <div class="column">
+                        <h3>Exercise 2: Advanced Operations</h3>
+                        <ul>
+                            <li>Implement search operations</li>
+                            <li>Implement delete with rebalancing</li>
+                            <li>Implement predecessor/successor</li>
+                            <li>Implement range queries</li>
+                            <li>Implement tree validation</li>
+                        </ul>
+                        <p style="color: var(--accent-yellow);">10-15 TODO markers</p>
+                    </div>
+                </div>
+                <div class="info-box tip">
+                    <div class="info-box-title">💡 Test Data</div>
+                    <p>Use <code>data/sorted_keys.txt</code> to trigger worst-case BST behaviour and verify your AVL implementation handles it correctly.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 35: Key Takeaways -->
+        <div class="slide">
+            <h2>🎯 Key Takeaways</h2>
+            <div class="slide-content">
+                <div class="summary-grid">
+                    <div class="summary-box">
+                        <div class="icon">📐</div>
+                        <h4>Balance Invariant</h4>
+                        <p>|height(L) - height(R)| ≤ 1 for all nodes</p>
+                    </div>
+                    <div class="summary-box">
+                        <div class="icon">📊</div>
+                        <h4>Height Guarantee</h4>
+                        <p>h ≤ 1.44 × log₂(n)</p>
+                    </div>
+                    <div class="summary-box">
+                        <div class="icon">🔄</div>
+                        <h4>Four Rotations</h4>
+                        <p>LL, RR, LR, RL cases</p>
+                    </div>
+                    <div class="summary-box">
+                        <div class="icon">⏱️</div>
+                        <h4>O(log n) All Ops</h4>
+                        <p>Search, Insert, Delete</p>
+                    </div>
+                    <div class="summary-box">
+                        <div class="icon">🆚</div>
+                        <h4>vs Red-Black</h4>
+                        <p>Stricter balance, faster lookup</p>
+                    </div>
+                    <div class="summary-box">
+                        <div class="icon">🏭</div>
+                        <h4>Applications</h4>
+                        <p>Databases, FS, Routers</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 36: Resources -->
+        <div class="slide">
+            <h2>📖 Resources</h2>
+            <div class="slide-content">
+                <h3>Essential Reading</h3>
+                <ul>
+                    <li>Cormen et al., <em>Introduction to Algorithms</em>, Ch. 12-13</li>
+                    <li>Sedgewick & Wayne, <em>Algorithms</em>, Section 3.3</li>
+                    <li>Original paper: Adelson-Velsky & Landis (1962)</li>
+                </ul>
+                <h3>Online Resources</h3>
+                <ul>
+                    <li><strong>Visualgo:</strong> https://visualgo.net/en/bst (interactive visualisation)</li>
+                    <li><strong>MIT OCW 6.006:</strong> https://ocw.mit.edu/courses/6-006-introduction-to-algorithms/</li>
+                    <li><strong>GeeksforGeeks:</strong> Comprehensive tutorials with code</li>
+                </ul>
+                <h3>Practice</h3>
+                <ul>
+                    <li>LeetCode: Problems tagged "Binary Search Tree"</li>
+                    <li>HackerRank: Self-Balancing Tree challenge</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Slide 37: Interview Questions -->
+        <div class="slide">
+            <h2>💼 Interview Questions</h2>
+            <div class="slide-content">
+                <ol>
+                    <li><strong>What is an AVL tree and why is it useful?</strong><br>
+                    <span style="color: var(--text-secondary);">Self-balancing BST guaranteeing O(log n) even with sorted input</span></li>
+                    
+                    <li><strong>How do you determine which rotation to perform?</strong><br>
+                    <span style="color: var(--text-secondary);">Check BF of node (+2/-2) and its taller child's BF</span></li>
+                    
+                    <li><strong>What is the maximum height of an AVL tree with n nodes?</strong><br>
+                    <span style="color: var(--text-secondary);">Approximately 1.44 × log₂(n), derived from Fibonacci numbers</span></li>
+                    
+                    <li><strong>Compare AVL trees with Red-Black trees.</strong><br>
+                    <span style="color: var(--text-secondary);">AVL: stricter balance, faster lookups; RB: fewer rotations, faster modifications</span></li>
+                    
+                    <li><strong>How would you implement an AVL tree iterator?</strong><br>
+                    <span style="color: var(--text-secondary);">Stack-based simulation of inorder traversal, or use parent pointers</span></li>
+                </ol>
+            </div>
+        </div>
+
+        <!-- Slide 38: Next Week Preview -->
+        <div class="slide">
+            <h2>🔗 Next Week: Heaps and Priority Queues</h2>
+            <div class="slide-content">
+                <p>Week 10 explores a different approach to partial ordering:</p>
+                <ul>
+                    <li><strong>Binary heap property:</strong> Parent ≥ children (max-heap) or Parent ≤ children (min-heap)</li>
+                    <li><strong>Array representation:</strong> No pointers needed, cache-friendly</li>
+                    <li><strong>Heapify:</strong> O(log n) to restore property, O(n) to build heap</li>
+                    <li><strong>Heap sort:</strong> O(n log n) in-place sorting algorithm</li>
+                    <li><strong>Priority queues:</strong> Efficient insert and extract-min/max</li>
+                </ul>
+                <div class="info-box note">
+                    <div class="info-box-title">📌 Comparison Preview</div>
+                    <p><strong>AVL:</strong> Full ordering, pointer-based, complex rotations<br>
+                    <strong>Heap:</strong> Partial ordering, array-based, simple swaps</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 39: Summary -->
+        <div class="slide">
+            <h2>📝 Summary</h2>
+            <div class="slide-content">
+                <div class="diagram">AVL Tree Mastery Checklist
+═══════════════════════════════════════════════════════════════
+
+  ✓ Definition     │ BST with |height(L) - height(R)| ≤ 1
+  ✓ Balance Factor │ height(left) - height(right) ∈ {-1, 0, +1}
+  ✓ Height Bound   │ h ≤ 1.44 × log₂(n)
+  ✓ Rotations      │ LL→Right, RR→Left, LR→L+R, RL→R+L
+  ✓ Insertion      │ BST insert + rebalance on way up
+  ✓ Deletion       │ BST delete + multiple rebalances possible
+  ✓ Complexity     │ O(log n) for all operations
+  ✓ Applications   │ Databases, file systems, compilers
+
+═══════════════════════════════════════════════════════════════
+Remember: Every modification must return the (possibly new) root!</div>
+            </div>
+        </div>
+
+        <!-- Slide 40: Questions -->
+        <div class="slide questions-slide">
+            <h1>❓ Questions?</h1>
+            <p style="font-size: 1.5em; color: var(--text-secondary);">
+                Thank you for your attention!
+            </p>
+            <div style="margin-top: 40px; color: var(--text-secondary);">
+                <p>Laboratory materials available in the course repository</p>
+                <p style="margin-top: 20px;">
+                    <strong>Next Week:</strong> Heaps and Priority Queues
+                </p>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Navigation -->
+    <div class="slide-counter">
+        <span id="currentSlide">1</span> / <span id="totalSlides">40</span>
+    </div>
+
+    <div class="nav-container">
+        <button class="nav-btn" id="prevBtn" onclick="changeSlide(-1)">←</button>
+        <button class="nav-btn" id="nextBtn" onclick="changeSlide(1)">→</button>
+    </div>
+
+    <script>
+        hljs.highlightAll();
+
+        let currentSlide = 0;
+        const slides = document.querySelectorAll('.slide');
+        const totalSlides = slides.length;
+
+        document.getElementById('totalSlides').textContent = totalSlides;
+
+        function showSlide(n) {
+            slides[currentSlide].classList.remove('active');
+            currentSlide = (n + totalSlides) % totalSlides;
+            slides[currentSlide].classList.add('active');
+            
+            document.getElementById('currentSlide').textContent = currentSlide + 1;
+            document.getElementById('progressBar').style.width = 
+                ((currentSlide + 1) / totalSlides * 100) + '%';
+            
+            document.getElementById('prevBtn').disabled = currentSlide === 0;
+            document.getElementById('nextBtn').disabled = currentSlide === totalSlides - 1;
+        }
+
+        function changeSlide(direction) {
+            showSlide(currentSlide + direction);
+        }
+
+        document.addEventListener('keydown', (e) => {
+            switch(e.key) {
+                case 'ArrowRight':
+                case ' ':
+                    if (currentSlide < totalSlides - 1) changeSlide(1);
+                    e.preventDefault();
+                    break;
+                case 'ArrowLeft':
+                    if (currentSlide > 0) changeSlide(-1);
+                    e.preventDefault();
+                    break;
+                case 'Home':
+                    showSlide(0);
+                    e.preventDefault();
+                    break;
+                case 'End':
+                    showSlide(totalSlides - 1);
+                    e.preventDefault();
+                    break;
+            }
+        });
+
+        showSlide(0);
+    </script>
+</body>
+</html>

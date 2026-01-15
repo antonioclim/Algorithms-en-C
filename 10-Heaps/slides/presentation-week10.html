@@ -1,0 +1,2156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Week 10: Heaps and Priority Queues | ATP Course</title>
+    
+    <!-- Highlight.js for syntax highlighting -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/c.min.js"></script>
+    
+    <style>
+        /* =================================================================
+           CSS VARIABLES - GitHub Dark Theme Colours
+           ================================================================= */
+        :root {
+            --bg-primary: #0d1117;
+            --bg-secondary: #161b22;
+            --bg-tertiary: #21262d;
+            --text-primary: #e6edf3;
+            --text-secondary: #8b949e;
+            --accent-blue: #58a6ff;
+            --accent-green: #3fb950;
+            --accent-yellow: #d29922;
+            --accent-red: #f85149;
+            --accent-purple: #a371f7;
+            --accent-orange: #f0883e;
+            --border-color: #30363d;
+            --code-bg: #161b22;
+        }
+
+        /* =================================================================
+           RESET AND BASE STYLES
+           ================================================================= */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html, body {
+            height: 100%;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans', Helvetica, Arial, sans-serif;
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            overflow: hidden;
+        }
+
+        /* =================================================================
+           PROGRESS BAR
+           ================================================================= */
+        .progress-bar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 4px;
+            background: linear-gradient(90deg, var(--accent-blue), var(--accent-purple));
+            transition: width 0.3s ease;
+            z-index: 1000;
+        }
+
+        /* =================================================================
+           SLIDE CONTAINER
+           ================================================================= */
+        .slides-container {
+            width: 100%;
+            height: 100%;
+            position: relative;
+        }
+
+        .slide {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            padding: 60px 80px;
+            display: none;
+            opacity: 0;
+            transition: opacity 0.4s ease;
+            overflow-y: auto;
+        }
+
+        .slide.active {
+            display: block;
+            opacity: 1;
+        }
+
+        /* =================================================================
+           TYPOGRAPHY
+           ================================================================= */
+        h1 {
+            font-size: 2.8rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 1rem;
+            line-height: 1.2;
+        }
+
+        h2 {
+            font-size: 2rem;
+            font-weight: 600;
+            color: var(--accent-blue);
+            margin-bottom: 1.5rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid var(--border-color);
+        }
+
+        h3 {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: var(--accent-green);
+            margin: 1.5rem 0 1rem 0;
+        }
+
+        p {
+            font-size: 1.25rem;
+            line-height: 1.7;
+            color: var(--text-primary);
+            margin-bottom: 1rem;
+        }
+
+        .subtitle {
+            font-size: 1.4rem;
+            color: var(--text-secondary);
+            margin-bottom: 2rem;
+        }
+
+        /* =================================================================
+           LISTS
+           ================================================================= */
+        ul, ol {
+            font-size: 1.2rem;
+            line-height: 1.8;
+            margin-left: 2rem;
+            margin-bottom: 1rem;
+        }
+
+        li {
+            margin-bottom: 0.5rem;
+        }
+
+        li::marker {
+            color: var(--accent-blue);
+        }
+
+        /* =================================================================
+           CODE BLOCKS
+           ================================================================= */
+        .code-block {
+            background: var(--code-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            margin: 1rem 0;
+            overflow: hidden;
+        }
+
+        .code-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 16px;
+            background: var(--bg-tertiary);
+            border-bottom: 1px solid var(--border-color);
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+        }
+
+        .lang-badge {
+            background: var(--accent-blue);
+            color: var(--bg-primary);
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-weight: 600;
+            font-size: 0.8rem;
+        }
+
+        pre {
+            margin: 0;
+            padding: 16px;
+            overflow-x: auto;
+        }
+
+        code {
+            font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+            font-size: 0.95rem;
+            line-height: 1.5;
+        }
+
+        .inline-code {
+            background: var(--bg-tertiary);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: 'SF Mono', 'Fira Code', monospace;
+            font-size: 0.9em;
+            color: var(--accent-orange);
+        }
+
+        /* =================================================================
+           BOXES AND CARDS
+           ================================================================= */
+        .info-box {
+            background: var(--bg-secondary);
+            border-left: 4px solid var(--accent-blue);
+            padding: 1rem 1.5rem;
+            margin: 1rem 0;
+            border-radius: 0 8px 8px 0;
+        }
+
+        .warning-box {
+            background: rgba(210, 153, 34, 0.1);
+            border-left: 4px solid var(--accent-yellow);
+            padding: 1rem 1.5rem;
+            margin: 1rem 0;
+            border-radius: 0 8px 8px 0;
+        }
+
+        .error-box {
+            background: rgba(248, 81, 73, 0.1);
+            border-left: 4px solid var(--accent-red);
+            padding: 1rem 1.5rem;
+            margin: 1rem 0;
+            border-radius: 0 8px 8px 0;
+        }
+
+        .success-box {
+            background: rgba(63, 185, 80, 0.1);
+            border-left: 4px solid var(--accent-green);
+            padding: 1rem 1.5rem;
+            margin: 1rem 0;
+            border-radius: 0 8px 8px 0;
+        }
+
+        .card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin: 1rem 0;
+        }
+
+        /* =================================================================
+           GRID LAYOUTS
+           ================================================================= */
+        .two-columns {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            margin: 1rem 0;
+        }
+
+        .three-columns {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 1.5rem;
+            margin: 1rem 0;
+        }
+
+        .column {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 1rem;
+        }
+
+        /* =================================================================
+           TABLES
+           ================================================================= */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+            font-size: 1.1rem;
+        }
+
+        th, td {
+            padding: 12px 16px;
+            text-align: left;
+            border: 1px solid var(--border-color);
+        }
+
+        th {
+            background: var(--bg-tertiary);
+            color: var(--accent-blue);
+            font-weight: 600;
+        }
+
+        tr:nth-child(even) {
+            background: var(--bg-secondary);
+        }
+
+        /* =================================================================
+           ASCII ART AND DIAGRAMS
+           ================================================================= */
+        .ascii-diagram {
+            font-family: 'SF Mono', 'Fira Code', monospace;
+            font-size: 1rem;
+            line-height: 1.4;
+            background: var(--bg-secondary);
+            padding: 1.5rem;
+            border-radius: 8px;
+            white-space: pre;
+            overflow-x: auto;
+            color: var(--accent-green);
+        }
+
+        /* =================================================================
+           TITLE SLIDE SPECIAL STYLES
+           ================================================================= */
+        .title-slide {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+        }
+
+        .title-slide h1 {
+            font-size: 3.5rem;
+            margin-bottom: 0.5rem;
+            background: linear-gradient(90deg, var(--accent-blue), var(--accent-purple));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .title-slide .course-info {
+            font-size: 1.3rem;
+            color: var(--text-secondary);
+            margin-top: 2rem;
+        }
+
+        .week-badge {
+            display: inline-block;
+            background: var(--accent-purple);
+            color: white;
+            padding: 8px 24px;
+            border-radius: 20px;
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+        }
+
+        /* =================================================================
+           NAVIGATION
+           ================================================================= */
+        .nav-container {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            display: flex;
+            gap: 10px;
+            z-index: 100;
+        }
+
+        .nav-btn {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: all 0.2s ease;
+        }
+
+        .nav-btn:hover {
+            background: var(--accent-blue);
+            border-color: var(--accent-blue);
+        }
+
+        .nav-btn:disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+        }
+
+        /* =================================================================
+           SLIDE COUNTER
+           ================================================================= */
+        .slide-counter {
+            position: fixed;
+            bottom: 25px;
+            left: 30px;
+            font-size: 1rem;
+            color: var(--text-secondary);
+            z-index: 100;
+        }
+
+        /* =================================================================
+           HIGHLIGHT CLASSES
+           ================================================================= */
+        .highlight-blue { color: var(--accent-blue); }
+        .highlight-green { color: var(--accent-green); }
+        .highlight-yellow { color: var(--accent-yellow); }
+        .highlight-red { color: var(--accent-red); }
+        .highlight-purple { color: var(--accent-purple); }
+        .highlight-orange { color: var(--accent-orange); }
+
+        /* =================================================================
+           ANIMATIONS
+           ================================================================= */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .slide.active > * {
+            animation: fadeIn 0.5s ease forwards;
+        }
+
+        /* =================================================================
+           RESPONSIVE
+           ================================================================= */
+        @media (max-width: 1200px) {
+            .slide { padding: 40px 50px; }
+            h1 { font-size: 2.2rem; }
+            h2 { font-size: 1.6rem; }
+            .two-columns { grid-template-columns: 1fr; }
+        }
+
+        /* =================================================================
+           QUOTE STYLES
+           ================================================================= */
+        blockquote {
+            border-left: 4px solid var(--accent-purple);
+            padding: 1rem 1.5rem;
+            margin: 1.5rem 0;
+            background: var(--bg-secondary);
+            font-style: italic;
+            font-size: 1.2rem;
+            border-radius: 0 8px 8px 0;
+        }
+
+        blockquote cite {
+            display: block;
+            margin-top: 0.5rem;
+            font-size: 1rem;
+            color: var(--text-secondary);
+            font-style: normal;
+        }
+
+        /* =================================================================
+           FORMULA/MATH STYLES
+           ================================================================= */
+        .formula {
+            font-family: 'Times New Roman', serif;
+            font-size: 1.3rem;
+            background: var(--bg-secondary);
+            padding: 1rem;
+            border-radius: 8px;
+            text-align: center;
+            margin: 1rem 0;
+        }
+
+        /* =================================================================
+           STEP LIST
+           ================================================================= */
+        .steps {
+            counter-reset: step;
+            list-style: none;
+            margin-left: 0;
+        }
+
+        .steps li {
+            counter-increment: step;
+            padding-left: 3rem;
+            position: relative;
+            margin-bottom: 1rem;
+        }
+
+        .steps li::before {
+            content: counter(step);
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 2rem;
+            height: 2rem;
+            background: var(--accent-blue);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 1rem;
+        }
+
+        /* Keyboard hints */
+        .kbd {
+            display: inline-block;
+            padding: 3px 8px;
+            font-size: 0.85rem;
+            font-family: 'SF Mono', monospace;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            box-shadow: 0 2px 0 var(--border-color);
+        }
+
+        /* Summary boxes grid */
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+            margin: 1rem 0;
+        }
+
+        .summary-item {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 1rem;
+            text-align: center;
+        }
+
+        .summary-item .icon {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .summary-item h4 {
+            color: var(--accent-blue);
+            margin-bottom: 0.5rem;
+        }
+    </style>
+</head>
+<body>
+    <!-- Progress Bar -->
+    <div class="progress-bar" id="progressBar"></div>
+
+    <!-- Slides Container -->
+    <div class="slides-container">
+        
+        <!-- ============================================================
+             SLIDE 1: Title Slide
+             ============================================================ -->
+        <div class="slide title-slide active" data-slide="1">
+            <div class="week-badge">Week 10</div>
+            <h1>Heaps and Priority Queues</h1>
+            <p class="subtitle">Efficient Partial Ordering for Dynamic Sets</p>
+            <div class="course-info">
+                <p><strong>Algorithms and Programming Techniques</strong></p>
+                <p>Academy of Economic Studies, Bucharest</p>
+                <p style="margin-top: 1rem; color: var(--text-secondary);">
+                    Navigate: <span class="kbd">←</span> <span class="kbd">→</span> or click buttons below
+                </p>
+            </div>
+        </div>
+
+        <!-- ============================================================
+             SLIDE 2: Learning Objectives
+             ============================================================ -->
+        <div class="slide" data-slide="2">
+            <h2>🎯 Learning Objectives</h2>
+            <p>By the end of this session, you will be able to:</p>
+            <ol class="steps">
+                <li><strong>Remember</strong> the structural and ordering properties defining binary heaps</li>
+                <li><strong>Understand</strong> the implicit array representation and index navigation formulae</li>
+                <li><strong>Apply</strong> heapify operations (sift-up, sift-down) to maintain heap invariants</li>
+                <li><strong>Analyse</strong> time complexity of heap operations, including Floyd's O(n) build-heap</li>
+                <li><strong>Evaluate</strong> when heaps outperform alternative priority queue implementations</li>
+                <li><strong>Create</strong> a generic priority queue ADT with dynamic resizing and custom comparators</li>
+            </ol>
+        </div>
+
+        <!-- ============================================================
+             SLIDE 3: Historical Context
+             ============================================================ -->
+        <div class="slide" data-slide="3">
+            <h2>📜 Historical Context</h2>
+            <div class="two-columns">
+                <div>
+                    <h3>Timeline of Development</h3>
+                    <ul>
+                        <li><strong>1964:</strong> J.W.J. Williams invents the binary heap for heapsort</li>
+                        <li><strong>1964:</strong> Robert Floyd improves heap construction to O(n)</li>
+                        <li><strong>1978:</strong> Fibonacci heaps introduced (Fredman & Tarjan)</li>
+                        <li><strong>1987:</strong> Pairing heaps proposed as simpler alternative</li>
+                        <li><strong>Today:</strong> Standard library implementations worldwide</li>
+                    </ul>
+                </div>
+                <div>
+                    <h3>Why Heaps Matter</h3>
+                    <div class="info-box">
+                        <p>Heaps provide the optimal trade-off between:</p>
+                        <ul>
+                            <li>Fast insertion: O(log n)</li>
+                            <li>Fast maximum/minimum access: O(1)</li>
+                            <li>Fast extraction: O(log n)</li>
+                            <li>In-place operation: O(1) extra space</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ============================================================
+             SLIDE 4: Key Figure - Williams
+             ============================================================ -->
+        <div class="slide" data-slide="4">
+            <h2>👤 Key Figure: J.W.J. Williams (1930–2012)</h2>
+            <div class="two-columns">
+                <div>
+                    <div class="card">
+                        <h3>Biography</h3>
+                        <p>John William Joseph Williams worked at the Atomic Weapons Research Establishment in Aldermaston, UK. A mathematician who applied rigorous analysis to computational problems.</p>
+                        <h3 style="margin-top: 1rem;">Contributions</h3>
+                        <ul>
+                            <li>Invented the binary heap data structure</li>
+                            <li>Developed heapsort algorithm</li>
+                            <li>Published Algorithm 232 in CACM (1964)</li>
+                        </ul>
+                    </div>
+                </div>
+                <div>
+                    <blockquote>
+                        "The heap is to priority queues what the hash table is to dictionaries—an elegantly simple structure whose utility far exceeds its apparent complexity."
+                        <cite>— Attributed to Williams's influence on the field</cite>
+                    </blockquote>
+                    <div class="success-box">
+                        <strong>Legacy:</strong> Every major programming language includes heap-based priority queues in its standard library.
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ============================================================
+             SLIDE 5: What is a Heap?
+             ============================================================ -->
+        <div class="slide" data-slide="5">
+            <h2>📊 What is a Heap?</h2>
+            <p>A <strong>binary heap</strong> is a <span class="highlight-blue">complete binary tree</span> satisfying the <span class="highlight-green">heap property</span>.</p>
+            
+            <div class="two-columns">
+                <div class="card">
+                    <h3>Structural Property</h3>
+                    <p><strong>Complete Binary Tree:</strong></p>
+                    <ul>
+                        <li>All levels fully filled except possibly the last</li>
+                        <li>Last level filled left-to-right</li>
+                        <li>Enables array representation</li>
+                    </ul>
+                </div>
+                <div class="card">
+                    <h3>Ordering Property</h3>
+                    <p><strong>Heap Invariant:</strong></p>
+                    <ul>
+                        <li><span class="highlight-green">Max-Heap:</span> Parent ≥ Children</li>
+                        <li><span class="highlight-blue">Min-Heap:</span> Parent ≤ Children</li>
+                        <li>No ordering between siblings</li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="info-box">
+                <strong>Key Insight:</strong> Heaps are <em>partially ordered</em>—we can find the maximum/minimum efficiently without fully sorting.
+            </div>
+        </div>
+
+        <!-- ============================================================
+             SLIDE 6: Max-Heap vs Min-Heap
+             ============================================================ -->
+        <div class="slide" data-slide="6">
+            <h2>⚖️ Max-Heap vs Min-Heap</h2>
+            <div class="two-columns">
+                <div>
+                    <h3 class="highlight-green">Max-Heap</h3>
+                    <div class="ascii-diagram">
+          90            Root = Maximum
+         /  \
+       85    70
+      /  \  /  \
+     50  60 65  40
+
+    Parent ≥ Children
+    Root always largest
+                    </div>
+                    <p><strong>Use cases:</strong> Finding maximum, heapsort (ascending), scheduling highest priority first</p>
+                </div>
+                <div>
+                    <h3 class="highlight-blue">Min-Heap</h3>
+                    <div class="ascii-diagram">
+          10            Root = Minimum
+         /  \
+       20    15
+      /  \  /  \
+     35  25 30  40
+
+    Parent ≤ Children
+    Root always smallest
+                    </div>
+                    <p><strong>Use cases:</strong> Finding minimum, Dijkstra's algorithm, event simulation</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- ============================================================
+             SLIDE 7: Array Representation
+             ============================================================ -->
+        <div class="slide" data-slide="7">
+            <h2>🗃️ Implicit Array Representation</h2>
+            <p>The complete tree property enables storing a heap in a contiguous array without explicit pointers.</p>
+            
+            <div class="ascii-diagram">
+Tree View:                     Array View (0-indexed):
+        90                     
+       /  \                    Index:  0   1   2   3   4   5   6
+      85   70                  Value: [90][85][70][50][60][65][40]
+     /  \  / \                          ↑   ↑   ↑
+    50 60 65 40                        root │   │
+                                            │   └── right child of root
+                                            └── left child of root
+            </div>
+
+            <div class="card">
+                <h3>Navigation Formulae (0-indexed)</h3>
+                <table>
+                    <tr>
+                        <th>Relationship</th>
+                        <th>Formula</th>
+                        <th>Example (i=1)</th>
+                    </tr>
+                    <tr>
+                        <td>Parent of node i</td>
+                        <td><code class="inline-code">(i - 1) / 2</code></td>
+                        <td>(1-1)/2 = 0</td>
+                    </tr>
+                    <tr>
+                        <td>Left child of node i</td>
+                        <td><code class="inline-code">2*i + 1</code></td>
+                        <td>2*1+1 = 3</td>
+                    </tr>
+                    <tr>
+                        <td>Right child of node i</td>
+                        <td><code class="inline-code">2*i + 2</code></td>
+                        <td>2*1+2 = 4</td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+
+        <!-- ============================================================
+             SLIDE 8: Index Navigation Code
+             ============================================================ -->
+        <div class="slide" data-slide="8">
+            <h2>🔢 Index Navigation in C</h2>
+            
+            <div class="code-block">
+                <div class="code-header">
+                    <span>Heap Index Calculations</span>
+                    <span class="lang-badge">C</span>
+                </div>
+                <pre><code class="language-c">/* Navigation macros for 0-indexed array */
+#define PARENT(i)       (((i) - 1) / 2)
+#define LEFT_CHILD(i)   (2 * (i) + 1)
+#define RIGHT_CHILD(i)  (2 * (i) + 2)
+
+/* Check if index has children */
+#define HAS_LEFT(heap, i)   (LEFT_CHILD(i) < (heap)->size)
+#define HAS_RIGHT(heap, i)  (RIGHT_CHILD(i) < (heap)->size)
+
+/* Example usage */
+void print_family(int *arr, int n, int i) {
+    printf("Node %d (value %d):\n", i, arr[i]);
+    
+    if (i > 0)
+        printf("  Parent: index %d, value %d\n", 
+               PARENT(i), arr[PARENT(i)]);
+    
+    if (LEFT_CHILD(i) < n)
+        printf("  Left child: index %d, value %d\n",
+               LEFT_CHILD(i), arr[LEFT_CHILD(i)]);
+    
+    if (RIGHT_CHILD(i) < n)
+        printf("  Right child: index %d, value %d\n",
+               RIGHT_CHILD(i), arr[RIGHT_CHILD(i)]);
+}</code></pre>
+            </div>
+        </div>
+
+        <!-- ============================================================
+             SLIDE 9: Heap Operations Overview
+             ============================================================ -->
+        <div class="slide" data-slide="9">
+            <h2>⚙️ Core Heap Operations</h2>
+            
+            <table>
+                <tr>
+                    <th>Operation</th>
+                    <th>Description</th>
+                    <th>Time</th>
+                    <th>Key Technique</th>
+                </tr>
+                <tr>
+                    <td><code class="inline-code">insert</code></td>
+                    <td>Add element to heap</td>
+                    <td class="highlight-green">O(log n)</td>
+                    <td>Sift-up (bubble up)</td>
+                </tr>
+                <tr>
+                    <td><code class="inline-code">extract_max/min</code></td>
+                    <td>Remove and return root</td>
+                    <td class="highlight-green">O(log n)</td>
+                    <td>Sift-down (heapify)</td>
+                </tr>
+                <tr>
+                    <td><code class="inline-code">peek</code></td>
+                    <td>Return root without removal</td>
+                    <td class="highlight-blue">O(1)</td>
+                    <td>Direct array access</td>
+                </tr>
+                <tr>
+                    <td><code class="inline-code">build_heap</code></td>
+                    <td>Convert array to heap</td>
+                    <td class="highlight-purple">O(n)</td>
+                    <td>Floyd's bottom-up</td>
+                </tr>
+                <tr>
+                    <td><code class="inline-code">heapsort</code></td>
+                    <td>Sort via repeated extraction</td>
+                    <td class="highlight-yellow">O(n log n)</td>
+                    <td>Build + n extractions</td>
+                </tr>
+            </table>
+            
+            <div class="info-box">
+                <strong>Design Pattern:</strong> Two fundamental repair operations handle all modifications:
+                <ul>
+                    <li><strong>Sift-Up:</strong> Move element toward root (insertion)</li>
+                    <li><strong>Sift-Down:</strong> Move element toward leaves (extraction)</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- ============================================================
+             SLIDE 10: Sift-Up Operation
+             ============================================================ -->
+        <div class="slide" data-slide="10">
+            <h2>⬆️ Sift-Up (Bubble Up)</h2>
+            <p>Restores heap property after inserting at the end by moving the element upward.</p>
+            
+            <div class="two-columns">
+                <div>
+                    <div class="ascii-diagram">
+Insert 95 at end:        After sift-up:
+
+        90                      95
+       /  \                    /  \
+      85   70     →          90    70
+     /  \  / \              /  \  / \
+    50 60 65 (95)          50 60 65 85
+        ↑                         
+    New element           95 bubbled to root
+                    </div>
+                </div>
+                <div>
+                    <div class="code-block">
+                        <div class="code-header">
+                            <span>Sift-Up Algorithm</span>
+                            <span class="lang-badge">C</span>
+                        </div>
+                        <pre><code class="language-c">void sift_up(int *arr, int i) {
+    while (i > 0) {
+        int parent = PARENT(i);
+        
+        if (arr[i] <= arr[parent])
+            break;  /* Heap property satisfied */
+        
+        /* Swap with parent */
+        int temp = arr[i];
+        arr[i] = arr[parent];
+        arr[parent] = temp;
+        
+        i = parent;  /* Move up */
+    }
+}</code></pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ============================================================
+             SLIDE 11: Sift-Down Operation
+             ============================================================ -->
+        <div class="slide" data-slide="11">
+            <h2>⬇️ Sift-Down (Heapify)</h2>
+            <p>Restores heap property by moving an element downward to its correct position.</p>
+            
+            <div class="code-block">
+                <div class="code-header">
+                    <span>Sift-Down Algorithm (Max-Heap)</span>
+                    <span class="lang-badge">C</span>
+                </div>
+                <pre><code class="language-c">void sift_down(int *arr, int n, int i) {
+    while (1) {
+        int largest = i;
+        int left = LEFT_CHILD(i);
+        int right = RIGHT_CHILD(i);
+        
+        /* Find largest among node and its children */
+        if (left < n && arr[left] > arr[largest])
+            largest = left;
+        
+        if (right < n && arr[right] > arr[largest])
+            largest = right;
+        
+        /* If node is largest, heap property satisfied */
+        if (largest == i)
+            break;
+        
+        /* Swap with largest child */
+        int temp = arr[i];
+        arr[i] = arr[largest];
+        arr[largest] = temp;
+        
+        i = largest;  /* Continue down */
+    }
+}</code></pre>
+            </div>
+        </div>
+
+        <!-- ============================================================
+             SLIDE 12: Insert Operation
+             ============================================================ -->
+        <div class="slide" data-slide="12">
+            <h2>➕ Insert Operation</h2>
+            
+            <div class="two-columns">
+                <div>
+                    <h3>Algorithm</h3>
+                    <ol class="steps">
+                        <li>Add new element at the end of the array</li>
+                        <li>Increment size</li>
+                        <li>Sift-up the new element to restore heap property</li>
+                    </ol>
+                    
+                    <div class="info-box">
+                        <strong>Complexity:</strong> O(log n) worst case—element may travel from leaf to root.
+                    </div>
+                </div>
+                <div>
+                    <div class="code-block">
+                        <div class="code-header">
+                            <span>Insert Implementation</span>
+                            <span class="lang-badge">C</span>
+                        </div>
+                        <pre><code class="language-c">int heap_insert(Heap *h, int value) {
+    /* Check if resize needed */
+    if (h->size >= h->capacity) {
+        if (!heap_resize(h, h->capacity * 2))
+            return 0;  /* Allocation failed */
+    }
+    
+    /* Add at end */
+    h->data[h->size] = value;
+    h->size++;
+    
+    /* Restore heap property */
+    sift_up(h->data, h->size - 1);
+    
+    return 1;  /* Success */
+}</code></pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ============================================================
+             SLIDE 13: Extract Operation
+             ============================================================ -->
+        <div class="slide" data-slide="13">
+            <h2>➖ Extract Max/Min Operation</h2>
+            
+            <div class="two-columns">
+                <div>
+                    <h3>Algorithm</h3>
+                    <ol class="steps">
+                        <li>Save root value (the max/min)</li>
+                        <li>Move last element to root position</li>
+                        <li>Decrement size</li>
+                        <li>Sift-down the new root to restore heap property</li>
+                    </ol>
+                    
+                    <div class="warning-box">
+                        <strong>Why move last element?</strong> Maintains complete tree property. Removing root directly would leave a "hole".
+                    </div>
+                </div>
+                <div>
+                    <div class="code-block">
+                        <div class="code-header">
+                            <span>Extract Max Implementation</span>
+                            <span class="lang-badge">C</span>
+                        </div>
+                        <pre><code class="language-c">int heap_extract_max(Heap *h, int *value) {
+    if (h->size == 0)
+        return 0;  /* Empty heap */
+    
+    /* Save max */
+    *value = h->data[0];
+    
+    /* Move last to root */
+    h->data[0] = h->data[h->size - 1];
+    h->size--;
+    
+    /* Restore heap property */
+    if (h->size > 0)
+        sift_down(h->data, h->size, 0);
+    
+    return 1;  /* Success */
+}</code></pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ============================================================
+             SLIDE 14: Visual Trace - Extraction
+             ============================================================ -->
+        <div class="slide" data-slide="14">
+            <h2>🔍 Visual Trace: Extracting Maximum</h2>
+            
+            <div class="ascii-diagram">
+Step 1: Initial heap         Step 2: Save max (90),    Step 3: Sift-down 40
+                             move last (40) to root    
+
+        90                          40                       85
+       /  \                        /  \                     /  \
+      85   70         →          85   70        →         40    70
+     /  \  /                    /  \                     /  \
+    50  60 40                  50  60                   50  60
+
+
+Step 4: Continue sift-down   Final Result:
+
+        85                          85
+       /  \                        /  \
+      60   70                     60   70
+     /  \                        /
+    50  40                      50   40
+
+    40 < 60, so swap           Heap property restored!
+            </div>
+            
+            <div class="success-box">
+                <strong>Result:</strong> Maximum (90) extracted. New maximum (85) at root. O(log n) operations.
+            </div>
+        </div>
+
+        <!-- ============================================================
+             SLIDE 15: Floyd's Build-Heap
+             ============================================================ -->
+        <div class="slide" data-slide="15">
+            <h2>🏗️ Floyd's Build-Heap Algorithm</h2>
+            <p>Converting an arbitrary array to a heap in <strong class="highlight-purple">O(n)</strong> time.</p>
+            
+            <div class="two-columns">
+                <div>
+                    <h3>Key Insight</h3>
+                    <div class="info-box">
+                        <p>Leaf nodes (indices ⌊n/2⌋ to n-1) are already valid 1-element heaps!</p>
+                        <p>We only need to heapify internal nodes, starting from the bottom.</p>
+                    </div>
+                    
+                    <div class="code-block">
+                        <div class="code-header">
+                            <span>Build-Heap Algorithm</span>
+                            <span class="lang-badge">C</span>
+                        </div>
+                        <pre><code class="language-c">void build_max_heap(int *arr, int n) {
+    /* Start from last internal node */
+    for (int i = n/2 - 1; i >= 0; i--) {
+        sift_down(arr, n, i);
+    }
+}</code></pre>
+                    </div>
+                </div>
+                <div>
+                    <h3>Why O(n) not O(n log n)?</h3>
+                    <div class="ascii-diagram">
+Level  Nodes  Max Sift  Work
+  0      1    log n     log n
+  1      2    log n-1   2(log n-1)
+  2      4    log n-2   4(log n-2)
+  ...
+  h    2^h      0         0
+
+Sum = Σ 2^k(log n - k)
+    = O(n)  ← Geometric!
+                    </div>
+                    <p>Most nodes are near the bottom where sift distances are small!</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- ============================================================
+             SLIDE 16: Heapsort Algorithm
+             ============================================================ -->
+        <div class="slide" data-slide="16">
+            <h2>📈 Heapsort Algorithm</h2>
+            <p>An in-place, O(n log n) sorting algorithm using the heap property.</p>
+            
+            <div class="code-block">
+                <div class="code-header">
+                    <span>Heapsort Implementation</span>
+                    <span class="lang-badge">C</span>
+                </div>
+                <pre><code class="language-c">void heapsort(int *arr, int n) {
+    /* Phase 1: Build max-heap - O(n) */
+    build_max_heap(arr, n);
+    
+    /* Phase 2: Extract elements - O(n log n) */
+    for (int i = n - 1; i > 0; i--) {
+        /* Move current max to end */
+        int temp = arr[0];
+        arr[0] = arr[i];
+        arr[i] = temp;
+        
+        /* Restore heap property on reduced heap */
+        sift_down(arr, i, 0);
+    }
+}
+
+/* Result: Array sorted in ascending order
+ * 
+ * The sorted portion grows from the end:
+ * [heap portion | sorted portion]
+ *      ↓              ↓
+ * Shrinks         Grows
+ */</code></pre>
+            </div>
+        </div>
+
+        <!-- ============================================================
+             SLIDE 17: Heapsort Trace
+             ============================================================ -->
+        <div class="slide" data-slide="17">
+            <h2>🔍 Visual Trace: Heapsort</h2>
+            
+            <div class="ascii-diagram">
+Initial:     [4, 10, 3, 5, 1]
+
+Build heap:  [10, 5, 3, 4, 1]     (max-heap)
+
+Extract 10:  [5, 4, 3, 1 | 10]
+Extract 5:   [4, 1, 3 | 5, 10]
+Extract 4:   [3, 1 | 4, 5, 10]
+Extract 3:   [1 | 3, 4, 5, 10]
+
+Final:       [1, 3, 4, 5, 10]     (sorted!)
+            </div>
+            
+            <table>
+                <tr>
+                    <th>Property</th>
+                    <th>Heapsort</th>
+                    <th>Quicksort</th>
+                    <th>Mergesort</th>
+                </tr>
+                <tr>
+                    <td>Best Case</td>
+                    <td>O(n log n)</td>
+                    <td>O(n log n)</td>
+                    <td>O(n log n)</td>
+                </tr>
+                <tr>
+                    <td>Worst Case</td>
+                    <td class="highlight-green">O(n log n)</td>
+                    <td class="highlight-red">O(n²)</td>
+                    <td>O(n log n)</td>
+                </tr>
+                <tr>
+                    <td>Space</td>
+                    <td class="highlight-green">O(1)</td>
+                    <td>O(log n)</td>
+                    <td class="highlight-red">O(n)</td>
+                </tr>
+                <tr>
+                    <td>Stable</td>
+                    <td class="highlight-red">No</td>
+                    <td class="highlight-red">No</td>
+                    <td class="highlight-green">Yes</td>
+                </tr>
+            </table>
+        </div>
+
+        <!-- ============================================================
+             SLIDE 18: Priority Queue ADT
+             ============================================================ -->
+        <div class="slide" data-slide="18">
+            <h2>📦 Priority Queue Abstract Data Type</h2>
+            <p>A collection where elements exit according to priority, not arrival order.</p>
+            
+            <div class="two-columns">
+                <div>
+                    <h3>Core Operations</h3>
+                    <table>
+                        <tr>
+                            <th>Operation</th>
+                            <th>Description</th>
+                        </tr>
+                        <tr>
+                            <td><code class="inline-code">pq_create()</code></td>
+                            <td>Create empty PQ</td>
+                        </tr>
+                        <tr>
+                            <td><code class="inline-code">pq_destroy()</code></td>
+                            <td>Free all memory</td>
+                        </tr>
+                        <tr>
+                            <td><code class="inline-code">pq_insert()</code></td>
+                            <td>Add element</td>
+                        </tr>
+                        <tr>
+                            <td><code class="inline-code">pq_extract()</code></td>
+                            <td>Remove highest priority</td>
+                        </tr>
+                        <tr>
+                            <td><code class="inline-code">pq_peek()</code></td>
+                            <td>View highest priority</td>
+                        </tr>
+                        <tr>
+                            <td><code class="inline-code">pq_size()</code></td>
+                            <td>Number of elements</td>
+                        </tr>
+                    </table>
+                </div>
+                <div>
+                    <h3>Implementation Options</h3>
+                    <table>
+                        <tr>
+                            <th>Structure</th>
+                            <th>Insert</th>
+                            <th>Extract</th>
+                        </tr>
+                        <tr>
+                            <td>Unsorted array</td>
+                            <td class="highlight-green">O(1)</td>
+                            <td class="highlight-red">O(n)</td>
+                        </tr>
+                        <tr>
+                            <td>Sorted array</td>
+                            <td class="highlight-red">O(n)</td>
+                            <td class="highlight-green">O(1)</td>
+                        </tr>
+                        <tr>
+                            <td class="highlight-blue">Binary heap</td>
+                            <td class="highlight-green">O(log n)</td>
+                            <td class="highlight-green">O(log n)</td>
+                        </tr>
+                        <tr>
+                            <td>Balanced BST</td>
+                            <td>O(log n)</td>
+                            <td>O(log n)</td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- ============================================================
+             SLIDE 19: Generic Priority Queue Structure
+             ============================================================ -->
+        <div class="slide" data-slide="19">
+            <h2>🔧 Generic Priority Queue Structure</h2>
+            
+            <div class="code-block">
+                <div class="code-header">
+                    <span>Priority Queue Type Definition</span>
+                    <span class="lang-badge">C</span>
+                </div>
+                <pre><code class="language-c">/* Comparator function type
+ * Returns: positive if a > b, negative if a < b, zero if equal
+ */
+typedef int (*PQComparator)(const void *a, const void *b);
+
+/* Generic Priority Queue structure */
+typedef struct {
+    void **data;          /* Array of void pointers */
+    size_t size;          /* Current number of elements */
+    size_t capacity;      /* Allocated capacity */
+    size_t elem_size;     /* Size of each element */
+    PQComparator compare; /* Comparison function */
+} PriorityQueue;
+
+/* Standard comparator for integers (max-heap) */
+int int_compare_max(const void *a, const void *b) {
+    return *(const int *)a - *(const int *)b;
+}
+
+/* Standard comparator for integers (min-heap) */
+int int_compare_min(const void *a, const void *b) {
+    return *(const int *)b - *(const int *)a;
+}</code></pre>
+            </div>
+        </div>
+
+        <!-- ============================================================
+             SLIDE 20: Priority Queue Create/Destroy
+             ============================================================ -->
+        <div class="slide" data-slide="20">
+            <h2>🏭 Create and Destroy Operations</h2>
+            
+            <div class="code-block">
+                <div class="code-header">
+                    <span>Memory Management</span>
+                    <span class="lang-badge">C</span>
+                </div>
+                <pre><code class="language-c">PriorityQueue *pq_create(size_t initial_capacity, 
+                          size_t elem_size,
+                          PQComparator compare) {
+    PriorityQueue *pq = malloc(sizeof(PriorityQueue));
+    if (!pq) return NULL;
+    
+    pq->data = malloc(initial_capacity * sizeof(void *));
+    if (!pq->data) {
+        free(pq);
+        return NULL;
+    }
+    
+    pq->size = 0;
+    pq->capacity = initial_capacity;
+    pq->elem_size = elem_size;
+    pq->compare = compare;
+    
+    return pq;
+}
+
+void pq_destroy(PriorityQueue *pq) {
+    if (!pq) return;
+    
+    /* Free all stored elements */
+    for (size_t i = 0; i < pq->size; i++) {
+        free(pq->data[i]);
+    }
+    
+    free(pq->data);
+    free(pq);
+}</code></pre>
+            </div>
+        </div>
+
+        <!-- ============================================================
+             SLIDE 21: Applications - Dijkstra's Algorithm
+             ============================================================ -->
+        <div class="slide" data-slide="21">
+            <h2>🗺️ Application: Dijkstra's Shortest Path</h2>
+            
+            <div class="two-columns">
+                <div>
+                    <div class="ascii-diagram">
+Graph:
+    A ---4--- B
+    |         |
+    2         3
+    |         |
+    C ---1--- D ---5--- E
+
+Min-heap processes vertices
+by increasing distance.
+                    </div>
+                    
+                    <div class="info-box">
+                        <strong>Complexity with heap:</strong><br>
+                        O((V + E) log V)<br>
+                        vs O(V²) with array
+                    </div>
+                </div>
+                <div>
+                    <div class="code-block">
+                        <div class="code-header">
+                            <span>Dijkstra with Priority Queue</span>
+                            <span class="lang-badge">C</span>
+                        </div>
+                        <pre><code class="language-c">void dijkstra(Graph *g, int src) {
+    int *dist = malloc(g->V * sizeof(int));
+    PriorityQueue *pq = pq_create(g->V, ...);
+    
+    for (int i = 0; i < g->V; i++)
+        dist[i] = INT_MAX;
+    
+    dist[src] = 0;
+    pq_insert(pq, &(Node){src, 0});
+    
+    while (!pq_is_empty(pq)) {
+        Node u = pq_extract(pq);
+        
+        for (Edge *e = g->adj[u.v]; e; e = e->next) {
+            int alt = dist[u.v] + e->weight;
+            if (alt < dist[e->dest]) {
+                dist[e->dest] = alt;
+                pq_insert(pq, &(Node){e->dest, alt});
+            }
+        }
+    }
+}</code></pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ============================================================
+             SLIDE 22: Applications - OS Scheduler
+             ============================================================ -->
+        <div class="slide" data-slide="22">
+            <h2>💻 Application: Process Scheduling</h2>
+            
+            <div class="code-block">
+                <div class="code-header">
+                    <span>Priority-Based Process Scheduler</span>
+                    <span class="lang-badge">C</span>
+                </div>
+                <pre><code class="language-c">typedef struct {
+    int pid;
+    int priority;      /* Higher = more important */
+    int burst_time;    /* CPU time required */
+    char name[32];
+} Process;
+
+int process_compare(const void *a, const void *b) {
+    const Process *pa = (const Process *)a;
+    const Process *pb = (const Process *)b;
+    return pa->priority - pb->priority;  /* Max-heap by priority */
+}
+
+void run_scheduler(void) {
+    PriorityQueue *ready_queue = pq_create(100, sizeof(Process), 
+                                            process_compare);
+    
+    /* Add processes */
+    pq_insert(ready_queue, &(Process){1001, 5, 10, "System"});
+    pq_insert(ready_queue, &(Process){1002, 2, 50, "Background"});
+    pq_insert(ready_queue, &(Process){1003, 8, 20, "Interactive"});
+    
+    /* Process in priority order */
+    while (!pq_is_empty(ready_queue)) {
+        Process p;
+        pq_extract(ready_queue, &p);
+        printf("Running PID %d (%s) - Priority %d\n", 
+               p.pid, p.name, p.priority);
+    }
+}</code></pre>
+            </div>
+        </div>
+
+        <!-- ============================================================
+             SLIDE 23: Applications - Top-K Elements
+             ============================================================ -->
+        <div class="slide" data-slide="23">
+            <h2>🏆 Application: Finding Top-K Elements</h2>
+            <p>Finding the k largest elements in a stream of n elements.</p>
+            
+            <div class="two-columns">
+                <div>
+                    <h3>Strategy</h3>
+                    <div class="info-box">
+                        <p>Maintain a <strong>min-heap of size k</strong>.</p>
+                        <p>For each new element:</p>
+                        <ul>
+                            <li>If heap has &lt; k elements: insert</li>
+                            <li>If element &gt; heap minimum: replace minimum</li>
+                        </ul>
+                        <p><strong>Complexity:</strong> O(n log k)</p>
+                    </div>
+                </div>
+                <div>
+                    <div class="code-block">
+                        <div class="code-header">
+                            <span>Top-K Implementation</span>
+                            <span class="lang-badge">C</span>
+                        </div>
+                        <pre><code class="language-c">void find_top_k(int *stream, int n, int k) {
+    /* Min-heap of size k */
+    PriorityQueue *pq = pq_create(k, sizeof(int),
+                                   int_compare_min);
+    
+    for (int i = 0; i < n; i++) {
+        if (pq_size(pq) < k) {
+            pq_insert(pq, &stream[i]);
+        } else {
+            int min;
+            pq_peek(pq, &min);
+            if (stream[i] > min) {
+                pq_extract(pq, &min);
+                pq_insert(pq, &stream[i]);
+            }
+        }
+    }
+    
+    /* Heap now contains k largest */
+}</code></pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ============================================================
+             SLIDE 24: Application - Median Tracking
+             ============================================================ -->
+        <div class="slide" data-slide="24">
+            <h2>📊 Application: Running Median</h2>
+            <p>Track the median of a stream using two heaps.</p>
+            
+            <div class="ascii-diagram">
+        Stream: [5, 2, 8, 1, 9, 4, 7]
+
+        Max-Heap (lower half)    Min-Heap (upper half)
+        ┌─────────────────┐      ┌─────────────────┐
+        │    5            │      │                 │
+        │   / \           │      │                 │
+        │  2   4          │      │    7            │
+        │ /               │      │   / \           │
+        │1                │      │  8   9          │
+        └─────────────────┘      └─────────────────┘
+           ↑                        ↑
+        Contains smaller         Contains larger
+        half of elements         half of elements
+
+        Median = max of left heap (if sizes differ)
+               = average of both roots (if sizes equal)
+            </div>
+            
+            <div class="success-box">
+                <strong>Complexity:</strong> O(log n) per insertion, O(1) to query median.
+            </div>
+        </div>
+
+        <!-- ============================================================
+             SLIDE 25: Common Mistakes
+             ============================================================ -->
+        <div class="slide" data-slide="25">
+            <h2>⚠️ Common Mistakes</h2>
+            
+            <div class="two-columns">
+                <div>
+                    <div class="error-box">
+                        <h3>❌ Wrong Index Formula</h3>
+                        <pre><code class="language-c">/* WRONG: 1-indexed in 0-indexed array */
+int left = 2 * i;
+int right = 2 * i + 1;
+
+/* CORRECT: 0-indexed */
+int left = 2 * i + 1;
+int right = 2 * i + 2;</code></pre>
+                    </div>
+                    
+                    <div class="error-box">
+                        <h3>❌ Off-by-One in Build-Heap</h3>
+                        <pre><code class="language-c">/* WRONG: Includes leaves unnecessarily */
+for (int i = n - 1; i >= 0; i--)
+    sift_down(arr, n, i);
+
+/* CORRECT: Start from last internal node */
+for (int i = n/2 - 1; i >= 0; i--)
+    sift_down(arr, n, i);</code></pre>
+                    </div>
+                </div>
+                <div>
+                    <div class="error-box">
+                        <h3>❌ Forgetting Bounds Check</h3>
+                        <pre><code class="language-c">/* WRONG: May access beyond array */
+if (arr[left] > arr[largest])
+    largest = left;
+
+/* CORRECT: Check bounds first */
+if (left < n && arr[left] > arr[largest])
+    largest = left;</code></pre>
+                    </div>
+                    
+                    <div class="error-box">
+                        <h3>❌ Confusing Min/Max Heap</h3>
+                        <pre><code class="language-c">/* Ensure comparator matches intended behaviour */
+/* Max-heap: parent > children → use > */
+/* Min-heap: parent < children → use < */</code></pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ============================================================
+             SLIDE 26: Memory Considerations
+             ============================================================ -->
+        <div class="slide" data-slide="26">
+            <h2>🧠 Memory Model and Cache Performance</h2>
+            
+            <div class="two-columns">
+                <div>
+                    <h3>Array-Based Heap Advantages</h3>
+                    <ul>
+                        <li><strong>Cache locality:</strong> Sequential memory access</li>
+                        <li><strong>No pointer overhead:</strong> ~8 bytes saved per node</li>
+                        <li><strong>Predictable access:</strong> Simple index arithmetic</li>
+                        <li><strong>Compact:</strong> No fragmentation</li>
+                    </ul>
+                    
+                    <div class="ascii-diagram">
+Memory layout (array):
+[90|85|70|50|60|65|40]
+ ↑  ↑  ↑  ↑  ↑  ↑  ↑
+Contiguous → Cache-friendly
+                    </div>
+                </div>
+                <div>
+                    <h3>Pointer-Based Tree Disadvantages</h3>
+                    <ul>
+                        <li><strong>Cache misses:</strong> Scattered allocations</li>
+                        <li><strong>Pointer overhead:</strong> 16+ bytes per node</li>
+                        <li><strong>Allocation cost:</strong> malloc per node</li>
+                        <li><strong>Fragmentation:</strong> Non-contiguous memory</li>
+                    </ul>
+                    
+                    <div class="ascii-diagram">
+Memory layout (pointer):
+[ptr]-→[90|L|R]
+       [ptr]-→[85|L|R]
+              [ptr]-→[50|∅|∅]
+Scattered → Cache unfriendly
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ============================================================
+             SLIDE 27: Complexity Summary
+             ============================================================ -->
+        <div class="slide" data-slide="27">
+            <h2>📊 Complexity Summary</h2>
+            
+            <table>
+                <tr>
+                    <th>Operation</th>
+                    <th>Time (Worst)</th>
+                    <th>Time (Average)</th>
+                    <th>Space</th>
+                </tr>
+                <tr>
+                    <td>Insert</td>
+                    <td>O(log n)</td>
+                    <td>O(1)*</td>
+                    <td>O(1)</td>
+                </tr>
+                <tr>
+                    <td>Extract Max/Min</td>
+                    <td>O(log n)</td>
+                    <td>O(log n)</td>
+                    <td>O(1)</td>
+                </tr>
+                <tr>
+                    <td>Peek</td>
+                    <td>O(1)</td>
+                    <td>O(1)</td>
+                    <td>O(1)</td>
+                </tr>
+                <tr>
+                    <td>Build Heap</td>
+                    <td>O(n)</td>
+                    <td>O(n)</td>
+                    <td>O(1)</td>
+                </tr>
+                <tr>
+                    <td>Heapsort</td>
+                    <td>O(n log n)</td>
+                    <td>O(n log n)</td>
+                    <td>O(1)</td>
+                </tr>
+                <tr>
+                    <td>Search</td>
+                    <td class="highlight-red">O(n)</td>
+                    <td class="highlight-red">O(n)</td>
+                    <td>O(1)</td>
+                </tr>
+            </table>
+            
+            <div class="info-box">
+                <p>* Average-case insert is O(1) because most elements end up near the bottom of the heap and require few swaps.</p>
+            </div>
+        </div>
+
+        <!-- ============================================================
+             SLIDE 28: Debugging with GDB
+             ============================================================ -->
+        <div class="slide" data-slide="28">
+            <h2>🔬 Debugging Heaps with GDB</h2>
+            
+            <div class="code-block">
+                <div class="code-header">
+                    <span>Useful GDB Commands</span>
+                    <span class="lang-badge">GDB</span>
+                </div>
+                <pre><code class="language-bash"># Compile with debug symbols
+gcc -g -Wall -o heap_test heap_test.c
+
+# Start GDB
+gdb ./heap_test
+
+# Set breakpoint at sift_down
+(gdb) break sift_down
+
+# Run program
+(gdb) run
+
+# Print heap array
+(gdb) print *heap->data@heap->size
+
+# Print specific range
+(gdb) print heap->data[0]@10
+
+# Watch for changes
+(gdb) watch heap->data[0]
+
+# Step through sift operations
+(gdb) next
+(gdb) step
+
+# Print call stack
+(gdb) backtrace
+
+# Visualise heap as tree (custom command)
+(gdb) define print_heap
+> set $i = 0
+> while $i < $arg0
+>   printf "[%d]=%d ", $i, heap->data[$i]
+>   set $i = $i + 1
+> end
+> printf "\n"
+> end</code></pre>
+            </div>
+        </div>
+
+        <!-- ============================================================
+             SLIDE 29: Debugging with Valgrind
+             ============================================================ -->
+        <div class="slide" data-slide="29">
+            <h2>🔍 Memory Checking with Valgrind</h2>
+            
+            <div class="code-block">
+                <div class="code-header">
+                    <span>Valgrind Commands</span>
+                    <span class="lang-badge">Bash</span>
+                </div>
+                <pre><code class="language-bash"># Basic memory check
+valgrind --leak-check=full ./heap_test
+
+# Show where leaks originated
+valgrind --leak-check=full --show-leak-kinds=all \
+         --track-origins=yes ./heap_test
+
+# Common output interpretation:
+
+# GOOD:
+# All heap blocks were freed -- no leaks are possible
+
+# BAD (memory leak):
+# definitely lost: 40 bytes in 1 blocks
+#   at 0x4C2FB0F: malloc (vg_replace_malloc.c:...)
+#   by 0x401234: pq_create (heap.c:42)
+#   by 0x401500: main (main.c:15)
+
+# BAD (use after free):
+# Invalid read of size 4
+#   at 0x401345: sift_down (heap.c:78)
+# Address 0x5204040 is 0 bytes inside a block of size 40 free'd
+#   at 0x4C30D3B: free (vg_replace_malloc.c:...)
+#   by 0x401290: pq_destroy (heap.c:55)</code></pre>
+            </div>
+        </div>
+
+        <!-- ============================================================
+             SLIDE 30: Best Practices
+             ============================================================ -->
+        <div class="slide" data-slide="30">
+            <h2>✅ Best Practices</h2>
+            
+            <div class="two-columns">
+                <div>
+                    <h3 class="highlight-green">Do</h3>
+                    <ul>
+                        <li>Use macros for index calculations (clearer, less error-prone)</li>
+                        <li>Check bounds before accessing children</li>
+                        <li>Use Floyd's algorithm for initial heap construction</li>
+                        <li>Implement generic comparators for reusability</li>
+                        <li>Handle memory allocation failures gracefully</li>
+                        <li>Use dynamic resizing (double/halve strategy)</li>
+                        <li>Document whether heap is min or max</li>
+                    </ul>
+                </div>
+                <div>
+                    <h3 class="highlight-red">Don't</h3>
+                    <ul>
+                        <li>Hardcode 1-indexed formulas in 0-indexed arrays</li>
+                        <li>Forget to update size after operations</li>
+                        <li>Build heap by repeated insertion (O(n log n) vs O(n))</li>
+                        <li>Assume heap is sorted (only root is guaranteed)</li>
+                        <li>Mix min-heap and max-heap operations</li>
+                        <li>Neglect edge cases (empty heap, single element)</li>
+                        <li>Leak memory when destroying the heap</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- ============================================================
+             SLIDE 31: Heap Variants
+             ============================================================ -->
+        <div class="slide" data-slide="31">
+            <h2>🔄 Advanced Heap Variants</h2>
+            
+            <table>
+                <tr>
+                    <th>Variant</th>
+                    <th>Insert</th>
+                    <th>Extract</th>
+                    <th>Decrease Key</th>
+                    <th>Merge</th>
+                </tr>
+                <tr>
+                    <td>Binary Heap</td>
+                    <td>O(log n)</td>
+                    <td>O(log n)</td>
+                    <td>O(log n)</td>
+                    <td class="highlight-red">O(n)</td>
+                </tr>
+                <tr>
+                    <td>Binomial Heap</td>
+                    <td>O(log n)</td>
+                    <td>O(log n)</td>
+                    <td>O(log n)</td>
+                    <td class="highlight-green">O(log n)</td>
+                </tr>
+                <tr>
+                    <td>Fibonacci Heap</td>
+                    <td class="highlight-green">O(1)*</td>
+                    <td>O(log n)*</td>
+                    <td class="highlight-green">O(1)*</td>
+                    <td class="highlight-green">O(1)</td>
+                </tr>
+                <tr>
+                    <td>Pairing Heap</td>
+                    <td>O(1)</td>
+                    <td>O(log n)*</td>
+                    <td>O(log n)*</td>
+                    <td>O(1)</td>
+                </tr>
+            </table>
+            
+            <p style="margin-top: 1rem;">* Amortised complexity</p>
+            
+            <div class="info-box">
+                <strong>Practical Note:</strong> Binary heaps often outperform theoretically superior variants due to cache efficiency and lower constants.
+            </div>
+        </div>
+
+        <!-- ============================================================
+             SLIDE 32: Standard Library Support
+             ============================================================ -->
+        <div class="slide" data-slide="32">
+            <h2>📚 Standard Library Functions</h2>
+            
+            <div class="info-box">
+                <p>C does not provide a built-in heap, but <code class="inline-code">&lt;stdlib.h&gt;</code> offers <code class="inline-code">qsort</code> which can be combined with manual heap operations.</p>
+            </div>
+            
+            <div class="code-block">
+                <div class="code-header">
+                    <span>Using qsort for Heap-like Operations</span>
+                    <span class="lang-badge">C</span>
+                </div>
+                <pre><code class="language-c">#include &lt;stdlib.h&gt;
+
+/* Comparator for descending order (simulates max extraction) */
+int compare_desc(const void *a, const void *b) {
+    return *(const int *)b - *(const int *)a;
+}
+
+/* Find k largest using partial sort concept */
+void find_k_largest(int *arr, int n, int k) {
+    /* Sort descending */
+    qsort(arr, n, sizeof(int), compare_desc);
+    
+    /* First k elements are the largest */
+    printf("Top %d elements: ", k);
+    for (int i = 0; i < k && i < n; i++) {
+        printf("%d ", arr[i]);
+    }
+    printf("\n");
+}
+
+/* Note: For true heap operations, implement your own or use
+ * POSIX extensions / third-party libraries */</code></pre>
+            </div>
+        </div>
+
+        <!-- ============================================================
+             SLIDE 33: C++ STL Reference
+             ============================================================ -->
+        <div class="slide" data-slide="33">
+            <h2>🔗 C++ STL Reference (For Comparison)</h2>
+            
+            <p>Understanding C++ STL helps when reading documentation and converting algorithms.</p>
+            
+            <div class="code-block">
+                <div class="code-header">
+                    <span>C++ Priority Queue</span>
+                    <span class="lang-badge">C++</span>
+                </div>
+                <pre><code class="language-cpp">#include &lt;queue&gt;
+#include &lt;vector&gt;
+#include &lt;functional&gt;
+
+int main() {
+    // Max-heap (default)
+    std::priority_queue&lt;int&gt; max_pq;
+    max_pq.push(3);
+    max_pq.push(1);
+    max_pq.push(4);
+    // top() returns 4
+    
+    // Min-heap
+    std::priority_queue&lt;int, std::vector&lt;int&gt;, 
+                        std::greater&lt;int&gt;&gt; min_pq;
+    min_pq.push(3);
+    min_pq.push(1);
+    min_pq.push(4);
+    // top() returns 1
+    
+    // Heap algorithms on vectors
+    std::vector&lt;int&gt; v = {3, 1, 4, 1, 5, 9};
+    std::make_heap(v.begin(), v.end());       // Build max-heap
+    std::pop_heap(v.begin(), v.end());        // Move max to end
+    std::push_heap(v.begin(), v.end());       // Insert last element
+    std::sort_heap(v.begin(), v.end());       // Heapsort
+}</code></pre>
+            </div>
+        </div>
+
+        <!-- ============================================================
+             SLIDE 34: Laboratory Preview
+             ============================================================ -->
+        <div class="slide" data-slide="34">
+            <h2>🔬 Laboratory Exercises</h2>
+            
+            <div class="two-columns">
+                <div class="card">
+                    <h3>Exercise 1: Generic Priority Queue</h3>
+                    <p>Implement a complete priority queue ADT:</p>
+                    <ul>
+                        <li>Dynamic array with automatic resizing</li>
+                        <li>Generic elements via <code class="inline-code">void *</code></li>
+                        <li>Custom comparator functions</li>
+                        <li>Full API: create, destroy, insert, extract, peek</li>
+                        <li>Memory safety (no leaks)</li>
+                    </ul>
+                    <p><strong>TODOs:</strong> 8-12 marked sections</p>
+                </div>
+                <div class="card">
+                    <h3>Exercise 2: Heapsort Analysis</h3>
+                    <p>Implement and benchmark heapsort:</p>
+                    <ul>
+                        <li>Floyd's build-heap algorithm</li>
+                        <li>In-place heapsort</li>
+                        <li>Comparison counter</li>
+                        <li>Timing framework</li>
+                        <li>CSV output for analysis</li>
+                    </ul>
+                    <p><strong>TODOs:</strong> 10-15 marked sections</p>
+                </div>
+            </div>
+            
+            <div class="info-box" style="margin-top: 1rem;">
+                <strong>Compilation:</strong> <code class="inline-code">make exercise1</code> and <code class="inline-code">make exercise2</code><br>
+                <strong>Testing:</strong> <code class="inline-code">make test</code>
+            </div>
+        </div>
+
+        <!-- ============================================================
+             SLIDE 35: Key Takeaways
+             ============================================================ -->
+        <div class="slide" data-slide="35">
+            <h2>🎯 Key Takeaways</h2>
+            
+            <div class="summary-grid">
+                <div class="summary-item">
+                    <div class="icon">🌳</div>
+                    <h4>Complete Binary Tree</h4>
+                    <p>Enables efficient array representation without pointers</p>
+                </div>
+                <div class="summary-item">
+                    <div class="icon">⬆️⬇️</div>
+                    <h4>Sift Operations</h4>
+                    <p>Two operations (up/down) handle all modifications</p>
+                </div>
+                <div class="summary-item">
+                    <div class="icon">⚡</div>
+                    <h4>O(log n) Operations</h4>
+                    <p>Insert and extract in logarithmic time</p>
+                </div>
+                <div class="summary-item">
+                    <div class="icon">🏗️</div>
+                    <h4>Floyd's O(n) Build</h4>
+                    <p>Linear-time heap construction from arbitrary array</p>
+                </div>
+                <div class="summary-item">
+                    <div class="icon">📋</div>
+                    <h4>Priority Queue</h4>
+                    <p>Optimal implementation for dynamic priority ordering</p>
+                </div>
+                <div class="summary-item">
+                    <div class="icon">🔧</div>
+                    <h4>Generic Design</h4>
+                    <p>Use void* and comparators for reusability</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- ============================================================
+             SLIDE 36: Resources
+             ============================================================ -->
+        <div class="slide" data-slide="36">
+            <h2>📖 Recommended Resources</h2>
+            
+            <div class="two-columns">
+                <div>
+                    <h3>Essential Reading</h3>
+                    <ul>
+                        <li><strong>CLRS</strong> - Chapter 6: Heapsort</li>
+                        <li><strong>Sedgewick</strong> - Section 2.4: Priority Queues</li>
+                        <li>Williams (1964) - Algorithm 232: Heapsort</li>
+                    </ul>
+                    
+                    <h3>Online Resources</h3>
+                    <ul>
+                        <li><a href="https://visualgo.net/en/heap" style="color: var(--accent-blue);">Visualgo Heap Visualisation</a></li>
+                        <li><a href="https://www.cs.usfca.edu/~galles/visualization/Heap.html" style="color: var(--accent-blue);">USFCA Heap Animation</a></li>
+                        <li><a href="https://opendsa-server.cs.vt.edu/OpenDSA/Books/CS3/html/Heaps.html" style="color: var(--accent-blue);">OpenDSA Heaps Chapter</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h3>Practice Problems</h3>
+                    <ul>
+                        <li>LeetCode 215: Kth Largest Element</li>
+                        <li>LeetCode 295: Find Median from Data Stream</li>
+                        <li>LeetCode 23: Merge k Sorted Lists</li>
+                        <li>LeetCode 347: Top K Frequent Elements</li>
+                    </ul>
+                    
+                    <h3>Video Lectures</h3>
+                    <ul>
+                        <li>MIT 6.006 - Heaps and Heap Sort</li>
+                        <li>Stanford CS161 - Priority Queues</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- ============================================================
+             SLIDE 37: Questions
+             ============================================================ -->
+        <div class="slide title-slide" data-slide="37">
+            <h1 style="font-size: 3rem;">Questions?</h1>
+            <p class="subtitle">Week 10: Heaps and Priority Queues</p>
+            
+            <div class="card" style="margin-top: 2rem; text-align: left; max-width: 600px;">
+                <h3>Next Week Preview</h3>
+                <p><strong>Week 11: Hash Tables</strong></p>
+                <ul>
+                    <li>Hash function design</li>
+                    <li>Collision resolution strategies</li>
+                    <li>Load factor and dynamic resizing</li>
+                    <li>Applications in symbol tables and caches</li>
+                </ul>
+            </div>
+            
+            <p style="margin-top: 2rem; color: var(--text-secondary);">
+                Algorithms and Programming Techniques<br>
+                Academy of Economic Studies, Bucharest
+            </p>
+        </div>
+
+    </div><!-- End slides-container -->
+
+    <!-- Navigation -->
+    <div class="nav-container">
+        <button class="nav-btn" id="prevBtn" onclick="changeSlide(-1)">← Previous</button>
+        <button class="nav-btn" id="nextBtn" onclick="changeSlide(1)">Next →</button>
+    </div>
+
+    <!-- Slide Counter -->
+    <div class="slide-counter">
+        <span id="currentSlide">1</span> / <span id="totalSlides">37</span>
+    </div>
+
+    <script>
+        // Initialize highlight.js
+        hljs.highlightAll();
+
+        // Slide management
+        let currentSlide = 1;
+        const totalSlides = document.querySelectorAll('.slide').length;
+
+        document.getElementById('totalSlides').textContent = totalSlides;
+
+        function showSlide(n) {
+            const slides = document.querySelectorAll('.slide');
+            
+            if (n > totalSlides) currentSlide = 1;
+            if (n < 1) currentSlide = totalSlides;
+            
+            slides.forEach(slide => slide.classList.remove('active'));
+            slides[currentSlide - 1].classList.add('active');
+            
+            document.getElementById('currentSlide').textContent = currentSlide;
+            
+            // Update progress bar
+            const progress = (currentSlide / totalSlides) * 100;
+            document.getElementById('progressBar').style.width = progress + '%';
+            
+            // Update button states
+            document.getElementById('prevBtn').disabled = false;
+            document.getElementById('nextBtn').disabled = false;
+        }
+
+        function changeSlide(direction) {
+            currentSlide += direction;
+            showSlide(currentSlide);
+        }
+
+        // Keyboard navigation
+        document.addEventListener('keydown', function(e) {
+            switch(e.key) {
+                case 'ArrowRight':
+                case ' ':
+                    changeSlide(1);
+                    e.preventDefault();
+                    break;
+                case 'ArrowLeft':
+                    changeSlide(-1);
+                    e.preventDefault();
+                    break;
+                case 'Home':
+                    currentSlide = 1;
+                    showSlide(currentSlide);
+                    e.preventDefault();
+                    break;
+                case 'End':
+                    currentSlide = totalSlides;
+                    showSlide(currentSlide);
+                    e.preventDefault();
+                    break;
+            }
+        });
+
+        // Initialize
+        showSlide(currentSlide);
+    </script>
+</body>
+</html>

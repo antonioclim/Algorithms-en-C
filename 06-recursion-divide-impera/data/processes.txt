@@ -1,0 +1,9 @@
+# Process data file for Round-Robin Scheduler
+# Format: PID ProcessName BurstTime ArrivalTime
+# Lines starting with # are comments
+
+# Standard test case - 4 processes arriving at different times
+1 Chrome 10 0
+2 VSCode 6 0
+3 Spotify 8 2
+4 Terminal 4 3

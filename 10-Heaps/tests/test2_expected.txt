@@ -1,0 +1,40 @@
+
+╔═══════════════════════════════════════════════════════════════╗
+║     EXERCISE 2: Heapsort Implementation                       ║
+╚═══════════════════════════════════════════════════════════════╝
+
+Test 1: Heapsort Correctness
+────────────────────────────────────
+  Before: 64 34 25 12 22 11 90 5 87 43 
+  After : 5 11 12 22 25 34 43 64 87 90 
+  Comparisons: 36
+  PASSED
+
+Test 2: Build Max-Heap
+────────────────────────────────────
+  Before: 4 1 3 2 16 9 10 14 8 7 
+  Is max-heap: No
+  After : 16 14 10 8 7 9 3 2 4 1 
+  Is max-heap: Yes
+  PASSED
+
+Test 3: Special Cases
+────────────────────────────────────
+  Empty array: PASSED
+  Single element: PASSED
+  Two elements: PASSED
+  Already sorted: PASSED
+  Reverse sorted: PASSED
+  All same: PASSED
+
+Test 4: Large Random Array (10000 elements)
+────────────────────────────────────
+  PASSED
+
+════════════════════════════════════════════════════════════════
+Results: 4/4 tests passed
+
+✓ All tests passed!
+
+Run with --benchmark flag for performance analysis.
+

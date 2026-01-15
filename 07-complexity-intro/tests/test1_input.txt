@@ -1,0 +1,2 @@
+# Test input for exercise 1 (tree construction)
+# No input needed - exercise uses hardcoded tree

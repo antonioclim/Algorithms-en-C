@@ -1,0 +1,1784 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Week 06: Queues - ATP Course</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/c.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-primary: #0d1117;
+            --bg-secondary: #161b22;
+            --bg-tertiary: #21262d;
+            --text-primary: #e6edf3;
+            --text-secondary: #8b949e;
+            --accent-blue: #58a6ff;
+            --accent-green: #3fb950;
+            --accent-yellow: #d29922;
+            --accent-red: #f85149;
+            --accent-purple: #a371f7;
+            --border-color: #30363d;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans', Helvetica, Arial, sans-serif;
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.6;
+            overflow: hidden;
+        }
+
+        /* Progress Bar */
+        .progress-bar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 4px;
+            background: linear-gradient(90deg, var(--accent-blue), var(--accent-purple));
+            transition: width 0.3s ease;
+            z-index: 1000;
+        }
+
+        /* Slide Container */
+        .presentation {
+            width: 100vw;
+            height: 100vh;
+            position: relative;
+        }
+
+        .slide {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            padding: 60px 80px;
+            display: none;
+            flex-direction: column;
+            opacity: 0;
+            transition: opacity 0.4s ease;
+            overflow-y: auto;
+        }
+
+        .slide.active {
+            display: flex;
+            opacity: 1;
+        }
+
+        /* Typography */
+        h1 {
+            font-size: 2.8em;
+            font-weight: 700;
+            margin-bottom: 20px;
+            color: var(--text-primary);
+        }
+
+        h2 {
+            font-size: 2.2em;
+            font-weight: 600;
+            margin-bottom: 30px;
+            color: var(--accent-blue);
+            border-bottom: 2px solid var(--border-color);
+            padding-bottom: 15px;
+        }
+
+        h3 {
+            font-size: 1.6em;
+            font-weight: 600;
+            margin: 20px 0 15px 0;
+            color: var(--accent-green);
+        }
+
+        p {
+            font-size: 1.3em;
+            margin-bottom: 15px;
+            color: var(--text-secondary);
+        }
+
+        ul, ol {
+            font-size: 1.25em;
+            margin-left: 40px;
+            margin-bottom: 20px;
+        }
+
+        li {
+            margin-bottom: 12px;
+            color: var(--text-secondary);
+        }
+
+        li strong {
+            color: var(--text-primary);
+        }
+
+        /* Code Blocks */
+        .code-block {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            margin: 20px 0;
+            overflow: hidden;
+        }
+
+        .code-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 15px;
+            background: var(--bg-tertiary);
+            border-bottom: 1px solid var(--border-color);
+            font-size: 0.9em;
+        }
+
+        .code-header span:first-child {
+            color: var(--text-secondary);
+        }
+
+        .lang-badge {
+            background: var(--accent-blue);
+            color: var(--bg-primary);
+            padding: 2px 10px;
+            border-radius: 4px;
+            font-weight: 600;
+            font-size: 0.85em;
+        }
+
+        pre {
+            margin: 0;
+            padding: 20px;
+            overflow-x: auto;
+        }
+
+        code {
+            font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+            font-size: 0.95em;
+        }
+
+        /* Info Boxes */
+        .info-box {
+            padding: 20px 25px;
+            border-radius: 8px;
+            margin: 20px 0;
+            border-left: 4px solid;
+        }
+
+        .info-box.tip {
+            background: rgba(63, 185, 80, 0.1);
+            border-color: var(--accent-green);
+        }
+
+        .info-box.warning {
+            background: rgba(210, 153, 34, 0.1);
+            border-color: var(--accent-yellow);
+        }
+
+        .info-box.danger {
+            background: rgba(248, 81, 73, 0.1);
+            border-color: var(--accent-red);
+        }
+
+        .info-box.note {
+            background: rgba(88, 166, 255, 0.1);
+            border-color: var(--accent-blue);
+        }
+
+        .info-box-title {
+            font-weight: 700;
+            margin-bottom: 10px;
+            font-size: 1.1em;
+        }
+
+        .info-box.tip .info-box-title { color: var(--accent-green); }
+        .info-box.warning .info-box-title { color: var(--accent-yellow); }
+        .info-box.danger .info-box-title { color: var(--accent-red); }
+        .info-box.note .info-box-title { color: var(--accent-blue); }
+
+        /* Tables */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            font-size: 1.1em;
+        }
+
+        th, td {
+            padding: 15px 20px;
+            text-align: left;
+            border: 1px solid var(--border-color);
+        }
+
+        th {
+            background: var(--bg-tertiary);
+            color: var(--accent-blue);
+            font-weight: 600;
+        }
+
+        td {
+            background: var(--bg-secondary);
+            color: var(--text-secondary);
+        }
+
+        tr:hover td {
+            background: var(--bg-tertiary);
+        }
+
+        /* ASCII Art / Diagrams */
+        .diagram {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 25px;
+            font-family: 'SF Mono', 'Fira Code', monospace;
+            font-size: 1em;
+            white-space: pre;
+            overflow-x: auto;
+            color: var(--accent-green);
+            line-height: 1.4;
+        }
+
+        /* Two Column Layout */
+        .two-columns {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 40px;
+            margin: 20px 0;
+        }
+
+        .column {
+            background: var(--bg-secondary);
+            padding: 25px;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+        }
+
+        /* Title Slide Styling */
+        .title-slide {
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+        }
+
+        .title-slide h1 {
+            font-size: 4em;
+            margin-bottom: 30px;
+            background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .title-slide .subtitle {
+            font-size: 1.8em;
+            color: var(--text-secondary);
+            margin-bottom: 40px;
+        }
+
+        .title-slide .course-info {
+            font-size: 1.2em;
+            color: var(--accent-green);
+        }
+
+        /* Key Figure Box */
+        .figure-box {
+            display: flex;
+            gap: 30px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 30px;
+            margin: 20px 0;
+        }
+
+        .figure-placeholder {
+            width: 200px;
+            height: 250px;
+            background: var(--bg-tertiary);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-secondary);
+            font-size: 0.9em;
+            flex-shrink: 0;
+        }
+
+        .figure-content {
+            flex: 1;
+        }
+
+        .figure-content blockquote {
+            font-style: italic;
+            font-size: 1.2em;
+            color: var(--accent-purple);
+            border-left: 3px solid var(--accent-purple);
+            padding-left: 20px;
+            margin-top: 20px;
+        }
+
+        /* Summary Boxes */
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            margin: 20px 0;
+        }
+
+        .summary-box {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .summary-box .icon {
+            font-size: 2.5em;
+            margin-bottom: 15px;
+        }
+
+        .summary-box h4 {
+            color: var(--accent-blue);
+            margin-bottom: 10px;
+        }
+
+        /* Navigation */
+        .nav-container {
+            position: fixed;
+            bottom: 30px;
+            right: 40px;
+            display: flex;
+            gap: 10px;
+            z-index: 100;
+        }
+
+        .nav-btn {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+            padding: 12px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1em;
+            transition: all 0.2s ease;
+        }
+
+        .nav-btn:hover {
+            background: var(--accent-blue);
+            color: var(--bg-primary);
+        }
+
+        /* Slide Counter */
+        .slide-counter {
+            position: fixed;
+            bottom: 35px;
+            left: 40px;
+            color: var(--text-secondary);
+            font-size: 1em;
+            z-index: 100;
+        }
+
+        /* Complexity Table */
+        .complexity-good { color: var(--accent-green); font-weight: 600; }
+        .complexity-ok { color: var(--accent-yellow); font-weight: 600; }
+        .complexity-bad { color: var(--accent-red); font-weight: 600; }
+
+        /* Highlight */
+        .highlight {
+            background: rgba(88, 166, 255, 0.2);
+            padding: 2px 8px;
+            border-radius: 4px;
+        }
+
+        /* Animation for lists */
+        .animated-list li {
+            opacity: 0;
+            transform: translateX(-20px);
+            animation: slideIn 0.5s ease forwards;
+        }
+
+        .animated-list li:nth-child(1) { animation-delay: 0.1s; }
+        .animated-list li:nth-child(2) { animation-delay: 0.2s; }
+        .animated-list li:nth-child(3) { animation-delay: 0.3s; }
+        .animated-list li:nth-child(4) { animation-delay: 0.4s; }
+        .animated-list li:nth-child(5) { animation-delay: 0.5s; }
+        .animated-list li:nth-child(6) { animation-delay: 0.6s; }
+
+        @keyframes slideIn {
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        /* Responsive */
+        @media (max-width: 1200px) {
+            .slide { padding: 40px 50px; }
+            h1 { font-size: 2.2em; }
+            h2 { font-size: 1.8em; }
+            .two-columns { grid-template-columns: 1fr; }
+            .summary-grid { grid-template-columns: repeat(2, 1fr); }
+        }
+    </style>
+</head>
+<body>
+    <div class="progress-bar" id="progressBar"></div>
+    
+    <div class="presentation" id="presentation">
+        
+        <!-- Slide 1: Title -->
+        <div class="slide title-slide active">
+            <h1>Queues</h1>
+            <div class="subtitle">First-In-First-Out Data Structures</div>
+            <div class="course-info">
+                ATP - Algorithms and Programming Techniques<br>
+                Week 06<br>
+                Academy of Economic Studies, Bucharest
+            </div>
+        </div>
+
+        <!-- Slide 2: Learning Objectives -->
+        <div class="slide">
+            <h2>🎯 Learning Objectives</h2>
+            <ul class="animated-list">
+                <li><strong>Remember</strong> the FIFO principle, front/rear pointers and core queue operations</li>
+                <li><strong>Understand</strong> array-based vs linked-list implementations and their trade-offs</li>
+                <li><strong>Apply</strong> queues to scheduling, BFS traversal and buffer management</li>
+                <li><strong>Analyse</strong> time and space complexity across different implementations</li>
+                <li><strong>Evaluate</strong> circular buffers against linear arrays for specific use cases</li>
+                <li><strong>Create</strong> custom queue variants: priority queues, deques and blocking queues</li>
+            </ul>
+        </div>
+
+        <!-- Slide 3: Historical Timeline -->
+        <div class="slide">
+            <h2>📜 Historical Context</h2>
+            <div class="diagram">
+    1936  │  Alan Turing's paper on computable numbers
+          │  Sequential access patterns in tape-based computation
+          │
+    1960s │  ALGOL development - explicit queue formalisation
+          │  Abstract data type concepts emerge
+          │
+    1968  │  Dijkstra's THE operating system
+          │  Process queues for multiprogramming
+          │
+    1970s │  Circular buffers in embedded systems
+          │  Real-time signal processing applications
+          │
+    1978  │  Hoare's Communicating Sequential Processes
+          │  Message queues as synchronisation primitives
+          │
+    Today │  Apache Kafka, RabbitMQ, Amazon SQS
+          │  Distributed message queue systems
+            </div>
+        </div>
+
+        <!-- Slide 4: Key Figure -->
+        <div class="slide">
+            <h2>👤 Key Figure: Edsger W. Dijkstra</h2>
+            <div class="figure-box">
+                <div class="figure-placeholder">[Photo Placeholder]<br>1930–2002</div>
+                <div class="figure-content">
+                    <h3>Contributions</h3>
+                    <ul>
+                        <li>THE Operating System - layered abstraction with process queues</li>
+                        <li>Shortest path algorithm (Dijkstra's algorithm)</li>
+                        <li>Semaphores for process synchronisation</li>
+                        <li>Structured programming methodology</li>
+                        <li>Turing Award recipient (1972)</li>
+                    </ul>
+                    <blockquote>
+                        "Computer Science is no more about computers than astronomy is about telescopes."
+                    </blockquote>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 5: Queue Definition -->
+        <div class="slide">
+            <h2>📚 What is a Queue?</h2>
+            <p>A <strong>queue</strong> is a linear data structure that follows the <span class="highlight">First-In-First-Out (FIFO)</span> principle.</p>
+            <div class="diagram">
+                         QUEUE OPERATIONS
+    
+         enqueue(x)                    dequeue()
+              │                             │
+              ▼                             ▼
+    ┌─────────────────────────────────────────────┐
+    │  A  │  B  │  C  │  D  │  E  │     │     │   │
+    └─────────────────────────────────────────────┘
+           ▲                       ▲
+         front                   rear
+    
+    • Elements enter at the rear (enqueue)
+    • Elements exit from the front (dequeue)
+    • Like a queue of people waiting in line
+            </div>
+        </div>
+
+        <!-- Slide 6: Queue vs Stack -->
+        <div class="slide">
+            <h2>Queue vs Stack</h2>
+            <div class="two-columns">
+                <div class="column">
+                    <h3>📥 Queue (FIFO)</h3>
+                    <div class="diagram">
+    enqueue → [A][B][C][D] → dequeue
+              rear    front
+    
+    First in = First out
+    Like a queue at a shop
+                    </div>
+                    <p>Use for: scheduling, BFS, buffers</p>
+                </div>
+                <div class="column">
+                    <h3>📚 Stack (LIFO)</h3>
+                    <div class="diagram">
+         push ↓     ↑ pop
+              ┌───┐
+              │ D │ ← top
+              ├───┤
+              │ C │
+              ├───┤
+              │ B │
+              ├───┤
+              │ A │
+              └───┘
+    Last in = First out
+    Like a stack of plates
+                    </div>
+                    <p>Use for: DFS, recursion, undo</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 7: Core Operations -->
+        <div class="slide">
+            <h2>⚙️ Core Queue Operations</h2>
+            <table>
+                <tr>
+                    <th>Operation</th>
+                    <th>Description</th>
+                    <th>Time</th>
+                    <th>Returns</th>
+                </tr>
+                <tr>
+                    <td><code>enqueue(item)</code></td>
+                    <td>Insert item at rear</td>
+                    <td class="complexity-good">O(1)</td>
+                    <td>void</td>
+                </tr>
+                <tr>
+                    <td><code>dequeue()</code></td>
+                    <td>Remove and return front item</td>
+                    <td class="complexity-good">O(1)</td>
+                    <td>item</td>
+                </tr>
+                <tr>
+                    <td><code>peek()</code> / <code>front()</code></td>
+                    <td>Return front without removal</td>
+                    <td class="complexity-good">O(1)</td>
+                    <td>item</td>
+                </tr>
+                <tr>
+                    <td><code>isEmpty()</code></td>
+                    <td>Test if queue is empty</td>
+                    <td class="complexity-good">O(1)</td>
+                    <td>bool</td>
+                </tr>
+                <tr>
+                    <td><code>size()</code></td>
+                    <td>Return element count</td>
+                    <td class="complexity-good">O(1)</td>
+                    <td>int</td>
+                </tr>
+            </table>
+        </div>
+
+        <!-- Slide 8: Queue Structure in C -->
+        <div class="slide">
+            <h2>🔧 Queue Structure Definition</h2>
+            <div class="code-block">
+                <div class="code-header">
+                    <span>Basic Queue Structure</span>
+                    <span class="lang-badge">C</span>
+                </div>
+                <pre><code class="language-c">#define MAX_SIZE 100
+
+typedef struct {
+    int data[MAX_SIZE];    /* Array to store elements */
+    int front;             /* Index of front element */
+    int rear;              /* Index of next insertion point */
+    int count;             /* Current number of elements */
+} Queue;
+
+/* Initialise an empty queue */
+void queue_init(Queue *q) {
+    q->front = 0;
+    q->rear = 0;
+    q->count = 0;
+}</code></pre>
+            </div>
+            <div class="info-box note">
+                <div class="info-box-title">💡 Design Choice</div>
+                <p>Using a <code>count</code> field simplifies distinguishing empty from full states.</p>
+            </div>
+        </div>
+
+        <!-- Slide 9: Enqueue Operation -->
+        <div class="slide">
+            <h2>➕ Enqueue Operation</h2>
+            <div class="code-block">
+                <div class="code-header">
+                    <span>Adding Elements to Queue</span>
+                    <span class="lang-badge">C</span>
+                </div>
+                <pre><code class="language-c">/**
+ * Insert an element at the rear of the queue
+ * @param q     Pointer to queue
+ * @param item  Value to insert
+ * @return      1 on success, 0 if queue is full
+ */
+int enqueue(Queue *q, int item) {
+    if (q->count >= MAX_SIZE) {
+        fprintf(stderr, "Error: Queue overflow\n");
+        return 0;  /* Queue is full */
+    }
+    
+    q->data[q->rear] = item;
+    q->rear = (q->rear + 1) % MAX_SIZE;  /* Circular wraparound */
+    q->count++;
+    
+    return 1;  /* Success */
+}</code></pre>
+            </div>
+            <div class="info-box tip">
+                <div class="info-box-title">✓ Key Point</div>
+                <p>The modulo operator <code>% MAX_SIZE</code> enables circular behaviour.</p>
+            </div>
+        </div>
+
+        <!-- Slide 10: Dequeue Operation -->
+        <div class="slide">
+            <h2>➖ Dequeue Operation</h2>
+            <div class="code-block">
+                <div class="code-header">
+                    <span>Removing Elements from Queue</span>
+                    <span class="lang-badge">C</span>
+                </div>
+                <pre><code class="language-c">/**
+ * Remove and return the front element
+ * @param q      Pointer to queue
+ * @param item   Pointer to store removed value
+ * @return       1 on success, 0 if queue is empty
+ */
+int dequeue(Queue *q, int *item) {
+    if (q->count == 0) {
+        fprintf(stderr, "Error: Queue underflow\n");
+        return 0;  /* Queue is empty */
+    }
+    
+    *item = q->data[q->front];
+    q->front = (q->front + 1) % MAX_SIZE;  /* Circular wraparound */
+    q->count--;
+    
+    return 1;  /* Success */
+}</code></pre>
+            </div>
+            <div class="info-box warning">
+                <div class="info-box-title">⚠️ Always Check</div>
+                <p>Never dequeue from an empty queue—always verify <code>count > 0</code> first.</p>
+            </div>
+        </div>
+
+        <!-- Slide 11: Peek and Helper Functions -->
+        <div class="slide">
+            <h2>👁️ Peek and Helper Functions</h2>
+            <div class="code-block">
+                <div class="code-header">
+                    <span>Auxiliary Queue Operations</span>
+                    <span class="lang-badge">C</span>
+                </div>
+                <pre><code class="language-c">/* View front element without removal */
+int peek(const Queue *q, int *item) {
+    if (q->count == 0) {
+        return 0;  /* Queue is empty */
+    }
+    *item = q->data[q->front];
+    return 1;
+}
+
+/* Check if queue is empty */
+int is_empty(const Queue *q) {
+    return q->count == 0;
+}
+
+/* Check if queue is full */
+int is_full(const Queue *q) {
+    return q->count == MAX_SIZE;
+}
+
+/* Get current size */
+int queue_size(const Queue *q) {
+    return q->count;
+}</code></pre>
+            </div>
+        </div>
+
+        <!-- Slide 12: The Queue Drift Problem -->
+        <div class="slide">
+            <h2>🚨 The Queue Drift Problem</h2>
+            <p>In a naïve linear implementation, dequeued space becomes permanently unusable:</p>
+            <div class="diagram">
+    Initial:     [A][B][C][D][E][_][_][_]
+                  ↑           ↑
+                front       rear
+    
+    After 3 dequeues:
+                 [_][_][_][D][E][_][_][_]
+                           ↑  ↑
+                         front rear
+    
+    After more enqueues:
+                 [_][_][_][D][E][F][G][H]  ← "Full" but 3 slots wasted!
+                           ↑           ↑
+                         front       rear
+    
+    PROBLEM: Cannot use indices 0, 1, 2 anymore!
+            </div>
+            <div class="info-box danger">
+                <div class="info-box-title">❌ Wasted Memory</div>
+                <p>Linear arrays waste O(n) space as elements are dequeued over time.</p>
+            </div>
+        </div>
+
+        <!-- Slide 13: Circular Buffer Solution -->
+        <div class="slide">
+            <h2>🔄 Circular Buffer Solution</h2>
+            <p>Treat the array as a ring—indices wrap around using modular arithmetic:</p>
+            <div class="diagram">
+    Linear view:    [0] [1] [2] [3] [4] [5] [6] [7]
+                         ↑               ↑
+                       front           rear
+    
+    Circular view:
+                        ┌───┐
+                   ┌────┤ 2 ├────┐
+                   │    └───┘    │
+                ┌──┴─┐        ┌──┴─┐
+                │ 1  │        │ 3  │  ← Data
+                └──┬─┘        └──┬─┘
+                   │            │
+               ┌───┴──┐    ┌───┴──┐
+               │  0   │    │  4   │  ← rear wraps to 0
+               └───┬──┘    └───┴──┘
+                   │            │
+                ┌──┴─┐        ┌──┴─┐
+                │ 7  │        │ 5  │
+                └──┬─┘        └──┬─┘
+                   │    ┌───┐    │
+                   └────┤ 6 ├────┘
+                        └───┘
+            </div>
+        </div>
+
+        <!-- Slide 14: Circular Buffer Mathematics -->
+        <div class="slide">
+            <h2>🔢 Circular Buffer Mathematics</h2>
+            <div class="two-columns">
+                <div class="column">
+                    <h3>Index Wraparound</h3>
+                    <div class="code-block">
+                        <div class="code-header">
+                            <span>Modular Arithmetic</span>
+                            <span class="lang-badge">C</span>
+                        </div>
+                        <pre><code class="language-c">/* Move rear forward */
+q->rear = (q->rear + 1) % capacity;
+
+/* Move front forward */
+q->front = (q->front + 1) % capacity;
+
+/* Calculate size */
+size = (rear - front + capacity) % capacity;
+/* Or simply use count field */</code></pre>
+                    </div>
+                </div>
+                <div class="column">
+                    <h3>Example Trace</h3>
+                    <div class="diagram">
+capacity = 8
+
+rear = 7, enqueue:
+  rear = (7 + 1) % 8 = 0  ✓
+
+front = 6, dequeue:
+  front = (6 + 1) % 8 = 7  ✓
+
+Size when front=5, rear=2:
+  (2 - 5 + 8) % 8 = 5  ✓
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 15: Full vs Empty Distinction -->
+        <div class="slide">
+            <h2>🤔 Full vs Empty: The Classic Problem</h2>
+            <p>When <code>front == rear</code>, is the queue empty or full?</p>
+            <div class="two-columns">
+                <div class="column">
+                    <h3>Solution 1: Count Variable</h3>
+                    <div class="code-block">
+                        <div class="code-header">
+                            <span>Recommended Approach</span>
+                            <span class="lang-badge">C</span>
+                        </div>
+                        <pre><code class="language-c">/* Empty: count == 0 */
+/* Full:  count == capacity */
+
+int is_empty(Queue *q) {
+    return q->count == 0;
+}
+
+int is_full(Queue *q) {
+    return q->count == q->capacity;
+}</code></pre>
+                    </div>
+                </div>
+                <div class="column">
+                    <h3>Solution 2: Waste One Slot</h3>
+                    <div class="code-block">
+                        <div class="code-header">
+                            <span>Alternative Approach</span>
+                            <span class="lang-badge">C</span>
+                        </div>
+                        <pre><code class="language-c">/* Empty: front == rear */
+/* Full: (rear+1)%cap == front */
+
+int is_empty(Queue *q) {
+    return q->front == q->rear;
+}
+
+int is_full(Queue *q) {
+    int next = (q->rear + 1) % q->cap;
+    return next == q->front;
+}</code></pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 16: Dynamic Queue with malloc -->
+        <div class="slide">
+            <h2>💾 Dynamic Queue Allocation</h2>
+            <div class="code-block">
+                <div class="code-header">
+                    <span>Heap-Allocated Circular Queue</span>
+                    <span class="lang-badge">C</span>
+                </div>
+                <pre><code class="language-c">typedef struct {
+    int *data;      /* Dynamically allocated array */
+    int front;
+    int rear;
+    int count;
+    int capacity;
+} DynamicQueue;
+
+DynamicQueue *queue_create(int capacity) {
+    DynamicQueue *q = malloc(sizeof(DynamicQueue));
+    if (!q) return NULL;
+    
+    q->data = malloc(sizeof(int) * capacity);
+    if (!q->data) {
+        free(q);
+        return NULL;
+    }
+    
+    q->front = q->rear = q->count = 0;
+    q->capacity = capacity;
+    return q;
+}
+
+void queue_destroy(DynamicQueue *q) {
+    if (q) {
+        free(q->data);
+        free(q);
+    }
+}</code></pre>
+            </div>
+        </div>
+
+        <!-- Slide 17: Linked List Implementation -->
+        <div class="slide">
+            <h2>🔗 Linked List Queue Implementation</h2>
+            <div class="code-block">
+                <div class="code-header">
+                    <span>Queue Node Structure</span>
+                    <span class="lang-badge">C</span>
+                </div>
+                <pre><code class="language-c">typedef struct Node {
+    int data;
+    struct Node *next;
+} Node;
+
+typedef struct {
+    Node *front;    /* Points to first node */
+    Node *rear;     /* Points to last node */
+    int count;
+} LinkedQueue;
+
+void lq_init(LinkedQueue *q) {
+    q->front = q->rear = NULL;
+    q->count = 0;
+}</code></pre>
+            </div>
+            <div class="diagram">
+    front                              rear
+      ↓                                  ↓
+    ┌───┬───┐   ┌───┬───┐   ┌───┬───┐   ┌───┬───┐
+    │ A │ ──┼──→│ B │ ──┼──→│ C │ ──┼──→│ D │ ∅ │
+    └───┴───┘   └───┴───┘   └───┴───┘   └───┴───┘
+            </div>
+        </div>
+
+        <!-- Slide 18: Linked Queue Operations -->
+        <div class="slide">
+            <h2>🔗 Linked Queue Enqueue/Dequeue</h2>
+            <div class="code-block">
+                <div class="code-header">
+                    <span>Linked List Operations</span>
+                    <span class="lang-badge">C</span>
+                </div>
+                <pre><code class="language-c">int lq_enqueue(LinkedQueue *q, int item) {
+    Node *new_node = malloc(sizeof(Node));
+    if (!new_node) return 0;
+    
+    new_node->data = item;
+    new_node->next = NULL;
+    
+    if (q->rear == NULL) {
+        q->front = q->rear = new_node;  /* First element */
+    } else {
+        q->rear->next = new_node;
+        q->rear = new_node;
+    }
+    q->count++;
+    return 1;
+}
+
+int lq_dequeue(LinkedQueue *q, int *item) {
+    if (q->front == NULL) return 0;
+    
+    Node *temp = q->front;
+    *item = temp->data;
+    q->front = q->front->next;
+    
+    if (q->front == NULL) {
+        q->rear = NULL;  /* Queue is now empty */
+    }
+    free(temp);
+    q->count--;
+    return 1;
+}</code></pre>
+            </div>
+        </div>
+
+        <!-- Slide 19: Implementation Comparison -->
+        <div class="slide">
+            <h2>📊 Implementation Comparison</h2>
+            <table>
+                <tr>
+                    <th>Aspect</th>
+                    <th>Circular Array</th>
+                    <th>Linked List</th>
+                </tr>
+                <tr>
+                    <td>Enqueue Time</td>
+                    <td class="complexity-good">O(1)</td>
+                    <td class="complexity-good">O(1)</td>
+                </tr>
+                <tr>
+                    <td>Dequeue Time</td>
+                    <td class="complexity-good">O(1)</td>
+                    <td class="complexity-good">O(1)</td>
+                </tr>
+                <tr>
+                    <td>Space Overhead</td>
+                    <td class="complexity-good">Minimal (indices only)</td>
+                    <td class="complexity-ok">Pointer per node</td>
+                </tr>
+                <tr>
+                    <td>Cache Locality</td>
+                    <td class="complexity-good">Excellent</td>
+                    <td class="complexity-bad">Poor</td>
+                </tr>
+                <tr>
+                    <td>Max Size</td>
+                    <td class="complexity-ok">Fixed (or resize)</td>
+                    <td class="complexity-good">Unbounded*</td>
+                </tr>
+                <tr>
+                    <td>Memory Fragmentation</td>
+                    <td class="complexity-good">None</td>
+                    <td class="complexity-ok">Possible</td>
+                </tr>
+            </table>
+            <p>*Limited by available heap memory</p>
+        </div>
+
+        <!-- Slide 20: Real-World Application - Process Scheduling -->
+        <div class="slide">
+            <h2>🏭 Application: Process Scheduling</h2>
+            <div class="code-block">
+                <div class="code-header">
+                    <span>Round-Robin Scheduler</span>
+                    <span class="lang-badge">C</span>
+                </div>
+                <pre><code class="language-c">typedef struct {
+    int pid;
+    char name[32];
+    int burst_time;      /* Total CPU time needed */
+    int remaining_time;  /* Time still required */
+} Process;
+
+void round_robin(Process procs[], int n, int quantum) {
+    Queue ready_queue;
+    queue_init(&ready_queue);
+    
+    /* Load all processes into queue */
+    for (int i = 0; i < n; i++) {
+        enqueue(&ready_queue, i);
+    }
+    
+    int time = 0;
+    while (!is_empty(&ready_queue)) {
+        int idx;
+        dequeue(&ready_queue, &idx);
+        
+        int run_time = (procs[idx].remaining_time < quantum) 
+                       ? procs[idx].remaining_time : quantum;
+        
+        printf("[%d-%d] Process %s\n", time, time + run_time, procs[idx].name);
+        time += run_time;
+        procs[idx].remaining_time -= run_time;
+        
+        if (procs[idx].remaining_time > 0) {
+            enqueue(&ready_queue, idx);  /* Re-queue if not finished */
+        }
+    }
+}</code></pre>
+            </div>
+        </div>
+
+        <!-- Slide 21: Application - BFS Graph Traversal -->
+        <div class="slide">
+            <h2>🏭 Application: Breadth-First Search</h2>
+            <div class="code-block">
+                <div class="code-header">
+                    <span>BFS using Queue</span>
+                    <span class="lang-badge">C</span>
+                </div>
+                <pre><code class="language-c">void bfs(int graph[][MAX_V], int vertices, int start) {
+    bool visited[MAX_V] = {false};
+    Queue q;
+    queue_init(&q);
+    
+    visited[start] = true;
+    enqueue(&q, start);
+    
+    printf("BFS Traversal: ");
+    
+    while (!is_empty(&q)) {
+        int current;
+        dequeue(&q, &current);
+        printf("%d ", current);
+        
+        /* Visit all unvisited neighbours */
+        for (int i = 0; i < vertices; i++) {
+            if (graph[current][i] && !visited[i]) {
+                visited[i] = true;
+                enqueue(&q, i);
+            }
+        }
+    }
+    printf("\n");
+}</code></pre>
+            </div>
+            <div class="info-box tip">
+                <div class="info-box-title">✓ Why BFS Uses a Queue</div>
+                <p>FIFO order ensures vertices are visited level-by-level, guaranteeing shortest paths in unweighted graphs.</p>
+            </div>
+        </div>
+
+        <!-- Slide 22: BFS Visualisation -->
+        <div class="slide">
+            <h2>👁️ BFS Traversal Visualisation</h2>
+            <div class="diagram">
+    Graph:                              Queue States:
+    
+         1 ─── 2                        Start at 0:
+        /│     │\                       Queue: [0]     Output: 
+       0 │     │ 4                      
+        \│     │/                       Process 0:
+         3 ─── 5                        Queue: [1,3]   Output: 0
+                                        
+    Adjacency:                          Process 1:
+    0: [1, 3]                           Queue: [3,2]   Output: 0,1
+    1: [0, 2, 3]                        
+    2: [1, 4, 5]                        Process 3:
+    3: [0, 1, 5]                        Queue: [2,5]   Output: 0,1,3
+    4: [2]                              
+    5: [2, 3]                           Process 2:
+                                        Queue: [5,4]   Output: 0,1,3,2
+    BFS from 0:                         
+    Level 0: 0                          Process 5:
+    Level 1: 1, 3                       Queue: [4]     Output: 0,1,3,2,5
+    Level 2: 2, 5                       
+    Level 3: 4                          Process 4:
+                                        Queue: []      Output: 0,1,3,2,5,4
+            </div>
+        </div>
+
+        <!-- Slide 23: Application - Print Spooler -->
+        <div class="slide">
+            <h2>🖨️ Application: Print Spooler</h2>
+            <div class="code-block">
+                <div class="code-header">
+                    <span>Print Job Queue</span>
+                    <span class="lang-badge">C</span>
+                </div>
+                <pre><code class="language-c">typedef struct {
+    int job_id;
+    char filename[256];
+    int pages;
+    int copies;
+    time_t submitted;
+} PrintJob;
+
+typedef struct {
+    PrintJob jobs[MAX_JOBS];
+    int front, rear, count;
+} PrintQueue;
+
+void process_print_queue(PrintQueue *pq) {
+    while (!pq_is_empty(pq)) {
+        PrintJob job;
+        pq_dequeue(pq, &job);
+        
+        printf("Printing: %s (%d pages x %d copies)\n",
+               job.filename, job.pages, job.copies);
+        
+        /* Simulate printing time */
+        int total_pages = job.pages * job.copies;
+        sleep(total_pages);  /* 1 second per page */
+        
+        printf("Completed job #%d\n", job.job_id);
+    }
+}</code></pre>
+            </div>
+        </div>
+
+        <!-- Slide 24: Common Mistake 1 -->
+        <div class="slide">
+            <h2>🚫 Common Mistake #1: Forgetting Wraparound</h2>
+            <div class="two-columns">
+                <div class="column">
+                    <h3>❌ Wrong</h3>
+                    <div class="code-block">
+                        <div class="code-header">
+                            <span>No modulo operator</span>
+                            <span class="lang-badge">C</span>
+                        </div>
+                        <pre><code class="language-c">void enqueue(Queue *q, int item) {
+    q->data[q->rear] = item;
+    q->rear++;  /* BUG: No wraparound! */
+    q->count++;
+}
+
+/* rear keeps growing beyond 
+   array bounds → buffer overflow */</code></pre>
+                    </div>
+                </div>
+                <div class="column">
+                    <h3>✓ Correct</h3>
+                    <div class="code-block">
+                        <div class="code-header">
+                            <span>Proper circular increment</span>
+                            <span class="lang-badge">C</span>
+                        </div>
+                        <pre><code class="language-c">void enqueue(Queue *q, int item) {
+    q->data[q->rear] = item;
+    q->rear = (q->rear + 1) % MAX_SIZE;
+    q->count++;
+}
+
+/* rear wraps to 0 when it 
+   reaches MAX_SIZE */</code></pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 25: Common Mistake 2 -->
+        <div class="slide">
+            <h2>🚫 Common Mistake #2: No Overflow Check</h2>
+            <div class="two-columns">
+                <div class="column">
+                    <h3>❌ Wrong</h3>
+                    <div class="code-block">
+                        <div class="code-header">
+                            <span>Missing bounds check</span>
+                            <span class="lang-badge">C</span>
+                        </div>
+                        <pre><code class="language-c">void enqueue(Queue *q, int item) {
+    /* No check for full queue! */
+    q->data[q->rear] = item;
+    q->rear = (q->rear + 1) % MAX;
+    q->count++;
+}
+
+/* Overwrites existing data 
+   when queue is full */</code></pre>
+                    </div>
+                </div>
+                <div class="column">
+                    <h3>✓ Correct</h3>
+                    <div class="code-block">
+                        <div class="code-header">
+                            <span>Proper overflow handling</span>
+                            <span class="lang-badge">C</span>
+                        </div>
+                        <pre><code class="language-c">int enqueue(Queue *q, int item) {
+    if (q->count >= MAX_SIZE) {
+        fprintf(stderr, "Queue full\n");
+        return 0;  /* Failure */
+    }
+    q->data[q->rear] = item;
+    q->rear = (q->rear + 1) % MAX;
+    q->count++;
+    return 1;  /* Success */
+}</code></pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 26: Common Mistake 3 -->
+        <div class="slide">
+            <h2>🚫 Common Mistake #3: Memory Leaks</h2>
+            <div class="two-columns">
+                <div class="column">
+                    <h3>❌ Wrong</h3>
+                    <div class="code-block">
+                        <div class="code-header">
+                            <span>Leaked node memory</span>
+                            <span class="lang-badge">C</span>
+                        </div>
+                        <pre><code class="language-c">int lq_dequeue(LinkedQueue *q) {
+    if (!q->front) return -1;
+    
+    int item = q->front->data;
+    q->front = q->front->next;
+    /* BUG: Old node not freed! */
+    q->count--;
+    return item;
+}
+
+/* Memory leak: unreachable nodes 
+   accumulate in heap */</code></pre>
+                    </div>
+                </div>
+                <div class="column">
+                    <h3>✓ Correct</h3>
+                    <div class="code-block">
+                        <div class="code-header">
+                            <span>Proper node cleanup</span>
+                            <span class="lang-badge">C</span>
+                        </div>
+                        <pre><code class="language-c">int lq_dequeue(LinkedQueue *q, int *item) {
+    if (!q->front) return 0;
+    
+    Node *temp = q->front;
+    *item = temp->data;
+    q->front = q->front->next;
+    
+    if (!q->front) q->rear = NULL;
+    
+    free(temp);  /* Release memory! */
+    q->count--;
+    return 1;
+}</code></pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 27: Memory Model -->
+        <div class="slide">
+            <h2>🧠 Memory Layout: Array vs Linked</h2>
+            <div class="diagram">
+    ARRAY-BASED QUEUE (Contiguous Memory)
+    
+    Stack:              Heap (if dynamic):
+    ┌────────────┐      ┌─────────────────────────────────┐
+    │ q.data ────┼─────→│ [A] [B] [C] [D] [_] [_] [_] [_] │
+    │ q.front: 0 │      └─────────────────────────────────┘
+    │ q.rear: 4  │       0    1    2    3    4    5    6    7
+    │ q.count: 4 │      
+    │ q.cap: 8   │      Cache-friendly: sequential access
+    └────────────┘
+    
+    
+    LINKED LIST QUEUE (Scattered Memory)
+    
+    Stack:              Heap (multiple allocations):
+    ┌────────────┐      ┌─────────┐     ┌─────────┐
+    │ q.front ───┼─────→│ A │ ────┼────→│ B │ ────┼───→ ...
+    │ q.rear ────┼──┐   └─────────┘     └─────────┘
+    │ q.count: 4 │  │    @0x1000         @0x2048
+    └────────────┘  │   
+                    │   ┌─────────┐
+                    └──→│ D │ NULL│   Cache-unfriendly:
+                        └─────────┘   pointer chasing
+                         @0x3500
+            </div>
+        </div>
+
+        <!-- Slide 28: Debugging with GDB -->
+        <div class="slide">
+            <h2>🔍 Debugging Queues with GDB</h2>
+            <div class="code-block">
+                <div class="code-header">
+                    <span>GDB Commands for Queue Debugging</span>
+                    <span class="lang-badge">Shell</span>
+                </div>
+                <pre><code class="language-bash"># Compile with debug symbols
+gcc -g -Wall queue.c -o queue
+
+# Start GDB
+gdb ./queue
+
+# Set breakpoint at enqueue
+(gdb) break enqueue
+(gdb) run
+
+# Inspect queue structure
+(gdb) print *q
+$1 = {data = {10, 20, 30, ...}, front = 0, rear = 3, count = 3}
+
+# Print specific array elements
+(gdb) print q->data[0]@5
+$2 = {10, 20, 30, 0, 0}
+
+# Watch for changes
+(gdb) watch q->count
+(gdb) continue
+
+# Step through enqueue
+(gdb) next
+
+# Check for wraparound
+(gdb) print (q->rear + 1) % 8</code></pre>
+            </div>
+        </div>
+
+        <!-- Slide 29: Valgrind Memory Check -->
+        <div class="slide">
+            <h2>🔍 Memory Checking with Valgrind</h2>
+            <div class="code-block">
+                <div class="code-header">
+                    <span>Detecting Queue Memory Issues</span>
+                    <span class="lang-badge">Shell</span>
+                </div>
+                <pre><code class="language-bash"># Run with Valgrind
+valgrind --leak-check=full --show-leak-kinds=all ./queue
+
+# Good output (no leaks):
+==12345== HEAP SUMMARY:
+==12345==   in use at exit: 0 bytes in 0 blocks
+==12345==   total heap usage: 10 allocs, 10 frees, 1,024 bytes allocated
+==12345== All heap blocks were freed -- no leaks are possible
+
+# Bad output (memory leak):
+==12345== LEAK SUMMARY:
+==12345==   definitely lost: 48 bytes in 3 blocks
+==12345==   indirectly lost: 0 bytes in 0 blocks
+==12345== 
+==12345== 48 bytes in 3 blocks are definitely lost in loss record 1 of 1
+==12345==    at 0x4C2FB0F: malloc (in /usr/lib/valgrind/...)
+==12345==    by 0x4005E3: lq_enqueue (queue.c:42)
+==12345==    by 0x400701: main (queue.c:85)</code></pre>
+            </div>
+        </div>
+
+        <!-- Slide 30: Double-Ended Queue (Deque) -->
+        <div class="slide">
+            <h2>📚 Advanced: Double-Ended Queue (Deque)</h2>
+            <p>A deque supports insertion and removal at both ends:</p>
+            <div class="diagram">
+        push_front()                push_back()
+              │                          │
+              ▼                          ▼
+    ┌─────────────────────────────────────────────┐
+    │     │  A  │  B  │  C  │  D  │  E  │     │   │
+    └─────────────────────────────────────────────┘
+              ▲                          ▲
+              │                          │
+        pop_front()                 pop_back()
+            </div>
+            <table>
+                <tr>
+                    <th>Operation</th>
+                    <th>Description</th>
+                    <th>Time</th>
+                </tr>
+                <tr>
+                    <td><code>push_front(item)</code></td>
+                    <td>Insert at front</td>
+                    <td class="complexity-good">O(1)</td>
+                </tr>
+                <tr>
+                    <td><code>push_back(item)</code></td>
+                    <td>Insert at rear</td>
+                    <td class="complexity-good">O(1)</td>
+                </tr>
+                <tr>
+                    <td><code>pop_front()</code></td>
+                    <td>Remove from front</td>
+                    <td class="complexity-good">O(1)</td>
+                </tr>
+                <tr>
+                    <td><code>pop_back()</code></td>
+                    <td>Remove from rear</td>
+                    <td class="complexity-good">O(1)</td>
+                </tr>
+            </table>
+        </div>
+
+        <!-- Slide 31: Priority Queue Preview -->
+        <div class="slide">
+            <h2>📚 Advanced: Priority Queue</h2>
+            <p>Elements are dequeued based on priority rather than arrival order:</p>
+            <div class="two-columns">
+                <div class="column">
+                    <h3>Standard Queue (FIFO)</h3>
+                    <div class="diagram">
+    Enqueue: A(3), B(1), C(5), D(2)
+    
+    Queue: [A:3][B:1][C:5][D:2]
+    
+    Dequeue order: A, B, C, D
+    (arrival order)
+                    </div>
+                </div>
+                <div class="column">
+                    <h3>Priority Queue</h3>
+                    <div class="diagram">
+    Enqueue: A(3), B(1), C(5), D(2)
+    
+    PQ: [C:5][A:3][D:2][B:1]
+         (ordered by priority)
+    
+    Dequeue order: C, A, D, B
+    (highest priority first)
+                    </div>
+                </div>
+            </div>
+            <div class="info-box note">
+                <div class="info-box-title">💡 Implementation</div>
+                <p>Priority queues are typically implemented using heaps (Week 10) for O(log n) operations.</p>
+            </div>
+        </div>
+
+        <!-- Slide 32: Best Practices -->
+        <div class="slide">
+            <h2>✅ Best Practices</h2>
+            <div class="two-columns">
+                <div class="column">
+                    <h3>✓ Do</h3>
+                    <ul>
+                        <li>Use <code>const</code> for read-only queue pointers</li>
+                        <li>Always check return values for success/failure</li>
+                        <li>Use meaningful names: <code>task_queue</code> not <code>q</code></li>
+                        <li>Document capacity limits clearly</li>
+                        <li>Test edge cases: empty, full, single element</li>
+                        <li>Use Valgrind to verify no memory leaks</li>
+                        <li>Prefer circular arrays for fixed-size queues</li>
+                    </ul>
+                </div>
+                <div class="column">
+                    <h3>✗ Don't</h3>
+                    <ul>
+                        <li>Dequeue without checking <code>isEmpty()</code></li>
+                        <li>Enqueue without checking <code>isFull()</code></li>
+                        <li>Forget to free linked list nodes</li>
+                        <li>Use magic numbers for capacity</li>
+                        <li>Assume index wraparound works without modulo</li>
+                        <li>Mix signed/unsigned types for indices</li>
+                        <li>Ignore compiler warnings</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 33: Generic Queue in C -->
+        <div class="slide">
+            <h2>🔧 Generic Queue with void*</h2>
+            <div class="code-block">
+                <div class="code-header">
+                    <span>Type-Agnostic Queue</span>
+                    <span class="lang-badge">C</span>
+                </div>
+                <pre><code class="language-c">typedef struct {
+    void **data;        /* Array of void pointers */
+    size_t elem_size;   /* Size of each element */
+    int front, rear, count, capacity;
+} GenericQueue;
+
+int gq_enqueue(GenericQueue *q, const void *item) {
+    if (q->count >= q->capacity) return 0;
+    
+    /* Allocate and copy element */
+    q->data[q->rear] = malloc(q->elem_size);
+    memcpy(q->data[q->rear], item, q->elem_size);
+    
+    q->rear = (q->rear + 1) % q->capacity;
+    q->count++;
+    return 1;
+}
+
+/* Usage with different types */
+GenericQueue int_queue, string_queue;
+
+int x = 42;
+gq_enqueue(&int_queue, &x);
+
+char *name = "Alice";
+gq_enqueue(&string_queue, &name);</code></pre>
+            </div>
+        </div>
+
+        <!-- Slide 34: Lab Preview -->
+        <div class="slide">
+            <h2>💻 Laboratory Preview</h2>
+            <div class="two-columns">
+                <div class="column">
+                    <h3>Exercise 1: Circular Buffer</h3>
+                    <ul>
+                        <li>Implement <code>CircularQueue</code> structure</li>
+                        <li>Create all core operations</li>
+                        <li>Handle overflow/underflow gracefully</li>
+                        <li>Build visual queue display</li>
+                        <li>Process commands from stdin</li>
+                    </ul>
+                    <p><strong>8 TODO markers</strong></p>
+                </div>
+                <div class="column">
+                    <h3>Exercise 2: Task Scheduler</h3>
+                    <ul>
+                        <li>Define <code>Process</code> structure</li>
+                        <li>Implement round-robin scheduling</li>
+                        <li>Read processes from file</li>
+                        <li>Calculate turnaround/waiting times</li>
+                        <li>Generate Gantt chart</li>
+                    </ul>
+                    <p><strong>12 TODO markers</strong></p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 35: Key Takeaways -->
+        <div class="slide">
+            <h2>🎯 Key Takeaways</h2>
+            <div class="summary-grid">
+                <div class="summary-box">
+                    <div class="icon">📥</div>
+                    <h4>FIFO Principle</h4>
+                    <p>First element in is first element out</p>
+                </div>
+                <div class="summary-box">
+                    <div class="icon">🔄</div>
+                    <h4>Circular Buffer</h4>
+                    <p>Modular arithmetic prevents queue drift</p>
+                </div>
+                <div class="summary-box">
+                    <div class="icon">⚡</div>
+                    <h4>O(1) Operations</h4>
+                    <p>Enqueue and dequeue are constant time</p>
+                </div>
+                <div class="summary-box">
+                    <div class="icon">🔗</div>
+                    <h4>Two Implementations</h4>
+                    <p>Arrays for speed, lists for flexibility</p>
+                </div>
+                <div class="summary-box">
+                    <div class="icon">🌐</div>
+                    <h4>BFS Foundation</h4>
+                    <p>Queues enable level-order traversal</p>
+                </div>
+                <div class="summary-box">
+                    <div class="icon">🏭</div>
+                    <h4>Real Applications</h4>
+                    <p>Scheduling, buffering, message passing</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 36: Resources -->
+        <div class="slide">
+            <h2>📖 Resources</h2>
+            <div class="two-columns">
+                <div class="column">
+                    <h3>Essential Reading</h3>
+                    <ul>
+                        <li>Cormen et al. <em>Introduction to Algorithms</em>, Ch. 10</li>
+                        <li>Sedgewick & Wayne. <em>Algorithms</em>, §1.3</li>
+                        <li>Kernighan & Ritchie. <em>The C Programming Language</em></li>
+                    </ul>
+                    <h3>Online Resources</h3>
+                    <ul>
+                        <li><a href="https://visualgo.net/en/list" style="color: var(--accent-blue);">Visualgo Queue Animation</a></li>
+                        <li><a href="https://www.geeksforgeeks.org/queue-data-structure/" style="color: var(--accent-blue);">GeeksforGeeks Queue Tutorial</a></li>
+                    </ul>
+                </div>
+                <div class="column">
+                    <h3>Advanced Topics</h3>
+                    <ul>
+                        <li>Lock-free queues (Michael-Scott algorithm)</li>
+                        <li>Persistent queues in functional programming</li>
+                        <li>Linux kernel kfifo implementation</li>
+                        <li>DPDK ring buffers for high-performance networking</li>
+                    </ul>
+                    <h3>Practice</h3>
+                    <ul>
+                        <li>LeetCode: Queue problems</li>
+                        <li>HackerRank: Data Structures track</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 37: Questions -->
+        <div class="slide title-slide">
+            <h1>Questions?</h1>
+            <div class="subtitle">Thank you for your attention</div>
+            <div class="course-info">
+                <strong>Next Week:</strong> Binary Trees<br>
+                Tree traversals, recursive algorithms and expression trees
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Navigation -->
+    <div class="nav-container">
+        <button class="nav-btn" onclick="prevSlide()">◄ Previous</button>
+        <button class="nav-btn" onclick="nextSlide()">Next ►</button>
+    </div>
+
+    <!-- Slide Counter -->
+    <div class="slide-counter">
+        <span id="currentSlide">1</span> / <span id="totalSlides">37</span>
+    </div>
+
+    <script>
+        // Initialise highlight.js
+        hljs.highlightAll();
+
+        // Slide management
+        let currentSlide = 0;
+        const slides = document.querySelectorAll('.slide');
+        const totalSlides = slides.length;
+
+        document.getElementById('totalSlides').textContent = totalSlides;
+
+        function showSlide(index) {
+            // Bounds checking
+            if (index < 0) index = 0;
+            if (index >= totalSlides) index = totalSlides - 1;
+
+            // Hide all slides
+            slides.forEach(slide => slide.classList.remove('active'));
+
+            // Show target slide
+            slides[index].classList.add('active');
+            currentSlide = index;
+
+            // Update counter
+            document.getElementById('currentSlide').textContent = currentSlide + 1;
+
+            // Update progress bar
+            const progress = ((currentSlide + 1) / totalSlides) * 100;
+            document.getElementById('progressBar').style.width = progress + '%';
+        }
+
+        function nextSlide() {
+            showSlide(currentSlide + 1);
+        }
+
+        function prevSlide() {
+            showSlide(currentSlide - 1);
+        }
+
+        // Keyboard navigation
+        document.addEventListener('keydown', function(e) {
+            switch(e.key) {
+                case 'ArrowRight':
+                case ' ':
+                    e.preventDefault();
+                    nextSlide();
+                    break;
+                case 'ArrowLeft':
+                    e.preventDefault();
+                    prevSlide();
+                    break;
+                case 'Home':
+                    e.preventDefault();
+                    showSlide(0);
+                    break;
+                case 'End':
+                    e.preventDefault();
+                    showSlide(totalSlides - 1);
+                    break;
+            }
+        });
+
+        // Touch support for mobile
+        let touchStartX = 0;
+        let touchEndX = 0;
+
+        document.addEventListener('touchstart', e => {
+            touchStartX = e.changedTouches[0].screenX;
+        });
+
+        document.addEventListener('touchend', e => {
+            touchEndX = e.changedTouches[0].screenX;
+            handleSwipe();
+        });
+
+        function handleSwipe() {
+            const swipeThreshold = 50;
+            const diff = touchStartX - touchEndX;
+            
+            if (Math.abs(diff) > swipeThreshold) {
+                if (diff > 0) {
+                    nextSlide();
+                } else {
+                    prevSlide();
+                }
+            }
+        }
+
+        // Initialise first slide
+        showSlide(0);
+    </script>
+</body>
+</html>

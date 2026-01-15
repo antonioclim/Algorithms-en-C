@@ -1,0 +1,19 @@
+# Priority Queue Test Data
+# Format: priority task_id description
+# Higher priority = more important
+
+5 101 Critical_system_update
+3 102 Review_documentation
+1 103 Archive_old_files
+4 104 Customer_support_ticket
+2 105 Weekly_backup
+5 106 Security_patch
+3 107 Database_optimisation
+4 108 Deploy_new_feature
+1 109 Clean_temp_files
+2 110 Generate_reports
+5 111 Emergency_hotfix
+4 112 API_integration
+3 113 Code_review
+2 114 Update_dependencies
+1 115 Reorganise_folders

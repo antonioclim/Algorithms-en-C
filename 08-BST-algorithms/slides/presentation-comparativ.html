@@ -1,0 +1,1095 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Week 08: BST Language Comparison | ATP Course</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/c.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/python.min.js"></script>
+    <style>
+        :root {
+            --bg-primary: #0d1117;
+            --bg-secondary: #161b22;
+            --bg-tertiary: #21262d;
+            --text-primary: #e6edf3;
+            --text-secondary: #8b949e;
+            --accent-blue: #58a6ff;
+            --accent-green: #3fb950;
+            --accent-yellow: #d29922;
+            --accent-red: #f85149;
+            --accent-purple: #a371f7;
+            --border-color: #30363d;
+            --pseudocode-bg: #1a1f35;
+            --c-bg: #1a2f1a;
+            --python-bg: #2f2a1a;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans', Helvetica, Arial, sans-serif;
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.6;
+            overflow: hidden;
+        }
+
+        .progress-bar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 4px;
+            background: linear-gradient(90deg, var(--accent-purple), var(--accent-blue), var(--accent-green));
+            transition: width 0.3s ease;
+            z-index: 1000;
+        }
+
+        .slides-container {
+            width: 100vw;
+            height: 100vh;
+            position: relative;
+        }
+
+        .slide {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            padding: 50px 60px;
+            display: none;
+            opacity: 0;
+            transition: opacity 0.4s ease;
+            overflow-y: auto;
+        }
+
+        .slide.active {
+            display: block;
+            opacity: 1;
+        }
+
+        h1 {
+            font-size: 2.5em;
+            color: var(--accent-blue);
+            margin-bottom: 15px;
+        }
+
+        h2 {
+            font-size: 2em;
+            color: var(--accent-blue);
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid var(--border-color);
+        }
+
+        h3 {
+            font-size: 1.2em;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        p {
+            font-size: 1.1em;
+            margin-bottom: 15px;
+        }
+
+        .title-slide {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+        }
+
+        .title-slide h1 {
+            font-size: 3em;
+        }
+
+        .subtitle {
+            font-size: 1.8em;
+            color: var(--accent-green);
+            margin-bottom: 20px;
+        }
+
+        /* Three Column Layout */
+        .three-columns {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 20px;
+            margin: 15px 0;
+            height: calc(100% - 120px);
+        }
+
+        .column {
+            background-color: var(--bg-secondary);
+            border-radius: 8px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            border: 1px solid var(--border-color);
+        }
+
+        .column.pseudocod {
+            border-top: 3px solid var(--accent-purple);
+        }
+
+        .column.c-lang {
+            border-top: 3px solid var(--accent-green);
+        }
+
+        .column.python {
+            border-top: 3px solid var(--accent-yellow);
+        }
+
+        .column-header {
+            padding: 12px 15px;
+            background-color: var(--bg-tertiary);
+            border-bottom: 1px solid var(--border-color);
+            font-weight: 600;
+        }
+
+        .column.pseudocod .column-header {
+            color: var(--accent-purple);
+        }
+
+        .column.c-lang .column-header {
+            color: var(--accent-green);
+        }
+
+        .column.python .column-header {
+            color: var(--accent-yellow);
+        }
+
+        .column-content {
+            padding: 15px;
+            flex: 1;
+            overflow-y: auto;
+        }
+
+        .column-content pre {
+            margin: 0;
+            font-size: 0.85em;
+        }
+
+        .column-content code {
+            font-family: 'JetBrains Mono', 'Fira Code', 'Consolas', monospace;
+            font-size: 0.9em;
+            line-height: 1.4;
+        }
+
+        /* Pseudocode styling */
+        .pseudocode {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.9em;
+            line-height: 1.5;
+            white-space: pre-wrap;
+            color: var(--text-primary);
+        }
+
+        .pseudocode .keyword {
+            color: var(--accent-purple);
+            font-weight: 600;
+        }
+
+        .pseudocode .function {
+            color: var(--accent-blue);
+        }
+
+        .pseudocode .comment {
+            color: var(--text-secondary);
+            font-style: italic;
+        }
+
+        /* Comparison Table */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            background-color: var(--bg-secondary);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        th, td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        th {
+            background-color: var(--bg-tertiary);
+            font-weight: 600;
+        }
+
+        th:nth-child(1) { color: var(--accent-purple); }
+        th:nth-child(2) { color: var(--accent-green); }
+        th:nth-child(3) { color: var(--accent-yellow); }
+
+        /* Info boxes */
+        .info-box {
+            padding: 15px 20px;
+            border-radius: 8px;
+            margin: 15px 0;
+            border-left: 4px solid;
+        }
+
+        .info-box.insight {
+            background-color: rgba(88, 166, 255, 0.1);
+            border-color: var(--accent-blue);
+        }
+
+        .info-box.note {
+            background-color: rgba(163, 113, 247, 0.1);
+            border-color: var(--accent-purple);
+        }
+
+        .highlight {
+            color: var(--accent-yellow);
+            font-weight: 600;
+        }
+
+        /* Navigation */
+        .navigation {
+            position: fixed;
+            bottom: 25px;
+            right: 25px;
+            display: flex;
+            gap: 10px;
+            z-index: 100;
+        }
+
+        .nav-btn {
+            background-color: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+            padding: 10px 18px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.95em;
+            transition: all 0.2s ease;
+        }
+
+        .nav-btn:hover {
+            background-color: var(--accent-blue);
+            color: var(--bg-primary);
+        }
+
+        .nav-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .slide-counter {
+            position: fixed;
+            bottom: 25px;
+            left: 25px;
+            color: var(--text-secondary);
+            font-size: 0.95em;
+            z-index: 100;
+        }
+
+        kbd {
+            background-color: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            padding: 2px 6px;
+            font-family: monospace;
+            font-size: 0.85em;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(15px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .slide.active {
+            animation: fadeIn 0.4s ease;
+        }
+
+        .two-columns {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+        }
+
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin: 20px 0;
+        }
+
+        .summary-box {
+            background-color: var(--bg-secondary);
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+            border: 1px solid var(--border-color);
+        }
+
+        .summary-box .icon {
+            font-size: 2em;
+            margin-bottom: 10px;
+        }
+
+        .summary-box h4 {
+            color: var(--accent-blue);
+            margin-bottom: 8px;
+        }
+    </style>
+</head>
+<body>
+    <div class="progress-bar" id="progressBar"></div>
+
+    <div class="slides-container" id="slidesContainer">
+
+        <!-- Slide 1: Title -->
+        <div class="slide title-slide active">
+            <h1>Binary Search Trees</h1>
+            <div class="subtitle">Language Comparison</div>
+            <p style="font-size: 1.4em; color: var(--text-secondary);">Pseudocode → C → Python</p>
+            <p style="margin-top: 30px;">Week 08 | Algorithms and Programming Techniques</p>
+        </div>
+
+        <!-- Slide 2: Why Compare? -->
+        <div class="slide">
+            <h2>🤔 Why Compare Languages?</h2>
+            <div class="two-columns">
+                <div>
+                    <h3>Learning Benefits</h3>
+                    <ul>
+                        <li>See the <span class="highlight">same algorithm</span> expressed differently</li>
+                        <li>Understand <span class="highlight">language-specific idioms</span></li>
+                        <li>Appreciate <span class="highlight">abstraction levels</span></li>
+                        <li>Transfer knowledge between languages</li>
+                    </ul>
+                </div>
+                <div>
+                    <h3>Language Characteristics</h3>
+                    <table>
+                        <tr>
+                            <th>📝 Pseudocode</th>
+                            <th>⚙️ C</th>
+                            <th>🐍 Python</th>
+                        </tr>
+                        <tr>
+                            <td>Algorithm focus</td>
+                            <td>Memory control</td>
+                            <td>Readability</td>
+                        </tr>
+                        <tr>
+                            <td>No syntax rules</td>
+                            <td>Manual memory</td>
+                            <td>Automatic memory</td>
+                        </tr>
+                        <tr>
+                            <td>Conceptual</td>
+                            <td>Explicit pointers</td>
+                            <td>References</td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 3: Node Structure -->
+        <div class="slide">
+            <h2>🧱 BST Node Structure</h2>
+            <div class="three-columns">
+                <div class="column pseudocod">
+                    <div class="column-header">📝 Pseudocode</div>
+                    <div class="column-content">
+                        <div class="pseudocode"><span class="keyword">STRUCTURE</span> BSTNode
+    key: <span class="function">Integer</span>
+    left: <span class="function">Pointer to BSTNode</span>
+    right: <span class="function">Pointer to BSTNode</span>
+<span class="keyword">END STRUCTURE</span>
+
+<span class="comment">// Abstract representation</span>
+<span class="comment">// No memory concerns</span>
+<span class="comment">// Focus on relationships</span></div>
+                    </div>
+                </div>
+                <div class="column c-lang">
+                    <div class="column-header">⚙️ C</div>
+                    <div class="column-content">
+                        <pre><code class="language-c">typedef struct BSTNode {
+    int key;
+    struct BSTNode *left;
+    struct BSTNode *right;
+} BSTNode;
+
+/* Explicit pointer types */
+/* Self-referential struct */
+/* Size: 24 bytes (64-bit) */</code></pre>
+                    </div>
+                </div>
+                <div class="column python">
+                    <div class="column-header">🐍 Python</div>
+                    <div class="column-content">
+                        <pre><code class="language-python">class BSTNode:
+    def __init__(self, key):
+        self.key = key
+        self.left = None
+        self.right = None
+
+# No pointer syntax
+# References are implicit
+# Memory managed by GC</code></pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 4: Node Creation -->
+        <div class="slide">
+            <h2>🔨 Creating a Node</h2>
+            <div class="three-columns">
+                <div class="column pseudocod">
+                    <div class="column-header">📝 Pseudocode</div>
+                    <div class="column-content">
+                        <div class="pseudocode"><span class="keyword">FUNCTION</span> <span class="function">CreateNode</span>(key)
+    node ← <span class="keyword">NEW</span> BSTNode
+    node.key ← key
+    node.left ← <span class="keyword">NULL</span>
+    node.right ← <span class="keyword">NULL</span>
+    <span class="keyword">RETURN</span> node
+<span class="keyword">END FUNCTION</span>
+
+<span class="comment">// Assumes allocation succeeds</span>
+<span class="comment">// No error handling shown</span></div>
+                    </div>
+                </div>
+                <div class="column c-lang">
+                    <div class="column-header">⚙️ C</div>
+                    <div class="column-content">
+                        <pre><code class="language-c">BSTNode *create_node(int key) {
+    BSTNode *node = malloc(
+        sizeof(BSTNode)
+    );
+    
+    if (node == NULL) {
+        return NULL;  /* Error! */
+    }
+    
+    node->key = key;
+    node->left = NULL;
+    node->right = NULL;
+    
+    return node;
+}
+/* Must check malloc result */
+/* Must free() later */</code></pre>
+                    </div>
+                </div>
+                <div class="column python">
+                    <div class="column-header">🐍 Python</div>
+                    <div class="column-content">
+                        <pre><code class="language-python">def create_node(key):
+    return BSTNode(key)
+
+# Or simply use constructor:
+node = BSTNode(42)
+
+# No malloc/free needed
+# Garbage collected
+# Exception if memory fails
+# (rare in practice)</code></pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 5: Search Algorithm -->
+        <div class="slide">
+            <h2>🔍 Search Algorithm</h2>
+            <div class="three-columns">
+                <div class="column pseudocod">
+                    <div class="column-header">📝 Pseudocode</div>
+                    <div class="column-content">
+                        <div class="pseudocode"><span class="keyword">FUNCTION</span> <span class="function">Search</span>(root, key)
+    <span class="keyword">IF</span> root = <span class="keyword">NULL</span> <span class="keyword">THEN</span>
+        <span class="keyword">RETURN</span> <span class="keyword">NULL</span>
+    <span class="keyword">END IF</span>
+    
+    <span class="keyword">IF</span> key = root.key <span class="keyword">THEN</span>
+        <span class="keyword">RETURN</span> root
+    <span class="keyword">ELSE IF</span> key < root.key <span class="keyword">THEN</span>
+        <span class="keyword">RETURN</span> <span class="function">Search</span>(root.left, key)
+    <span class="keyword">ELSE</span>
+        <span class="keyword">RETURN</span> <span class="function">Search</span>(root.right, key)
+    <span class="keyword">END IF</span>
+<span class="keyword">END FUNCTION</span></div>
+                    </div>
+                </div>
+                <div class="column c-lang">
+                    <div class="column-header">⚙️ C</div>
+                    <div class="column-content">
+                        <pre><code class="language-c">BSTNode *search(BSTNode *root, 
+                int key) {
+    if (root == NULL) {
+        return NULL;
+    }
+    
+    if (key == root->key) {
+        return root;
+    }
+    
+    if (key < root->key) {
+        return search(root->left, 
+                      key);
+    }
+    
+    return search(root->right, key);
+}</code></pre>
+                    </div>
+                </div>
+                <div class="column python">
+                    <div class="column-header">🐍 Python</div>
+                    <div class="column-content">
+                        <pre><code class="language-python">def search(root, key):
+    if root is None:
+        return None
+    
+    if key == root.key:
+        return root
+    elif key < root.key:
+        return search(root.left, 
+                      key)
+    else:
+        return search(root.right, 
+                      key)
+
+# 'is None' preferred over '== None'
+# No pointer syntax needed</code></pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 6: Insert Algorithm -->
+        <div class="slide">
+            <h2>➕ Insert Algorithm</h2>
+            <div class="three-columns">
+                <div class="column pseudocod">
+                    <div class="column-header">📝 Pseudocode</div>
+                    <div class="column-content">
+                        <div class="pseudocode"><span class="keyword">FUNCTION</span> <span class="function">Insert</span>(root, key)
+    <span class="keyword">IF</span> root = <span class="keyword">NULL</span> <span class="keyword">THEN</span>
+        <span class="keyword">RETURN</span> <span class="function">CreateNode</span>(key)
+    <span class="keyword">END IF</span>
+    
+    <span class="keyword">IF</span> key < root.key <span class="keyword">THEN</span>
+        root.left ← <span class="function">Insert</span>(root.left, key)
+    <span class="keyword">ELSE IF</span> key > root.key <span class="keyword">THEN</span>
+        root.right ← <span class="function">Insert</span>(root.right, key)
+    <span class="keyword">END IF</span>
+    <span class="comment">// Duplicates ignored</span>
+    
+    <span class="keyword">RETURN</span> root
+<span class="keyword">END FUNCTION</span></div>
+                    </div>
+                </div>
+                <div class="column c-lang">
+                    <div class="column-header">⚙️ C</div>
+                    <div class="column-content">
+                        <pre><code class="language-c">BSTNode *insert(BSTNode *root, 
+                int key) {
+    if (root == NULL) {
+        return create_node(key);
+    }
+    
+    if (key < root->key) {
+        root->left = insert(
+            root->left, key
+        );
+    } else if (key > root->key) {
+        root->right = insert(
+            root->right, key
+        );
+    }
+    /* Duplicates ignored */
+    
+    return root;
+}</code></pre>
+                    </div>
+                </div>
+                <div class="column python">
+                    <div class="column-header">🐍 Python</div>
+                    <div class="column-content">
+                        <pre><code class="language-python">def insert(root, key):
+    if root is None:
+        return BSTNode(key)
+    
+    if key < root.key:
+        root.left = insert(
+            root.left, key
+        )
+    elif key > root.key:
+        root.right = insert(
+            root.right, key
+        )
+    # Duplicates ignored
+    
+    return root</code></pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 7: In-order Traversal -->
+        <div class="slide">
+            <h2>📋 In-order Traversal</h2>
+            <div class="three-columns">
+                <div class="column pseudocod">
+                    <div class="column-header">📝 Pseudocode</div>
+                    <div class="column-content">
+                        <div class="pseudocode"><span class="keyword">FUNCTION</span> <span class="function">InOrder</span>(root)
+    <span class="keyword">IF</span> root ≠ <span class="keyword">NULL</span> <span class="keyword">THEN</span>
+        <span class="function">InOrder</span>(root.left)
+        <span class="function">PRINT</span>(root.key)
+        <span class="function">InOrder</span>(root.right)
+    <span class="keyword">END IF</span>
+<span class="keyword">END FUNCTION</span>
+
+<span class="comment">// L-N-R order</span>
+<span class="comment">// Produces sorted output</span>
+<span class="comment">// for valid BST</span></div>
+                    </div>
+                </div>
+                <div class="column c-lang">
+                    <div class="column-header">⚙️ C</div>
+                    <div class="column-content">
+                        <pre><code class="language-c">void inorder(BSTNode *root) {
+    if (root == NULL) {
+        return;
+    }
+    
+    inorder(root->left);
+    printf("%d ", root->key);
+    inorder(root->right);
+}
+
+/* Side effect: prints */
+/* No return value */
+/* Stack grows with depth */</code></pre>
+                    </div>
+                </div>
+                <div class="column python">
+                    <div class="column-header">🐍 Python</div>
+                    <div class="column-content">
+                        <pre><code class="language-python">def inorder(root):
+    if root is None:
+        return
+    
+    inorder(root.left)
+    print(root.key, end=' ')
+    inorder(root.right)
+
+# Or return a list:
+def inorder_list(root):
+    if root is None:
+        return []
+    return (inorder_list(root.left)
+            + [root.key]
+            + inorder_list(root.right))</code></pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 8: Delete Algorithm -->
+        <div class="slide">
+            <h2>➖ Delete Algorithm</h2>
+            <div class="three-columns">
+                <div class="column pseudocod">
+                    <div class="column-header">📝 Pseudocode</div>
+                    <div class="column-content">
+                        <div class="pseudocode"><span class="keyword">FUNCTION</span> <span class="function">Delete</span>(root, key)
+    <span class="keyword">IF</span> root = <span class="keyword">NULL</span> <span class="keyword">THEN</span>
+        <span class="keyword">RETURN</span> <span class="keyword">NULL</span>
+    <span class="keyword">END IF</span>
+    
+    <span class="keyword">IF</span> key < root.key <span class="keyword">THEN</span>
+        root.left ← <span class="function">Delete</span>(root.left, key)
+    <span class="keyword">ELSE IF</span> key > root.key <span class="keyword">THEN</span>
+        root.right ← <span class="function">Delete</span>(root.right, key)
+    <span class="keyword">ELSE</span>
+        <span class="comment">// Found node to delete</span>
+        <span class="keyword">IF</span> root.left = <span class="keyword">NULL</span> <span class="keyword">THEN</span>
+            <span class="keyword">RETURN</span> root.right
+        <span class="keyword">ELSE IF</span> root.right = <span class="keyword">NULL</span> <span class="keyword">THEN</span>
+            <span class="keyword">RETURN</span> root.left
+        <span class="keyword">END IF</span>
+        
+        <span class="comment">// Two children: get successor</span>
+        succ ← <span class="function">FindMin</span>(root.right)
+        root.key ← succ.key
+        root.right ← <span class="function">Delete</span>(root.right, succ.key)
+    <span class="keyword">END IF</span>
+    <span class="keyword">RETURN</span> root
+<span class="keyword">END FUNCTION</span></div>
+                    </div>
+                </div>
+                <div class="column c-lang">
+                    <div class="column-header">⚙️ C</div>
+                    <div class="column-content">
+                        <pre><code class="language-c">BSTNode *delete(BSTNode *root, int key) {
+    if (root == NULL) return NULL;
+    
+    if (key < root->key) {
+        root->left = delete(root->left, key);
+    } else if (key > root->key) {
+        root->right = delete(root->right, key);
+    } else {
+        /* Found: handle cases */
+        if (root->left == NULL) {
+            BSTNode *temp = root->right;
+            free(root);  /* MUST free! */
+            return temp;
+        }
+        if (root->right == NULL) {
+            BSTNode *temp = root->left;
+            free(root);
+            return temp;
+        }
+        /* Two children */
+        BSTNode *succ = find_min(root->right);
+        root->key = succ->key;
+        root->right = delete(root->right, 
+                             succ->key);
+    }
+    return root;
+}</code></pre>
+                    </div>
+                </div>
+                <div class="column python">
+                    <div class="column-header">🐍 Python</div>
+                    <div class="column-content">
+                        <pre><code class="language-python">def delete(root, key):
+    if root is None:
+        return None
+    
+    if key < root.key:
+        root.left = delete(root.left, key)
+    elif key > root.key:
+        root.right = delete(root.right, key)
+    else:
+        # Found node to delete
+        if root.left is None:
+            return root.right
+        if root.right is None:
+            return root.left
+        
+        # Two children: get successor
+        succ = find_min(root.right)
+        root.key = succ.key
+        root.right = delete(root.right, 
+                            succ.key)
+    
+    return root
+
+# No explicit free() needed!
+# Garbage collector handles it</code></pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 9: Memory Management -->
+        <div class="slide">
+            <h2>🧹 Memory Management</h2>
+            <div class="three-columns">
+                <div class="column pseudocod">
+                    <div class="column-header">📝 Pseudocode</div>
+                    <div class="column-content">
+                        <div class="pseudocode"><span class="keyword">FUNCTION</span> <span class="function">FreeTree</span>(root)
+    <span class="keyword">IF</span> root ≠ <span class="keyword">NULL</span> <span class="keyword">THEN</span>
+        <span class="function">FreeTree</span>(root.left)
+        <span class="function">FreeTree</span>(root.right)
+        <span class="function">DEALLOCATE</span>(root)
+    <span class="keyword">END IF</span>
+<span class="keyword">END FUNCTION</span>
+
+<span class="comment">// Post-order traversal</span>
+<span class="comment">// Children freed before parent</span>
+<span class="comment">// Assumes manual memory</span></div>
+                    </div>
+                </div>
+                <div class="column c-lang">
+                    <div class="column-header">⚙️ C</div>
+                    <div class="column-content">
+                        <pre><code class="language-c">void free_tree(BSTNode *root) {
+    if (root == NULL) {
+        return;
+    }
+    
+    /* MUST be post-order! */
+    free_tree(root->left);
+    free_tree(root->right);
+    free(root);  /* Free LAST */
+}
+
+/* Every malloc needs a free */
+/* Memory leaks are serious */
+/* Use Valgrind to check */
+
+/* Wrong order causes: */
+/* - Use after free */
+/* - Memory corruption */</code></pre>
+                    </div>
+                </div>
+                <div class="column python">
+                    <div class="column-header">🐍 Python</div>
+                    <div class="column-content">
+                        <pre><code class="language-python"># No explicit free needed!
+
+# Simply remove reference:
+root = None
+
+# Garbage collector handles it
+# Reference counting + cycle detection
+
+# Or use del for clarity:
+del root
+
+# Python handles memory
+# automatically when objects
+# become unreachable
+
+# Focus on algorithm,
+# not memory management</code></pre>
+                    </div>
+                </div>
+            </div>
+            <div class="info-box insight">
+                <strong>Key Insight:</strong> C requires explicit memory management with free(), whilst Python's garbage collector automates this process entirely.
+            </div>
+        </div>
+
+        <!-- Slide 10: Comparison Table -->
+        <div class="slide">
+            <h2>📊 Language Comparison Summary</h2>
+            <table>
+                <tr>
+                    <th style="width: 20%;">Aspect</th>
+                    <th style="width: 26%;">📝 Pseudocode</th>
+                    <th style="width: 27%;">⚙️ C</th>
+                    <th style="width: 27%;">🐍 Python</th>
+                </tr>
+                <tr>
+                    <td><strong>Purpose</strong></td>
+                    <td>Describe algorithm</td>
+                    <td>System programming</td>
+                    <td>Rapid development</td>
+                </tr>
+                <tr>
+                    <td><strong>Memory</strong></td>
+                    <td>Abstract</td>
+                    <td>Manual (malloc/free)</td>
+                    <td>Automatic (GC)</td>
+                </tr>
+                <tr>
+                    <td><strong>Pointers</strong></td>
+                    <td>Implicit</td>
+                    <td>Explicit (*)</td>
+                    <td>References (hidden)</td>
+                </tr>
+                <tr>
+                    <td><strong>NULL check</strong></td>
+                    <td>root = NULL</td>
+                    <td>root == NULL</td>
+                    <td>root is None</td>
+                </tr>
+                <tr>
+                    <td><strong>Error handling</strong></td>
+                    <td>Usually omitted</td>
+                    <td>Return codes/NULL</td>
+                    <td>Exceptions</td>
+                </tr>
+                <tr>
+                    <td><strong>Performance</strong></td>
+                    <td>N/A</td>
+                    <td>Fastest</td>
+                    <td>Slower (interpreted)</td>
+                </tr>
+                <tr>
+                    <td><strong>Lines of code</strong></td>
+                    <td>Shortest</td>
+                    <td>Longest</td>
+                    <td>Medium</td>
+                </tr>
+            </table>
+        </div>
+
+        <!-- Slide 11: When to Use Each -->
+        <div class="slide">
+            <h2>🎯 When to Use Each Language</h2>
+            <div class="summary-grid">
+                <div class="summary-box">
+                    <div class="icon">📝</div>
+                    <h4>Pseudocode</h4>
+                    <ul style="text-align: left; font-size: 0.9em;">
+                        <li>Algorithm design</li>
+                        <li>Academic papers</li>
+                        <li>Teaching concepts</li>
+                        <li>Whiteboard interviews</li>
+                        <li>Documentation</li>
+                    </ul>
+                </div>
+                <div class="summary-box">
+                    <div class="icon">⚙️</div>
+                    <h4>C</h4>
+                    <ul style="text-align: left; font-size: 0.9em;">
+                        <li>Operating systems</li>
+                        <li>Embedded systems</li>
+                        <li>Performance-critical code</li>
+                        <li>Memory-constrained</li>
+                        <li>System libraries</li>
+                    </ul>
+                </div>
+                <div class="summary-box">
+                    <div class="icon">🐍</div>
+                    <h4>Python</h4>
+                    <ul style="text-align: left; font-size: 0.9em;">
+                        <li>Prototyping</li>
+                        <li>Data science</li>
+                        <li>Scripting</li>
+                        <li>Web development</li>
+                        <li>Algorithm testing</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="info-box note">
+                <strong>Career Tip:</strong> Being fluent in all three makes you a more versatile engineer. Pseudocode for design, C for understanding, Python for productivity.
+            </div>
+        </div>
+
+        <!-- Slide 12: Key Insights -->
+        <div class="slide">
+            <h2>💡 Key Insights</h2>
+            <div class="two-columns">
+                <div>
+                    <h3 style="color: var(--accent-green);">What Stays the Same</h3>
+                    <ul>
+                        <li>Algorithm logic is <strong>identical</strong></li>
+                        <li>Time complexity: O(log n) average</li>
+                        <li>Space complexity: O(h) for recursion</li>
+                        <li>BST property enforcement</li>
+                        <li>Three deletion cases</li>
+                        <li>Traversal orders (in/pre/post)</li>
+                    </ul>
+                </div>
+                <div>
+                    <h3 style="color: var(--accent-yellow);">What Changes</h3>
+                    <ul>
+                        <li>Syntax and keywords</li>
+                        <li>Memory management approach</li>
+                        <li>Error handling patterns</li>
+                        <li>Type declarations</li>
+                        <li>Pointer/reference notation</li>
+                        <li>Standard library support</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="info-box insight" style="margin-top: 30px;">
+                <strong>The Big Picture:</strong> Once you understand the algorithm in pseudocode, implementing it in any language becomes a matter of translating syntax, not reinventing logic.
+            </div>
+        </div>
+
+        <!-- Slide 13: Questions -->
+        <div class="slide title-slide">
+            <h1>❓ Questions?</h1>
+            <div class="subtitle">BST Language Comparison</div>
+            <p style="margin-top: 30px; color: var(--text-secondary);">
+                Navigate: <kbd>←</kbd> <kbd>→</kbd> or <kbd>Space</kbd>
+            </p>
+        </div>
+
+    </div>
+
+    <!-- Navigation -->
+    <div class="slide-counter">
+        <span id="currentSlide">1</span> / <span id="totalSlides">13</span>
+    </div>
+
+    <div class="navigation">
+        <button class="nav-btn" id="prevBtn" onclick="prevSlide()">← Previous</button>
+        <button class="nav-btn" id="nextBtn" onclick="nextSlide()">Next →</button>
+    </div>
+
+    <script>
+        let currentSlide = 0;
+        const slides = document.querySelectorAll('.slide');
+        const totalSlides = slides.length;
+        const progressBar = document.getElementById('progressBar');
+        const currentSlideEl = document.getElementById('currentSlide');
+        const totalSlidesEl = document.getElementById('totalSlides');
+        const prevBtn = document.getElementById('prevBtn');
+        const nextBtn = document.getElementById('nextBtn');
+
+        totalSlidesEl.textContent = totalSlides;
+
+        function showSlide(index) {
+            slides.forEach(slide => slide.classList.remove('active'));
+            slides[index].classList.add('active');
+            
+            const progress = ((index + 1) / totalSlides) * 100;
+            progressBar.style.width = progress + '%';
+            currentSlideEl.textContent = index + 1;
+            
+            prevBtn.disabled = index === 0;
+            nextBtn.disabled = index === totalSlides - 1;
+        }
+
+        function nextSlide() {
+            if (currentSlide < totalSlides - 1) {
+                currentSlide++;
+                showSlide(currentSlide);
+            }
+        }
+
+        function prevSlide() {
+            if (currentSlide > 0) {
+                currentSlide--;
+                showSlide(currentSlide);
+            }
+        }
+
+        document.addEventListener('keydown', function(e) {
+            switch(e.key) {
+                case 'ArrowRight':
+                case ' ':
+                    e.preventDefault();
+                    nextSlide();
+                    break;
+                case 'ArrowLeft':
+                    e.preventDefault();
+                    prevSlide();
+                    break;
+                case 'Home':
+                    e.preventDefault();
+                    currentSlide = 0;
+                    showSlide(currentSlide);
+                    break;
+                case 'End':
+                    e.preventDefault();
+                    currentSlide = totalSlides - 1;
+                    showSlide(currentSlide);
+                    break;
+            }
+        });
+
+        hljs.highlightAll();
+        showSlide(0);
+    </script>
+</body>
+</html>

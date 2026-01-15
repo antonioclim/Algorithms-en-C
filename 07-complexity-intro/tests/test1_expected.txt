@@ -1,0 +1,24 @@
+
+╔═══════════════════════════════════════════════════════════════╗
+║     EXERCISE 1: Binary Tree Construction and Traversal        ║
+╚═══════════════════════════════════════════════════════════════╝
+
+Traversal Results:
+─────────────────────────────────────────
+Preorder:  50 30 20 40 70 60 80 
+Inorder:   20 30 40 50 60 70 80 
+Postorder: 20 40 30 60 80 70 50 
+
+Tree Statistics:
+┌─────────────────────────┬─────────────┐
+│ Statistic               │ Value       │
+├─────────────────────────┼─────────────┤
+│ Tree Height             │ 2           │
+│ Total Nodes             │ 7           │
+│ Leaf Nodes              │ 4           │
+│ Sum of Values           │ 350         │
+└─────────────────────────┴─────────────┘
+
+Freeing tree memory...
+Done. Run with Valgrind to verify no memory leaks.
+

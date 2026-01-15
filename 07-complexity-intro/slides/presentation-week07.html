@@ -1,0 +1,2064 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Week 07: Binary Trees | Algorithms and Programming Techniques</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/c.min.js"></script>
+    <style>
+        /* =================================================================
+           CSS CUSTOM PROPERTIES - GitHub Dark Theme
+           ================================================================= */
+        :root {
+            --bg-primary: #0d1117;
+            --bg-secondary: #161b22;
+            --bg-tertiary: #21262d;
+            --border-color: #30363d;
+            --text-primary: #c9d1d9;
+            --text-secondary: #8b949e;
+            --accent-blue: #58a6ff;
+            --accent-green: #3fb950;
+            --accent-yellow: #d29922;
+            --accent-red: #f85149;
+            --accent-purple: #a371f7;
+            --accent-cyan: #39c5cf;
+            --accent-orange: #db6d28;
+            --code-bg: #161b22;
+            --shadow: 0 8px 24px rgba(0,0,0,0.4);
+            --transition: all 0.3s ease;
+        }
+
+        /* =================================================================
+           RESET AND BASE STYLES
+           ================================================================= */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html, body {
+            height: 100%;
+            overflow: hidden;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans', Helvetica, Arial, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.6;
+        }
+
+        /* =================================================================
+           PROGRESS BAR
+           ================================================================= */
+        .progress-bar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 4px;
+            background: linear-gradient(90deg, var(--accent-blue), var(--accent-purple));
+            transition: width 0.3s ease;
+            z-index: 1000;
+        }
+
+        /* =================================================================
+           SLIDE CONTAINER
+           ================================================================= */
+        .slides-container {
+            height: 100vh;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .slide {
+            display: none;
+            height: 100vh;
+            padding: 60px 80px;
+            overflow-y: auto;
+            animation: fadeIn 0.4s ease;
+        }
+
+        .slide.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* =================================================================
+           TYPOGRAPHY
+           ================================================================= */
+        h1 {
+            font-size: 2.8em;
+            color: var(--accent-blue);
+            margin-bottom: 0.5em;
+            font-weight: 600;
+        }
+
+        h2 {
+            font-size: 2.2em;
+            color: var(--accent-green);
+            margin-bottom: 0.8em;
+            font-weight: 600;
+            border-bottom: 2px solid var(--border-color);
+            padding-bottom: 0.3em;
+        }
+
+        h3 {
+            font-size: 1.5em;
+            color: var(--accent-yellow);
+            margin: 1em 0 0.5em;
+        }
+
+        p {
+            margin-bottom: 1em;
+            font-size: 1.1em;
+        }
+
+        /* =================================================================
+           LISTS
+           ================================================================= */
+        ul, ol {
+            margin: 1em 0 1em 2em;
+        }
+
+        li {
+            margin-bottom: 0.6em;
+            font-size: 1.1em;
+        }
+
+        li::marker {
+            color: var(--accent-blue);
+        }
+
+        /* =================================================================
+           CODE BLOCKS
+           ================================================================= */
+        .code-block {
+            background: var(--code-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            margin: 1.5em 0;
+            overflow: hidden;
+        }
+
+        .code-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: var(--bg-tertiary);
+            padding: 8px 16px;
+            border-bottom: 1px solid var(--border-color);
+            font-size: 0.9em;
+        }
+
+        .code-header span:first-child {
+            color: var(--text-secondary);
+        }
+
+        .lang-badge {
+            background: var(--accent-blue);
+            color: var(--bg-primary);
+            padding: 2px 10px;
+            border-radius: 4px;
+            font-weight: 600;
+            font-size: 0.85em;
+        }
+
+        pre {
+            padding: 1em;
+            overflow-x: auto;
+            font-size: 0.95em;
+        }
+
+        code {
+            font-family: 'Fira Code', 'Consolas', 'Monaco', monospace;
+        }
+
+        /* Inline code */
+        p code, li code {
+            background: var(--bg-tertiary);
+            padding: 2px 6px;
+            border-radius: 4px;
+            color: var(--accent-cyan);
+            font-size: 0.9em;
+        }
+
+        /* =================================================================
+           TITLE SLIDE
+           ================================================================= */
+        .title-slide {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            height: 100vh;
+        }
+
+        .title-slide h1 {
+            font-size: 3.5em;
+            margin-bottom: 0.3em;
+            background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .title-slide .subtitle {
+            font-size: 1.8em;
+            color: var(--accent-green);
+            margin-bottom: 1.5em;
+        }
+
+        .title-slide .meta {
+            color: var(--text-secondary);
+            font-size: 1.2em;
+        }
+
+        .title-slide .week-badge {
+            display: inline-block;
+            background: var(--accent-purple);
+            color: white;
+            padding: 10px 30px;
+            border-radius: 30px;
+            font-size: 1.3em;
+            margin-bottom: 2em;
+        }
+
+        /* =================================================================
+           INFO BOXES
+           ================================================================= */
+        .info-box {
+            background: var(--bg-secondary);
+            border-left: 4px solid var(--accent-blue);
+            padding: 1em 1.5em;
+            margin: 1em 0;
+            border-radius: 0 8px 8px 0;
+        }
+
+        .warning-box {
+            background: rgba(248, 81, 73, 0.1);
+            border-left: 4px solid var(--accent-red);
+            padding: 1em 1.5em;
+            margin: 1em 0;
+            border-radius: 0 8px 8px 0;
+        }
+
+        .success-box {
+            background: rgba(63, 185, 80, 0.1);
+            border-left: 4px solid var(--accent-green);
+            padding: 1em 1.5em;
+            margin: 1em 0;
+            border-radius: 0 8px 8px 0;
+        }
+
+        .tip-box {
+            background: rgba(210, 153, 34, 0.1);
+            border-left: 4px solid var(--accent-yellow);
+            padding: 1em 1.5em;
+            margin: 1em 0;
+            border-radius: 0 8px 8px 0;
+        }
+
+        /* =================================================================
+           GRID LAYOUTS
+           ================================================================= */
+        .two-columns {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2em;
+            margin: 1em 0;
+        }
+
+        .three-columns {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 1.5em;
+            margin: 1em 0;
+        }
+
+        .column {
+            background: var(--bg-secondary);
+            padding: 1.5em;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+        }
+
+        /* =================================================================
+           TABLES
+           ================================================================= */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1em 0;
+            background: var(--bg-secondary);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        th, td {
+            padding: 12px 16px;
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        th {
+            background: var(--bg-tertiary);
+            color: var(--accent-blue);
+            font-weight: 600;
+        }
+
+        tr:last-child td {
+            border-bottom: none;
+        }
+
+        tr:hover {
+            background: var(--bg-tertiary);
+        }
+
+        /* =================================================================
+           ASCII DIAGRAMS
+           ================================================================= */
+        .ascii-diagram {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 1.5em;
+            font-family: 'Fira Code', monospace;
+            font-size: 0.9em;
+            line-height: 1.4;
+            overflow-x: auto;
+            white-space: pre;
+            color: var(--accent-cyan);
+        }
+
+        /* =================================================================
+           KEY FIGURE SECTION
+           ================================================================= */
+        .key-figure {
+            display: flex;
+            gap: 2em;
+            align-items: flex-start;
+            background: var(--bg-secondary);
+            padding: 2em;
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+        }
+
+        .key-figure-image {
+            width: 200px;
+            height: 200px;
+            background: var(--bg-tertiary);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 4em;
+            flex-shrink: 0;
+        }
+
+        .key-figure-content {
+            flex: 1;
+        }
+
+        .key-figure blockquote {
+            font-style: italic;
+            color: var(--accent-yellow);
+            border-left: 3px solid var(--accent-yellow);
+            padding-left: 1em;
+            margin: 1em 0;
+        }
+
+        /* =================================================================
+           NAVIGATION
+           ================================================================= */
+        .nav-container {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            display: flex;
+            gap: 10px;
+            z-index: 100;
+        }
+
+        .nav-btn {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+            padding: 12px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1em;
+            transition: var(--transition);
+        }
+
+        .nav-btn:hover {
+            background: var(--accent-blue);
+            border-color: var(--accent-blue);
+        }
+
+        .slide-counter {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            padding: 8px 16px;
+            border-radius: 8px;
+            color: var(--text-secondary);
+            font-size: 0.9em;
+        }
+
+        /* =================================================================
+           SUMMARY BOXES
+           ================================================================= */
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1em;
+            margin: 1em 0;
+        }
+
+        .summary-box {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 1.2em;
+            text-align: center;
+        }
+
+        .summary-box .icon {
+            font-size: 2em;
+            margin-bottom: 0.3em;
+        }
+
+        .summary-box h4 {
+            color: var(--accent-blue);
+            margin-bottom: 0.5em;
+        }
+
+        /* =================================================================
+           TRAVERSAL ANIMATION
+           ================================================================= */
+        .traversal-demo {
+            display: flex;
+            align-items: center;
+            gap: 2em;
+            background: var(--bg-secondary);
+            padding: 1.5em;
+            border-radius: 8px;
+        }
+
+        .traversal-tree {
+            flex: 1;
+        }
+
+        .traversal-order {
+            flex: 1;
+            padding: 1em;
+            background: var(--bg-tertiary);
+            border-radius: 8px;
+        }
+
+        /* =================================================================
+           COMPLEXITY HIGHLIGHT
+           ================================================================= */
+        .complexity {
+            display: inline-block;
+            background: var(--bg-tertiary);
+            padding: 4px 12px;
+            border-radius: 20px;
+            color: var(--accent-green);
+            font-family: monospace;
+            font-weight: 600;
+        }
+
+        /* =================================================================
+           QUESTION SLIDE
+           ================================================================= */
+        .question-slide {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            height: 100vh;
+        }
+
+        .question-slide h1 {
+            font-size: 4em;
+            margin-bottom: 0.5em;
+        }
+
+        .question-slide p {
+            font-size: 1.5em;
+            color: var(--text-secondary);
+        }
+
+        /* =================================================================
+           RESPONSIVE ADJUSTMENTS
+           ================================================================= */
+        @media (max-width: 1200px) {
+            .slide {
+                padding: 40px 50px;
+            }
+            .two-columns, .three-columns {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* =================================================================
+           PRINT STYLES
+           ================================================================= */
+        @media print {
+            .slide {
+                page-break-after: always;
+                display: block !important;
+            }
+            .nav-container, .slide-counter, .progress-bar {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Progress Bar -->
+    <div class="progress-bar" id="progressBar"></div>
+
+    <!-- Slides Container -->
+    <div class="slides-container" id="slidesContainer">
+
+        <!-- ============================================================
+             SLIDE 1: Title
+             ============================================================ -->
+        <div class="slide title-slide active" data-slide="1">
+            <div class="week-badge">Week 07 of 14</div>
+            <h1>Binary Trees</h1>
+            <p class="subtitle">Hierarchical Data Structures and Recursive Algorithms</p>
+            <p class="meta">
+                Algorithms and Programming Techniques<br>
+                ASE-CSIE, Bucharest<br>
+                Academic Year 2024-2025
+            </p>
+        </div>
+
+        <!-- ============================================================
+             SLIDE 2: Learning Objectives
+             ============================================================ -->
+        <div class="slide" data-slide="2">
+            <h2>🎯 Learning Objectives</h2>
+            <p>By the end of this lecture, you will be able to:</p>
+            <ol>
+                <li><strong>Remember</strong> the fundamental terminology: nodes, edges, root, leaves, depth, height and subtrees</li>
+                <li><strong>Understand</strong> the recursive nature of tree structures and their mathematical properties</li>
+                <li><strong>Apply</strong> the three classical traversal algorithms: preorder, inorder and postorder</li>
+                <li><strong>Analyse</strong> time complexity O(n) for traversals and O(h) space for recursion</li>
+                <li><strong>Evaluate</strong> different tree representations for specific problem domains</li>
+                <li><strong>Create</strong> complete binary tree implementations with insertion, traversal and deletion</li>
+            </ol>
+            <div class="info-box">
+                <strong>Prerequisites:</strong> Pointers, dynamic memory allocation (malloc/free), recursion fundamentals
+            </div>
+        </div>
+
+        <!-- ============================================================
+             SLIDE 3: Historical Context
+             ============================================================ -->
+        <div class="slide" data-slide="3">
+            <h2>📜 Historical Context</h2>
+            <div class="two-columns">
+                <div>
+                    <h3>Origins</h3>
+                    <p>The concept of tree structures in computer science emerged from mathematical graph theory, which itself originated with Leonhard Euler's 1736 solution to the Seven Bridges of Königsberg problem.</p>
+                    <p>Binary trees gained prominence in the 1950s-60s as researchers formalised data organisation principles.</p>
+                </div>
+                <div>
+                    <h3>Timeline</h3>
+                    <ul>
+                        <li><strong>1736</strong> – Euler's graph theory foundations</li>
+                        <li><strong>1958</strong> – McCarthy's LISP demonstrates recursive structures</li>
+                        <li><strong>1962</strong> – Adelson-Velsky and Landis: AVL trees</li>
+                        <li><strong>1968</strong> – Knuth's TAOCP Vol. 1: definitive formalisation</li>
+                        <li><strong>1972</strong> – Bayer: Red-Black trees</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- ============================================================
+             SLIDE 4: Key Figure - Donald Knuth
+             ============================================================ -->
+        <div class="slide" data-slide="4">
+            <h2>👤 Key Figure: Donald E. Knuth (1938–)</h2>
+            <div class="key-figure">
+                <div class="key-figure-image">👨‍🔬</div>
+                <div class="key-figure-content">
+                    <p>Professor Emeritus at Stanford University, Donald Ervin Knuth stands as one of the most influential figures in computer science history.</p>
+                    <p>His multi-volume masterwork <em>The Art of Computer Programming</em>, begun in 1962 and still ongoing, established rigorous mathematical analysis as the foundation of algorithm study.</p>
+                    <p><strong>Contributions:</strong> TeX typesetting, Literate Programming, analysis of algorithms, comprehensive tree algorithm formalisation</p>
+                    <blockquote>"An algorithm must be seen to be believed."</blockquote>
+                </div>
+            </div>
+        </div>
+
+        <!-- ============================================================
+             SLIDE 5: What is a Binary Tree?
+             ============================================================ -->
+        <div class="slide" data-slide="5">
+            <h2>🌳 What is a Binary Tree?</h2>
+            <div class="info-box">
+                <strong>Definition:</strong> A binary tree is a hierarchical data structure wherein each node contains at most two children, conventionally designated as the <em>left child</em> and <em>right child</em>.
+            </div>
+            <div class="two-columns">
+                <div>
+                    <h3>Key Characteristics</h3>
+                    <ul>
+                        <li>Each node has 0, 1 or 2 children</li>
+                        <li>Exactly one root node (no parent)</li>
+                        <li>Each non-root node has exactly one parent</li>
+                        <li>No cycles exist in the structure</li>
+                    </ul>
+                </div>
+                <div>
+                    <h3>Recursive Definition</h3>
+                    <p>A binary tree is either:</p>
+                    <ul>
+                        <li><strong>Empty</strong> (NULL), or</li>
+                        <li>A <strong>root node</strong> with two binary trees as left and right subtrees</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- ============================================================
+             SLIDE 6: Tree Terminology
+             ============================================================ -->
+        <div class="slide" data-slide="6">
+            <h2>📖 Tree Terminology</h2>
+            <div class="ascii-diagram">
+                                    ┌───┐
+                           Root ──▶ │ A │ ◀── Level 0, Depth 0
+                                    └─┬─┘
+                           ┌──────────┴──────────┐
+                           ▼                     ▼
+                        ┌───┐                 ┌───┐
+                        │ B │                 │ C │ ◀── Level 1, Depth 1
+                        └─┬─┘                 └─┬─┘
+                     ┌────┴────┐           ┌────┴────┐
+                     ▼         ▼           ▼         ▼
+                  ┌───┐     ┌───┐       ┌───┐     ┌───┐
+                  │ D │     │ E │       │ F │     │ G │ ◀── Level 2 (Leaves)
+                  └───┘     └───┘       └───┘     └───┘
+
+            Height of tree = 2    |    Size = 7 nodes
+            </div>
+            <table>
+                <tr><th>Term</th><th>Definition</th><th>Example</th></tr>
+                <tr><td>Root</td><td>Topmost node with no parent</td><td>Node A</td></tr>
+                <tr><td>Leaf</td><td>Node with no children</td><td>D, E, F, G</td></tr>
+                <tr><td>Internal</td><td>Node with at least one child</td><td>A, B, C</td></tr>
+                <tr><td>Depth</td><td>Distance from root to node</td><td>Depth(E) = 2</td></tr>
+                <tr><td>Height</td><td>Longest path from node to leaf</td><td>Height(A) = 2</td></tr>
+            </table>
+        </div>
+
+        <!-- ============================================================
+             SLIDE 7: Node Structure in C
+             ============================================================ -->
+        <div class="slide" data-slide="7">
+            <h2>⚙️ Node Structure in C</h2>
+            <div class="code-block">
+                <div class="code-header">
+                    <span>Basic Binary Tree Node Definition</span>
+                    <span class="lang-badge">C</span>
+                </div>
+                <pre><code class="language-c">/* Binary Tree Node Structure */
+typedef struct TreeNode {
+    int data;                    /* Node payload (can be any type) */
+    struct TreeNode *left;       /* Pointer to left child */
+    struct TreeNode *right;      /* Pointer to right child */
+} TreeNode;
+
+/* Create a new node */
+TreeNode* create_node(int value) {
+    TreeNode *node = malloc(sizeof(TreeNode));
+    if (node == NULL) {
+        fprintf(stderr, "Memory allocation failed\n");
+        exit(EXIT_FAILURE);
+    }
+    node->data = value;
+    node->left = NULL;
+    node->right = NULL;
+    return node;
+}</code></pre>
+            </div>
+            <div class="tip-box">
+                <strong>Memory Layout:</strong> Each node occupies sizeof(int) + 2 × sizeof(pointer) bytes. On a 64-bit system, this is typically 4 + 16 = 20 bytes (possibly 24 with alignment padding).
+            </div>
+        </div>
+
+        <!-- ============================================================
+             SLIDE 8: Memory Visualisation
+             ============================================================ -->
+        <div class="slide" data-slide="8">
+            <h2>💾 Memory Visualisation</h2>
+            <div class="ascii-diagram">
+           Stack                              Heap
+        ┌─────────┐                    ┌─────────────────┐
+        │  root   │──────────────────▶ │ TreeNode (A)    │
+        │ 0x1000  │                    │ data: 10        │
+        └─────────┘                    │ left: 0x2000 ───┼───┐
+                                       │ right: 0x3000 ──┼───┼───┐
+                                       └─────────────────┘   │   │
+                                              ┌──────────────┘   │
+                                              ▼                   │
+                                       ┌─────────────────┐       │
+                                       │ TreeNode (B)    │       │
+                                       │ data: 5         │       │
+                                       │ left: NULL      │       │
+                                       │ right: NULL     │       │
+                                       └─────────────────┘       │
+                                              ┌──────────────────┘
+                                              ▼
+                                       ┌─────────────────┐
+                                       │ TreeNode (C)    │
+                                       │ data: 15        │
+                                       │ left: NULL      │
+                                       │ right: NULL     │
+                                       └─────────────────┘
+            </div>
+        </div>
+
+        <!-- ============================================================
+             SLIDE 9: The Three Traversals Overview
+             ============================================================ -->
+        <div class="slide" data-slide="9">
+            <h2>🔄 The Three Classical Traversals</h2>
+            <div class="info-box">
+                A <strong>traversal</strong> visits every node exactly once in a systematic order. The three fundamental traversals differ in <em>when</em> they process the current node relative to its subtrees.
+            </div>
+            <div class="three-columns">
+                <div class="column" style="border-top: 3px solid var(--accent-blue);">
+                    <h3 style="color: var(--accent-blue);">Preorder</h3>
+                    <p><strong>N</strong>ode → Left → Right</p>
+                    <p>Process node <em>before</em> children</p>
+                    <p><strong>Use:</strong> Copy tree, serialisation</p>
+                </div>
+                <div class="column" style="border-top: 3px solid var(--accent-green);">
+                    <h3 style="color: var(--accent-green);">Inorder</h3>
+                    <p>Left → <strong>N</strong>ode → Right</p>
+                    <p>Process node <em>between</em> children</p>
+                    <p><strong>Use:</strong> BST sorted output</p>
+                </div>
+                <div class="column" style="border-top: 3px solid var(--accent-purple);">
+                    <h3 style="color: var(--accent-purple);">Postorder</h3>
+                    <p>Left → Right → <strong>N</strong>ode</p>
+                    <p>Process node <em>after</em> children</p>
+                    <p><strong>Use:</strong> Delete tree, evaluate expressions</p>
+                </div>
+            </div>
+            <div class="tip-box">
+                <strong>Mnemonic:</strong> "Pre" = node first, "Post" = node last, "In" = node in middle
+            </div>
+        </div>
+
+        <!-- ============================================================
+             SLIDE 10: Traversal Demonstration
+             ============================================================ -->
+        <div class="slide" data-slide="10">
+            <h2>🎯 Traversal Demonstration</h2>
+            <div class="ascii-diagram">
+                                    ┌───┐
+                                    │ 1 │
+                                    └─┬─┘
+                             ┌────────┴────────┐
+                             ▼                 ▼
+                          ┌───┐             ┌───┐
+                          │ 2 │             │ 3 │
+                          └─┬─┘             └─┬─┘
+                       ┌────┴────┐       ┌────┴────┐
+                       ▼         ▼       ▼         ▼
+                    ┌───┐     ┌───┐   ┌───┐     ┌───┐
+                    │ 4 │     │ 5 │   │ 6 │     │ 7 │
+                    └───┘     └───┘   └───┘     └───┘
+
+        ╔════════════════╦═══════════════════════════════════════════╗
+        ║   TRAVERSAL    ║              OUTPUT SEQUENCE              ║
+        ╠════════════════╬═══════════════════════════════════════════╣
+        ║   Preorder     ║  1 → 2 → 4 → 5 → 3 → 6 → 7               ║
+        ║   Inorder      ║  4 → 2 → 5 → 1 → 6 → 3 → 7               ║
+        ║   Postorder    ║  4 → 5 → 2 → 6 → 7 → 3 → 1               ║
+        ╚════════════════╩═══════════════════════════════════════════╝
+            </div>
+        </div>
+
+        <!-- ============================================================
+             SLIDE 11: Preorder Implementation
+             ============================================================ -->
+        <div class="slide" data-slide="11">
+            <h2>⚙️ Preorder Traversal</h2>
+            <div class="two-columns">
+                <div>
+                    <div class="code-block">
+                        <div class="code-header">
+                            <span>Recursive Implementation</span>
+                            <span class="lang-badge">C</span>
+                        </div>
+                        <pre><code class="language-c">/* Preorder: Node → Left → Right */
+void preorder(TreeNode *node) {
+    /* Base case: empty tree */
+    if (node == NULL) {
+        return;
+    }
+    
+    /* Process current node FIRST */
+    printf("%d ", node->data);
+    
+    /* Then traverse left subtree */
+    preorder(node->left);
+    
+    /* Finally traverse right subtree */
+    preorder(node->right);
+}</code></pre>
+                    </div>
+                </div>
+                <div>
+                    <h3>Execution Trace</h3>
+                    <div class="ascii-diagram" style="font-size: 0.8em;">
+preorder(1)
+├── print 1
+├── preorder(2)
+│   ├── print 2
+│   ├── preorder(4)
+│   │   ├── print 4
+│   │   ├── preorder(NULL)
+│   │   └── preorder(NULL)
+│   └── preorder(5)
+│       └── print 5 ...
+└── preorder(3)
+    └── print 3 ...
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ============================================================
+             SLIDE 12: Inorder Implementation
+             ============================================================ -->
+        <div class="slide" data-slide="12">
+            <h2>⚙️ Inorder Traversal</h2>
+            <div class="two-columns">
+                <div>
+                    <div class="code-block">
+                        <div class="code-header">
+                            <span>Recursive Implementation</span>
+                            <span class="lang-badge">C</span>
+                        </div>
+                        <pre><code class="language-c">/* Inorder: Left → Node → Right */
+void inorder(TreeNode *node) {
+    /* Base case: empty tree */
+    if (node == NULL) {
+        return;
+    }
+    
+    /* First traverse left subtree */
+    inorder(node->left);
+    
+    /* Process current node IN MIDDLE */
+    printf("%d ", node->data);
+    
+    /* Finally traverse right subtree */
+    inorder(node->right);
+}</code></pre>
+                    </div>
+                </div>
+                <div>
+                    <h3>Key Property</h3>
+                    <div class="success-box">
+                        <strong>BST Property:</strong> For a Binary Search Tree, inorder traversal yields elements in <em>sorted ascending order</em>.
+                    </div>
+                    <div class="ascii-diagram" style="font-size: 0.85em;">
+       BST:           Inorder output:
+         5            1, 2, 3, 5, 7, 8
+        / \           (sorted!)
+       2   7
+      / \   \
+     1   3   8
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ============================================================
+             SLIDE 13: Postorder Implementation
+             ============================================================ -->
+        <div class="slide" data-slide="13">
+            <h2>⚙️ Postorder Traversal</h2>
+            <div class="two-columns">
+                <div>
+                    <div class="code-block">
+                        <div class="code-header">
+                            <span>Recursive Implementation</span>
+                            <span class="lang-badge">C</span>
+                        </div>
+                        <pre><code class="language-c">/* Postorder: Left → Right → Node */
+void postorder(TreeNode *node) {
+    /* Base case: empty tree */
+    if (node == NULL) {
+        return;
+    }
+    
+    /* First traverse left subtree */
+    postorder(node->left);
+    
+    /* Then traverse right subtree */
+    postorder(node->right);
+    
+    /* Process current node LAST */
+    printf("%d ", node->data);
+}</code></pre>
+                    </div>
+                </div>
+                <div>
+                    <h3>Primary Use Cases</h3>
+                    <ul>
+                        <li><strong>Tree deletion:</strong> Children must be freed before parent</li>
+                        <li><strong>Expression evaluation:</strong> Operands before operator</li>
+                        <li><strong>Dependency resolution:</strong> Process dependencies first</li>
+                    </ul>
+                    <div class="warning-box">
+                        <strong>Memory Rule:</strong> Always use postorder to free a tree—freeing a parent before its children creates memory leaks!
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ============================================================
+             SLIDE 14: Freeing Tree Memory
+             ============================================================ -->
+        <div class="slide" data-slide="14">
+            <h2>🗑️ Freeing Tree Memory</h2>
+            <div class="code-block">
+                <div class="code-header">
+                    <span>Postorder Deletion Pattern</span>
+                    <span class="lang-badge">C</span>
+                </div>
+                <pre><code class="language-c">/* Free entire tree using postorder traversal */
+void free_tree(TreeNode *node) {
+    if (node == NULL) {
+        return;
+    }
+    
+    /* MUST free children BEFORE freeing parent */
+    free_tree(node->left);   /* Free left subtree */
+    free_tree(node->right);  /* Free right subtree */
+    
+    /* Now safe to free current node */
+    free(node);
+}
+
+/* Usage */
+int main(void) {
+    TreeNode *root = create_node(10);
+    root->left = create_node(5);
+    root->right = create_node(15);
+    
+    /* ... use the tree ... */
+    
+    free_tree(root);  /* Clean up - no memory leaks! */
+    root = NULL;      /* Good practice: nullify dangling pointer */
+    return 0;
+}</code></pre>
+            </div>
+        </div>
+
+        <!-- ============================================================
+             SLIDE 15: Tree Height Calculation
+             ============================================================ -->
+        <div class="slide" data-slide="15">
+            <h2>📏 Calculating Tree Height</h2>
+            <div class="two-columns">
+                <div>
+                    <div class="code-block">
+                        <div class="code-header">
+                            <span>Recursive Height Function</span>
+                            <span class="lang-badge">C</span>
+                        </div>
+                        <pre><code class="language-c">/* Calculate height of tree */
+int tree_height(TreeNode *node) {
+    /* Base case: empty tree has height -1 */
+    if (node == NULL) {
+        return -1;
+    }
+    
+    /* Recursive case: 1 + max of subtrees */
+    int left_height = tree_height(node->left);
+    int right_height = tree_height(node->right);
+    
+    /* Return 1 (current) + taller subtree */
+    if (left_height > right_height) {
+        return 1 + left_height;
+    } else {
+        return 1 + right_height;
+    }
+}</code></pre>
+                    </div>
+                </div>
+                <div>
+                    <h3>Complexity</h3>
+                    <ul>
+                        <li>Time: <span class="complexity">O(n)</span> — must visit every node</li>
+                        <li>Space: <span class="complexity">O(h)</span> — recursive stack depth</li>
+                    </ul>
+                    <div class="info-box">
+                        <strong>Convention Note:</strong> Some texts define height of empty tree as -1, others as 0. Be consistent!
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ============================================================
+             SLIDE 16: Counting Nodes
+             ============================================================ -->
+        <div class="slide" data-slide="16">
+            <h2>🔢 Counting Nodes</h2>
+            <div class="three-columns">
+                <div class="column">
+                    <h3>Total Nodes</h3>
+                    <div class="code-block">
+                        <div class="code-header">
+                            <span>Count All</span>
+                            <span class="lang-badge">C</span>
+                        </div>
+                        <pre><code class="language-c">int count_nodes(TreeNode *n) {
+    if (n == NULL) return 0;
+    return 1 
+         + count_nodes(n->left) 
+         + count_nodes(n->right);
+}</code></pre>
+                    </div>
+                </div>
+                <div class="column">
+                    <h3>Leaf Nodes</h3>
+                    <div class="code-block">
+                        <div class="code-header">
+                            <span>Count Leaves</span>
+                            <span class="lang-badge">C</span>
+                        </div>
+                        <pre><code class="language-c">int count_leaves(TreeNode *n) {
+    if (n == NULL) return 0;
+    if (n->left == NULL && 
+        n->right == NULL) {
+        return 1;
+    }
+    return count_leaves(n->left) 
+         + count_leaves(n->right);
+}</code></pre>
+                    </div>
+                </div>
+                <div class="column">
+                    <h3>Internal Nodes</h3>
+                    <div class="code-block">
+                        <div class="code-header">
+                            <span>Count Internal</span>
+                            <span class="lang-badge">C</span>
+                        </div>
+                        <pre><code class="language-c">int count_internal(TreeNode *n) {
+    if (n == NULL) return 0;
+    if (n->left == NULL && 
+        n->right == NULL) {
+        return 0;
+    }
+    return 1 
+         + count_internal(n->left) 
+         + count_internal(n->right);
+}</code></pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ============================================================
+             SLIDE 17: Tree Sum and Search
+             ============================================================ -->
+        <div class="slide" data-slide="17">
+            <h2>➕ Sum and Search Operations</h2>
+            <div class="two-columns">
+                <div>
+                    <div class="code-block">
+                        <div class="code-header">
+                            <span>Sum of All Values</span>
+                            <span class="lang-badge">C</span>
+                        </div>
+                        <pre><code class="language-c">/* Calculate sum of all node values */
+int tree_sum(TreeNode *node) {
+    if (node == NULL) {
+        return 0;
+    }
+    return node->data 
+         + tree_sum(node->left) 
+         + tree_sum(node->right);
+}</code></pre>
+                    </div>
+                </div>
+                <div>
+                    <div class="code-block">
+                        <div class="code-header">
+                            <span>Search for Value</span>
+                            <span class="lang-badge">C</span>
+                        </div>
+                        <pre><code class="language-c">/* Search for value in tree */
+TreeNode* tree_search(TreeNode *node, 
+                      int target) {
+    if (node == NULL) {
+        return NULL;  /* Not found */
+    }
+    if (node->data == target) {
+        return node;  /* Found! */
+    }
+    /* Search left subtree */
+    TreeNode *result = tree_search(
+        node->left, target);
+    if (result != NULL) {
+        return result;
+    }
+    /* Search right subtree */
+    return tree_search(
+        node->right, target);
+}</code></pre>
+                    </div>
+                </div>
+            </div>
+            <div class="tip-box">
+                Both operations have <span class="complexity">O(n)</span> time complexity—must potentially visit every node.
+            </div>
+        </div>
+
+        <!-- ============================================================
+             SLIDE 18: Level-Order Traversal (BFS)
+             ============================================================ -->
+        <div class="slide" data-slide="18">
+            <h2>📊 Level-Order Traversal (BFS)</h2>
+            <div class="info-box">
+                <strong>Level-Order</strong> visits nodes level by level, left to right. Unlike the recursive traversals, it requires a <em>queue</em> data structure.
+            </div>
+            <div class="code-block">
+                <div class="code-header">
+                    <span>Breadth-First Traversal</span>
+                    <span class="lang-badge">C</span>
+                </div>
+                <pre><code class="language-c">void level_order(TreeNode *root) {
+    if (root == NULL) return;
+    
+    Queue *q = queue_create();
+    queue_enqueue(q, root);
+    
+    while (!queue_is_empty(q)) {
+        TreeNode *current = queue_dequeue(q);
+        printf("%d ", current->data);
+        
+        if (current->left != NULL) {
+            queue_enqueue(q, current->left);
+        }
+        if (current->right != NULL) {
+            queue_enqueue(q, current->right);
+        }
+    }
+    queue_destroy(q);
+}</code></pre>
+            </div>
+            <p>For the tree [1,2,3,4,5,6,7], level-order outputs: <strong>1, 2, 3, 4, 5, 6, 7</strong></p>
+        </div>
+
+        <!-- ============================================================
+             SLIDE 19: Expression Trees Introduction
+             ============================================================ -->
+        <div class="slide" data-slide="19">
+            <h2>🧮 Expression Trees</h2>
+            <div class="two-columns">
+                <div>
+                    <p>An <strong>expression tree</strong> represents a mathematical expression where:</p>
+                    <ul>
+                        <li><strong>Leaves</strong> contain operands (numbers)</li>
+                        <li><strong>Internal nodes</strong> contain operators (+, -, *, /)</li>
+                    </ul>
+                    <div class="success-box">
+                        <strong>Key Insight:</strong> The three traversals produce the three standard notations:
+                        <ul style="margin-top: 0.5em;">
+                            <li>Preorder → <strong>Prefix</strong> (Polish)</li>
+                            <li>Inorder → <strong>Infix</strong> (standard)</li>
+                            <li>Postorder → <strong>Postfix</strong> (RPN)</li>
+                        </ul>
+                    </div>
+                </div>
+                <div>
+                    <div class="ascii-diagram">
+     Expression: (3 + 4) * 5
+
+           ┌───┐
+           │ * │
+           └─┬─┘
+        ┌────┴────┐
+        ▼         ▼
+      ┌───┐     ┌───┐
+      │ + │     │ 5 │
+      └─┬─┘     └───┘
+    ┌───┴───┐
+    ▼       ▼
+  ┌───┐   ┌───┐
+  │ 3 │   │ 4 │
+  └───┘   └───┘
+
+  Preorder:  * + 3 4 5
+  Inorder:   3 + 4 * 5
+  Postorder: 3 4 + 5 *
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ============================================================
+             SLIDE 20: Expression Tree Evaluation
+             ============================================================ -->
+        <div class="slide" data-slide="20">
+            <h2>⚡ Expression Tree Evaluation</h2>
+            <div class="code-block">
+                <div class="code-header">
+                    <span>Recursive Evaluation (Postorder)</span>
+                    <span class="lang-badge">C</span>
+                </div>
+                <pre><code class="language-c">typedef struct ExprNode {
+    char op;           /* Operator: '+', '-', '*', '/' or '\0' */
+    int value;         /* Operand value (if leaf) */
+    int is_operator;   /* 1 if operator, 0 if operand */
+    struct ExprNode *left, *right;
+} ExprNode;
+
+int evaluate(ExprNode *node) {
+    /* Base case: leaf node is an operand */
+    if (!node->is_operator) {
+        return node->value;
+    }
+    
+    /* Recursive case: evaluate children first (postorder!) */
+    int left_val = evaluate(node->left);
+    int right_val = evaluate(node->right);
+    
+    /* Then apply operator */
+    switch (node->op) {
+        case '+': return left_val + right_val;
+        case '-': return left_val - right_val;
+        case '*': return left_val * right_val;
+        case '/': return left_val / right_val;
+        default:  return 0;
+    }
+}</code></pre>
+            </div>
+        </div>
+
+        <!-- ============================================================
+             SLIDE 21: Building Expression Tree from Postfix
+             ============================================================ -->
+        <div class="slide" data-slide="21">
+            <h2>🔧 Building Tree from Postfix</h2>
+            <div class="info-box">
+                <strong>Algorithm:</strong> Use a stack. For each token: if operand, push a leaf node; if operator, pop two nodes, make them children of new operator node, push result.
+            </div>
+            <div class="code-block">
+                <div class="code-header">
+                    <span>Postfix to Expression Tree</span>
+                    <span class="lang-badge">C</span>
+                </div>
+                <pre><code class="language-c">ExprNode* build_from_postfix(char *postfix) {
+    Stack *stack = stack_create();
+    char *token = strtok(postfix, " ");
+    
+    while (token != NULL) {
+        if (isdigit(token[0])) {
+            /* Operand: create leaf and push */
+            ExprNode *node = create_operand(atoi(token));
+            stack_push(stack, node);
+        } else {
+            /* Operator: pop two, create node, push result */
+            ExprNode *right = stack_pop(stack);
+            ExprNode *left = stack_pop(stack);
+            ExprNode *node = create_operator(token[0], left, right);
+            stack_push(stack, node);
+        }
+        token = strtok(NULL, " ");
+    }
+    
+    return stack_pop(stack);  /* Root of expression tree */
+}</code></pre>
+            </div>
+        </div>
+
+        <!-- ============================================================
+             SLIDE 22: Complete vs Full Binary Trees
+             ============================================================ -->
+        <div class="slide" data-slide="22">
+            <h2>📐 Special Binary Trees</h2>
+            <div class="three-columns">
+                <div class="column">
+                    <h3>Full Binary Tree</h3>
+                    <div class="ascii-diagram" style="font-size: 0.75em;">
+       ●
+      / \
+     ●   ●
+    / \
+   ●   ●
+                    </div>
+                    <p>Every node has 0 or 2 children</p>
+                </div>
+                <div class="column">
+                    <h3>Complete Binary Tree</h3>
+                    <div class="ascii-diagram" style="font-size: 0.75em;">
+       ●
+      / \
+     ●   ●
+    / \  /
+   ●  ● ●
+                    </div>
+                    <p>All levels full except last; last level left-aligned</p>
+                </div>
+                <div class="column">
+                    <h3>Perfect Binary Tree</h3>
+                    <div class="ascii-diagram" style="font-size: 0.75em;">
+       ●
+      / \
+     ●   ●
+    / \ / \
+   ● ● ● ●
+                    </div>
+                    <p>All leaves at same level; all internal nodes have 2 children</p>
+                </div>
+            </div>
+            <table>
+                <tr><th>Type</th><th>Nodes at Height h</th><th>Properties</th></tr>
+                <tr><td>Full</td><td>Variable</td><td>n = 2L - 1 where L = leaves</td></tr>
+                <tr><td>Complete</td><td>2<sup>h</sup> to 2<sup>h+1</sup>-1</td><td>Can store in array</td></tr>
+                <tr><td>Perfect</td><td>Exactly 2<sup>h+1</sup>-1</td><td>Full + Complete</td></tr>
+            </table>
+        </div>
+
+        <!-- ============================================================
+             SLIDE 23: Array Representation
+             ============================================================ -->
+        <div class="slide" data-slide="23">
+            <h2>📦 Array Representation</h2>
+            <div class="info-box">
+                For <strong>complete binary trees</strong>, we can use an array representation with implicit parent-child relationships.
+            </div>
+            <div class="two-columns">
+                <div>
+                    <div class="ascii-diagram">
+      Tree:              Array:
+        1               Index: 0  1  2  3  4  5  6
+       / \              Value: 1  2  3  4  5  6  7
+      2   3
+     / \ / \
+    4  5 6  7
+
+    For node at index i:
+    • Parent:      (i - 1) / 2
+    • Left child:  2 * i + 1
+    • Right child: 2 * i + 2
+                    </div>
+                </div>
+                <div>
+                    <div class="code-block">
+                        <div class="code-header">
+                            <span>Index Calculations</span>
+                            <span class="lang-badge">C</span>
+                        </div>
+                        <pre><code class="language-c">#define PARENT(i)    (((i) - 1) / 2)
+#define LEFT(i)      (2 * (i) + 1)
+#define RIGHT(i)     (2 * (i) + 2)
+
+/* Example usage */
+int tree[100];
+int size = 0;
+
+/* Access parent of node 5 */
+int p = tree[PARENT(5)]; /* tree[2] */
+
+/* Access children of node 1 */
+int l = tree[LEFT(1)];   /* tree[3] */
+int r = tree[RIGHT(1)];  /* tree[4] */</code></pre>
+                    </div>
+                </div>
+            </div>
+            <div class="tip-box">
+                <strong>Advantage:</strong> No pointer overhead, cache-friendly. <strong>Disadvantage:</strong> Wasted space for sparse trees.
+            </div>
+        </div>
+
+        <!-- ============================================================
+             SLIDE 24: Complexity Analysis Summary
+             ============================================================ -->
+        <div class="slide" data-slide="24">
+            <h2>📊 Complexity Analysis</h2>
+            <table>
+                <tr>
+                    <th>Operation</th>
+                    <th>Time</th>
+                    <th>Space</th>
+                    <th>Notes</th>
+                </tr>
+                <tr>
+                    <td>Traversal (all three)</td>
+                    <td><span class="complexity">O(n)</span></td>
+                    <td><span class="complexity">O(h)</span></td>
+                    <td>Visit each node once; stack depth = height</td>
+                </tr>
+                <tr>
+                    <td>Search</td>
+                    <td><span class="complexity">O(n)</span></td>
+                    <td><span class="complexity">O(h)</span></td>
+                    <td>Worst case: check every node</td>
+                </tr>
+                <tr>
+                    <td>Insert (given position)</td>
+                    <td><span class="complexity">O(1)</span></td>
+                    <td><span class="complexity">O(1)</span></td>
+                    <td>Just pointer manipulation</td>
+                </tr>
+                <tr>
+                    <td>Height calculation</td>
+                    <td><span class="complexity">O(n)</span></td>
+                    <td><span class="complexity">O(h)</span></td>
+                    <td>Must visit all nodes</td>
+                </tr>
+                <tr>
+                    <td>Count nodes</td>
+                    <td><span class="complexity">O(n)</span></td>
+                    <td><span class="complexity">O(h)</span></td>
+                    <td>Must visit all nodes</td>
+                </tr>
+                <tr>
+                    <td>Level-order (BFS)</td>
+                    <td><span class="complexity">O(n)</span></td>
+                    <td><span class="complexity">O(w)</span></td>
+                    <td>w = max width of tree</td>
+                </tr>
+            </table>
+            <div class="warning-box">
+                <strong>Height Impact:</strong> Balanced tree: h = O(log n). Degenerate tree: h = O(n). This affects all recursive operations!
+            </div>
+        </div>
+
+        <!-- ============================================================
+             SLIDE 25: Balanced vs Degenerate Trees
+             ============================================================ -->
+        <div class="slide" data-slide="25">
+            <h2>⚖️ Balanced vs Degenerate Trees</h2>
+            <div class="two-columns">
+                <div>
+                    <h3 style="color: var(--accent-green);">Balanced Tree</h3>
+                    <div class="ascii-diagram">
+           ○
+          / \
+         ○   ○
+        / \ / \
+       ○  ○ ○  ○
+
+    Height: 2 for 7 nodes
+    h = O(log n)
+    
+    Recursive ops: O(log n) space
+                    </div>
+                    <div class="success-box">
+                        Ideal structure. Achieved through AVL, Red-Black trees (future weeks).
+                    </div>
+                </div>
+                <div>
+                    <h3 style="color: var(--accent-red);">Degenerate Tree</h3>
+                    <div class="ascii-diagram">
+    ○
+     \
+      ○
+       \
+        ○
+         \
+          ○
+
+    Height: 3 for 4 nodes
+    h = O(n)
+    
+    Recursive ops: O(n) space
+    (Stack overflow risk!)
+                    </div>
+                    <div class="warning-box">
+                        Worst case. Effectively a linked list. Occurs with sorted insertions in BST.
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ============================================================
+             SLIDE 26: Common Mistakes
+             ============================================================ -->
+        <div class="slide" data-slide="26">
+            <h2>⚠️ Common Mistakes</h2>
+            <div class="two-columns">
+                <div>
+                    <div class="warning-box">
+                        <h3>❌ Forgetting Base Case</h3>
+                        <pre style="background: var(--bg-tertiary); padding: 0.5em; margin-top: 0.5em;"><code class="language-c">void bad_traverse(TreeNode *n) {
+    printf("%d ", n->data);  /* CRASH if NULL! */
+    bad_traverse(n->left);
+    bad_traverse(n->right);
+}</code></pre>
+                    </div>
+                    <div class="success-box">
+                        <h3>✓ Correct Version</h3>
+                        <pre style="background: var(--bg-tertiary); padding: 0.5em; margin-top: 0.5em;"><code class="language-c">void good_traverse(TreeNode *n) {
+    if (n == NULL) return;  /* Base case! */
+    printf("%d ", n->data);
+    good_traverse(n->left);
+    good_traverse(n->right);
+}</code></pre>
+                    </div>
+                </div>
+                <div>
+                    <div class="warning-box">
+                        <h3>❌ Freeing Parent Before Children</h3>
+                        <pre style="background: var(--bg-tertiary); padding: 0.5em; margin-top: 0.5em;"><code class="language-c">void bad_free(TreeNode *n) {
+    free(n);  /* Loses access to children! */
+    bad_free(n->left);   /* Memory leak */
+    bad_free(n->right);  /* Memory leak */
+}</code></pre>
+                    </div>
+                    <div class="success-box">
+                        <h3>✓ Correct Version (Postorder)</h3>
+                        <pre style="background: var(--bg-tertiary); padding: 0.5em; margin-top: 0.5em;"><code class="language-c">void good_free(TreeNode *n) {
+    if (n == NULL) return;
+    good_free(n->left);   /* Free children */
+    good_free(n->right);  /* first! */
+    free(n);              /* Then parent */
+}</code></pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ============================================================
+             SLIDE 27: More Common Mistakes
+             ============================================================ -->
+        <div class="slide" data-slide="27">
+            <h2>⚠️ More Common Mistakes</h2>
+            <div class="two-columns">
+                <div>
+                    <div class="warning-box">
+                        <h3>❌ Not Checking malloc Return</h3>
+                        <pre style="background: var(--bg-tertiary); padding: 0.5em; margin-top: 0.5em;"><code class="language-c">TreeNode *n = malloc(sizeof(TreeNode));
+n->data = 10;  /* Crash if malloc failed! */</code></pre>
+                    </div>
+                    <div class="success-box">
+                        <h3>✓ Always Check</h3>
+                        <pre style="background: var(--bg-tertiary); padding: 0.5em; margin-top: 0.5em;"><code class="language-c">TreeNode *n = malloc(sizeof(TreeNode));
+if (n == NULL) {
+    fprintf(stderr, "malloc failed\n");
+    exit(EXIT_FAILURE);
+}
+n->data = 10;</code></pre>
+                    </div>
+                </div>
+                <div>
+                    <div class="warning-box">
+                        <h3>❌ Returning Wrong Type</h3>
+                        <pre style="background: var(--bg-tertiary); padding: 0.5em; margin-top: 0.5em;"><code class="language-c">int height(TreeNode *n) {
+    if (n == NULL) return;  /* Missing value! */
+    /* ... */
+}</code></pre>
+                    </div>
+                    <div class="success-box">
+                        <h3>✓ Consistent Returns</h3>
+                        <pre style="background: var(--bg-tertiary); padding: 0.5em; margin-top: 0.5em;"><code class="language-c">int height(TreeNode *n) {
+    if (n == NULL) return -1;  /* Proper value */
+    int l = height(n->left);
+    int r = height(n->right);
+    return 1 + (l > r ? l : r);
+}</code></pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ============================================================
+             SLIDE 28: Debugging with GDB
+             ============================================================ -->
+        <div class="slide" data-slide="28">
+            <h2>🔍 Debugging Trees with GDB</h2>
+            <div class="code-block">
+                <div class="code-header">
+                    <span>Useful GDB Commands</span>
+                    <span class="lang-badge">GDB</span>
+                </div>
+                <pre><code class="language-bash"># Compile with debug symbols
+gcc -g -Wall -o program program.c
+
+# Start GDB
+gdb ./program
+
+# Set breakpoint at function
+(gdb) break preorder
+(gdb) break tree.c:42
+
+# Run program
+(gdb) run
+
+# Print tree node
+(gdb) print *node
+(gdb) print node->data
+(gdb) print node->left
+(gdb) print *node->left
+
+# Examine memory
+(gdb) x/3xw node      # 3 words in hex
+
+# Watch recursion
+(gdb) backtrace       # Show call stack
+(gdb) frame 2         # Jump to frame
+(gdb) info locals     # Show local variables
+
+# Step through
+(gdb) next            # Step over
+(gdb) step            # Step into
+(gdb) continue        # Continue to next breakpoint</code></pre>
+            </div>
+        </div>
+
+        <!-- ============================================================
+             SLIDE 29: Memory Checking with Valgrind
+             ============================================================ -->
+        <div class="slide" data-slide="29">
+            <h2>🔬 Memory Checking with Valgrind</h2>
+            <div class="code-block">
+                <div class="code-header">
+                    <span>Valgrind Commands</span>
+                    <span class="lang-badge">BASH</span>
+                </div>
+                <pre><code class="language-bash"># Basic memory leak check
+valgrind --leak-check=full ./program
+
+# Detailed output
+valgrind --leak-check=full --show-leak-kinds=all ./program
+
+# Track origins of uninitialised values
+valgrind --track-origins=yes ./program
+
+# Example output for leaked tree:
+==12345== 24 bytes in 1 blocks are definitely lost
+==12345==    at 0x4C2FB0F: malloc (in vgpreload_memcheck.so)
+==12345==    by 0x400654: create_node (tree.c:15)
+==12345==    by 0x400701: main (main.c:28)
+
+# Good output (no leaks):
+==12345== All heap blocks were freed -- no leaks are possible</code></pre>
+            </div>
+            <div class="tip-box">
+                <strong>Pro tip:</strong> Always run Valgrind before submitting. A single unfree'd node = points deducted!
+            </div>
+        </div>
+
+        <!-- ============================================================
+             SLIDE 30: Best Practices
+             ============================================================ -->
+        <div class="slide" data-slide="30">
+            <h2>✅ Best Practices</h2>
+            <div class="two-columns">
+                <div>
+                    <h3 style="color: var(--accent-green);">✓ Do</h3>
+                    <ul>
+                        <li>Always check for NULL before accessing node members</li>
+                        <li>Use postorder for freeing trees</li>
+                        <li>Nullify pointers after freeing</li>
+                        <li>Test with edge cases: empty tree, single node, degenerate</li>
+                        <li>Comment recursive functions clearly</li>
+                        <li>Use consistent height/depth conventions</li>
+                        <li>Run Valgrind before submission</li>
+                    </ul>
+                </div>
+                <div>
+                    <h3 style="color: var(--accent-red);">✗ Don't</h3>
+                    <ul>
+                        <li>Dereference pointers without NULL check</li>
+                        <li>Free parent before children</li>
+                        <li>Leave dangling pointers</li>
+                        <li>Assume trees are always balanced</li>
+                        <li>Forget base cases in recursion</li>
+                        <li>Mix up traversal orders</li>
+                        <li>Ignore compiler warnings</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- ============================================================
+             SLIDE 31: Industrial Applications
+             ============================================================ -->
+        <div class="slide" data-slide="31">
+            <h2>🏭 Industrial Applications</h2>
+            <div class="three-columns">
+                <div class="column">
+                    <h3>🖥️ Compilers</h3>
+                    <p>Abstract Syntax Trees (AST) represent program structure. Expression trees evaluate and optimise mathematical expressions.</p>
+                </div>
+                <div class="column">
+                    <h3>🌐 Web Browsers</h3>
+                    <p>DOM (Document Object Model) is a tree structure. CSS selectors traverse this tree to apply styles.</p>
+                </div>
+                <div class="column">
+                    <h3>📁 File Systems</h3>
+                    <p>Directory hierarchies form trees. Commands like <code>find</code> and <code>du</code> use recursive traversal.</p>
+                </div>
+            </div>
+            <div class="three-columns">
+                <div class="column">
+                    <h3>🎮 Game AI</h3>
+                    <p>Decision trees and game trees (minimax) power AI opponents in chess, checkers and strategy games.</p>
+                </div>
+                <div class="column">
+                    <h3>🗃️ Databases</h3>
+                    <p>B-trees and B+ trees enable efficient indexing. Query optimisers use tree transformations.</p>
+                </div>
+                <div class="column">
+                    <h3>🤖 Machine Learning</h3>
+                    <p>Decision trees, random forests and gradient boosting are fundamental ML algorithms.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- ============================================================
+             SLIDE 32: Printing Trees Visually
+             ============================================================ -->
+        <div class="slide" data-slide="32">
+            <h2>🖨️ Printing Trees Visually</h2>
+            <div class="code-block">
+                <div class="code-header">
+                    <span>Simple Tree Printer (Rotated)</span>
+                    <span class="lang-badge">C</span>
+                </div>
+                <pre><code class="language-c">/* Print tree rotated 90° (right subtree on top) */
+void print_tree(TreeNode *node, int level) {
+    if (node == NULL) return;
+    
+    /* Print right subtree first (will appear on top) */
+    print_tree(node->right, level + 1);
+    
+    /* Print current node with indentation */
+    for (int i = 0; i < level; i++) {
+        printf("    ");  /* 4 spaces per level */
+    }
+    printf("%d\n", node->data);
+    
+    /* Print left subtree (will appear on bottom) */
+    print_tree(node->left, level + 1);
+}
+
+/* Usage: print_tree(root, 0);
+   Output for tree [5,3,7,1,4]:
+       7
+   5
+           4
+       3
+           1
+*/</code></pre>
+            </div>
+        </div>
+
+        <!-- ============================================================
+             SLIDE 33: Mirror/Invert a Tree
+             ============================================================ -->
+        <div class="slide" data-slide="33">
+            <h2>🪞 Mirror (Invert) a Binary Tree</h2>
+            <div class="two-columns">
+                <div>
+                    <div class="code-block">
+                        <div class="code-header">
+                            <span>Classic Interview Question</span>
+                            <span class="lang-badge">C</span>
+                        </div>
+                        <pre><code class="language-c">/* Invert/mirror a binary tree */
+void mirror_tree(TreeNode *node) {
+    if (node == NULL) return;
+    
+    /* Swap left and right children */
+    TreeNode *temp = node->left;
+    node->left = node->right;
+    node->right = temp;
+    
+    /* Recursively mirror subtrees */
+    mirror_tree(node->left);
+    mirror_tree(node->right);
+}</code></pre>
+                    </div>
+                </div>
+                <div>
+                    <div class="ascii-diagram">
+     Before:              After:
+        1                    1
+       / \                  / \
+      2   3      ──▶       3   2
+     / \   \              /   / \
+    4   5   6            6   5   4
+                    </div>
+                    <div class="info-box">
+                        <strong>Fun fact:</strong> This question famously stumped the creator of Homebrew during a Google interview!
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ============================================================
+             SLIDE 34: Laboratory Preview
+             ============================================================ -->
+        <div class="slide" data-slide="34">
+            <h2>🔬 Laboratory Preview</h2>
+            <div class="two-columns">
+                <div class="column">
+                    <h3>Exercise 1: Tree Construction</h3>
+                    <p>Implement a complete binary tree with:</p>
+                    <ul>
+                        <li>Node structure and creation</li>
+                        <li>All three traversals</li>
+                        <li>Height calculation</li>
+                        <li>Node counting (total, leaves, internal)</li>
+                        <li>Sum of all values</li>
+                        <li>Proper memory deallocation</li>
+                    </ul>
+                    <p><strong>12 TODOs</strong> to complete</p>
+                </div>
+                <div class="column">
+                    <h3>Exercise 2: Expression Trees</h3>
+                    <p>Build an expression evaluator:</p>
+                    <ul>
+                        <li>Parse postfix expressions</li>
+                        <li>Construct expression tree</li>
+                        <li>Evaluate using postorder</li>
+                        <li>Convert to infix with parentheses</li>
+                        <li>Convert to prefix notation</li>
+                        <li>Handle all four operators</li>
+                    </ul>
+                    <p><strong>14 TODOs</strong> to complete</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- ============================================================
+             SLIDE 35: Key Takeaways
+             ============================================================ -->
+        <div class="slide" data-slide="35">
+            <h2>📝 Key Takeaways</h2>
+            <div class="summary-grid">
+                <div class="summary-box">
+                    <div class="icon">🌳</div>
+                    <h4>Structure</h4>
+                    <p>Binary tree = root + two subtrees (recursive)</p>
+                </div>
+                <div class="summary-box">
+                    <div class="icon">🔄</div>
+                    <h4>Traversals</h4>
+                    <p>Pre (NLR), In (LNR), Post (LRN)</p>
+                </div>
+                <div class="summary-box">
+                    <div class="icon">⏱️</div>
+                    <h4>Complexity</h4>
+                    <p>Time O(n), Space O(h)</p>
+                </div>
+                <div class="summary-box">
+                    <div class="icon">🗑️</div>
+                    <h4>Memory</h4>
+                    <p>Postorder for freeing</p>
+                </div>
+                <div class="summary-box">
+                    <div class="icon">🧮</div>
+                    <h4>Expressions</h4>
+                    <p>Leaves=operands, Internal=operators</p>
+                </div>
+                <div class="summary-box">
+                    <div class="icon">⚖️</div>
+                    <h4>Balance</h4>
+                    <p>Balanced: h=log n, Degenerate: h=n</p>
+                </div>
+            </div>
+            <div class="info-box">
+                <strong>The Golden Rule:</strong> Every recursive tree function needs a NULL check base case!
+            </div>
+        </div>
+
+        <!-- ============================================================
+             SLIDE 36: Resources
+             ============================================================ -->
+        <div class="slide" data-slide="36">
+            <h2>📚 Resources</h2>
+            <div class="two-columns">
+                <div>
+                    <h3>Essential Reading</h3>
+                    <ul>
+                        <li>Knuth, D.E. — <em>TAOCP Vol. 1</em>, §2.3</li>
+                        <li>Cormen et al. — <em>Introduction to Algorithms</em>, Ch. 12</li>
+                        <li>Sedgewick & Wayne — <em>Algorithms</em>, §3.2</li>
+                    </ul>
+                    <h3>Online Visualisations</h3>
+                    <ul>
+                        <li><a href="https://visualgo.net/en/bst" style="color: var(--accent-blue);">visualgo.net/en/bst</a></li>
+                        <li><a href="https://www.cs.usfca.edu/~galles/visualization/" style="color: var(--accent-blue);">USF Data Structure Visualisations</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h3>Practice Problems</h3>
+                    <ul>
+                        <li>LeetCode: Binary Tree section (Easy → Medium)</li>
+                        <li>HackerRank: Trees track</li>
+                        <li>Exercism: C track tree exercises</li>
+                    </ul>
+                    <h3>Tools</h3>
+                    <ul>
+                        <li>GDB — GNU Debugger</li>
+                        <li>Valgrind — Memory checker</li>
+                        <li>AddressSanitizer — Compile-time checking</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- ============================================================
+             SLIDE 37: Questions
+             ============================================================ -->
+        <div class="slide question-slide" data-slide="37">
+            <h1>❓ Questions?</h1>
+            <p>Binary Trees | Week 07 of 14</p>
+            <div style="margin-top: 3em; padding: 2em; background: var(--bg-secondary); border-radius: 12px; display: inline-block;">
+                <h3 style="color: var(--accent-green);">Next Week Preview</h3>
+                <p style="font-size: 1.3em;"><strong>Week 08:</strong> Binary Search Trees (BST)</p>
+                <p>Ordered trees with O(log n) search • Insert/Delete algorithms • BST property</p>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Navigation -->
+    <div class="nav-container">
+        <button class="nav-btn" onclick="firstSlide()" title="First slide (Home)">⏮</button>
+        <button class="nav-btn" onclick="prevSlide()" title="Previous slide (←)">◀</button>
+        <button class="nav-btn" onclick="nextSlide()" title="Next slide (→)">▶</button>
+        <button class="nav-btn" onclick="lastSlide()" title="Last slide (End)">⏭</button>
+    </div>
+
+    <!-- Slide Counter -->
+    <div class="slide-counter">
+        <span id="currentSlide">1</span> / <span id="totalSlides">37</span>
+    </div>
+
+    <script>
+        // Initialise highlight.js
+        hljs.highlightAll();
+
+        // Slide management
+        let currentSlide = 1;
+        const totalSlides = document.querySelectorAll('.slide').length;
+        document.getElementById('totalSlides').textContent = totalSlides;
+
+        function showSlide(n) {
+            const slides = document.querySelectorAll('.slide');
+            
+            // Bounds checking
+            if (n < 1) n = 1;
+            if (n > totalSlides) n = totalSlides;
+            
+            currentSlide = n;
+            
+            // Hide all slides
+            slides.forEach(slide => slide.classList.remove('active'));
+            
+            // Show current slide
+            slides[currentSlide - 1].classList.add('active');
+            
+            // Update counter
+            document.getElementById('currentSlide').textContent = currentSlide;
+            
+            // Update progress bar
+            const progress = ((currentSlide - 1) / (totalSlides - 1)) * 100;
+            document.getElementById('progressBar').style.width = progress + '%';
+        }
+
+        function nextSlide() {
+            showSlide(currentSlide + 1);
+        }
+
+        function prevSlide() {
+            showSlide(currentSlide - 1);
+        }
+
+        function firstSlide() {
+            showSlide(1);
+        }
+
+        function lastSlide() {
+            showSlide(totalSlides);
+        }
+
+        // Keyboard navigation
+        document.addEventListener('keydown', function(e) {
+            switch(e.key) {
+                case 'ArrowRight':
+                case ' ':
+                case 'PageDown':
+                    e.preventDefault();
+                    nextSlide();
+                    break;
+                case 'ArrowLeft':
+                case 'PageUp':
+                    e.preventDefault();
+                    prevSlide();
+                    break;
+                case 'Home':
+                    e.preventDefault();
+                    firstSlide();
+                    break;
+                case 'End':
+                    e.preventDefault();
+                    lastSlide();
+                    break;
+            }
+        });
+
+        // Touch support for mobile
+        let touchStartX = 0;
+        let touchEndX = 0;
+
+        document.addEventListener('touchstart', e => {
+            touchStartX = e.changedTouches[0].screenX;
+        });
+
+        document.addEventListener('touchend', e => {
+            touchEndX = e.changedTouches[0].screenX;
+            handleSwipe();
+        });
+
+        function handleSwipe() {
+            const swipeThreshold = 50;
+            const diff = touchStartX - touchEndX;
+            
+            if (Math.abs(diff) > swipeThreshold) {
+                if (diff > 0) {
+                    nextSlide();
+                } else {
+                    prevSlide();
+                }
+            }
+        }
+
+        // Initial slide
+        showSlide(1);
+    </script>
+</body>
+</html>

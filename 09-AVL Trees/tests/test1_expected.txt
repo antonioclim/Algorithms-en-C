@@ -1,0 +1,24 @@
+TEST 1: LL Case - Insert 30, 20, 10
+Inorder: 10 20 30
+Valid AVL: YES
+Root: 20, Height: 1
+
+TEST 2: RR Case - Insert 10, 20, 30
+Inorder: 10 20 30
+Valid AVL: YES
+Root: 20, Height: 1
+
+TEST 3: LR Case - Insert 30, 10, 20
+Inorder: 10 20 30
+Valid AVL: YES
+Root: 20, Height: 1
+
+TEST 4: RL Case - Insert 10, 30, 20
+Inorder: 10 20 30
+Valid AVL: YES
+Root: 20, Height: 1
+
+TEST 5: Larger tree
+Inorder: 10 20 25 30 35 40 45 50 60 70 80
+Valid AVL: YES
+Height: 3

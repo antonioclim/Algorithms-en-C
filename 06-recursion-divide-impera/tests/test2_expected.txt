@@ -1,0 +1,14 @@
+  Loaded 3 processes from 'tests/test2_input.txt'
+  Time Quantum: 2 ms
+
+  Loaded Processes:
+  ┌─────┬────────────────┬───────────┬───────────┐
+  │ PID │ Name           │ Burst(ms) │ Arrival   │
+  ├─────┼────────────────┼───────────┼───────────┤
+  │   1 │ ProcessA       │      6    │      0    │
+  │   2 │ ProcessB       │      4    │      0    │
+  │   3 │ ProcessC       │      2    │      0    │
+  └─────┴────────────────┴───────────┴───────────┘
+
+  Average Turnaround Time: 8.67 ms
+  Average Waiting Time:    4.67 ms

@@ -1,0 +1,35 @@
+# Numeric Test Data for Heapsort
+# Various arrays for testing different scenarios
+
+# Random array (20 elements)
+64 34 25 12 22 11 90 5 87 43 17 29 31 8 56 72 99 14 61 38
+
+# Already sorted (ascending)
+1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20
+
+# Reverse sorted (descending)
+20 19 18 17 16 15 14 13 12 11 10 9 8 7 6 5 4 3 2 1
+
+# All same values
+7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7
+
+# Few unique values (many duplicates)
+3 1 4 1 5 9 2 6 5 3 5 8 9 7 9 3 2 3 8 4
+
+# Nearly sorted (few elements out of place)
+1 2 3 5 4 6 7 8 10 9 11 12 13 15 14 16 17 18 20 19
+
+# Power of 2 size (16 elements) - good for heap structure
+45 23 67 12 89 34 56 78 90 11 43 65 87 21 54 76
+
+# Prime size (17 elements)
+31 73 17 29 41 83 53 61 97 13 67 89 37 59 71 43 79
+
+# Single element
+42
+
+# Two elements (swap needed)
+100 50
+
+# Small array for trace debugging
+4 10 3 5 1

@@ -1,0 +1,36 @@
+# =============================================================================
+# Sample Postfix Expressions for Exercise 2
+# =============================================================================
+# Format: Space-separated tokens (numbers and operators)
+# Operators: + - * /
+# =============================================================================
+
+# Expression 1: (3 + 4) * 5 = 35
+3 4 + 5 *
+
+# Expression 2: 10 / 2 + 3 = 8
+10 2 / 3 +
+
+# Expression 3: 5 + ((1 + 2) * 4) - 3 = 14
+5 1 2 + 4 * + 3 -
+
+# Expression 4: (2 + 3) * (4 + 5) = 45
+2 3 + 4 5 + *
+
+# Expression 5: ((2 * 3) + (4 * 5)) = 26
+2 3 * 4 5 * +
+
+# Expression 6: 100 / (5 * 4) = 5
+100 5 4 * /
+
+# Expression 7: (8 - 3) * (2 + 7) = 45
+8 3 - 2 7 + *
+
+# Expression 8: Simple subtraction: 10 - 4 = 6
+10 4 -
+
+# Expression 9: Complex nested: ((1 + 2) * (3 + 4)) + ((5 - 6) * (7 + 8)) = 6
+1 2 + 3 4 + * 5 6 - 7 8 + * +
+
+# Expression 10: Division chain: 100 / 2 / 5 = 10
+100 2 / 5 /

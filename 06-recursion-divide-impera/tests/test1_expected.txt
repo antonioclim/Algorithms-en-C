@@ -1,0 +1,20 @@
+Enqueued: 10
+Enqueued: 20
+Enqueued: 30
+Queue size: 3 / 8
+Front element: 10
+Dequeued: 10
+Dequeued: 20
+Queue size: 1 / 8
+Enqueued: 40
+Enqueued: 50
+Front element: 30
+
+  === Queue Statistics ===
+  Total enqueues:    5
+  Total dequeues:    2
+  Overflow attempts: 0
+  Underflow attempts: 0
+  ==========================
+
+Goodbye!
