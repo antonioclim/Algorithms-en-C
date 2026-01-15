@@ -1,0 +1,4 @@
+11 12 22 25 33 45 56 64 78 90
+SelectionSort: PASSED
+QuickSort: PASSED
+MergeSort: PASSED

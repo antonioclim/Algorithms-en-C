@@ -1,0 +1,1825 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Week 12: Graph Fundamentals | ATP Course</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/c.min.js"></script>
+    <style>
+        :root {
+            --bg-primary: #0d1117;
+            --bg-secondary: #161b22;
+            --bg-tertiary: #21262d;
+            --text-primary: #e6edf3;
+            --text-secondary: #8b949e;
+            --accent-blue: #58a6ff;
+            --accent-green: #3fb950;
+            --accent-yellow: #d29922;
+            --accent-red: #f85149;
+            --accent-purple: #a371f7;
+            --border-color: #30363d;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans', Helvetica, Arial, sans-serif;
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.6;
+            overflow: hidden;
+        }
+
+        /* Progress Bar */
+        .progress-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background-color: var(--bg-tertiary);
+            z-index: 1000;
+        }
+
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, var(--accent-blue), var(--accent-purple));
+            transition: width 0.3s ease;
+        }
+
+        /* Slide Container */
+        .slides-container {
+            width: 100vw;
+            height: 100vh;
+            position: relative;
+        }
+
+        .slide {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            padding: 60px 80px;
+            display: none;
+            opacity: 0;
+            transition: opacity 0.4s ease;
+            overflow-y: auto;
+        }
+
+        .slide.active {
+            display: block;
+            opacity: 1;
+        }
+
+        /* Typography */
+        h1 {
+            font-size: 2.8em;
+            margin-bottom: 0.5em;
+            color: var(--text-primary);
+            border-bottom: 3px solid var(--accent-blue);
+            padding-bottom: 0.3em;
+        }
+
+        h2 {
+            font-size: 2.2em;
+            margin-bottom: 0.8em;
+            color: var(--accent-blue);
+        }
+
+        h3 {
+            font-size: 1.6em;
+            margin-bottom: 0.6em;
+            color: var(--accent-green);
+        }
+
+        p {
+            font-size: 1.3em;
+            margin-bottom: 1em;
+            color: var(--text-secondary);
+        }
+
+        ul, ol {
+            font-size: 1.25em;
+            margin-left: 1.5em;
+            margin-bottom: 1em;
+        }
+
+        li {
+            margin-bottom: 0.5em;
+            color: var(--text-secondary);
+        }
+
+        li strong {
+            color: var(--text-primary);
+        }
+
+        /* Code Blocks */
+        .code-block {
+            background-color: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            margin: 1em 0;
+            overflow: hidden;
+        }
+
+        .code-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 16px;
+            background-color: var(--bg-tertiary);
+            border-bottom: 1px solid var(--border-color);
+            font-size: 0.9em;
+        }
+
+        .lang-badge {
+            background-color: var(--accent-blue);
+            color: var(--bg-primary);
+            padding: 2px 10px;
+            border-radius: 4px;
+            font-weight: 600;
+            font-size: 0.85em;
+        }
+
+        .code-block pre {
+            margin: 0;
+            padding: 16px;
+            overflow-x: auto;
+        }
+
+        .code-block code {
+            font-family: 'Fira Code', 'Consolas', 'Monaco', monospace;
+            font-size: 0.95em;
+            line-height: 1.5;
+        }
+
+        /* Diagram Container */
+        .diagram {
+            background-color: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 20px;
+            margin: 1em 0;
+            font-family: 'Fira Code', monospace;
+            white-space: pre;
+            line-height: 1.4;
+            font-size: 1.1em;
+            overflow-x: auto;
+        }
+
+        /* Two Column Layout */
+        .two-columns {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin: 1em 0;
+        }
+
+        .column {
+            background-color: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 20px;
+        }
+
+        .column h3 {
+            margin-top: 0;
+        }
+
+        /* Info Boxes */
+        .info-box {
+            padding: 16px 20px;
+            border-radius: 8px;
+            margin: 1em 0;
+            border-left: 4px solid;
+        }
+
+        .info-box.tip {
+            background-color: rgba(63, 185, 80, 0.1);
+            border-color: var(--accent-green);
+        }
+
+        .info-box.warning {
+            background-color: rgba(210, 153, 34, 0.1);
+            border-color: var(--accent-yellow);
+        }
+
+        .info-box.danger {
+            background-color: rgba(248, 81, 73, 0.1);
+            border-color: var(--accent-red);
+        }
+
+        .info-box.note {
+            background-color: rgba(88, 166, 255, 0.1);
+            border-color: var(--accent-blue);
+        }
+
+        .info-box-title {
+            font-weight: 600;
+            margin-bottom: 8px;
+            font-size: 1.1em;
+        }
+
+        .info-box.tip .info-box-title { color: var(--accent-green); }
+        .info-box.warning .info-box-title { color: var(--accent-yellow); }
+        .info-box.danger .info-box-title { color: var(--accent-red); }
+        .info-box.note .info-box-title { color: var(--accent-blue); }
+
+        /* Table Styles */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1em 0;
+            font-size: 1.1em;
+        }
+
+        th, td {
+            padding: 12px 16px;
+            text-align: left;
+            border: 1px solid var(--border-color);
+        }
+
+        th {
+            background-color: var(--bg-tertiary);
+            color: var(--accent-blue);
+            font-weight: 600;
+        }
+
+        tr:nth-child(even) {
+            background-color: var(--bg-secondary);
+        }
+
+        /* Title Slide Specific */
+        .title-slide {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+        }
+
+        .title-slide h1 {
+            font-size: 3.5em;
+            border: none;
+            margin-bottom: 0.3em;
+        }
+
+        .title-slide .subtitle {
+            font-size: 2em;
+            color: var(--accent-blue);
+            margin-bottom: 1em;
+        }
+
+        .title-slide .meta {
+            font-size: 1.3em;
+            color: var(--text-secondary);
+        }
+
+        /* Quote Box */
+        .quote-box {
+            background-color: var(--bg-secondary);
+            border-left: 4px solid var(--accent-purple);
+            padding: 20px 25px;
+            margin: 1.5em 0;
+            font-style: italic;
+            font-size: 1.2em;
+        }
+
+        .quote-box .author {
+            margin-top: 10px;
+            font-style: normal;
+            color: var(--accent-purple);
+            font-weight: 500;
+        }
+
+        /* Complexity Badge */
+        .complexity {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 4px;
+            font-family: 'Fira Code', monospace;
+            font-size: 0.9em;
+            font-weight: 600;
+        }
+
+        .complexity.good { background-color: rgba(63, 185, 80, 0.2); color: var(--accent-green); }
+        .complexity.medium { background-color: rgba(210, 153, 34, 0.2); color: var(--accent-yellow); }
+        .complexity.bad { background-color: rgba(248, 81, 73, 0.2); color: var(--accent-red); }
+
+        /* Navigation */
+        .nav-container {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            display: flex;
+            gap: 10px;
+            z-index: 1000;
+        }
+
+        .nav-btn {
+            background-color: var(--bg-tertiary);
+            color: var(--text-primary);
+            border: 1px solid var(--border-color);
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 1em;
+            transition: all 0.2s ease;
+        }
+
+        .nav-btn:hover {
+            background-color: var(--accent-blue);
+            color: var(--bg-primary);
+        }
+
+        /* Slide Counter */
+        .slide-counter {
+            position: fixed;
+            bottom: 25px;
+            left: 30px;
+            font-size: 1em;
+            color: var(--text-secondary);
+            z-index: 1000;
+        }
+
+        /* Highlight Text */
+        .highlight { color: var(--accent-blue); font-weight: 600; }
+        .highlight-green { color: var(--accent-green); font-weight: 600; }
+        .highlight-yellow { color: var(--accent-yellow); font-weight: 600; }
+        .highlight-red { color: var(--accent-red); font-weight: 600; }
+        .highlight-purple { color: var(--accent-purple); font-weight: 600; }
+
+        /* Key Points Grid */
+        .key-points {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            margin: 1em 0;
+        }
+
+        .key-point {
+            background-color: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .key-point .icon {
+            font-size: 2em;
+            margin-bottom: 10px;
+        }
+
+        .key-point h4 {
+            color: var(--accent-blue);
+            margin-bottom: 8px;
+        }
+
+        /* Animation for diagrams */
+        .animated-step {
+            opacity: 0;
+            transform: translateY(10px);
+            transition: all 0.3s ease;
+        }
+
+        .animated-step.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Scrollbar styling */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--bg-secondary);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--border-color);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--text-secondary);
+        }
+    </style>
+</head>
+<body>
+    <div class="progress-container">
+        <div class="progress-bar" id="progressBar"></div>
+    </div>
+
+    <div class="slides-container" id="slidesContainer">
+        
+        <!-- Slide 1: Title -->
+        <div class="slide title-slide active" data-slide="1">
+            <h1>Graph Fundamentals</h1>
+            <div class="subtitle">Week 12 | Algorithms and Programming Techniques</div>
+            <div class="meta">
+                <p>BFS • DFS • Adjacency Representations</p>
+                <p style="margin-top: 2em; font-size: 0.9em;">Academy of Economic Studies • Computer Science Department</p>
+            </div>
+        </div>
+
+        <!-- Slide 2: Learning Objectives -->
+        <div class="slide" data-slide="2">
+            <h2>🎯 Learning Objectives</h2>
+            <ol>
+                <li><strong>Remember</strong> graph terminology: vertices, edges, degrees, paths, cycles</li>
+                <li><strong>Understand</strong> trade-offs between adjacency matrix and adjacency list representations</li>
+                <li><strong>Apply</strong> BFS and DFS algorithms to traverse arbitrary graphs</li>
+                <li><strong>Analyse</strong> time and space complexity of graph algorithms</li>
+                <li><strong>Evaluate</strong> traversal strategies for cycle detection and shortest paths</li>
+                <li><strong>Create</strong> complete C implementations with proper memory management</li>
+            </ol>
+            <div class="info-box note">
+                <div class="info-box-title">📌 Prerequisites</div>
+                <p>Queues, stacks, dynamic memory allocation, pointers and linked lists</p>
+            </div>
+        </div>
+
+        <!-- Slide 3: Historical Context -->
+        <div class="slide" data-slide="3">
+            <h2>📜 Historical Context</h2>
+            <div class="two-columns">
+                <div class="column">
+                    <h3>Origins</h3>
+                    <ul>
+                        <li><strong>1736</strong> — Euler solves Seven Bridges of Königsberg</li>
+                        <li><strong>1847</strong> — Kirchhoff develops graph-based circuit analysis</li>
+                        <li><strong>1936</strong> — König publishes first graph theory textbook</li>
+                        <li><strong>1959</strong> — Dijkstra's shortest path algorithm</li>
+                        <li><strong>1962</strong> — Moore's BFS for maze solving</li>
+                        <li><strong>1972</strong> — Tarjan's DFS applications paper</li>
+                    </ul>
+                </div>
+                <div class="column">
+                    <h3>Impact Today</h3>
+                    <ul>
+                        <li>Social networks (2+ billion users)</li>
+                        <li>GPS navigation systems</li>
+                        <li>Web search engines</li>
+                        <li>Compiler optimisations</li>
+                        <li>Network routing protocols</li>
+                        <li>Machine learning (GNNs)</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 4: Key Figure -->
+        <div class="slide" data-slide="4">
+            <h2>👤 Key Figure: Leonhard Euler (1707–1783)</h2>
+            <div class="two-columns">
+                <div class="column">
+                    <h3>Biography</h3>
+                    <p>Swiss mathematician and physicist, one of the most prolific mathematicians in history.</p>
+                    <ul>
+                        <li>Published 886 papers and books</li>
+                        <li>Introduced modern mathematical notation</li>
+                        <li>Founded graph theory with Königsberg solution</li>
+                        <li>Contributed to calculus, topology, mechanics</li>
+                    </ul>
+                </div>
+                <div class="column">
+                    <div class="quote-box">
+                        "In order to reach a goal that is really worth of our efforts, we must be ready to sacrifice everything."
+                        <div class="author">— Leonhard Euler</div>
+                    </div>
+                    <div class="info-box tip">
+                        <div class="info-box-title">Fun Fact</div>
+                        <p>Euler continued working even after becoming blind, dictating papers from memory.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 5: What is a Graph? -->
+        <div class="slide" data-slide="5">
+            <h2>📊 What is a Graph?</h2>
+            <p>A graph <strong>G = (V, E)</strong> consists of a set of <span class="highlight">vertices</span> V and a set of <span class="highlight">edges</span> E.</p>
+            <div class="two-columns">
+                <div class="column">
+                    <h3>Undirected Graph</h3>
+                    <div class="diagram">
+     A -------- B
+     |  \      /|
+     |   \    / |
+     |    \  /  |
+     |     \/   |
+     |     /\   |
+     |    /  \  |
+     D -------- C
+
+Edges: {A,B}, {A,D}, {A,C}
+       {B,C}, {D,C}
+                    </div>
+                </div>
+                <div class="column">
+                    <h3>Directed Graph (Digraph)</h3>
+                    <div class="diagram">
+     A -------→ B
+     ↑         ↗|
+     |       ↗  |
+     |     ↗    ↓
+     |   ↗      |
+     | ↗        ↓
+     D ←------- C
+
+Edges: (A,B), (B,C), (C,D)
+       (D,A), (D,B)
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 6: Graph Terminology -->
+        <div class="slide" data-slide="6">
+            <h2>📖 Graph Terminology</h2>
+            <table>
+                <tr>
+                    <th>Term</th>
+                    <th>Definition</th>
+                    <th>Example</th>
+                </tr>
+                <tr>
+                    <td><strong>Vertex (Node)</strong></td>
+                    <td>Fundamental unit of a graph</td>
+                    <td>Person in social network</td>
+                </tr>
+                <tr>
+                    <td><strong>Edge (Arc)</strong></td>
+                    <td>Connection between two vertices</td>
+                    <td>Friendship connection</td>
+                </tr>
+                <tr>
+                    <td><strong>Degree</strong></td>
+                    <td>Number of edges incident to vertex</td>
+                    <td>deg(v) = 3</td>
+                </tr>
+                <tr>
+                    <td><strong>Path</strong></td>
+                    <td>Sequence of vertices via edges</td>
+                    <td>A → B → C → D</td>
+                </tr>
+                <tr>
+                    <td><strong>Cycle</strong></td>
+                    <td>Path that starts and ends at same vertex</td>
+                    <td>A → B → C → A</td>
+                </tr>
+                <tr>
+                    <td><strong>Connected</strong></td>
+                    <td>Path exists between every pair</td>
+                    <td>Single component graph</td>
+                </tr>
+            </table>
+        </div>
+
+        <!-- Slide 7: Directed Graph Properties -->
+        <div class="slide" data-slide="7">
+            <h2>➡️ Directed Graph Properties</h2>
+            <div class="two-columns">
+                <div class="column">
+                    <h3>In-Degree and Out-Degree</h3>
+                    <div class="diagram">
+        → B →
+       ↗     ↘
+      A       → D
+       ↘     ↗
+        → C →
+
+in-deg(D) = 2  (edges into D)
+out-deg(A) = 2 (edges from A)
+                    </div>
+                </div>
+                <div class="column">
+                    <h3>Types of Directed Graphs</h3>
+                    <ul>
+                        <li><strong>DAG</strong> — Directed Acyclic Graph (no cycles)</li>
+                        <li><strong>Strongly Connected</strong> — Path both ways between all pairs</li>
+                        <li><strong>Weakly Connected</strong> — Connected if edges made undirected</li>
+                        <li><strong>Tournament</strong> — Complete directed graph</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="info-box note">
+                <div class="info-box-title">Key Property</div>
+                <p>Sum of all in-degrees = Sum of all out-degrees = |E| (total edges)</p>
+            </div>
+        </div>
+
+        <!-- Slide 8: Adjacency Matrix -->
+        <div class="slide" data-slide="8">
+            <h2>🔢 Representation: Adjacency Matrix</h2>
+            <p>A |V| × |V| matrix where A[i][j] = 1 if edge (i,j) exists, 0 otherwise.</p>
+            <div class="two-columns">
+                <div class="column">
+                    <h3>Graph</h3>
+                    <div class="diagram">
+    0 ----- 1
+    |     / |
+    |   /   |
+    | /     |
+    3 ----- 2
+                    </div>
+                </div>
+                <div class="column">
+                    <h3>Matrix</h3>
+                    <div class="diagram">
+        0   1   2   3
+    ┌───────────────────┐
+  0 │   0   1   0   1   │
+  1 │   1   0   1   1   │
+  2 │   0   1   0   1   │
+  3 │   1   1   1   0   │
+    └───────────────────┘
+                    </div>
+                </div>
+            </div>
+            <div class="info-box tip">
+                <div class="info-box-title">Property</div>
+                <p>For undirected graphs, the matrix is <strong>symmetric</strong>: A[i][j] = A[j][i]</p>
+            </div>
+        </div>
+
+        <!-- Slide 9: Adjacency Matrix in C -->
+        <div class="slide" data-slide="9">
+            <h2>💻 Adjacency Matrix Implementation</h2>
+            <div class="code-block">
+                <div class="code-header">
+                    <span>Graph structure using adjacency matrix</span>
+                    <span class="lang-badge">C</span>
+                </div>
+                <pre><code class="language-c">typedef struct {
+    int num_vertices;
+    int **matrix;      /* 2D array: matrix[i][j] */
+    int is_directed;
+} GraphMatrix;
+
+GraphMatrix *graph_matrix_create(int vertices, int directed) {
+    GraphMatrix *g = malloc(sizeof(GraphMatrix));
+    g->num_vertices = vertices;
+    g->is_directed = directed;
+    
+    /* Allocate 2D array */
+    g->matrix = malloc(vertices * sizeof(int *));
+    for (int i = 0; i < vertices; i++) {
+        g->matrix[i] = calloc(vertices, sizeof(int));
+    }
+    return g;
+}
+
+void graph_matrix_add_edge(GraphMatrix *g, int src, int dest) {
+    g->matrix[src][dest] = 1;
+    if (!g->is_directed) {
+        g->matrix[dest][src] = 1;  /* Symmetric */
+    }
+}</code></pre>
+            </div>
+        </div>
+
+        <!-- Slide 10: Adjacency List -->
+        <div class="slide" data-slide="10">
+            <h2>📋 Representation: Adjacency List</h2>
+            <p>An array of linked lists. Index i contains list of vertices adjacent to i.</p>
+            <div class="two-columns">
+                <div class="column">
+                    <h3>Graph</h3>
+                    <div class="diagram">
+    0 ----- 1
+    |     / |
+    |   /   |
+    | /     |
+    3 ----- 2
+                    </div>
+                </div>
+                <div class="column">
+                    <h3>Adjacency List</h3>
+                    <div class="diagram">
+0 → [1] → [3] → NULL
+1 → [0] → [2] → [3] → NULL
+2 → [1] → [3] → NULL
+3 → [0] → [1] → [2] → NULL
+                    </div>
+                </div>
+            </div>
+            <div class="info-box note">
+                <div class="info-box-title">Space Efficiency</div>
+                <p>For sparse graphs (E << V²), adjacency lists use O(V + E) vs O(V²) for matrix</p>
+            </div>
+        </div>
+
+        <!-- Slide 11: Adjacency List in C -->
+        <div class="slide" data-slide="11">
+            <h2>💻 Adjacency List Implementation</h2>
+            <div class="code-block">
+                <div class="code-header">
+                    <span>Graph structure using adjacency list</span>
+                    <span class="lang-badge">C</span>
+                </div>
+                <pre><code class="language-c">typedef struct AdjNode {
+    int vertex;
+    struct AdjNode *next;
+} AdjNode;
+
+typedef struct {
+    int num_vertices;
+    AdjNode **adj_list;   /* Array of linked lists */
+    int is_directed;
+} GraphList;
+
+AdjNode *create_node(int v) {
+    AdjNode *node = malloc(sizeof(AdjNode));
+    node->vertex = v;
+    node->next = NULL;
+    return node;
+}
+
+void graph_list_add_edge(GraphList *g, int src, int dest) {
+    /* Add dest to src's list */
+    AdjNode *node = create_node(dest);
+    node->next = g->adj_list[src];
+    g->adj_list[src] = node;
+    
+    if (!g->is_directed) {
+        /* Add src to dest's list */
+        node = create_node(src);
+        node->next = g->adj_list[dest];
+        g->adj_list[dest] = node;
+    }
+}</code></pre>
+            </div>
+        </div>
+
+        <!-- Slide 12: Representation Comparison -->
+        <div class="slide" data-slide="12">
+            <h2>⚖️ Representation Comparison</h2>
+            <table>
+                <tr>
+                    <th>Operation</th>
+                    <th>Adjacency Matrix</th>
+                    <th>Adjacency List</th>
+                </tr>
+                <tr>
+                    <td>Space</td>
+                    <td><span class="complexity bad">O(V²)</span></td>
+                    <td><span class="complexity good">O(V + E)</span></td>
+                </tr>
+                <tr>
+                    <td>Check if edge exists</td>
+                    <td><span class="complexity good">O(1)</span></td>
+                    <td><span class="complexity medium">O(degree)</span></td>
+                </tr>
+                <tr>
+                    <td>Find all neighbours</td>
+                    <td><span class="complexity bad">O(V)</span></td>
+                    <td><span class="complexity good">O(degree)</span></td>
+                </tr>
+                <tr>
+                    <td>Add edge</td>
+                    <td><span class="complexity good">O(1)</span></td>
+                    <td><span class="complexity good">O(1)</span></td>
+                </tr>
+                <tr>
+                    <td>Remove edge</td>
+                    <td><span class="complexity good">O(1)</span></td>
+                    <td><span class="complexity medium">O(degree)</span></td>
+                </tr>
+            </table>
+            <div class="info-box tip">
+                <div class="info-box-title">Rule of Thumb</div>
+                <p><strong>Sparse graphs</strong> (E ≈ V): Use adjacency list<br>
+                <strong>Dense graphs</strong> (E ≈ V²): Use adjacency matrix</p>
+            </div>
+        </div>
+
+        <!-- Slide 13: BFS Introduction -->
+        <div class="slide" data-slide="13">
+            <h2>🌊 Breadth-First Search (BFS)</h2>
+            <p>BFS explores vertices <span class="highlight">level by level</span>, visiting all neighbours before going deeper.</p>
+            <div class="diagram">
+Starting from vertex 0:
+
+Level 0:  ──────── [0] ────────
+                  ↙   ↘
+Level 1:      [1]       [3]
+               ↓  ↘   ↙
+Level 2:        [2]
+
+Traversal order: 0 → 1 → 3 → 2
+            </div>
+            <div class="key-points">
+                <div class="key-point">
+                    <div class="icon">📦</div>
+                    <h4>Data Structure</h4>
+                    <p>Queue (FIFO)</p>
+                </div>
+                <div class="key-point">
+                    <div class="icon">⏱️</div>
+                    <h4>Time</h4>
+                    <p>O(V + E)</p>
+                </div>
+                <div class="key-point">
+                    <div class="icon">💾</div>
+                    <h4>Space</h4>
+                    <p>O(V)</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 14: BFS Algorithm -->
+        <div class="slide" data-slide="14">
+            <h2>📝 BFS Algorithm</h2>
+            <div class="code-block">
+                <div class="code-header">
+                    <span>BFS Pseudocode</span>
+                    <span class="lang-badge">Pseudocode</span>
+                </div>
+                <pre><code>BFS(Graph G, vertex source):
+    create empty queue Q
+    create visited array (all false)
+    
+    mark source as visited
+    enqueue source into Q
+    
+    while Q is not empty:
+        v = dequeue from Q
+        process(v)                    // e.g., print v
+        
+        for each neighbour u of v:
+            if u is not visited:
+                mark u as visited
+                enqueue u into Q</code></pre>
+            </div>
+            <div class="info-box note">
+                <div class="info-box-title">Key Insight</div>
+                <p>Vertices are marked visited <strong>when enqueued</strong>, not when dequeued. This prevents duplicates in the queue.</p>
+            </div>
+        </div>
+
+        <!-- Slide 15: BFS Implementation -->
+        <div class="slide" data-slide="15">
+            <h2>💻 BFS Implementation in C</h2>
+            <div class="code-block">
+                <div class="code-header">
+                    <span>Complete BFS traversal</span>
+                    <span class="lang-badge">C</span>
+                </div>
+                <pre><code class="language-c">void bfs(GraphList *g, int source) {
+    int *visited = calloc(g->num_vertices, sizeof(int));
+    Queue *q = queue_create();
+    
+    visited[source] = 1;
+    queue_enqueue(q, source);
+    
+    printf("BFS traversal: ");
+    
+    while (!queue_is_empty(q)) {
+        int v = queue_dequeue(q);
+        printf("%d ", v);
+        
+        /* Visit all neighbours */
+        for (AdjNode *adj = g->adj_list[v]; adj; adj = adj->next) {
+            if (!visited[adj->vertex]) {
+                visited[adj->vertex] = 1;
+                queue_enqueue(q, adj->vertex);
+            }
+        }
+    }
+    printf("\n");
+    
+    free(visited);
+    queue_destroy(q);
+}</code></pre>
+            </div>
+        </div>
+
+        <!-- Slide 16: BFS Shortest Path -->
+        <div class="slide" data-slide="16">
+            <h2>🛤️ BFS: Shortest Path (Unweighted)</h2>
+            <p>BFS naturally finds the <span class="highlight">shortest path</span> in unweighted graphs.</p>
+            <div class="code-block">
+                <div class="code-header">
+                    <span>Computing distances from source</span>
+                    <span class="lang-badge">C</span>
+                </div>
+                <pre><code class="language-c">int *bfs_shortest_path(GraphList *g, int source) {
+    int *distance = malloc(g->num_vertices * sizeof(int));
+    for (int i = 0; i < g->num_vertices; i++)
+        distance[i] = -1;  /* -1 means unreachable */
+    
+    Queue *q = queue_create();
+    distance[source] = 0;
+    queue_enqueue(q, source);
+    
+    while (!queue_is_empty(q)) {
+        int v = queue_dequeue(q);
+        
+        for (AdjNode *adj = g->adj_list[v]; adj; adj = adj->next) {
+            if (distance[adj->vertex] == -1) {
+                distance[adj->vertex] = distance[v] + 1;
+                queue_enqueue(q, adj->vertex);
+            }
+        }
+    }
+    queue_destroy(q);
+    return distance;  /* Caller must free */
+}</code></pre>
+            </div>
+        </div>
+
+        <!-- Slide 17: BFS Visualisation -->
+        <div class="slide" data-slide="17">
+            <h2>🎬 BFS Step-by-Step Visualisation</h2>
+            <div class="diagram">
+Graph:  0 ─── 1 ─── 4       Queue operations starting from 0:
+        │   / │
+        │  /  │             Step 1: Enqueue 0         Q: [0]
+        │ /   │             Step 2: Dequeue 0         Q: []
+        2 ─── 3                     Enqueue 1,2       Q: [1,2]
+                            Step 3: Dequeue 1         Q: [2]
+                                    Enqueue 3,4       Q: [2,3,4]
+Distances from 0:           Step 4: Dequeue 2         Q: [3,4]
+                                    (1,3 visited)     
+  Vertex:  0  1  2  3  4    Step 5: Dequeue 3         Q: [4]
+Distance:  0  1  1  2  2    Step 6: Dequeue 4         Q: []
+                                    DONE!
+            </div>
+            <div class="info-box tip">
+                <div class="info-box-title">Observation</div>
+                <p>Vertices at distance d are all processed before any vertex at distance d+1</p>
+            </div>
+        </div>
+
+        <!-- Slide 18: DFS Introduction -->
+        <div class="slide" data-slide="18">
+            <h2>🏔️ Depth-First Search (DFS)</h2>
+            <p>DFS explores <span class="highlight">as deep as possible</span> along each branch before backtracking.</p>
+            <div class="diagram">
+Starting from vertex 0:
+
+    0 ──→ 1 ──→ 2 ──→ 3
+          │     ↑
+          └─────┘ (backtrack)
+
+Traversal order: 0 → 1 → 2 → 3
+
+    [0]
+     ↓
+    [1]
+     ↓
+    [2]
+     ↓
+    [3] ← deepest point, backtrack
+            </div>
+            <div class="key-points">
+                <div class="key-point">
+                    <div class="icon">📦</div>
+                    <h4>Data Structure</h4>
+                    <p>Stack (LIFO)</p>
+                </div>
+                <div class="key-point">
+                    <div class="icon">⏱️</div>
+                    <h4>Time</h4>
+                    <p>O(V + E)</p>
+                </div>
+                <div class="key-point">
+                    <div class="icon">💾</div>
+                    <h4>Space</h4>
+                    <p>O(V)</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 19: DFS Recursive -->
+        <div class="slide" data-slide="19">
+            <h2>💻 DFS: Recursive Implementation</h2>
+            <div class="code-block">
+                <div class="code-header">
+                    <span>Recursive DFS (elegant, uses call stack)</span>
+                    <span class="lang-badge">C</span>
+                </div>
+                <pre><code class="language-c">void dfs_recursive(GraphList *g, int v, int *visited) {
+    visited[v] = 1;
+    printf("%d ", v);
+    
+    /* Recursively visit all unvisited neighbours */
+    for (AdjNode *adj = g->adj_list[v]; adj; adj = adj->next) {
+        if (!visited[adj->vertex]) {
+            dfs_recursive(g, adj->vertex, visited);
+        }
+    }
+}
+
+void dfs(GraphList *g, int source) {
+    int *visited = calloc(g->num_vertices, sizeof(int));
+    
+    printf("DFS traversal: ");
+    dfs_recursive(g, source, visited);
+    printf("\n");
+    
+    free(visited);
+}</code></pre>
+            </div>
+            <div class="info-box warning">
+                <div class="info-box-title">⚠️ Stack Overflow Risk</div>
+                <p>Deep graphs may cause stack overflow. Use iterative version for large graphs.</p>
+            </div>
+        </div>
+
+        <!-- Slide 20: DFS Iterative -->
+        <div class="slide" data-slide="20">
+            <h2>💻 DFS: Iterative Implementation</h2>
+            <div class="code-block">
+                <div class="code-header">
+                    <span>Iterative DFS (explicit stack, handles large graphs)</span>
+                    <span class="lang-badge">C</span>
+                </div>
+                <pre><code class="language-c">void dfs_iterative(GraphList *g, int source) {
+    int *visited = calloc(g->num_vertices, sizeof(int));
+    Stack *s = stack_create();
+    
+    stack_push(s, source);
+    printf("DFS traversal: ");
+    
+    while (!stack_is_empty(s)) {
+        int v = stack_pop(s);
+        
+        if (!visited[v]) {
+            visited[v] = 1;
+            printf("%d ", v);
+            
+            /* Push neighbours in reverse order for consistent ordering */
+            for (AdjNode *adj = g->adj_list[v]; adj; adj = adj->next) {
+                if (!visited[adj->vertex]) {
+                    stack_push(s, adj->vertex);
+                }
+            }
+        }
+    }
+    printf("\n");
+    
+    free(visited);
+    stack_destroy(s);
+}</code></pre>
+            </div>
+        </div>
+
+        <!-- Slide 21: DFS Discovery and Finish Times -->
+        <div class="slide" data-slide="21">
+            <h2>⏰ DFS: Discovery and Finish Times</h2>
+            <p>Tracking when vertices are <span class="highlight">discovered</span> and <span class="highlight-green">finished</span> enables powerful applications.</p>
+            <div class="code-block">
+                <div class="code-header">
+                    <span>DFS with timestamps</span>
+                    <span class="lang-badge">C</span>
+                </div>
+                <pre><code class="language-c">int time_counter = 0;
+
+void dfs_timestamps(GraphList *g, int v, int *visited,
+                    int *discovery, int *finish) {
+    visited[v] = 1;
+    discovery[v] = ++time_counter;
+    
+    for (AdjNode *adj = g->adj_list[v]; adj; adj = adj->next) {
+        if (!visited[adj->vertex]) {
+            dfs_timestamps(g, adj->vertex, visited, discovery, finish);
+        }
+    }
+    
+    finish[v] = ++time_counter;
+}</code></pre>
+            </div>
+            <div class="diagram">
+Example: discovery[v]/finish[v]
+
+     1/8 ──→ 2/7
+      ↓       ↓
+     3/6 ←── 4/5
+            </div>
+        </div>
+
+        <!-- Slide 22: BFS vs DFS Comparison -->
+        <div class="slide" data-slide="22">
+            <h2>🆚 BFS vs DFS Comparison</h2>
+            <table>
+                <tr>
+                    <th>Criterion</th>
+                    <th>BFS</th>
+                    <th>DFS</th>
+                </tr>
+                <tr>
+                    <td>Data structure</td>
+                    <td>Queue</td>
+                    <td>Stack</td>
+                </tr>
+                <tr>
+                    <td>Order of exploration</td>
+                    <td>Level by level</td>
+                    <td>Branch by branch</td>
+                </tr>
+                <tr>
+                    <td>Shortest path (unweighted)</td>
+                    <td><span class="highlight-green">✓ Yes</span></td>
+                    <td><span class="highlight-red">✗ No</span></td>
+                </tr>
+                <tr>
+                    <td>Topological sort</td>
+                    <td><span class="highlight-red">✗ No</span></td>
+                    <td><span class="highlight-green">✓ Yes</span></td>
+                </tr>
+                <tr>
+                    <td>Memory (wide graph)</td>
+                    <td>Higher (stores level)</td>
+                    <td>Lower</td>
+                </tr>
+                <tr>
+                    <td>Memory (deep graph)</td>
+                    <td>Lower</td>
+                    <td>Higher (stack depth)</td>
+                </tr>
+            </table>
+        </div>
+
+        <!-- Slide 23: Cycle Detection -->
+        <div class="slide" data-slide="23">
+            <h2>🔄 Application: Cycle Detection</h2>
+            <div class="two-columns">
+                <div class="column">
+                    <h3>Undirected Graph</h3>
+                    <p>Back edge to visited vertex (not parent) = cycle</p>
+                    <div class="code-block">
+                        <div class="code-header">
+                            <span>Cycle check</span>
+                            <span class="lang-badge">C</span>
+                        </div>
+                        <pre><code class="language-c">int has_cycle_undirected(
+    GraphList *g, int v,
+    int *visited, int parent) {
+    
+    visited[v] = 1;
+    
+    for (AdjNode *adj = g->adj_list[v];
+         adj; adj = adj->next) {
+        if (!visited[adj->vertex]) {
+            if (has_cycle_undirected(g,
+                adj->vertex, visited, v))
+                return 1;
+        } else if (adj->vertex != parent) {
+            return 1; /* Back edge! */
+        }
+    }
+    return 0;
+}</code></pre>
+                    </div>
+                </div>
+                <div class="column">
+                    <h3>Directed Graph</h3>
+                    <p>Use three colours: white, grey, black</p>
+                    <div class="diagram">
+WHITE (0): Unvisited
+GREY  (1): In current DFS path
+BLACK (2): Finished
+
+Back edge to GREY vertex = cycle
+
+    A (grey)
+    ↓
+    B (grey)
+    ↓
+    C (grey) ──→ A (grey)
+                 ↑
+              CYCLE!
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 24: Cycle Detection - Directed -->
+        <div class="slide" data-slide="24">
+            <h2>💻 Cycle Detection in Directed Graphs</h2>
+            <div class="code-block">
+                <div class="code-header">
+                    <span>Three-colour DFS cycle detection</span>
+                    <span class="lang-badge">C</span>
+                </div>
+                <pre><code class="language-c">#define WHITE 0
+#define GREY  1
+#define BLACK 2
+
+int has_cycle_directed_dfs(GraphList *g, int v, int *colour) {
+    colour[v] = GREY;  /* Currently exploring */
+    
+    for (AdjNode *adj = g->adj_list[v]; adj; adj = adj->next) {
+        if (colour[adj->vertex] == GREY) {
+            return 1;  /* Back edge to ancestor = cycle */
+        }
+        if (colour[adj->vertex] == WHITE) {
+            if (has_cycle_directed_dfs(g, adj->vertex, colour))
+                return 1;
+        }
+    }
+    
+    colour[v] = BLACK;  /* Finished with this vertex */
+    return 0;
+}
+
+int has_cycle_directed(GraphList *g) {
+    int *colour = calloc(g->num_vertices, sizeof(int));
+    for (int v = 0; v < g->num_vertices; v++) {
+        if (colour[v] == WHITE) {
+            if (has_cycle_directed_dfs(g, v, colour)) {
+                free(colour);
+                return 1;
+            }
+        }
+    }
+    free(colour);
+    return 0;
+}</code></pre>
+            </div>
+        </div>
+
+        <!-- Slide 25: Connected Components -->
+        <div class="slide" data-slide="25">
+            <h2>🧩 Application: Connected Components</h2>
+            <p>Find all <span class="highlight">maximal connected subgraphs</span> in an undirected graph.</p>
+            <div class="two-columns">
+                <div class="column">
+                    <div class="diagram">
+Graph with 3 components:
+
+Component 1:    Component 2:    Component 3:
+    0 ─── 1         4 ─── 5         7
+    │   /           │
+    │  /            6
+    2
+
+                    </div>
+                </div>
+                <div class="column">
+                    <div class="code-block">
+                        <div class="code-header">
+                            <span>Finding components</span>
+                            <span class="lang-badge">C</span>
+                        </div>
+                        <pre><code class="language-c">int count_components(GraphList *g) {
+    int *visited = calloc(
+        g->num_vertices, sizeof(int));
+    int count = 0;
+    
+    for (int v = 0; v < g->num_vertices; v++) {
+        if (!visited[v]) {
+            bfs_visit(g, v, visited);
+            count++;
+        }
+    }
+    
+    free(visited);
+    return count;
+}</code></pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 26: Topological Sort -->
+        <div class="slide" data-slide="26">
+            <h2>📊 Application: Topological Sort</h2>
+            <p>Linear ordering of vertices such that for every edge (u,v), u appears before v.</p>
+            <div class="diagram">
+DAG (Directed Acyclic Graph):        Topological Order:
+
+    A ──→ B ──→ D                    A → B → C → D → E
+          ↓     ↓
+    C ──→ E ←───┘
+
+Task dependencies:                   Valid execution order:
+  A: No prerequisites                1. A
+  B: Requires A                      2. B (or C)
+  C: No prerequisites                3. C (or B)
+  D: Requires B                      4. D
+  E: Requires B, C, D                5. E
+            </div>
+            <div class="info-box note">
+                <div class="info-box-title">Applications</div>
+                <p>Build systems (Make), course scheduling, spreadsheet recalculation, package dependencies</p>
+            </div>
+        </div>
+
+        <!-- Slide 27: Topological Sort Implementation -->
+        <div class="slide" data-slide="27">
+            <h2>💻 Topological Sort using DFS</h2>
+            <div class="code-block">
+                <div class="code-header">
+                    <span>DFS-based topological sort</span>
+                    <span class="lang-badge">C</span>
+                </div>
+                <pre><code class="language-c">void topo_sort_dfs(GraphList *g, int v, int *visited, Stack *result) {
+    visited[v] = 1;
+    
+    for (AdjNode *adj = g->adj_list[v]; adj; adj = adj->next) {
+        if (!visited[adj->vertex]) {
+            topo_sort_dfs(g, adj->vertex, visited, result);
+        }
+    }
+    
+    /* Push after all descendants are processed */
+    stack_push(result, v);
+}
+
+int *topological_sort(GraphList *g) {
+    int *visited = calloc(g->num_vertices, sizeof(int));
+    Stack *result = stack_create();
+    
+    for (int v = 0; v < g->num_vertices; v++) {
+        if (!visited[v]) {
+            topo_sort_dfs(g, v, visited, result);
+        }
+    }
+    
+    /* Pop from stack to get topological order */
+    int *order = malloc(g->num_vertices * sizeof(int));
+    for (int i = 0; i < g->num_vertices; i++) {
+        order[i] = stack_pop(result);
+    }
+    
+    free(visited);
+    stack_destroy(result);
+    return order;
+}</code></pre>
+            </div>
+        </div>
+
+        <!-- Slide 28: Common Mistakes -->
+        <div class="slide" data-slide="28">
+            <h2>⚠️ Common Mistakes</h2>
+            <div class="info-box danger">
+                <div class="info-box-title">1. Forgetting to Mark Visited</div>
+                <p>Always mark a vertex as visited <strong>immediately</strong> when processing. Forgetting causes infinite loops or duplicate processing.</p>
+            </div>
+            <div class="info-box danger">
+                <div class="info-box-title">2. Memory Leaks in Adjacency List</div>
+                <p>Each edge creates new nodes via malloc. Always free all nodes when destroying the graph.</p>
+            </div>
+            <div class="info-box danger">
+                <div class="info-box-title">3. Off-by-One with Vertex Indices</div>
+                <p>If input uses 1-based indexing, convert to 0-based or allocate (n+1) sized arrays.</p>
+            </div>
+            <div class="info-box danger">
+                <div class="info-box-title">4. Assuming Connected Graph</div>
+                <p>Always start traversal from all unvisited vertices to handle disconnected components.</p>
+            </div>
+        </div>
+
+        <!-- Slide 29: Memory Management -->
+        <div class="slide" data-slide="29">
+            <h2>🧹 Memory Management</h2>
+            <div class="code-block">
+                <div class="code-header">
+                    <span>Proper cleanup for adjacency list</span>
+                    <span class="lang-badge">C</span>
+                </div>
+                <pre><code class="language-c">void graph_list_destroy(GraphList *g) {
+    if (g == NULL) return;
+    
+    /* Free each adjacency list */
+    for (int i = 0; i < g->num_vertices; i++) {
+        AdjNode *current = g->adj_list[i];
+        while (current != NULL) {
+            AdjNode *temp = current;
+            current = current->next;
+            free(temp);
+        }
+    }
+    
+    /* Free the array of lists */
+    free(g->adj_list);
+    
+    /* Free the graph structure */
+    free(g);
+}
+
+/* For adjacency matrix */
+void graph_matrix_destroy(GraphMatrix *g) {
+    if (g == NULL) return;
+    
+    for (int i = 0; i < g->num_vertices; i++) {
+        free(g->matrix[i]);
+    }
+    free(g->matrix);
+    free(g);
+}</code></pre>
+            </div>
+        </div>
+
+        <!-- Slide 30: Debugging with GDB -->
+        <div class="slide" data-slide="30">
+            <h2>🐛 Debugging Graph Algorithms</h2>
+            <div class="two-columns">
+                <div class="column">
+                    <h3>GDB Commands</h3>
+                    <div class="code-block">
+                        <div class="code-header">
+                            <span>Useful GDB commands</span>
+                            <span class="lang-badge">GDB</span>
+                        </div>
+                        <pre><code>$ gdb ./exercise1
+
+(gdb) break bfs
+(gdb) run < input.txt
+
+(gdb) print *g
+(gdb) print g->adj_list[0]->vertex
+(gdb) print visited[0]@5
+
+(gdb) watch visited[3]
+(gdb) continue
+
+(gdb) backtrace
+(gdb) frame 2</code></pre>
+                    </div>
+                </div>
+                <div class="column">
+                    <h3>Valgrind Memory Check</h3>
+                    <div class="code-block">
+                        <div class="code-header">
+                            <span>Detecting memory issues</span>
+                            <span class="lang-badge">Shell</span>
+                        </div>
+                        <pre><code>$ valgrind --leak-check=full \
+           --show-leak-kinds=all \
+           ./exercise1 < input.txt
+
+# Check for:
+# - Memory leaks
+# - Invalid reads/writes
+# - Use of uninitialised values
+# - Double frees</code></pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 31: Complexity Analysis -->
+        <div class="slide" data-slide="31">
+            <h2>📈 Complexity Analysis Summary</h2>
+            <table>
+                <tr>
+                    <th>Algorithm</th>
+                    <th>Time (Matrix)</th>
+                    <th>Time (List)</th>
+                    <th>Space</th>
+                </tr>
+                <tr>
+                    <td>BFS</td>
+                    <td>O(V²)</td>
+                    <td><span class="complexity good">O(V + E)</span></td>
+                    <td>O(V)</td>
+                </tr>
+                <tr>
+                    <td>DFS</td>
+                    <td>O(V²)</td>
+                    <td><span class="complexity good">O(V + E)</span></td>
+                    <td>O(V)</td>
+                </tr>
+                <tr>
+                    <td>Connected Components</td>
+                    <td>O(V²)</td>
+                    <td><span class="complexity good">O(V + E)</span></td>
+                    <td>O(V)</td>
+                </tr>
+                <tr>
+                    <td>Cycle Detection</td>
+                    <td>O(V²)</td>
+                    <td><span class="complexity good">O(V + E)</span></td>
+                    <td>O(V)</td>
+                </tr>
+                <tr>
+                    <td>Topological Sort</td>
+                    <td>O(V²)</td>
+                    <td><span class="complexity good">O(V + E)</span></td>
+                    <td>O(V)</td>
+                </tr>
+            </table>
+            <div class="info-box note">
+                <div class="info-box-title">Why O(V + E)?</div>
+                <p>Each vertex is visited once: O(V). Each edge is examined once (twice for undirected): O(E).</p>
+            </div>
+        </div>
+
+        <!-- Slide 32: Best Practices -->
+        <div class="slide" data-slide="32">
+            <h2>✅ Best Practices</h2>
+            <div class="two-columns">
+                <div class="column" style="background-color: rgba(63, 185, 80, 0.1); border-color: var(--accent-green);">
+                    <h3 style="color: var(--accent-green);">✓ Do</h3>
+                    <ul>
+                        <li>Choose representation based on graph density</li>
+                        <li>Mark visited immediately when discovered</li>
+                        <li>Handle disconnected graphs</li>
+                        <li>Free all allocated memory</li>
+                        <li>Use calloc for zero-initialisation</li>
+                        <li>Check malloc return values</li>
+                        <li>Document time/space complexity</li>
+                    </ul>
+                </div>
+                <div class="column" style="background-color: rgba(248, 81, 73, 0.1); border-color: var(--accent-red);">
+                    <h3 style="color: var(--accent-red);">✗ Don't</h3>
+                    <ul>
+                        <li>Assume graph is connected</li>
+                        <li>Use recursive DFS for very deep graphs</li>
+                        <li>Forget to initialise visited array</li>
+                        <li>Mix 0-based and 1-based indexing</li>
+                        <li>Ignore compiler warnings</li>
+                        <li>Skip Valgrind testing</li>
+                        <li>Assume specific traversal order</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 33: Queue Implementation Reference -->
+        <div class="slide" data-slide="33">
+            <h2>📦 Queue Implementation (for BFS)</h2>
+            <div class="code-block">
+                <div class="code-header">
+                    <span>Simple array-based queue</span>
+                    <span class="lang-badge">C</span>
+                </div>
+                <pre><code class="language-c">typedef struct {
+    int *data;
+    int front, rear, size, capacity;
+} Queue;
+
+Queue *queue_create(int capacity) {
+    Queue *q = malloc(sizeof(Queue));
+    q->data = malloc(capacity * sizeof(int));
+    q->front = q->size = 0;
+    q->rear = capacity - 1;
+    q->capacity = capacity;
+    return q;
+}
+
+int queue_is_empty(Queue *q) { return q->size == 0; }
+
+void queue_enqueue(Queue *q, int item) {
+    q->rear = (q->rear + 1) % q->capacity;
+    q->data[q->rear] = item;
+    q->size++;
+}
+
+int queue_dequeue(Queue *q) {
+    int item = q->data[q->front];
+    q->front = (q->front + 1) % q->capacity;
+    q->size--;
+    return item;
+}
+
+void queue_destroy(Queue *q) { free(q->data); free(q); }</code></pre>
+            </div>
+        </div>
+
+        <!-- Slide 34: Stack Implementation Reference -->
+        <div class="slide" data-slide="34">
+            <h2>📦 Stack Implementation (for DFS)</h2>
+            <div class="code-block">
+                <div class="code-header">
+                    <span>Simple array-based stack</span>
+                    <span class="lang-badge">C</span>
+                </div>
+                <pre><code class="language-c">typedef struct {
+    int *data;
+    int top, capacity;
+} Stack;
+
+Stack *stack_create(int capacity) {
+    Stack *s = malloc(sizeof(Stack));
+    s->data = malloc(capacity * sizeof(int));
+    s->top = -1;
+    s->capacity = capacity;
+    return s;
+}
+
+int stack_is_empty(Stack *s) { return s->top == -1; }
+
+void stack_push(Stack *s, int item) {
+    s->data[++s->top] = item;
+}
+
+int stack_pop(Stack *s) {
+    return s->data[s->top--];
+}
+
+int stack_peek(Stack *s) {
+    return s->data[s->top];
+}
+
+void stack_destroy(Stack *s) { free(s->data); free(s); }</code></pre>
+            </div>
+        </div>
+
+        <!-- Slide 35: Laboratory Preview -->
+        <div class="slide" data-slide="35">
+            <h2>🔬 Laboratory Exercises Preview</h2>
+            <div class="two-columns">
+                <div class="column">
+                    <h3>Exercise 1: BFS Implementation</h3>
+                    <ul>
+                        <li>Graph creation from file input</li>
+                        <li>Support both representations</li>
+                        <li>BFS traversal printing</li>
+                        <li>Shortest path computation</li>
+                        <li>Connected components counting</li>
+                        <li>8 TODO markers to complete</li>
+                    </ul>
+                </div>
+                <div class="column">
+                    <h3>Exercise 2: DFS Applications</h3>
+                    <ul>
+                        <li>Recursive and iterative DFS</li>
+                        <li>Discovery/finish timestamps</li>
+                        <li>Cycle detection (directed)</li>
+                        <li>Topological sorting</li>
+                        <li>Path existence check</li>
+                        <li>10 TODO markers to complete</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="info-box tip">
+                <div class="info-box-title">Getting Started</div>
+                <p>Read the header comments in each file. Start with the simpler functions first. Test incrementally.</p>
+            </div>
+        </div>
+
+        <!-- Slide 36: Key Takeaways -->
+        <div class="slide" data-slide="36">
+            <h2>🎯 Key Takeaways</h2>
+            <div class="key-points">
+                <div class="key-point">
+                    <div class="icon">📊</div>
+                    <h4>Representations</h4>
+                    <p>Matrix for dense, List for sparse</p>
+                </div>
+                <div class="key-point">
+                    <div class="icon">🌊</div>
+                    <h4>BFS</h4>
+                    <p>Queue, level-order, shortest paths</p>
+                </div>
+                <div class="key-point">
+                    <div class="icon">🏔️</div>
+                    <h4>DFS</h4>
+                    <p>Stack, depth-first, topological sort</p>
+                </div>
+                <div class="key-point">
+                    <div class="icon">⏱️</div>
+                    <h4>Complexity</h4>
+                    <p>O(V + E) for both traversals</p>
+                </div>
+                <div class="key-point">
+                    <div class="icon">🔄</div>
+                    <h4>Applications</h4>
+                    <p>Cycles, components, ordering</p>
+                </div>
+                <div class="key-point">
+                    <div class="icon">🧹</div>
+                    <h4>Memory</h4>
+                    <p>Always free all allocations</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 37: Resources -->
+        <div class="slide" data-slide="37">
+            <h2>📚 Resources</h2>
+            <div class="two-columns">
+                <div class="column">
+                    <h3>Essential Reading</h3>
+                    <ul>
+                        <li>CLRS Chapter 22: Elementary Graph Algorithms</li>
+                        <li>Sedgewick & Wayne, Chapter 4: Graphs</li>
+                        <li>Skiena, Chapter 7: Graph Traversal</li>
+                    </ul>
+                    <h3 style="margin-top: 1em;">Online Visualisations</h3>
+                    <ul>
+                        <li>visualgo.net/en/dfsbfs</li>
+                        <li>algorithm-visualizer.org</li>
+                        <li>cs.usfca.edu/~galles/visualization</li>
+                    </ul>
+                </div>
+                <div class="column">
+                    <h3>Practice Problems</h3>
+                    <ul>
+                        <li>LeetCode: Graph section (40+ problems)</li>
+                        <li>HackerRank: Graph Theory track</li>
+                        <li>Codeforces: Tag "graphs"</li>
+                    </ul>
+                    <h3 style="margin-top: 1em;">Reference</h3>
+                    <ul>
+                        <li>CP-Algorithms: cp-algorithms.com/graph/</li>
+                        <li>GeeksforGeeks Graph Algorithms</li>
+                        <li>MIT 6.006 Lecture Notes</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 38: Questions -->
+        <div class="slide title-slide" data-slide="38">
+            <h1>Questions?</h1>
+            <div class="subtitle">Week 12: Graph Fundamentals</div>
+            <div class="meta">
+                <p style="margin-top: 2em;">Next Week: Advanced Graph Algorithms</p>
+                <p>Dijkstra • Bellman-Ford • Minimum Spanning Trees</p>
+            </div>
+            <div class="quote-box" style="margin-top: 2em; max-width: 600px;">
+                "The theory of graphs is one of the most important branches of combinatorics and has countless applications."
+                <div class="author">— Reinhard Diestel</div>
+            </div>
+        </div>
+
+    </div>
+
+    <div class="slide-counter">
+        <span id="currentSlide">1</span> / <span id="totalSlides">38</span>
+    </div>
+
+    <div class="nav-container">
+        <button class="nav-btn" onclick="goToSlide(1)">⏮ First</button>
+        <button class="nav-btn" onclick="prevSlide()">← Prev</button>
+        <button class="nav-btn" onclick="nextSlide()">Next →</button>
+        <button class="nav-btn" onclick="goToSlide(totalSlides)">Last ⏭</button>
+    </div>
+
+    <script>
+        let currentSlide = 1;
+        const totalSlides = document.querySelectorAll('.slide').length;
+        
+        document.getElementById('totalSlides').textContent = totalSlides;
+
+        function updateSlide() {
+            document.querySelectorAll('.slide').forEach((slide, index) => {
+                slide.classList.remove('active');
+                if (index + 1 === currentSlide) {
+                    slide.classList.add('active');
+                }
+            });
+            
+            document.getElementById('currentSlide').textContent = currentSlide;
+            document.getElementById('progressBar').style.width = 
+                ((currentSlide / totalSlides) * 100) + '%';
+        }
+
+        function nextSlide() {
+            if (currentSlide < totalSlides) {
+                currentSlide++;
+                updateSlide();
+            }
+        }
+
+        function prevSlide() {
+            if (currentSlide > 1) {
+                currentSlide--;
+                updateSlide();
+            }
+        }
+
+        function goToSlide(n) {
+            currentSlide = Math.max(1, Math.min(n, totalSlides));
+            updateSlide();
+        }
+
+        document.addEventListener('keydown', (e) => {
+            switch(e.key) {
+                case 'ArrowRight':
+                case ' ':
+                    e.preventDefault();
+                    nextSlide();
+                    break;
+                case 'ArrowLeft':
+                    prevSlide();
+                    break;
+                case 'Home':
+                    goToSlide(1);
+                    break;
+                case 'End':
+                    goToSlide(totalSlides);
+                    break;
+            }
+        });
+
+        // Initialise syntax highlighting
+        hljs.highlightAll();
+    </script>
+</body>
+</html>

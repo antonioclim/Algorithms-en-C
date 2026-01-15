@@ -1,0 +1,13 @@
+Graph: 5 vertices, 6 edges
+Density: 0.600
+Components: 1
+
+BFS from 0: 0 1 2 3 4
+DFS from 0: 0 1 2 3 4
+
+Dijkstra from vertex 0:
+  To 0: 0
+  To 1: 3
+  To 2: 1
+  To 3: 8
+  To 4: 11

@@ -1,0 +1,1195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Week 14: Language Comparison | Pseudocode → C → Python</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/c.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/python.min.js"></script>
+    <style>
+        :root {
+            --bg-primary: #0d1117;
+            --bg-secondary: #161b22;
+            --bg-tertiary: #21262d;
+            --text-primary: #e6edf3;
+            --text-secondary: #8b949e;
+            --accent-blue: #58a6ff;
+            --accent-green: #3fb950;
+            --accent-yellow: #d29922;
+            --accent-red: #f85149;
+            --accent-purple: #a371f7;
+            --accent-cyan: #39c5cf;
+            --border-color: #30363d;
+            --pseudo-color: #f0883e;
+            --c-color: #58a6ff;
+            --python-color: #3fb950;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.6;
+            overflow: hidden;
+        }
+
+        .progress-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: var(--bg-tertiary);
+            z-index: 1000;
+        }
+
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, var(--pseudo-color), var(--c-color), var(--python-color));
+            transition: width 0.3s ease;
+        }
+
+        .slides-container {
+            width: 100vw;
+            height: 100vh;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .slide {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            padding: 50px 60px;
+            display: none;
+            opacity: 0;
+            transition: opacity 0.4s ease;
+            overflow-y: auto;
+        }
+
+        .slide.active {
+            display: flex;
+            flex-direction: column;
+            opacity: 1;
+        }
+
+        .slide-counter {
+            position: fixed;
+            bottom: 20px;
+            left: 30px;
+            font-size: 14px;
+            color: var(--text-secondary);
+            z-index: 100;
+        }
+
+        .nav-buttons {
+            position: fixed;
+            bottom: 20px;
+            right: 30px;
+            display: flex;
+            gap: 10px;
+            z-index: 100;
+        }
+
+        .nav-btn {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.2s ease;
+        }
+
+        .nav-btn:hover {
+            background: var(--accent-blue);
+            border-color: var(--accent-blue);
+        }
+
+        h1 {
+            font-size: 2.5em;
+            font-weight: 600;
+            margin-bottom: 25px;
+            color: var(--text-primary);
+        }
+
+        h2 {
+            font-size: 2em;
+            font-weight: 600;
+            margin-bottom: 20px;
+            color: var(--accent-cyan);
+        }
+
+        p {
+            font-size: 1.1em;
+            margin-bottom: 15px;
+            color: var(--text-secondary);
+        }
+
+        .title-slide {
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            background: radial-gradient(ellipse at center, var(--bg-secondary) 0%, var(--bg-primary) 100%);
+        }
+
+        .title-slide h1 {
+            font-size: 3em;
+            background: linear-gradient(135deg, var(--pseudo-color), var(--c-color), var(--python-color));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .week-badge {
+            display: inline-block;
+            background: var(--accent-purple);
+            color: white;
+            padding: 8px 24px;
+            border-radius: 20px;
+            font-size: 1.1em;
+            margin-bottom: 25px;
+        }
+
+        /* Three Column Layout */
+        .three-columns {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin: 15px 0;
+            flex: 1;
+        }
+
+        .column {
+            background: var(--bg-secondary);
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .column-header {
+            padding: 12px 15px;
+            font-weight: 600;
+            font-size: 1.1em;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .column.pseudocod .column-header {
+            background: rgba(240, 136, 62, 0.2);
+            color: var(--pseudo-color);
+            border-bottom: 2px solid var(--pseudo-color);
+        }
+
+        .column.c-lang .column-header {
+            background: rgba(88, 166, 255, 0.2);
+            color: var(--c-color);
+            border-bottom: 2px solid var(--c-color);
+        }
+
+        .column.python .column-header {
+            background: rgba(63, 185, 80, 0.2);
+            color: var(--python-color);
+            border-bottom: 2px solid var(--python-color);
+        }
+
+        .column-content {
+            padding: 15px;
+            flex: 1;
+            overflow-y: auto;
+        }
+
+        .column-content pre {
+            margin: 0;
+            font-size: 0.85em;
+        }
+
+        .column-content code {
+            font-family: 'JetBrains Mono', 'Fira Code', Consolas, monospace;
+            line-height: 1.4;
+        }
+
+        /* Comparison Table */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+
+        th, td {
+            padding: 12px 15px;
+            text-align: left;
+            border: 1px solid var(--border-color);
+        }
+
+        th {
+            background: var(--bg-tertiary);
+            color: var(--accent-blue);
+            font-weight: 600;
+        }
+
+        tr:nth-child(even) {
+            background: var(--bg-secondary);
+        }
+
+        .highlight {
+            color: var(--accent-yellow);
+            font-weight: 600;
+        }
+
+        .info-box {
+            padding: 15px 20px;
+            border-radius: 8px;
+            margin: 15px 0;
+            border-left: 4px solid;
+        }
+
+        .info-box.note {
+            background: rgba(88, 166, 255, 0.1);
+            border-color: var(--accent-blue);
+        }
+
+        .info-box.tip {
+            background: rgba(63, 185, 80, 0.1);
+            border-color: var(--accent-green);
+        }
+
+        .info-box h4 {
+            font-size: 1em;
+            margin-bottom: 8px;
+            color: var(--accent-blue);
+        }
+
+        .info-box.tip h4 {
+            color: var(--accent-green);
+        }
+
+        .two-columns {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+        }
+
+        .lang-badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 0.8em;
+            font-weight: 600;
+        }
+
+        .lang-badge.pseudo { background: var(--pseudo-color); color: var(--bg-primary); }
+        .lang-badge.c { background: var(--c-color); color: var(--bg-primary); }
+        .lang-badge.python { background: var(--python-color); color: var(--bg-primary); }
+
+        ul {
+            margin-left: 25px;
+            margin-bottom: 15px;
+        }
+
+        li {
+            margin-bottom: 8px;
+            color: var(--text-secondary);
+        }
+
+        .end-slide {
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+        }
+
+        .complexity {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 0.9em;
+        }
+
+        .complexity.good {
+            background: rgba(63, 185, 80, 0.2);
+            color: var(--accent-green);
+        }
+
+        .complexity.medium {
+            background: rgba(210, 153, 34, 0.2);
+            color: var(--accent-yellow);
+        }
+    </style>
+</head>
+<body>
+    <div class="progress-container">
+        <div class="progress-bar" id="progressBar"></div>
+    </div>
+
+    <div class="slides-container" id="slidesContainer">
+
+        <!-- Slide 1: Title -->
+        <div class="slide title-slide active" data-slide="1">
+            <span class="week-badge">Week 14</span>
+            <h1>Pseudocode → C → Python</h1>
+            <p style="font-size: 1.4em; color: var(--text-secondary);">Algorithm Implementation Across Languages</p>
+            <p style="margin-top: 30px;">
+                <span class="lang-badge pseudo">📝 Pseudocode</span>
+                <span class="lang-badge c">⚙️ C</span>
+                <span class="lang-badge python">🐍 Python</span>
+            </p>
+        </div>
+
+        <!-- Slide 2: Why Compare? -->
+        <div class="slide" data-slide="2">
+            <h2>🤔 Why Compare Languages?</h2>
+            <div class="two-columns">
+                <div>
+                    <h3>Understanding Abstraction Levels</h3>
+                    <ul>
+                        <li><strong>Pseudocode</strong> — Pure algorithmic logic, language-agnostic</li>
+                        <li><strong>C</strong> — Low-level control, manual memory, explicit types</li>
+                        <li><strong>Python</strong> — High-level abstraction, automatic memory, dynamic types</li>
+                    </ul>
+                    <div class="info-box note">
+                        <h4>Key Insight</h4>
+                        <p>The same algorithm can look very different across languages whilst maintaining identical logic and complexity.</p>
+                    </div>
+                </div>
+                <div>
+                    <h3>Benefits of Comparison</h3>
+                    <ul>
+                        <li>Separates algorithm from implementation details</li>
+                        <li>Reveals language-specific idioms</li>
+                        <li>Highlights trade-offs (verbosity vs clarity)</li>
+                        <li>Improves translation skills between languages</li>
+                        <li>Deepens understanding of underlying concepts</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 3: Binary Search -->
+        <div class="slide" data-slide="3">
+            <h2>🔍 Binary Search</h2>
+            <div class="three-columns">
+                <div class="column pseudocod">
+                    <div class="column-header">📝 Pseudocode</div>
+                    <div class="column-content">
+<pre><code>FUNCTION BinarySearch(A, target):
+    left ← 0
+    right ← length(A) - 1
+    
+    WHILE left ≤ right:
+        mid ← left + (right - left) / 2
+        
+        IF A[mid] = target:
+            RETURN mid
+        ELSE IF A[mid] < target:
+            left ← mid + 1
+        ELSE:
+            right ← mid - 1
+    
+    RETURN -1  // Not found</code></pre>
+                    </div>
+                </div>
+                <div class="column c-lang">
+                    <div class="column-header">⚙️ C</div>
+                    <div class="column-content">
+<pre><code class="language-c">int binary_search(int *arr, int n, 
+                  int target) {
+    int left = 0;
+    int right = n - 1;
+    
+    while (left <= right) {
+        int mid = left + (right - left) / 2;
+        
+        if (arr[mid] == target) {
+            return mid;
+        } else if (arr[mid] < target) {
+            left = mid + 1;
+        } else {
+            right = mid - 1;
+        }
+    }
+    
+    return -1;
+}</code></pre>
+                    </div>
+                </div>
+                <div class="column python">
+                    <div class="column-header">🐍 Python</div>
+                    <div class="column-content">
+<pre><code class="language-python">def binary_search(arr, target):
+    left, right = 0, len(arr) - 1
+    
+    while left <= right:
+        mid = left + (right - left) // 2
+        
+        if arr[mid] == target:
+            return mid
+        elif arr[mid] < target:
+            left = mid + 1
+        else:
+            right = mid - 1
+    
+    return -1
+
+# Or use bisect module:
+# from bisect import bisect_left</code></pre>
+                    </div>
+                </div>
+            </div>
+            <p style="text-align: center; margin-top: 10px;"><span class="complexity good">O(log n)</span> time complexity across all implementations</p>
+        </div>
+
+        <!-- Slide 4: Quick Sort -->
+        <div class="slide" data-slide="4">
+            <h2>⚡ Quick Sort</h2>
+            <div class="three-columns">
+                <div class="column pseudocod">
+                    <div class="column-header">📝 Pseudocode</div>
+                    <div class="column-content">
+<pre><code>FUNCTION QuickSort(A, low, high):
+    IF low < high:
+        pivot ← Partition(A, low, high)
+        QuickSort(A, low, pivot - 1)
+        QuickSort(A, pivot + 1, high)
+
+FUNCTION Partition(A, low, high):
+    pivot ← A[high]
+    i ← low - 1
+    
+    FOR j ← low TO high - 1:
+        IF A[j] ≤ pivot:
+            i ← i + 1
+            SWAP(A[i], A[j])
+    
+    SWAP(A[i + 1], A[high])
+    RETURN i + 1</code></pre>
+                    </div>
+                </div>
+                <div class="column c-lang">
+                    <div class="column-header">⚙️ C</div>
+                    <div class="column-content">
+<pre><code class="language-c">void swap(int *a, int *b) {
+    int t = *a; *a = *b; *b = t;
+}
+
+int partition(int *arr, int low, int high) {
+    int pivot = arr[high];
+    int i = low - 1;
+    
+    for (int j = low; j < high; j++) {
+        if (arr[j] <= pivot) {
+            i++;
+            swap(&arr[i], &arr[j]);
+        }
+    }
+    swap(&arr[i + 1], &arr[high]);
+    return i + 1;
+}
+
+void quicksort(int *arr, int low, int high) {
+    if (low < high) {
+        int pi = partition(arr, low, high);
+        quicksort(arr, low, pi - 1);
+        quicksort(arr, pi + 1, high);
+    }
+}</code></pre>
+                    </div>
+                </div>
+                <div class="column python">
+                    <div class="column-header">🐍 Python</div>
+                    <div class="column-content">
+<pre><code class="language-python">def quicksort(arr):
+    if len(arr) <= 1:
+        return arr
+    
+    pivot = arr[-1]
+    left = [x for x in arr[:-1] 
+            if x <= pivot]
+    right = [x for x in arr[:-1] 
+             if x > pivot]
+    
+    return quicksort(left) + [pivot] \
+           + quicksort(right)
+
+# In-place version also possible
+# Python's sort() uses Timsort</code></pre>
+                    </div>
+                </div>
+            </div>
+            <p style="text-align: center; margin-top: 10px;"><span class="complexity good">O(n log n)</span> average, <span class="complexity medium">O(n²)</span> worst case</p>
+        </div>
+
+        <!-- Slide 5: Dijkstra's Algorithm -->
+        <div class="slide" data-slide="5">
+            <h2>🛤️ Dijkstra's Shortest Path</h2>
+            <div class="three-columns">
+                <div class="column pseudocod">
+                    <div class="column-header">📝 Pseudocode</div>
+                    <div class="column-content">
+<pre><code>FUNCTION Dijkstra(G, source):
+    FOR each vertex v in G:
+        dist[v] ← INFINITY
+        prev[v] ← UNDEFINED
+    dist[source] ← 0
+    Q ← priority queue of all vertices
+    
+    WHILE Q is not empty:
+        u ← vertex with min dist in Q
+        REMOVE u from Q
+        
+        FOR each neighbour v of u:
+            alt ← dist[u] + weight(u, v)
+            IF alt < dist[v]:
+                dist[v] ← alt
+                prev[v] ← u
+                DECREASE-KEY(Q, v, alt)
+    
+    RETURN dist, prev</code></pre>
+                    </div>
+                </div>
+                <div class="column c-lang">
+                    <div class="column-header">⚙️ C</div>
+                    <div class="column-content">
+<pre><code class="language-c">void dijkstra(Graph *g, int src, 
+              int *dist, int *prev) {
+    MinHeap *pq = heap_create(g->V);
+    
+    for (int v = 0; v < g->V; v++) {
+        dist[v] = INT_MAX;
+        prev[v] = -1;
+    }
+    dist[src] = 0;
+    heap_insert(pq, src, 0);
+    
+    while (!heap_empty(pq)) {
+        int u = heap_extract_min(pq);
+        
+        for (Edge *e = g->adj[u]; e; 
+             e = e->next) {
+            int v = e->dest;
+            if (dist[u] + e->weight < dist[v]) {
+                dist[v] = dist[u] + e->weight;
+                prev[v] = u;
+                heap_decrease(pq, v, dist[v]);
+            }
+        }
+    }
+    heap_destroy(pq);
+}</code></pre>
+                    </div>
+                </div>
+                <div class="column python">
+                    <div class="column-header">🐍 Python</div>
+                    <div class="column-content">
+<pre><code class="language-python">import heapq
+
+def dijkstra(graph, src):
+    dist = {v: float('inf') 
+            for v in graph}
+    dist[src] = 0
+    prev = {v: None for v in graph}
+    pq = [(0, src)]
+    
+    while pq:
+        d, u = heapq.heappop(pq)
+        if d > dist[u]:
+            continue
+            
+        for v, weight in graph[u]:
+            if dist[u] + weight < dist[v]:
+                dist[v] = dist[u] + weight
+                prev[v] = u
+                heapq.heappush(pq, 
+                    (dist[v], v))
+    
+    return dist, prev</code></pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 6: Dynamic Programming - Fibonacci -->
+        <div class="slide" data-slide="6">
+            <h2>🔢 Dynamic Programming: Fibonacci</h2>
+            <div class="three-columns">
+                <div class="column pseudocod">
+                    <div class="column-header">📝 Pseudocode</div>
+                    <div class="column-content">
+<pre><code>// Naive recursive (exponential)
+FUNCTION Fib_Naive(n):
+    IF n ≤ 1:
+        RETURN n
+    RETURN Fib(n-1) + Fib(n-2)
+
+// DP with memoisation
+FUNCTION Fib_Memo(n, memo):
+    IF n ≤ 1:
+        RETURN n
+    IF memo[n] is defined:
+        RETURN memo[n]
+    memo[n] ← Fib(n-1) + Fib(n-2)
+    RETURN memo[n]
+
+// DP with tabulation
+FUNCTION Fib_Tab(n):
+    IF n ≤ 1: RETURN n
+    prev, curr ← 0, 1
+    FOR i ← 2 TO n:
+        prev, curr ← curr, prev+curr
+    RETURN curr</code></pre>
+                    </div>
+                </div>
+                <div class="column c-lang">
+                    <div class="column-header">⚙️ C</div>
+                    <div class="column-content">
+<pre><code class="language-c">// Space-optimised O(1)
+long long fib(int n) {
+    if (n <= 1) return n;
+    
+    long long prev = 0;
+    long long curr = 1;
+    
+    for (int i = 2; i <= n; i++) {
+        long long next = prev + curr;
+        prev = curr;
+        curr = next;
+    }
+    
+    return curr;
+}
+
+// With memoisation
+long long memo[100] = {0};
+long long fib_memo(int n) {
+    if (n <= 1) return n;
+    if (memo[n]) return memo[n];
+    return memo[n] = fib_memo(n-1) 
+                   + fib_memo(n-2);
+}</code></pre>
+                    </div>
+                </div>
+                <div class="column python">
+                    <div class="column-header">🐍 Python</div>
+                    <div class="column-content">
+<pre><code class="language-python"># Using decorator
+from functools import lru_cache
+
+@lru_cache(maxsize=None)
+def fib_memo(n):
+    if n <= 1:
+        return n
+    return fib_memo(n-1) + fib_memo(n-2)
+
+# Generator (lazy evaluation)
+def fib_gen():
+    a, b = 0, 1
+    while True:
+        yield a
+        a, b = b, a + b
+
+# Get nth Fibonacci
+def fib(n):
+    a, b = 0, 1
+    for _ in range(n):
+        a, b = b, a + b
+    return a</code></pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 7: LCS (Longest Common Subsequence) -->
+        <div class="slide" data-slide="7">
+            <h2>📏 Longest Common Subsequence</h2>
+            <div class="three-columns">
+                <div class="column pseudocod">
+                    <div class="column-header">📝 Pseudocode</div>
+                    <div class="column-content">
+<pre><code>FUNCTION LCS(X, Y):
+    m ← length(X)
+    n ← length(Y)
+    dp ← 2D array [m+1][n+1]
+    
+    FOR i ← 0 TO m:
+        FOR j ← 0 TO n:
+            IF i = 0 OR j = 0:
+                dp[i][j] ← 0
+            ELSE IF X[i-1] = Y[j-1]:
+                dp[i][j] ← dp[i-1][j-1] + 1
+            ELSE:
+                dp[i][j] ← MAX(dp[i-1][j],
+                               dp[i][j-1])
+    
+    RETURN dp[m][n]</code></pre>
+                    </div>
+                </div>
+                <div class="column c-lang">
+                    <div class="column-header">⚙️ C</div>
+                    <div class="column-content">
+<pre><code class="language-c">int lcs(const char *X, const char *Y) {
+    int m = strlen(X);
+    int n = strlen(Y);
+    
+    int **dp = malloc((m+1) * sizeof(int*));
+    for (int i = 0; i <= m; i++)
+        dp[i] = calloc(n+1, sizeof(int));
+    
+    for (int i = 1; i <= m; i++) {
+        for (int j = 1; j <= n; j++) {
+            if (X[i-1] == Y[j-1])
+                dp[i][j] = dp[i-1][j-1] + 1;
+            else
+                dp[i][j] = (dp[i-1][j] > dp[i][j-1])
+                         ? dp[i-1][j] : dp[i][j-1];
+        }
+    }
+    
+    int result = dp[m][n];
+    // Free memory...
+    return result;
+}</code></pre>
+                    </div>
+                </div>
+                <div class="column python">
+                    <div class="column-header">🐍 Python</div>
+                    <div class="column-content">
+<pre><code class="language-python">def lcs(X, Y):
+    m, n = len(X), len(Y)
+    dp = [[0] * (n + 1) 
+          for _ in range(m + 1)]
+    
+    for i in range(1, m + 1):
+        for j in range(1, n + 1):
+            if X[i-1] == Y[j-1]:
+                dp[i][j] = dp[i-1][j-1] + 1
+            else:
+                dp[i][j] = max(dp[i-1][j],
+                               dp[i][j-1])
+    
+    return dp[m][n]
+
+# Using difflib (built-in):
+# from difflib import SequenceMatcher
+# ratio = SequenceMatcher(None, X, Y).ratio()</code></pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 8: Graph BFS -->
+        <div class="slide" data-slide="8">
+            <h2>🔄 Breadth-First Search</h2>
+            <div class="three-columns">
+                <div class="column pseudocod">
+                    <div class="column-header">📝 Pseudocode</div>
+                    <div class="column-content">
+<pre><code>FUNCTION BFS(G, start):
+    visited ← empty set
+    queue ← empty queue
+    
+    ENQUEUE(queue, start)
+    ADD start TO visited
+    
+    WHILE queue is not empty:
+        vertex ← DEQUEUE(queue)
+        PROCESS(vertex)
+        
+        FOR each neighbour of vertex:
+            IF neighbour NOT IN visited:
+                ADD neighbour TO visited
+                ENQUEUE(queue, neighbour)
+
+// Complexity: O(V + E)</code></pre>
+                    </div>
+                </div>
+                <div class="column c-lang">
+                    <div class="column-header">⚙️ C</div>
+                    <div class="column-content">
+<pre><code class="language-c">void bfs(Graph *g, int start) {
+    bool *visited = calloc(g->V, 
+                           sizeof(bool));
+    Queue *q = queue_create();
+    
+    visited[start] = true;
+    queue_enqueue(q, start);
+    
+    while (!queue_empty(q)) {
+        int v = queue_dequeue(q);
+        printf("%d ", v);
+        
+        for (Node *n = g->adj[v]; n; 
+             n = n->next) {
+            if (!visited[n->vertex]) {
+                visited[n->vertex] = true;
+                queue_enqueue(q, n->vertex);
+            }
+        }
+    }
+    
+    free(visited);
+    queue_destroy(q);
+}</code></pre>
+                    </div>
+                </div>
+                <div class="column python">
+                    <div class="column-header">🐍 Python</div>
+                    <div class="column-content">
+<pre><code class="language-python">from collections import deque
+
+def bfs(graph, start):
+    visited = {start}
+    queue = deque([start])
+    result = []
+    
+    while queue:
+        vertex = queue.popleft()
+        result.append(vertex)
+        
+        for neighbour in graph[vertex]:
+            if neighbour not in visited:
+                visited.add(neighbour)
+                queue.append(neighbour)
+    
+    return result
+
+# Example usage:
+# graph = {0: [1, 2], 1: [2], 2: [3]}
+# print(bfs(graph, 0))</code></pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 9: Hash Table -->
+        <div class="slide" data-slide="9">
+            <h2>#️⃣ Hash Table Implementation</h2>
+            <div class="three-columns">
+                <div class="column pseudocod">
+                    <div class="column-header">📝 Pseudocode</div>
+                    <div class="column-content">
+<pre><code>FUNCTION Hash(key, size):
+    hash ← 0
+    FOR each char c IN key:
+        hash ← hash * 33 + c
+    RETURN hash MOD size
+
+FUNCTION Insert(table, key, value):
+    index ← Hash(key, table.size)
+    // Handle collision (chaining)
+    ADD (key, value) TO table[index]
+
+FUNCTION Get(table, key):
+    index ← Hash(key, table.size)
+    FOR each (k, v) IN table[index]:
+        IF k = key:
+            RETURN v
+    RETURN NULL</code></pre>
+                    </div>
+                </div>
+                <div class="column c-lang">
+                    <div class="column-header">⚙️ C</div>
+                    <div class="column-content">
+<pre><code class="language-c">typedef struct Node {
+    char *key;
+    void *value;
+    struct Node *next;
+} Node;
+
+size_t hash(const char *key, size_t sz) {
+    size_t h = 5381;
+    int c;
+    while ((c = *key++))
+        h = ((h << 5) + h) + c;
+    return h % sz;
+}
+
+void *ht_get(HashTable *ht, 
+             const char *key) {
+    size_t idx = hash(key, ht->size);
+    for (Node *n = ht->buckets[idx]; 
+         n; n = n->next)
+        if (strcmp(n->key, key) == 0)
+            return n->value;
+    return NULL;
+}</code></pre>
+                    </div>
+                </div>
+                <div class="column python">
+                    <div class="column-header">🐍 Python</div>
+                    <div class="column-content">
+<pre><code class="language-python"># Python dict IS a hash table!
+# Built-in, highly optimised
+
+my_dict = {}
+my_dict["key"] = "value"
+value = my_dict.get("key")
+
+# For learning, manual impl:
+class HashTable:
+    def __init__(self, size=100):
+        self.size = size
+        self.table = [[] for _ in range(size)]
+    
+    def _hash(self, key):
+        return hash(key) % self.size
+    
+    def set(self, key, value):
+        idx = self._hash(key)
+        for pair in self.table[idx]:
+            if pair[0] == key:
+                pair[1] = value
+                return
+        self.table[idx].append([key, value])</code></pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 10: Comparison Table -->
+        <div class="slide" data-slide="10">
+            <h2>📊 Language Comparison Summary</h2>
+            <table>
+                <tr>
+                    <th>Aspect</th>
+                    <th><span class="lang-badge pseudo">Pseudocode</span></th>
+                    <th><span class="lang-badge c">C</span></th>
+                    <th><span class="lang-badge python">Python</span></th>
+                </tr>
+                <tr>
+                    <td>Memory Management</td>
+                    <td>Implicit</td>
+                    <td>Manual (malloc/free)</td>
+                    <td>Automatic (GC)</td>
+                </tr>
+                <tr>
+                    <td>Type System</td>
+                    <td>Implicit</td>
+                    <td>Static, explicit</td>
+                    <td>Dynamic, duck typing</td>
+                </tr>
+                <tr>
+                    <td>Data Structures</td>
+                    <td>Abstract</td>
+                    <td>Manual implementation</td>
+                    <td>Built-in (list, dict, set)</td>
+                </tr>
+                <tr>
+                    <td>Error Handling</td>
+                    <td>Assumed correct</td>
+                    <td>Return codes, manual</td>
+                    <td>Exceptions</td>
+                </tr>
+                <tr>
+                    <td>Performance</td>
+                    <td>N/A</td>
+                    <td>Fastest (compiled)</td>
+                    <td>Slower (interpreted)</td>
+                </tr>
+                <tr>
+                    <td>Code Length</td>
+                    <td>Minimal</td>
+                    <td>Verbose</td>
+                    <td>Concise</td>
+                </tr>
+                <tr>
+                    <td>Best For</td>
+                    <td>Algorithm design</td>
+                    <td>Systems, performance</td>
+                    <td>Rapid development</td>
+                </tr>
+            </table>
+        </div>
+
+        <!-- Slide 11: When to Use Each -->
+        <div class="slide" data-slide="11">
+            <h2>🎯 When to Use Each Language</h2>
+            <div class="two-columns">
+                <div>
+                    <div class="info-box" style="border-color: var(--pseudo-color); background: rgba(240, 136, 62, 0.1);">
+                        <h4 style="color: var(--pseudo-color);">📝 Pseudocode</h4>
+                        <ul>
+                            <li>Algorithm design and communication</li>
+                            <li>Teaching and learning concepts</li>
+                            <li>Documentation and specifications</li>
+                            <li>Interview whiteboard solutions</li>
+                            <li>Cross-team collaboration</li>
+                        </ul>
+                    </div>
+                    <div class="info-box" style="border-color: var(--c-color); background: rgba(88, 166, 255, 0.1);">
+                        <h4 style="color: var(--c-color);">⚙️ C</h4>
+                        <ul>
+                            <li>Operating systems and kernels</li>
+                            <li>Embedded systems and IoT</li>
+                            <li>Performance-critical applications</li>
+                            <li>Hardware interfaces and drivers</li>
+                            <li>When memory control is essential</li>
+                        </ul>
+                    </div>
+                </div>
+                <div>
+                    <div class="info-box tip">
+                        <h4 style="color: var(--python-color);">🐍 Python</h4>
+                        <ul>
+                            <li>Rapid prototyping</li>
+                            <li>Data science and machine learning</li>
+                            <li>Scripting and automation</li>
+                            <li>Web development (Django, Flask)</li>
+                            <li>When development speed matters</li>
+                        </ul>
+                    </div>
+                    <div class="info-box note">
+                        <h4>💡 Pro Tip</h4>
+                        <p>Start with pseudocode to clarify logic, prototype in Python to verify correctness, then implement in C when performance is critical.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 12: Key Insights -->
+        <div class="slide" data-slide="12">
+            <h2>💡 Key Insights</h2>
+            <div class="two-columns">
+                <div>
+                    <h3>Algorithm Invariants</h3>
+                    <ul>
+                        <li><strong>Time complexity</strong> remains constant across languages</li>
+                        <li><strong>Space complexity</strong> may vary due to overhead</li>
+                        <li><strong>Correctness</strong> depends on algorithm, not language</li>
+                        <li><strong>Logic flow</strong> is identical when properly translated</li>
+                    </ul>
+                </div>
+                <div>
+                    <h3>Language-Specific Considerations</h3>
+                    <ul>
+                        <li><strong>C</strong>: Pointer arithmetic, manual bounds checking</li>
+                        <li><strong>Python</strong>: List comprehensions, generator expressions</li>
+                        <li><strong>Both</strong>: Standard library functions are optimised</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="info-box tip" style="margin-top: 20px;">
+                <h4>✓ Remember</h4>
+                <p>The best programmers understand algorithms at the pseudocode level and can implement them in multiple languages. Focus on the algorithm first, then adapt to the language's idioms.</p>
+            </div>
+        </div>
+
+        <!-- Slide 13: Conclusion -->
+        <div class="slide end-slide" data-slide="13">
+            <h1>Conclusion</h1>
+            <p style="font-size: 1.3em; max-width: 700px; margin: 20px auto;">
+                Understanding algorithms across languages deepens comprehension and improves implementation skills.
+            </p>
+            <p style="margin-top: 30px;">
+                <span class="lang-badge pseudo">📝 Design</span>
+                →
+                <span class="lang-badge python">🐍 Prototype</span>
+                →
+                <span class="lang-badge c">⚙️ Optimise</span>
+            </p>
+            <p style="margin-top: 40px; color: var(--text-secondary);">
+                Week 14 • Algorithms and Programming Techniques
+            </p>
+        </div>
+
+    </div>
+
+    <div class="slide-counter">
+        <span id="currentSlide">1</span> / <span id="totalSlides">13</span>
+    </div>
+
+    <div class="nav-buttons">
+        <button class="nav-btn" onclick="goToSlide(1)">⏮ Start</button>
+        <button class="nav-btn" onclick="prevSlide()">← Prev</button>
+        <button class="nav-btn" onclick="nextSlide()">Next →</button>
+        <button class="nav-btn" onclick="goToSlide(totalSlides)">End ⏭</button>
+    </div>
+
+    <script>
+        hljs.highlightAll();
+        
+        let currentSlide = 1;
+        const slides = document.querySelectorAll('.slide');
+        const totalSlides = slides.length;
+        
+        document.getElementById('totalSlides').textContent = totalSlides;
+        
+        function updateSlide() {
+            slides.forEach((slide, index) => {
+                slide.classList.remove('active');
+                if (index + 1 === currentSlide) {
+                    slide.classList.add('active');
+                }
+            });
+            
+            document.getElementById('currentSlide').textContent = currentSlide;
+            document.getElementById('progressBar').style.width = 
+                ((currentSlide / totalSlides) * 100) + '%';
+        }
+        
+        function nextSlide() {
+            if (currentSlide < totalSlides) {
+                currentSlide++;
+                updateSlide();
+            }
+        }
+        
+        function prevSlide() {
+            if (currentSlide > 1) {
+                currentSlide--;
+                updateSlide();
+            }
+        }
+        
+        function goToSlide(n) {
+            if (n >= 1 && n <= totalSlides) {
+                currentSlide = n;
+                updateSlide();
+            }
+        }
+        
+        document.addEventListener('keydown', function(e) {
+            switch(e.key) {
+                case 'ArrowRight':
+                case ' ':
+                    e.preventDefault();
+                    nextSlide();
+                    break;
+                case 'ArrowLeft':
+                    prevSlide();
+                    break;
+                case 'Home':
+                    goToSlide(1);
+                    break;
+                case 'End':
+                    goToSlide(totalSlides);
+                    break;
+            }
+        });
+        
+        let touchStartX = 0;
+        document.addEventListener('touchstart', e => {
+            touchStartX = e.changedTouches[0].screenX;
+        });
+        
+        document.addEventListener('touchend', e => {
+            const touchEndX = e.changedTouches[0].screenX;
+            if (touchStartX - touchEndX > 50) nextSlide();
+            if (touchEndX - touchStartX > 50) prevSlide();
+        });
+    </script>
+</body>
+</html>

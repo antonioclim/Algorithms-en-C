@@ -1,0 +1,1111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Week 11: Hash Tables — Language Comparison</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/c.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/python.min.js"></script>
+    <style>
+        :root {
+            --bg-primary: #0d1117;
+            --bg-secondary: #161b22;
+            --bg-tertiary: #21262d;
+            --text-primary: #f0f6fc;
+            --text-secondary: #8b949e;
+            --accent-blue: #58a6ff;
+            --accent-green: #3fb950;
+            --accent-yellow: #d29922;
+            --accent-red: #f85149;
+            --accent-purple: #a371f7;
+            --accent-orange: #db6d28;
+            --border-color: #30363d;
+            --pseudocode-bg: #1a1f29;
+            --c-bg: #1a2332;
+            --python-bg: #1a2922;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.6;
+            overflow: hidden;
+        }
+
+        .progress-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: var(--bg-tertiary);
+            z-index: 1000;
+        }
+
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, var(--accent-purple), var(--accent-blue), var(--accent-green));
+            transition: width 0.3s ease;
+        }
+
+        .slides-container {
+            width: 100vw;
+            height: 100vh;
+            position: relative;
+        }
+
+        .slide {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            padding: 50px 60px;
+            display: none;
+            flex-direction: column;
+            opacity: 0;
+            transition: opacity 0.4s ease;
+            overflow-y: auto;
+        }
+
+        .slide.active {
+            display: flex;
+            opacity: 1;
+        }
+
+        .slide-title {
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+        }
+
+        h1 {
+            font-size: 3rem;
+            background: linear-gradient(135deg, var(--accent-purple), var(--accent-blue), var(--accent-green));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 1rem;
+        }
+
+        h2 {
+            font-size: 1.8rem;
+            color: var(--accent-blue);
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid var(--border-color);
+        }
+
+        .subtitle {
+            font-size: 1.3rem;
+            color: var(--text-secondary);
+        }
+
+        .three-columns {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 1rem;
+            flex: 1;
+            margin-top: 1rem;
+            min-height: 0;
+        }
+
+        .column {
+            display: flex;
+            flex-direction: column;
+            border-radius: 8px;
+            overflow: hidden;
+            border: 1px solid var(--border-color);
+        }
+
+        .column.pseudocode { background: var(--pseudocode-bg); }
+        .column.c-lang { background: var(--c-bg); }
+        .column.python { background: var(--python-bg); }
+
+        .column-header {
+            padding: 0.75rem 1rem;
+            font-weight: 600;
+            font-size: 1.1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .column.pseudocode .column-header { 
+            background: rgba(163, 113, 247, 0.2); 
+            color: var(--accent-purple);
+        }
+        .column.c-lang .column-header { 
+            background: rgba(88, 166, 255, 0.2); 
+            color: var(--accent-blue);
+        }
+        .column.python .column-header { 
+            background: rgba(63, 185, 80, 0.2); 
+            color: var(--accent-green);
+        }
+
+        .column-content {
+            flex: 1;
+            padding: 1rem;
+            overflow-y: auto;
+        }
+
+        pre {
+            margin: 0;
+            font-family: 'JetBrains Mono', 'Fira Code', monospace;
+            font-size: 0.85rem;
+            line-height: 1.5;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+
+        code {
+            font-family: inherit;
+        }
+
+        .comparison-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+        }
+
+        .comparison-table th,
+        .comparison-table td {
+            padding: 0.75rem;
+            text-align: left;
+            border: 1px solid var(--border-color);
+        }
+
+        .comparison-table th {
+            background: var(--bg-tertiary);
+        }
+
+        .comparison-table th:nth-child(1) { color: var(--accent-purple); }
+        .comparison-table th:nth-child(2) { color: var(--accent-blue); }
+        .comparison-table th:nth-child(3) { color: var(--accent-green); }
+
+        .info-box {
+            padding: 1rem;
+            border-radius: 8px;
+            margin: 1rem 0;
+            border-left: 4px solid;
+        }
+
+        .info-box.insight {
+            background: rgba(163, 113, 247, 0.1);
+            border-color: var(--accent-purple);
+        }
+
+        .info-box.tip {
+            background: rgba(63, 185, 80, 0.1);
+            border-color: var(--accent-green);
+        }
+
+        .info-box h4 {
+            margin-bottom: 0.5rem;
+            color: var(--accent-purple);
+        }
+
+        .nav-controls {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            display: flex;
+            gap: 10px;
+            z-index: 1000;
+        }
+
+        .nav-btn {
+            width: 50px;
+            height: 50px;
+            border: none;
+            border-radius: 8px;
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+            font-size: 1.2rem;
+            cursor: pointer;
+            border: 1px solid var(--border-color);
+            transition: all 0.2s;
+        }
+
+        .nav-btn:hover {
+            background: var(--accent-blue);
+            color: var(--bg-primary);
+        }
+
+        .slide-counter {
+            position: fixed;
+            bottom: 25px;
+            left: 30px;
+            font-size: 1rem;
+            color: var(--text-secondary);
+        }
+
+        .two-columns {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            margin-top: 1rem;
+        }
+
+        ul {
+            margin-left: 1.5rem;
+        }
+
+        li {
+            margin-bottom: 0.5rem;
+        }
+
+        .highlight { color: var(--accent-yellow); font-weight: 600; }
+    </style>
+</head>
+<body>
+    <div class="progress-container">
+        <div class="progress-bar" id="progressBar"></div>
+    </div>
+
+    <div class="slides-container">
+        <!-- Slide 1: Title -->
+        <div class="slide slide-title active">
+            <h1>Hash Tables</h1>
+            <p class="subtitle">Pseudocode → C → Python Comparison</p>
+            <p style="margin-top: 2rem; color: var(--text-secondary);">
+                Week 11 | Algorithms and Programming Techniques
+            </p>
+        </div>
+
+        <!-- Slide 2: Why Compare? -->
+        <div class="slide">
+            <h2>Why Compare Languages?</h2>
+            <div class="two-columns">
+                <div>
+                    <h3 style="color: var(--accent-purple);">📝 Pseudocode</h3>
+                    <ul>
+                        <li>Language-agnostic algorithm description</li>
+                        <li>Focus on logic, not syntax</li>
+                        <li>Ideal for planning and communication</li>
+                        <li>No compilation or runtime</li>
+                    </ul>
+                    <h3 style="color: var(--accent-blue); margin-top: 1.5rem;">⚙️ C</h3>
+                    <ul>
+                        <li>Manual memory management</li>
+                        <li>Direct hardware control</li>
+                        <li>Maximum performance</li>
+                        <li>Systems programming foundation</li>
+                    </ul>
+                </div>
+                <div>
+                    <h3 style="color: var(--accent-green);">🐍 Python</h3>
+                    <ul>
+                        <li>Built-in hash table (<code>dict</code>)</li>
+                        <li>Automatic memory management</li>
+                        <li>Rapid prototyping</li>
+                        <li>Rich standard library</li>
+                    </ul>
+                    <div class="info-box insight" style="margin-top: 1.5rem;">
+                        <h4>💡 Learning Goal</h4>
+                        <p>Understanding the same algorithm in multiple representations deepens comprehension and reveals language-specific trade-offs.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 3: Hash Function -->
+        <div class="slide">
+            <h2>Hash Function (djb2 Algorithm)</h2>
+            <div class="three-columns">
+                <div class="column pseudocode">
+                    <div class="column-header">📝 Pseudocode</div>
+                    <div class="column-content">
+<pre>FUNCTION hash(key):
+    hash_value ← 5381
+    
+    FOR EACH character c IN key:
+        hash_value ← hash_value × 33 + c
+    END FOR
+    
+    RETURN hash_value
+END FUNCTION
+
+// Usage:
+index ← hash(key) MOD table_size</pre>
+                    </div>
+                </div>
+                <div class="column c-lang">
+                    <div class="column-header">⚙️ C</div>
+                    <div class="column-content">
+<pre><code class="language-c">unsigned int hash_djb2(const char *key) {
+    unsigned int hash = 5381;
+    int c;
+    
+    while ((c = *key++)) {
+        // hash * 33 + c
+        hash = ((hash << 5) + hash) + c;
+    }
+    
+    return hash;
+}
+
+// Usage:
+unsigned int idx = hash_djb2(key) % size;</code></pre>
+                    </div>
+                </div>
+                <div class="column python">
+                    <div class="column-header">🐍 Python</div>
+                    <div class="column-content">
+<pre><code class="language-python">def hash_djb2(key: str) -> int:
+    hash_value = 5381
+    
+    for char in key:
+        hash_value = ((hash_value << 5) + 
+                      hash_value) + ord(char)
+    
+    return hash_value
+
+# Usage:
+index = hash_djb2(key) % table_size
+
+# Or use built-in:
+index = hash(key) % table_size</code></pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 4: Data Structures -->
+        <div class="slide">
+            <h2>Hash Table Structure</h2>
+            <div class="three-columns">
+                <div class="column pseudocode">
+                    <div class="column-header">📝 Pseudocode</div>
+                    <div class="column-content">
+<pre>STRUCTURE Node:
+    key: STRING
+    value: ANY
+    next: Node (or NULL)
+END STRUCTURE
+
+STRUCTURE HashTable:
+    buckets: ARRAY of Node
+    size: INTEGER
+    count: INTEGER
+END STRUCTURE
+
+FUNCTION create_table(size):
+    table ← NEW HashTable
+    table.size ← size
+    table.count ← 0
+    table.buckets ← 
+        NEW ARRAY[size] of NULL
+    RETURN table
+END FUNCTION</pre>
+                    </div>
+                </div>
+                <div class="column c-lang">
+                    <div class="column-header">⚙️ C</div>
+                    <div class="column-content">
+<pre><code class="language-c">typedef struct Node {
+    char *key;
+    int value;
+    struct Node *next;
+} Node;
+
+typedef struct {
+    Node **buckets;
+    int size;
+    int count;
+} HashTable;
+
+HashTable *ht_create(int size) {
+    HashTable *ht = malloc(
+        sizeof(HashTable));
+    ht->size = size;
+    ht->count = 0;
+    ht->buckets = calloc(size,
+        sizeof(Node *));
+    return ht;
+}</code></pre>
+                    </div>
+                </div>
+                <div class="column python">
+                    <div class="column-header">🐍 Python</div>
+                    <div class="column-content">
+<pre><code class="language-python">class Node:
+    def __init__(self, key, value):
+        self.key = key
+        self.value = value
+        self.next = None
+
+class HashTable:
+    def __init__(self, size=16):
+        self.size = size
+        self.count = 0
+        self.buckets = [None] * size
+    
+    @property
+    def load_factor(self):
+        return self.count / self.size
+
+# Or simply use built-in:
+table = {}  # Empty dict
+table = dict()  # Same thing</code></pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 5: Insert Operation -->
+        <div class="slide">
+            <h2>Insert Operation</h2>
+            <div class="three-columns">
+                <div class="column pseudocode">
+                    <div class="column-header">📝 Pseudocode</div>
+                    <div class="column-content">
+<pre>FUNCTION insert(table, key, value):
+    index ← hash(key) MOD table.size
+    
+    // Check for existing key
+    current ← table.buckets[index]
+    WHILE current ≠ NULL:
+        IF current.key = key:
+            current.value ← value
+            RETURN  // Updated
+        END IF
+        current ← current.next
+    END WHILE
+    
+    // Insert new node at head
+    new_node ← NEW Node
+    new_node.key ← key
+    new_node.value ← value
+    new_node.next ← table.buckets[index]
+    table.buckets[index] ← new_node
+    table.count ← table.count + 1
+END FUNCTION</pre>
+                    </div>
+                </div>
+                <div class="column c-lang">
+                    <div class="column-header">⚙️ C</div>
+                    <div class="column-content">
+<pre><code class="language-c">void ht_insert(HashTable *ht,
+               const char *key,
+               int value) {
+    unsigned int idx = 
+        hash_djb2(key) % ht->size;
+    
+    // Check for existing key
+    Node *curr = ht->buckets[idx];
+    while (curr != NULL) {
+        if (strcmp(curr->key, key) == 0) {
+            curr->value = value;
+            return;
+        }
+        curr = curr->next;
+    }
+    
+    // Create and insert new node
+    Node *node = malloc(sizeof(Node));
+    node->key = strdup(key);
+    node->value = value;
+    node->next = ht->buckets[idx];
+    ht->buckets[idx] = node;
+    ht->count++;
+}</code></pre>
+                    </div>
+                </div>
+                <div class="column python">
+                    <div class="column-header">🐍 Python</div>
+                    <div class="column-content">
+<pre><code class="language-python">def insert(self, key, value):
+    index = hash(key) % self.size
+    
+    # Check for existing key
+    current = self.buckets[index]
+    while current is not None:
+        if current.key == key:
+            current.value = value
+            return
+        current = current.next
+    
+    # Insert new node at head
+    node = Node(key, value)
+    node.next = self.buckets[index]
+    self.buckets[index] = node
+    self.count += 1
+
+# Built-in dict usage:
+table[key] = value  # That's it!</code></pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 6: Search Operation -->
+        <div class="slide">
+            <h2>Search Operation</h2>
+            <div class="three-columns">
+                <div class="column pseudocode">
+                    <div class="column-header">📝 Pseudocode</div>
+                    <div class="column-content">
+<pre>FUNCTION search(table, key):
+    index ← hash(key) MOD table.size
+    
+    current ← table.buckets[index]
+    WHILE current ≠ NULL:
+        IF current.key = key:
+            RETURN current.value
+        END IF
+        current ← current.next
+    END WHILE
+    
+    RETURN NOT_FOUND
+END FUNCTION
+
+// Complexity:
+// Average: O(1)
+// Worst:   O(n) when all keys collide</pre>
+                    </div>
+                </div>
+                <div class="column c-lang">
+                    <div class="column-header">⚙️ C</div>
+                    <div class="column-content">
+<pre><code class="language-c">int *ht_search(HashTable *ht,
+               const char *key) {
+    unsigned int idx = 
+        hash_djb2(key) % ht->size;
+    
+    Node *curr = ht->buckets[idx];
+    while (curr != NULL) {
+        if (strcmp(curr->key, key) == 0) {
+            return &curr->value;
+        }
+        curr = curr->next;
+    }
+    
+    return NULL;  // Not found
+}
+
+// Usage:
+int *val = ht_search(table, "alice");
+if (val != NULL) {
+    printf("Found: %d\n", *val);
+}</code></pre>
+                    </div>
+                </div>
+                <div class="column python">
+                    <div class="column-header">🐍 Python</div>
+                    <div class="column-content">
+<pre><code class="language-python">def search(self, key):
+    index = hash(key) % self.size
+    
+    current = self.buckets[index]
+    while current is not None:
+        if current.key == key:
+            return current.value
+        current = current.next
+    
+    return None  # Not found
+
+# Built-in dict usage:
+value = table.get(key)  # Returns None
+value = table.get(key, default)
+value = table[key]  # KeyError if missing
+
+# Check membership:
+if key in table:
+    value = table[key]</code></pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 7: Delete Operation -->
+        <div class="slide">
+            <h2>Delete Operation</h2>
+            <div class="three-columns">
+                <div class="column pseudocode">
+                    <div class="column-header">📝 Pseudocode</div>
+                    <div class="column-content">
+<pre>FUNCTION delete(table, key):
+    index ← hash(key) MOD table.size
+    
+    current ← table.buckets[index]
+    previous ← NULL
+    
+    WHILE current ≠ NULL:
+        IF current.key = key:
+            IF previous = NULL:
+                // First node in chain
+                table.buckets[index] ← 
+                    current.next
+            ELSE:
+                // Middle or end of chain
+                previous.next ← current.next
+            END IF
+            FREE current
+            table.count ← table.count - 1
+            RETURN TRUE
+        END IF
+        previous ← current
+        current ← current.next
+    END WHILE
+    
+    RETURN FALSE  // Key not found
+END FUNCTION</pre>
+                    </div>
+                </div>
+                <div class="column c-lang">
+                    <div class="column-header">⚙️ C</div>
+                    <div class="column-content">
+<pre><code class="language-c">bool ht_delete(HashTable *ht,
+               const char *key) {
+    unsigned int idx = 
+        hash_djb2(key) % ht->size;
+    
+    Node *curr = ht->buckets[idx];
+    Node *prev = NULL;
+    
+    while (curr != NULL) {
+        if (strcmp(curr->key, key) == 0) {
+            if (prev == NULL) {
+                ht->buckets[idx] = curr->next;
+            } else {
+                prev->next = curr->next;
+            }
+            free(curr->key);
+            free(curr);
+            ht->count--;
+            return true;
+        }
+        prev = curr;
+        curr = curr->next;
+    }
+    return false;
+}</code></pre>
+                    </div>
+                </div>
+                <div class="column python">
+                    <div class="column-header">🐍 Python</div>
+                    <div class="column-content">
+<pre><code class="language-python">def delete(self, key):
+    index = hash(key) % self.size
+    current = self.buckets[index]
+    prev = None
+    
+    while current is not None:
+        if current.key == key:
+            if prev is None:
+                self.buckets[index] = \
+                    current.next
+            else:
+                prev.next = current.next
+            self.count -= 1
+            return True
+        prev = current
+        current = current.next
+    return False
+
+# Built-in dict usage:
+del table[key]  # KeyError if missing
+table.pop(key)  # Returns value, KeyError
+table.pop(key, None)  # No error</code></pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 8: Rehashing -->
+        <div class="slide">
+            <h2>Dynamic Resizing (Rehashing)</h2>
+            <div class="three-columns">
+                <div class="column pseudocode">
+                    <div class="column-header">📝 Pseudocode</div>
+                    <div class="column-content">
+<pre>FUNCTION rehash(table):
+    old_buckets ← table.buckets
+    old_size ← table.size
+    
+    // Double the size
+    table.size ← old_size × 2
+    table.buckets ← 
+        NEW ARRAY[table.size] of NULL
+    table.count ← 0
+    
+    // Reinsert all entries
+    FOR i FROM 0 TO old_size - 1:
+        current ← old_buckets[i]
+        WHILE current ≠ NULL:
+            insert(table, 
+                   current.key, 
+                   current.value)
+            temp ← current
+            current ← current.next
+            FREE temp
+        END WHILE
+    END FOR
+    
+    FREE old_buckets
+END FUNCTION</pre>
+                    </div>
+                </div>
+                <div class="column c-lang">
+                    <div class="column-header">⚙️ C</div>
+                    <div class="column-content">
+<pre><code class="language-c">void ht_rehash(HashTable *ht) {
+    Node **old = ht->buckets;
+    int old_size = ht->size;
+    
+    // Create new larger table
+    ht->size *= 2;
+    ht->buckets = calloc(ht->size,
+        sizeof(Node *));
+    ht->count = 0;
+    
+    // Reinsert all entries
+    for (int i = 0; i < old_size; i++) {
+        Node *curr = old[i];
+        while (curr != NULL) {
+            ht_insert(ht, curr->key,
+                      curr->value);
+            Node *temp = curr;
+            curr = curr->next;
+            free(temp->key);
+            free(temp);
+        }
+    }
+    free(old);
+}</code></pre>
+                    </div>
+                </div>
+                <div class="column python">
+                    <div class="column-header">🐍 Python</div>
+                    <div class="column-content">
+<pre><code class="language-python">def rehash(self):
+    old_buckets = self.buckets
+    
+    # Double the size
+    self.size *= 2
+    self.buckets = [None] * self.size
+    self.count = 0
+    
+    # Reinsert all entries
+    for bucket in old_buckets:
+        current = bucket
+        while current is not None:
+            self.insert(current.key,
+                       current.value)
+            current = current.next
+
+# Built-in dict handles this
+# automatically! No action needed.
+
+# Python's dict resizes when
+# load factor exceeds ~2/3</code></pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 9: Open Addressing -->
+        <div class="slide">
+            <h2>Open Addressing (Double Hashing)</h2>
+            <div class="three-columns">
+                <div class="column pseudocode">
+                    <div class="column-header">📝 Pseudocode</div>
+                    <div class="column-content">
+<pre>FUNCTION insert_open(table, key, val):
+    index ← h1(key) MOD table.size
+    step ← h2(key)
+    
+    WHILE table[index] ≠ EMPTY AND
+          table[index] ≠ TOMBSTONE:
+        IF table[index].key = key:
+            table[index].value ← val
+            RETURN
+        END IF
+        index ← (index + step) MOD size
+    END WHILE
+    
+    table[index] ← (key, val)
+    count ← count + 1
+END FUNCTION
+
+// h2(key) must be coprime to size
+// to guarantee all slots are probed</pre>
+                    </div>
+                </div>
+                <div class="column c-lang">
+                    <div class="column-header">⚙️ C</div>
+                    <div class="column-content">
+<pre><code class="language-c">void oht_insert(OpenHT *ht,
+                const char *key,
+                int value) {
+    unsigned int idx = 
+        h1(key) % ht->size;
+    unsigned int step = h2(key);
+    
+    while (ht->entries[idx].key != NULL
+        && !ht->entries[idx].deleted) {
+        if (strcmp(ht->entries[idx].key,
+                   key) == 0) {
+            ht->entries[idx].value = value;
+            return;
+        }
+        idx = (idx + step) % ht->size;
+    }
+    
+    ht->entries[idx].key = strdup(key);
+    ht->entries[idx].value = value;
+    ht->entries[idx].deleted = false;
+    ht->count++;
+}</code></pre>
+                    </div>
+                </div>
+                <div class="column python">
+                    <div class="column-header">🐍 Python</div>
+                    <div class="column-content">
+<pre><code class="language-python">def insert_open(self, key, value):
+    index = self.h1(key) % self.size
+    step = self.h2(key)
+    
+    while (self.entries[index] is not None
+           and not self.entries[index].deleted):
+        if self.entries[index].key == key:
+            self.entries[index].value = value
+            return
+        index = (index + step) % self.size
+    
+    self.entries[index] = Entry(key, value)
+    self.count += 1
+
+# CPython's dict actually uses
+# open addressing with pseudo-random
+# probing based on the hash value!</code></pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 10: Word Frequency Counter -->
+        <div class="slide">
+            <h2>Practical Example: Word Counter</h2>
+            <div class="three-columns">
+                <div class="column pseudocode">
+                    <div class="column-header">📝 Pseudocode</div>
+                    <div class="column-content">
+<pre>FUNCTION count_words(text):
+    table ← create_table(1000)
+    words ← split(text, whitespace)
+    
+    FOR EACH word IN words:
+        word ← lowercase(word)
+        word ← remove_punctuation(word)
+        
+        count ← search(table, word)
+        IF count = NOT_FOUND:
+            insert(table, word, 1)
+        ELSE:
+            insert(table, word, count + 1)
+        END IF
+    END FOR
+    
+    RETURN table
+END FUNCTION
+
+// Usage:
+frequencies ← count_words(document)
+top_10 ← get_highest(frequencies, 10)</pre>
+                    </div>
+                </div>
+                <div class="column c-lang">
+                    <div class="column-header">⚙️ C</div>
+                    <div class="column-content">
+<pre><code class="language-c">HashTable *count_words(const char *text) {
+    HashTable *ht = ht_create(1000);
+    char *copy = strdup(text);
+    char *word = strtok(copy, " \t\n");
+    
+    while (word != NULL) {
+        // Convert to lowercase
+        for (char *p = word; *p; p++) {
+            *p = tolower(*p);
+        }
+        
+        int *count = ht_search(ht, word);
+        if (count == NULL) {
+            ht_insert(ht, word, 1);
+        } else {
+            (*count)++;
+        }
+        word = strtok(NULL, " \t\n");
+    }
+    
+    free(copy);
+    return ht;
+}</code></pre>
+                    </div>
+                </div>
+                <div class="column python">
+                    <div class="column-header">🐍 Python</div>
+                    <div class="column-content">
+<pre><code class="language-python">def count_words(text):
+    counts = {}
+    
+    for word in text.split():
+        word = word.lower().strip('.,!?')
+        counts[word] = counts.get(word, 0) + 1
+    
+    return counts
+
+# Even simpler with Counter:
+from collections import Counter
+
+def count_words(text):
+    words = text.lower().split()
+    return Counter(words)
+
+# Usage:
+freq = count_words(document)
+top_10 = freq.most_common(10)</code></pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 11: Comparison Table -->
+        <div class="slide">
+            <h2>Feature Comparison</h2>
+            <table class="comparison-table">
+                <tr>
+                    <th>Aspect</th>
+                    <th>C</th>
+                    <th>Python</th>
+                </tr>
+                <tr>
+                    <td>Memory management</td>
+                    <td>Manual (malloc/free)</td>
+                    <td>Automatic (garbage collected)</td>
+                </tr>
+                <tr>
+                    <td>Hash table</td>
+                    <td>Must implement from scratch</td>
+                    <td>Built-in <code>dict</code></td>
+                </tr>
+                <tr>
+                    <td>String comparison</td>
+                    <td><code>strcmp()</code></td>
+                    <td><code>==</code> operator</td>
+                </tr>
+                <tr>
+                    <td>Key types</td>
+                    <td>Usually strings (custom for others)</td>
+                    <td>Any hashable type</td>
+                </tr>
+                <tr>
+                    <td>Iteration</td>
+                    <td>Manual bucket traversal</td>
+                    <td><code>for key in dict</code></td>
+                </tr>
+                <tr>
+                    <td>Performance</td>
+                    <td>Faster (no interpreter overhead)</td>
+                    <td>Slower but optimised C backend</td>
+                </tr>
+                <tr>
+                    <td>Code length</td>
+                    <td>~200 lines for basic implementation</td>
+                    <td>0 lines (use built-in)</td>
+                </tr>
+            </table>
+        </div>
+
+        <!-- Slide 12: Key Insights -->
+        <div class="slide">
+            <h2>Key Insights</h2>
+            <div class="two-columns">
+                <div>
+                    <div class="info-box insight">
+                        <h4>🎯 Algorithm Understanding</h4>
+                        <p>Pseudocode reveals the algorithm's essence without syntactic noise. Start here when learning.</p>
+                    </div>
+                    <div class="info-box insight">
+                        <h4>⚙️ Systems Mastery</h4>
+                        <p>C implementation teaches memory layout, pointer manipulation and performance considerations.</p>
+                    </div>
+                </div>
+                <div>
+                    <div class="info-box tip">
+                        <h4>🐍 Productivity</h4>
+                        <p>Python's dict is implemented in optimised C. Use it for rapid development; optimise later if needed.</p>
+                    </div>
+                    <div class="info-box tip">
+                        <h4>💼 Interview Tip</h4>
+                        <p>Know how to implement from scratch (asked in interviews) but use standard libraries in production.</p>
+                    </div>
+                </div>
+            </div>
+            <div style="margin-top: 2rem; padding: 1.5rem; background: var(--bg-secondary); border-radius: 8px; text-align: center;">
+                <p style="font-size: 1.2rem; color: var(--accent-yellow); margin: 0;">
+                    "First, solve the problem. Then, write the code." — John Johnson
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <div class="slide-counter">
+        <span id="currentSlide">1</span> / <span id="totalSlides">12</span>
+    </div>
+
+    <div class="nav-controls">
+        <button class="nav-btn" onclick="changeSlide(-1)">←</button>
+        <button class="nav-btn" onclick="changeSlide(1)">→</button>
+    </div>
+
+    <script>
+        let currentSlide = 0;
+        const slides = document.querySelectorAll('.slide');
+        const totalSlides = slides.length;
+
+        document.getElementById('totalSlides').textContent = totalSlides;
+
+        function showSlide(n) {
+            slides[currentSlide].classList.remove('active');
+            currentSlide = (n + totalSlides) % totalSlides;
+            slides[currentSlide].classList.add('active');
+            document.getElementById('currentSlide').textContent = currentSlide + 1;
+            document.getElementById('progressBar').style.width = 
+                ((currentSlide + 1) / totalSlides * 100) + '%';
+        }
+
+        function changeSlide(direction) {
+            showSlide(currentSlide + direction);
+        }
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowRight' || e.key === ' ') {
+                changeSlide(1);
+                e.preventDefault();
+            } else if (e.key === 'ArrowLeft') {
+                changeSlide(-1);
+                e.preventDefault();
+            } else if (e.key === 'Home') {
+                showSlide(0);
+            } else if (e.key === 'End') {
+                showSlide(totalSlides - 1);
+            }
+        });
+
+        hljs.highlightAll();
+    </script>
+</body>
+</html>

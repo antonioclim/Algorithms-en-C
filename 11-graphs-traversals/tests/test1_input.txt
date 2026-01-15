@@ -1,0 +1,8 @@
+S001 Alice 9.5
+S002 Bob 7.8
+S003 Carol 8.2
+S004 Dave 6.9
+S005 Eve 8.8
+S006 Frank 7.5
+S007 Grace 9.1
+S008 Henry 6.2

@@ -1,0 +1,44 @@
+╔═══════════════════════════════════════════════════════════════╗
+║     EXERCISE 1: Chained Hash Table for Student Records        ║
+╚═══════════════════════════════════════════════════════════════╝
+
+Loading student records from file...
+
+Inserted: S001 (Alice) at bucket 4
+Inserted: S002 (Bob) at bucket 7
+Inserted: S003 (Carol) at bucket 2
+Inserted: S004 (Dave) at bucket 5
+Inserted: S005 (Eve) at bucket 0
+Inserted: S006 (Frank) at bucket 3
+Inserted: S007 (Grace) at bucket 6
+Inserted: S008 (Henry) at bucket 1
+
+--- Hash Table Statistics ---
+  Table size:        16
+  Entries:           8
+  Load factor:       0.50
+  Non-empty buckets: 8
+
+--- All Student Records ---
+  S001: Alice, Grade: 9.50
+  S002: Bob, Grade: 7.80
+  S003: Carol, Grade: 8.20
+  S004: Dave, Grade: 6.90
+  S005: Eve, Grade: 8.80
+  S006: Frank, Grade: 7.50
+  S007: Grace, Grade: 9.10
+  S008: Henry, Grade: 6.20
+
+--- Search Test ---
+  Search S003: Found - Carol, Grade: 8.20
+  Search S007: Found - Grace, Grade: 9.10
+  Search S999: Not found
+
+--- Delete Test ---
+  Deleting S002...
+  Delete successful.
+  Entries after deletion: 7
+  Load factor: 0.44
+
+Program completed successfully.
+Memory freed.

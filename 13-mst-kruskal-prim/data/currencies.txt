@@ -1,0 +1,20 @@
+# Currency Exchange Rates for Arbitrage Detection
+# Format:
+#   Line 1: N (number of currencies)
+#   Line 2: Currency names
+#   Lines 3 to N+2: N x N exchange rate matrix
+#
+# Rate[i][j] = how much of currency j you get for 1 unit of currency i
+#
+# This data contains an arbitrage opportunity:
+# USD -> EUR -> GBP -> USD
+# 1.00 * 0.92 * 1.18 * 1.30 = 1.41128 (41% profit - exaggerated for testing)
+#
+# Real arbitrage would be much smaller (< 1%), but this is for demonstration
+
+4
+USD EUR GBP CHF
+1.0000 0.9200 0.7700 0.9100
+1.0900 1.0000 0.8400 0.9900
+1.3000 1.1900 1.0000 1.1800
+1.1000 1.0100 0.8500 1.0000

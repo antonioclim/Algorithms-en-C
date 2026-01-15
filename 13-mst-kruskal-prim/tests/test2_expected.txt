@@ -1,0 +1,7 @@
+╔════════════════════════════════════════════════════════════╗
+║       Currency Arbitrage Detection using Bellman-Ford      ║
+╚════════════════════════════════════════════════════════════╝
+
+Arbitrage opportunity detected!
+Cycle: USD -> EUR -> GBP -> USD
+Profit: 41.13%

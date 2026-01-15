@@ -1,0 +1,23 @@
+Hash tables are fundamental data structures that provide efficient key-value storage and retrieval. A hash table uses a hash function to compute an index into an array of buckets or slots from which the desired value can be found.
+
+The performance of hash tables depends critically on the quality of the hash function. A good hash function should distribute keys uniformly across the available buckets, minimising the number of collisions. When two different keys hash to the same index, a collision occurs, and the hash table must employ a collision resolution strategy.
+
+Chaining is one of the most common collision resolution techniques. In chaining, each bucket contains a linked list of entries that hash to that bucket. When a collision occurs, the new entry is simply added to the list at the appropriate bucket. This approach is simple to implement and handles high load factors gracefully.
+
+Open addressing is an alternative collision resolution strategy where all entries are stored directly in the hash table array. When a collision occurs, the algorithm probes for an alternative empty slot using a probing sequence. Common probing strategies include linear probing, quadratic probing, and double hashing.
+
+The load factor of a hash table is the ratio of the number of entries to the number of buckets. As the load factor increases, the probability of collisions increases, and performance degrades. Most hash table implementations automatically resize the table when the load factor exceeds a threshold, typically around 0.7 for open addressing.
+
+Rehashing is the process of creating a larger hash table and reinserting all existing entries. This operation has O(n) time complexity but is performed infrequently enough that the amortised cost per insertion remains O(1).
+
+Hash tables have numerous applications in computer science. They are used in database indexing, caching systems, symbol tables in compilers, and associative arrays in programming languages. Many modern programming languages provide built-in hash table implementations, such as Python dictionaries and Java HashMaps.
+
+The theoretical foundation of hashing includes important concepts like universal hashing and perfect hashing. Universal hashing provides probabilistic guarantees against adversarial inputs by randomly selecting the hash function at runtime. Perfect hashing achieves O(1) worst-case lookup time by using a two-level hashing scheme.
+
+When implementing hash tables, careful attention must be paid to memory management. Each key typically needs to be copied into the hash table to avoid dangling pointer issues. Proper cleanup requires freeing all allocated keys and nodes when the table is destroyed.
+
+Understanding hash tables is essential for any serious programmer. They appear in countless algorithms and data structures, from graph algorithms to string processing. Mastering hash tables opens the door to efficient solutions for many computational problems.
+
+The birthday paradox illustrates why collisions in hash tables are inevitable. Even with a good hash function, collisions begin occurring after approximately the square root of the table size insertions. This mathematical fact underscores the importance of effective collision resolution strategies.
+
+In practice, the choice between chaining and open addressing depends on the specific requirements of the application. Chaining offers simpler implementation and better performance under high load factors. Open addressing provides better cache locality and lower memory overhead for small entries.

@@ -1,0 +1,32 @@
+╔═══════════════════════════════════════════════════════════════╗
+║     EXERCISE 2: Word Frequency Counter (Open Addressing)      ║
+╚═══════════════════════════════════════════════════════════════╝
+
+Processing file: tests/test2_input.txt
+
+--- Hash Table Statistics ---
+  Table size:       127
+  Entries:          24
+  Load factor:      0.19
+  Total probes:     28
+  Avg probes/op:    1.17
+
+--- Top 10 Most Frequent Words ---
+  Rank | Word           | Count
+  ─────┼────────────────┼──────
+     1 | the            | 9
+     2 | fox            | 4
+     3 | dog            | 4
+     4 | and            | 3
+     5 | was            | 3
+     6 | quick          | 3
+     7 | lazy           | 3
+     8 | to             | 2
+     9 | trees          | 2
+    10 | forest         | 2
+
+Total unique words: 24
+Total word count: 47
+
+Program completed successfully.
+Memory freed.

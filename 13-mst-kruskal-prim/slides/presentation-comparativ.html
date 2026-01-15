@@ -1,0 +1,1248 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Week 13: Language Comparison — Shortest Path Algorithms</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/c.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/python.min.js"></script>
+    <style>
+        :root {
+            --bg-primary: #0d1117;
+            --bg-secondary: #161b22;
+            --bg-tertiary: #21262d;
+            --text-primary: #e6edf3;
+            --text-secondary: #8b949e;
+            --accent-blue: #58a6ff;
+            --accent-green: #3fb950;
+            --accent-yellow: #d29922;
+            --accent-red: #f85149;
+            --accent-purple: #a371f7;
+            --accent-cyan: #39c5cf;
+            --border-color: #30363d;
+            --pseudocode-bg: #1a1d21;
+            --c-bg: #0f1318;
+            --python-bg: #141820;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.6;
+            overflow: hidden;
+        }
+        
+        .progress-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: var(--bg-tertiary);
+            z-index: 1000;
+        }
+        
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, var(--accent-yellow), var(--accent-blue), var(--accent-green));
+            transition: width 0.3s ease;
+        }
+        
+        .presentation {
+            width: 100vw;
+            height: 100vh;
+            overflow: hidden;
+            position: relative;
+        }
+        
+        .slide {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            padding: 50px 60px;
+            display: none;
+            opacity: 0;
+            transition: opacity 0.4s ease;
+            overflow-y: auto;
+        }
+        
+        .slide.active {
+            display: flex;
+            flex-direction: column;
+            opacity: 1;
+        }
+        
+        .slide-header {
+            margin-bottom: 25px;
+        }
+        
+        .slide-header h2 {
+            font-size: 1.9rem;
+            color: var(--accent-blue);
+            margin-bottom: 8px;
+        }
+        
+        .slide-header .subtitle {
+            color: var(--text-secondary);
+            font-size: 1.1rem;
+        }
+        
+        .content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        
+        /* Three Column Layout */
+        .three-columns {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 15px;
+            flex: 1;
+            min-height: 0;
+        }
+        
+        .column {
+            background: var(--bg-secondary);
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .column.pseudocode {
+            background: var(--pseudocode-bg);
+            border-color: var(--accent-yellow);
+        }
+        
+        .column.c-lang {
+            background: var(--c-bg);
+            border-color: var(--accent-blue);
+        }
+        
+        .column.python {
+            background: var(--python-bg);
+            border-color: var(--accent-green);
+        }
+        
+        .column-header {
+            padding: 12px 15px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .column.pseudocode .column-header {
+            background: rgba(210, 153, 34, 0.15);
+        }
+        
+        .column.c-lang .column-header {
+            background: rgba(88, 166, 255, 0.15);
+        }
+        
+        .column.python .column-header {
+            background: rgba(63, 185, 80, 0.15);
+        }
+        
+        .column-header h3 {
+            font-size: 1rem;
+            color: var(--text-primary);
+        }
+        
+        .column-header .icon {
+            font-size: 1.3rem;
+        }
+        
+        .column-content {
+            padding: 15px;
+            flex: 1;
+            overflow-y: auto;
+        }
+        
+        .column-content pre {
+            margin: 0;
+            font-family: 'JetBrains Mono', 'Fira Code', Consolas, monospace;
+            font-size: 0.82rem;
+            line-height: 1.45;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+        
+        .column-content code {
+            font-family: inherit;
+        }
+        
+        /* Title Slide */
+        .title-slide {
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+        }
+        
+        .title-slide h1 {
+            font-size: 2.8rem;
+            margin-bottom: 15px;
+            background: linear-gradient(135deg, var(--accent-yellow), var(--accent-blue), var(--accent-green));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .title-slide .badges {
+            display: flex;
+            gap: 15px;
+            margin: 20px 0;
+            justify-content: center;
+        }
+        
+        .badge {
+            padding: 8px 20px;
+            border-radius: 20px;
+            font-size: 1rem;
+            font-weight: 600;
+        }
+        
+        .badge.pseudo { background: var(--accent-yellow); color: var(--bg-primary); }
+        .badge.c { background: var(--accent-blue); color: var(--bg-primary); }
+        .badge.py { background: var(--accent-green); color: var(--bg-primary); }
+        
+        /* Info Box */
+        .info-box {
+            padding: 15px;
+            border-radius: 8px;
+            margin: 10px 0;
+            background: rgba(88, 166, 255, 0.1);
+            border-left: 4px solid var(--accent-blue);
+        }
+        
+        .info-box p {
+            font-size: 0.95rem;
+            color: var(--text-primary);
+        }
+        
+        /* Comparison Table */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.95rem;
+        }
+        
+        th, td {
+            padding: 12px 15px;
+            text-align: left;
+            border: 1px solid var(--border-color);
+        }
+        
+        th {
+            background: var(--bg-tertiary);
+            font-weight: 600;
+        }
+        
+        th:nth-child(1) { color: var(--text-primary); }
+        th:nth-child(2) { color: var(--accent-yellow); }
+        th:nth-child(3) { color: var(--accent-blue); }
+        th:nth-child(4) { color: var(--accent-green); }
+        
+        tr:nth-child(even) {
+            background: var(--bg-secondary);
+        }
+        
+        /* Navigation */
+        .nav-container {
+            position: fixed;
+            bottom: 20px;
+            right: 30px;
+            display: flex;
+            gap: 10px;
+            z-index: 100;
+        }
+        
+        .nav-btn {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: all 0.2s ease;
+        }
+        
+        .nav-btn:hover {
+            background: var(--accent-blue);
+            border-color: var(--accent-blue);
+        }
+        
+        .nav-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        .slide-counter {
+            position: fixed;
+            bottom: 25px;
+            left: 30px;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            z-index: 100;
+        }
+        
+        /* Highlight text */
+        .hl-y { color: var(--accent-yellow); }
+        .hl-b { color: var(--accent-blue); }
+        .hl-g { color: var(--accent-green); }
+        
+        kbd {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            padding: 2px 6px;
+            font-family: monospace;
+            font-size: 0.85rem;
+        }
+        
+        .two-columns {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        
+        .insight-box {
+            background: var(--bg-secondary);
+            border: 1px solid var(--accent-purple);
+            border-radius: 8px;
+            padding: 15px;
+        }
+        
+        .insight-box h4 {
+            color: var(--accent-purple);
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="progress-container">
+        <div class="progress-bar" id="progressBar"></div>
+    </div>
+    
+    <div class="presentation" id="presentation">
+        
+        <!-- Slide 1: Title -->
+        <div class="slide title-slide active">
+            <h1>Language Comparison</h1>
+            <h2 style="font-size: 1.8rem; color: var(--text-secondary);">Shortest Path Algorithms</h2>
+            <div class="badges">
+                <span class="badge pseudo">📝 Pseudocode</span>
+                <span class="badge c">⚙️ C</span>
+                <span class="badge py">🐍 Python</span>
+            </div>
+            <p style="color: var(--text-secondary); margin-top: 20px;">
+                Week 13 — Graph Algorithms<br>
+                Algorithms and Programming Techniques
+            </p>
+            <p style="color: var(--text-secondary); margin-top: 30px; font-size: 0.9rem;">
+                Navigate: <kbd>←</kbd> <kbd>→</kbd> <kbd>Space</kbd>
+            </p>
+        </div>
+        
+        <!-- Slide 2: Why Compare Languages -->
+        <div class="slide">
+            <div class="slide-header">
+                <h2>🤔 Why Compare Languages?</h2>
+            </div>
+            <div class="content">
+                <div class="two-columns">
+                    <div>
+                        <h3 style="color: var(--accent-blue); margin-bottom: 15px;">Learning Benefits</h3>
+                        <ul>
+                            <li>Understand algorithms independently of syntax</li>
+                            <li>See how abstractions map to implementations</li>
+                            <li>Appreciate trade-offs: control vs convenience</li>
+                            <li>Prepare for interviews in any language</li>
+                        </ul>
+                    </div>
+                    <div>
+                        <h3 style="color: var(--accent-green); margin-bottom: 15px;">Practical Insights</h3>
+                        <ul>
+                            <li><span class="hl-y">Pseudocode</span>: Algorithm design, communication</li>
+                            <li><span class="hl-b">C</span>: Performance-critical systems, embedded</li>
+                            <li><span class="hl-g">Python</span>: Rapid prototyping, data science</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="info-box" style="margin-top: 20px;">
+                    <p><strong>Goal:</strong> Recognise the same algorithm across different syntactic representations. The core logic remains identical — only the expression changes.</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Slide 3: Graph Representation -->
+        <div class="slide">
+            <div class="slide-header">
+                <h2>📊 Graph Representation</h2>
+                <p class="subtitle">Adjacency list structure</p>
+            </div>
+            <div class="three-columns">
+                <div class="column pseudocode">
+                    <div class="column-header">
+                        <span class="icon">📝</span>
+                        <h3>Pseudocode</h3>
+                    </div>
+                    <div class="column-content">
+                        <pre>Graph:
+  V: integer (vertex count)
+  adj: array of lists
+
+Edge:
+  dest: integer
+  weight: integer
+
+CREATE-GRAPH(V):
+  G.V ← V
+  G.adj ← new array[V] of empty lists
+  return G
+
+ADD-EDGE(G, u, v, w):
+  append (v, w) to G.adj[u]</pre>
+                    </div>
+                </div>
+                <div class="column c-lang">
+                    <div class="column-header">
+                        <span class="icon">⚙️</span>
+                        <h3>C</h3>
+                    </div>
+                    <div class="column-content">
+                        <pre><code class="language-c">typedef struct Edge {
+    int dest;
+    int weight;
+    struct Edge *next;
+} Edge;
+
+typedef struct {
+    int V;
+    Edge **adj;
+} Graph;
+
+Graph* createGraph(int V) {
+    Graph *g = malloc(sizeof(Graph));
+    g->V = V;
+    g->adj = calloc(V, sizeof(Edge*));
+    return g;
+}
+
+void addEdge(Graph *g, int u, 
+             int v, int w) {
+    Edge *e = malloc(sizeof(Edge));
+    e->dest = v;
+    e->weight = w;
+    e->next = g->adj[u];
+    g->adj[u] = e;
+}</code></pre>
+                    </div>
+                </div>
+                <div class="column python">
+                    <div class="column-header">
+                        <span class="icon">🐍</span>
+                        <h3>Python</h3>
+                    </div>
+                    <div class="column-content">
+                        <pre><code class="language-python">from collections import defaultdict
+
+class Graph:
+    def __init__(self, V):
+        self.V = V
+        self.adj = defaultdict(list)
+    
+    def add_edge(self, u, v, w):
+        self.adj[u].append((v, w))
+
+# Usage
+g = Graph(6)
+g.add_edge(0, 1, 4)
+g.add_edge(0, 2, 2)
+
+# Or simply use dict:
+graph = {
+    0: [(1, 4), (2, 2)],
+    1: [(2, 1), (3, 5)],
+    2: [(3, 8)],
+    3: []
+}</code></pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Slide 4: Relaxation -->
+        <div class="slide">
+            <div class="slide-header">
+                <h2>⚡ The Relaxation Operation</h2>
+                <p class="subtitle">Core operation for shortest paths</p>
+            </div>
+            <div class="three-columns">
+                <div class="column pseudocode">
+                    <div class="column-header">
+                        <span class="icon">📝</span>
+                        <h3>Pseudocode</h3>
+                    </div>
+                    <div class="column-content">
+                        <pre>RELAX(u, v, w):
+  // Can we improve path to v via u?
+  if dist[u] ≠ ∞ and 
+     dist[u] + w < dist[v]:
+    
+    dist[v] ← dist[u] + w
+    parent[v] ← u
+    return TRUE
+  
+  return FALSE</pre>
+                    </div>
+                </div>
+                <div class="column c-lang">
+                    <div class="column-header">
+                        <span class="icon">⚙️</span>
+                        <h3>C</h3>
+                    </div>
+                    <div class="column-content">
+                        <pre><code class="language-c">#include &lt;limits.h&gt;
+
+int relax(int u, int v, int w,
+          int dist[], int parent[]) {
+    // Check for overflow
+    if (dist[u] == INT_MAX)
+        return 0;
+    
+    if (dist[u] + w < dist[v]) {
+        dist[v] = dist[u] + w;
+        parent[v] = u;
+        return 1;  // Improved
+    }
+    return 0;  // No change
+}</code></pre>
+                    </div>
+                </div>
+                <div class="column python">
+                    <div class="column-header">
+                        <span class="icon">🐍</span>
+                        <h3>Python</h3>
+                    </div>
+                    <div class="column-content">
+                        <pre><code class="language-python">import math
+
+def relax(u, v, w, dist, parent):
+    """Try to improve path to v via u"""
+    if dist[u] + w < dist[v]:
+        dist[v] = dist[u] + w
+        parent[v] = u
+        return True
+    return False
+
+# Python note: float('inf') + x 
+# still equals inf, no overflow
+# dist[u] = float('inf')
+# dist[u] + 5 → inf  (safe!)</code></pre>
+                    </div>
+                </div>
+            </div>
+            <div class="info-box">
+                <p><strong>Key insight:</strong> C requires explicit overflow checking with INT_MAX. Python's float('inf') handles infinity arithmetic naturally.</p>
+            </div>
+        </div>
+        
+        <!-- Slide 5: Dijkstra's Algorithm -->
+        <div class="slide">
+            <div class="slide-header">
+                <h2>🔷 Dijkstra's Algorithm</h2>
+                <p class="subtitle">Complete implementation comparison</p>
+            </div>
+            <div class="three-columns">
+                <div class="column pseudocode">
+                    <div class="column-header">
+                        <span class="icon">📝</span>
+                        <h3>Pseudocode</h3>
+                    </div>
+                    <div class="column-content">
+                        <pre>DIJKSTRA(G, src):
+  for v ∈ G.V:
+    dist[v] ← ∞
+    parent[v] ← NIL
+  dist[src] ← 0
+  
+  Q ← PRIORITY-QUEUE(G.V)
+  
+  while Q not empty:
+    u ← EXTRACT-MIN(Q)
+    
+    for each (v, w) in G.adj[u]:
+      if RELAX(u, v, w):
+        DECREASE-KEY(Q, v, dist[v])
+  
+  return dist, parent</pre>
+                    </div>
+                </div>
+                <div class="column c-lang">
+                    <div class="column-header">
+                        <span class="icon">⚙️</span>
+                        <h3>C</h3>
+                    </div>
+                    <div class="column-content">
+                        <pre><code class="language-c">void dijkstra(Graph *g, int src,
+              int dist[], int parent[]) {
+    int V = g->V;
+    MinHeap *pq = createHeap(V);
+    
+    for (int i = 0; i < V; i++) {
+        dist[i] = INT_MAX;
+        parent[i] = -1;
+        insertHeap(pq, i, INT_MAX);
+    }
+    dist[src] = 0;
+    decreaseKey(pq, src, 0);
+    
+    while (pq->size > 0) {
+        HeapNode min = extractMin(pq);
+        int u = min.vertex;
+        
+        for (Edge *e = g->adj[u]; 
+             e != NULL; e = e->next) {
+            int v = e->dest;
+            int w = e->weight;
+            if (relax(u, v, w, dist, parent))
+                decreaseKey(pq, v, dist[v]);
+        }
+    }
+    freeHeap(pq);
+}</code></pre>
+                    </div>
+                </div>
+                <div class="column python">
+                    <div class="column-header">
+                        <span class="icon">🐍</span>
+                        <h3>Python</h3>
+                    </div>
+                    <div class="column-content">
+                        <pre><code class="language-python">import heapq
+
+def dijkstra(graph, src):
+    V = len(graph)
+    dist = {v: float('inf') for v in graph}
+    parent = {v: None for v in graph}
+    dist[src] = 0
+    
+    # (distance, vertex) tuples
+    pq = [(0, src)]
+    
+    while pq:
+        d, u = heapq.heappop(pq)
+        
+        # Skip if outdated entry
+        if d > dist[u]:
+            continue
+            
+        for v, w in graph[u]:
+            if dist[u] + w < dist[v]:
+                dist[v] = dist[u] + w
+                parent[v] = u
+                heapq.heappush(pq, 
+                    (dist[v], v))
+    
+    return dist, parent</code></pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Slide 6: Priority Queue Comparison -->
+        <div class="slide">
+            <div class="slide-header">
+                <h2>🔺 Priority Queue Implementation</h2>
+                <p class="subtitle">Min-heap with decrease-key</p>
+            </div>
+            <div class="three-columns">
+                <div class="column pseudocode">
+                    <div class="column-header">
+                        <span class="icon">📝</span>
+                        <h3>Pseudocode</h3>
+                    </div>
+                    <div class="column-content">
+                        <pre>MIN-HEAP:
+  nodes: array of (vertex, dist)
+  position: array mapping v → index
+  size: integer
+
+EXTRACT-MIN(H):
+  min ← H.nodes[0]
+  H.nodes[0] ← H.nodes[H.size - 1]
+  H.size ← H.size - 1
+  HEAPIFY-DOWN(H, 0)
+  return min
+
+DECREASE-KEY(H, v, newDist):
+  idx ← H.position[v]
+  H.nodes[idx].dist ← newDist
+  HEAPIFY-UP(H, idx)</pre>
+                    </div>
+                </div>
+                <div class="column c-lang">
+                    <div class="column-header">
+                        <span class="icon">⚙️</span>
+                        <h3>C</h3>
+                    </div>
+                    <div class="column-content">
+                        <pre><code class="language-c">typedef struct {
+    int vertex, distance;
+} HeapNode;
+
+typedef struct {
+    HeapNode *nodes;
+    int *position;
+    int size, capacity;
+} MinHeap;
+
+void decreaseKey(MinHeap *h, 
+                 int v, int d) {
+    int idx = h->position[v];
+    h->nodes[idx].distance = d;
+    
+    // Bubble up
+    while (idx > 0) {
+        int p = (idx - 1) / 2;
+        if (h->nodes[idx].distance 
+            < h->nodes[p].distance) {
+            swap(h, idx, p);
+            idx = p;
+        } else break;
+    }
+}</code></pre>
+                    </div>
+                </div>
+                <div class="column python">
+                    <div class="column-header">
+                        <span class="icon">🐍</span>
+                        <h3>Python</h3>
+                    </div>
+                    <div class="column-content">
+                        <pre><code class="language-python"># Python heapq doesn't support 
+# decrease-key directly.
+# Two approaches:
+
+# 1. Lazy deletion (recommended)
+#    Push duplicates, skip stale entries
+while pq:
+    d, u = heapq.heappop(pq)
+    if d > dist[u]:  # Stale entry
+        continue
+    # Process u...
+
+# 2. Custom heap class
+class IndexedHeap:
+    def __init__(self):
+        self.heap = []
+        self.position = {}
+    
+    def decrease_key(self, v, d):
+        # Update and bubble up
+        idx = self.position[v]
+        self.heap[idx] = (d, v)
+        self._sift_up(idx)</code></pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Slide 7: Bellman-Ford Algorithm -->
+        <div class="slide">
+            <div class="slide-header">
+                <h2>🔶 Bellman-Ford Algorithm</h2>
+                <p class="subtitle">Handles negative weights</p>
+            </div>
+            <div class="three-columns">
+                <div class="column pseudocode">
+                    <div class="column-header">
+                        <span class="icon">📝</span>
+                        <h3>Pseudocode</h3>
+                    </div>
+                    <div class="column-content">
+                        <pre>BELLMAN-FORD(G, src):
+  for v ∈ G.V:
+    dist[v] ← ∞
+    parent[v] ← NIL
+  dist[src] ← 0
+  
+  // Relax all edges V-1 times
+  for i ← 1 to |V| - 1:
+    for each edge (u, v, w) in G.E:
+      RELAX(u, v, w)
+  
+  // Check for negative cycle
+  for each edge (u, v, w) in G.E:
+    if dist[u] + w < dist[v]:
+      return "NEGATIVE CYCLE"
+  
+  return dist, parent</pre>
+                    </div>
+                </div>
+                <div class="column c-lang">
+                    <div class="column-header">
+                        <span class="icon">⚙️</span>
+                        <h3>C</h3>
+                    </div>
+                    <div class="column-content">
+                        <pre><code class="language-c">int bellmanFord(int V, Edge edges[],
+                int E, int src,
+                int dist[], int parent[]) {
+    for (int i = 0; i < V; i++) {
+        dist[i] = INT_MAX;
+        parent[i] = -1;
+    }
+    dist[src] = 0;
+    
+    // V-1 iterations
+    for (int i = 0; i < V - 1; i++) {
+        int changed = 0;
+        for (int j = 0; j < E; j++) {
+            if (relax(edges[j].src,
+                      edges[j].dest,
+                      edges[j].weight,
+                      dist, parent))
+                changed = 1;
+        }
+        if (!changed) break; // Early exit
+    }
+    
+    // Negative cycle check
+    for (int j = 0; j < E; j++)
+        if (dist[edges[j].src] != INT_MAX &&
+            dist[edges[j].src] + 
+            edges[j].weight < 
+            dist[edges[j].dest])
+            return 0;  // Cycle!
+    return 1;
+}</code></pre>
+                    </div>
+                </div>
+                <div class="column python">
+                    <div class="column-header">
+                        <span class="icon">🐍</span>
+                        <h3>Python</h3>
+                    </div>
+                    <div class="column-content">
+                        <pre><code class="language-python">def bellman_ford(graph, edges, src):
+    V = len(graph)
+    dist = {v: float('inf') for v in graph}
+    parent = {v: None for v in graph}
+    dist[src] = 0
+    
+    # V-1 iterations
+    for _ in range(V - 1):
+        changed = False
+        for u, v, w in edges:
+            if dist[u] + w < dist[v]:
+                dist[v] = dist[u] + w
+                parent[v] = u
+                changed = True
+        if not changed:
+            break  # Early termination
+    
+    # Check for negative cycle
+    for u, v, w in edges:
+        if dist[u] + w < dist[v]:
+            raise ValueError(
+                "Negative cycle detected")
+    
+    return dist, parent</code></pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Slide 8: Path Reconstruction -->
+        <div class="slide">
+            <div class="slide-header">
+                <h2>🛤️ Path Reconstruction</h2>
+                <p class="subtitle">Using the parent array</p>
+            </div>
+            <div class="three-columns">
+                <div class="column pseudocode">
+                    <div class="column-header">
+                        <span class="icon">📝</span>
+                        <h3>Pseudocode</h3>
+                    </div>
+                    <div class="column-content">
+                        <pre>GET-PATH(parent, dest):
+  path ← empty list
+  v ← dest
+  
+  while v ≠ NIL:
+    prepend v to path
+    v ← parent[v]
+  
+  return path
+
+PRINT-PATH(parent, dest):
+  if parent[dest] ≠ NIL:
+    PRINT-PATH(parent, parent[dest])
+    print " → "
+  print dest</pre>
+                    </div>
+                </div>
+                <div class="column c-lang">
+                    <div class="column-header">
+                        <span class="icon">⚙️</span>
+                        <h3>C</h3>
+                    </div>
+                    <div class="column-content">
+                        <pre><code class="language-c">// Recursive version
+void printPath(int parent[], int dest) {
+    if (parent[dest] == -1) {
+        printf("%d", dest);
+        return;
+    }
+    printPath(parent, parent[dest]);
+    printf(" -> %d", dest);
+}
+
+// Iterative with stack
+void getPath(int parent[], int dest,
+             int path[], int *len) {
+    *len = 0;
+    int v = dest;
+    while (v != -1) {
+        path[(*len)++] = v;
+        v = parent[v];
+    }
+    // Reverse the path
+    for (int i = 0; i < *len/2; i++) {
+        int t = path[i];
+        path[i] = path[*len-1-i];
+        path[*len-1-i] = t;
+    }
+}</code></pre>
+                    </div>
+                </div>
+                <div class="column python">
+                    <div class="column-header">
+                        <span class="icon">🐍</span>
+                        <h3>Python</h3>
+                    </div>
+                    <div class="column-content">
+                        <pre><code class="language-python">def get_path(parent, dest):
+    """Reconstruct path from parent dict"""
+    path = []
+    v = dest
+    while v is not None:
+        path.append(v)
+        v = parent[v]
+    return path[::-1]  # Reverse
+
+def print_path(parent, dest):
+    """Print path with arrows"""
+    path = get_path(parent, dest)
+    print(" → ".join(map(str, path)))
+
+# Usage
+dist, parent = dijkstra(graph, 0)
+for v in graph:
+    if dist[v] != float('inf'):
+        print(f"{v}: {dist[v]}", end=" ")
+        print_path(parent, v)</code></pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Slide 9: Memory Management -->
+        <div class="slide">
+            <div class="slide-header">
+                <h2>🧠 Memory Management</h2>
+                <p class="subtitle">Critical difference between C and Python</p>
+            </div>
+            <div class="three-columns">
+                <div class="column pseudocode">
+                    <div class="column-header">
+                        <span class="icon">📝</span>
+                        <h3>Pseudocode</h3>
+                    </div>
+                    <div class="column-content">
+                        <pre>// Abstract: no memory concerns
+// Focus on algorithm logic
+
+G ← CREATE-GRAPH(V)
+// Use G...
+// Implicitly freed when done
+
+// Real implementations must
+// manage allocation/deallocation</pre>
+                    </div>
+                </div>
+                <div class="column c-lang">
+                    <div class="column-header">
+                        <span class="icon">⚙️</span>
+                        <h3>C</h3>
+                    </div>
+                    <div class="column-content">
+                        <pre><code class="language-c">// Manual memory management
+Graph* createGraph(int V) {
+    Graph *g = malloc(sizeof(Graph));
+    g->V = V;
+    g->adj = calloc(V, sizeof(Edge*));
+    return g;
+}
+
+void freeGraph(Graph *g) {
+    for (int i = 0; i < g->V; i++) {
+        Edge *e = g->adj[i];
+        while (e) {
+            Edge *next = e->next;
+            free(e);
+            e = next;
+        }
+    }
+    free(g->adj);
+    free(g);
+}
+
+// MUST call freeGraph() or leak!</code></pre>
+                    </div>
+                </div>
+                <div class="column python">
+                    <div class="column-header">
+                        <span class="icon">🐍</span>
+                        <h3>Python</h3>
+                    </div>
+                    <div class="column-content">
+                        <pre><code class="language-python"># Automatic garbage collection
+
+def solve():
+    graph = Graph(1000)
+    # Add edges...
+    dist, parent = dijkstra(graph, 0)
+    return dist[999]
+    # graph automatically freed
+    # when no longer referenced
+
+# Python handles:
+# - Reference counting
+# - Cycle detection
+# - Automatic deallocation
+
+# No memory leaks from forgetting
+# to free (but can still have
+# logical memory issues)</code></pre>
+                    </div>
+                </div>
+            </div>
+            <div class="info-box">
+                <p><strong>Trade-off:</strong> C gives control (and responsibility). Python automates it but with overhead and less predictability.</p>
+            </div>
+        </div>
+        
+        <!-- Slide 10: Comparison Table -->
+        <div class="slide">
+            <div class="slide-header">
+                <h2>📊 Language Comparison Summary</h2>
+            </div>
+            <div class="content">
+                <table>
+                    <tr>
+                        <th>Aspect</th>
+                        <th>📝 Pseudocode</th>
+                        <th>⚙️ C</th>
+                        <th>🐍 Python</th>
+                    </tr>
+                    <tr>
+                        <td>Purpose</td>
+                        <td>Algorithm design</td>
+                        <td>Production systems</td>
+                        <td>Rapid prototyping</td>
+                    </tr>
+                    <tr>
+                        <td>Memory</td>
+                        <td>Abstract</td>
+                        <td>Manual (malloc/free)</td>
+                        <td>Automatic (GC)</td>
+                    </tr>
+                    <tr>
+                        <td>Priority Queue</td>
+                        <td>Abstract ops</td>
+                        <td>Custom implementation</td>
+                        <td>heapq module</td>
+                    </tr>
+                    <tr>
+                        <td>Infinity</td>
+                        <td>∞ symbol</td>
+                        <td>INT_MAX (overflow risk)</td>
+                        <td>float('inf') (safe)</td>
+                    </tr>
+                    <tr>
+                        <td>Graph Storage</td>
+                        <td>adj[v] list</td>
+                        <td>Linked list / array</td>
+                        <td>Dict of lists</td>
+                    </tr>
+                    <tr>
+                        <td>Typical Speed</td>
+                        <td>N/A</td>
+                        <td>Fastest</td>
+                        <td>10-100× slower</td>
+                    </tr>
+                    <tr>
+                        <td>Lines of Code</td>
+                        <td>~20</td>
+                        <td>~80-150</td>
+                        <td>~25-40</td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+        
+        <!-- Slide 11: When to Use Which -->
+        <div class="slide">
+            <div class="slide-header">
+                <h2>🎯 When to Use Which Language</h2>
+            </div>
+            <div class="content">
+                <div class="two-columns">
+                    <div>
+                        <div class="insight-box" style="border-color: var(--accent-yellow); margin-bottom: 15px;">
+                            <h4 style="color: var(--accent-yellow);">📝 Use Pseudocode For</h4>
+                            <ul>
+                                <li>Algorithm design and analysis</li>
+                                <li>Teaching and communication</li>
+                                <li>Whiteboard interviews</li>
+                                <li>Research papers</li>
+                                <li>Initial problem solving</li>
+                            </ul>
+                        </div>
+                        <div class="insight-box" style="border-color: var(--accent-blue);">
+                            <h4 style="color: var(--accent-blue);">⚙️ Use C For</h4>
+                            <ul>
+                                <li>Performance-critical systems</li>
+                                <li>Operating systems, drivers</li>
+                                <li>Embedded systems</li>
+                                <li>Network routers (OSPF)</li>
+                                <li>Competitive programming</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="insight-box" style="border-color: var(--accent-green);">
+                            <h4 style="color: var(--accent-green);">🐍 Use Python For</h4>
+                            <ul>
+                                <li>Rapid prototyping</li>
+                                <li>Data science and ML</li>
+                                <li>Script-based automation</li>
+                                <li>Algorithm verification</li>
+                                <li>Interview practice (when allowed)</li>
+                            </ul>
+                        </div>
+                        <div class="info-box" style="margin-top: 15px;">
+                            <p><strong>Pro tip:</strong> Prototype in Python, optimise in C. Use pseudocode to communicate your approach regardless of implementation language.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Slide 12: Key Insights -->
+        <div class="slide title-slide">
+            <h1 style="font-size: 2.5rem;">Key Insights</h1>
+            <div style="text-align: left; max-width: 700px; margin-top: 30px;">
+                <p style="margin-bottom: 20px; font-size: 1.2rem;">
+                    <span class="hl-y">1.</span> The <strong>algorithm is the same</strong> — syntax differs, logic remains.
+                </p>
+                <p style="margin-bottom: 20px; font-size: 1.2rem;">
+                    <span class="hl-b">2.</span> C requires <strong>explicit memory management</strong> — a source of bugs but also control.
+                </p>
+                <p style="margin-bottom: 20px; font-size: 1.2rem;">
+                    <span class="hl-g">3.</span> Python trades <strong>performance for convenience</strong> — heapq lacks decrease-key.
+                </p>
+                <p style="margin-bottom: 20px; font-size: 1.2rem;">
+                    <span class="hl-y">4.</span> Pseudocode <strong>abstracts implementation details</strong> — focus on correctness first.
+                </p>
+                <p style="font-size: 1.2rem;">
+                    <span class="hl-b">5.</span> Understanding all three makes you a <strong>better problem solver</strong>.
+                </p>
+            </div>
+            <p style="margin-top: 50px; color: var(--text-secondary);">
+                Week 13 — Graph Algorithms: Language Comparison<br>
+                Algorithms and Programming Techniques
+            </p>
+        </div>
+        
+    </div>
+    
+    <div class="slide-counter">
+        <span id="currentSlide">1</span> / <span id="totalSlides">12</span>
+    </div>
+    
+    <div class="nav-container">
+        <button class="nav-btn" id="prevBtn" onclick="changeSlide(-1)">← Previous</button>
+        <button class="nav-btn" id="nextBtn" onclick="changeSlide(1)">Next →</button>
+    </div>
+    
+    <script>
+        let currentSlide = 0;
+        const slides = document.querySelectorAll('.slide');
+        const totalSlides = slides.length;
+        
+        document.getElementById('totalSlides').textContent = totalSlides;
+        
+        function showSlide(n) {
+            slides[currentSlide].classList.remove('active');
+            currentSlide = (n + totalSlides) % totalSlides;
+            slides[currentSlide].classList.add('active');
+            
+            document.getElementById('currentSlide').textContent = currentSlide + 1;
+            document.getElementById('progressBar').style.width = 
+                ((currentSlide + 1) / totalSlides * 100) + '%';
+            
+            document.getElementById('prevBtn').disabled = currentSlide === 0;
+            document.getElementById('nextBtn').disabled = currentSlide === totalSlides - 1;
+        }
+        
+        function changeSlide(direction) {
+            showSlide(currentSlide + direction);
+        }
+        
+        document.addEventListener('keydown', (e) => {
+            switch(e.key) {
+                case 'ArrowRight':
+                case ' ':
+                    if (currentSlide < totalSlides - 1) changeSlide(1);
+                    e.preventDefault();
+                    break;
+                case 'ArrowLeft':
+                    if (currentSlide > 0) changeSlide(-1);
+                    e.preventDefault();
+                    break;
+                case 'Home':
+                    showSlide(0);
+                    e.preventDefault();
+                    break;
+                case 'End':
+                    showSlide(totalSlides - 1);
+                    e.preventDefault();
+                    break;
+            }
+        });
+        
+        hljs.highlightAll();
+        showSlide(0);
+    </script>
+</body>
+</html>

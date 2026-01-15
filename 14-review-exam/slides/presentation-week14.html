@@ -1,0 +1,1987 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Week 14: Advanced Topics and Comprehensive Review | ATP</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/c.min.js"></script>
+    <style>
+        :root {
+            --bg-primary: #0d1117;
+            --bg-secondary: #161b22;
+            --bg-tertiary: #21262d;
+            --text-primary: #e6edf3;
+            --text-secondary: #8b949e;
+            --accent-blue: #58a6ff;
+            --accent-green: #3fb950;
+            --accent-yellow: #d29922;
+            --accent-red: #f85149;
+            --accent-purple: #a371f7;
+            --accent-cyan: #39c5cf;
+            --border-color: #30363d;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans', Helvetica, Arial, sans-serif;
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.6;
+            overflow: hidden;
+        }
+
+        /* Progress Bar */
+        .progress-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: var(--bg-tertiary);
+            z-index: 1000;
+        }
+
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, var(--accent-blue), var(--accent-purple));
+            transition: width 0.3s ease;
+        }
+
+        /* Slide Container */
+        .slides-container {
+            width: 100vw;
+            height: 100vh;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .slide {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            padding: 60px 80px;
+            display: none;
+            opacity: 0;
+            transition: opacity 0.4s ease;
+            overflow-y: auto;
+        }
+
+        .slide.active {
+            display: flex;
+            flex-direction: column;
+            opacity: 1;
+        }
+
+        /* Slide Navigation */
+        .slide-counter {
+            position: fixed;
+            bottom: 20px;
+            left: 30px;
+            font-size: 14px;
+            color: var(--text-secondary);
+            z-index: 100;
+        }
+
+        .nav-buttons {
+            position: fixed;
+            bottom: 20px;
+            right: 30px;
+            display: flex;
+            gap: 10px;
+            z-index: 100;
+        }
+
+        .nav-btn {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.2s ease;
+        }
+
+        .nav-btn:hover {
+            background: var(--accent-blue);
+            border-color: var(--accent-blue);
+        }
+
+        /* Typography */
+        h1 {
+            font-size: 2.8em;
+            font-weight: 600;
+            margin-bottom: 30px;
+            color: var(--text-primary);
+        }
+
+        h2 {
+            font-size: 2.2em;
+            font-weight: 600;
+            margin-bottom: 25px;
+            color: var(--accent-blue);
+        }
+
+        h3 {
+            font-size: 1.6em;
+            font-weight: 600;
+            margin-bottom: 20px;
+            color: var(--accent-cyan);
+        }
+
+        p {
+            font-size: 1.2em;
+            margin-bottom: 15px;
+            color: var(--text-secondary);
+        }
+
+        ul, ol {
+            margin-left: 30px;
+            margin-bottom: 20px;
+        }
+
+        li {
+            font-size: 1.1em;
+            margin-bottom: 12px;
+            color: var(--text-secondary);
+        }
+
+        /* Title Slide */
+        .title-slide {
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            background: radial-gradient(ellipse at center, var(--bg-secondary) 0%, var(--bg-primary) 100%);
+        }
+
+        .title-slide h1 {
+            font-size: 3.5em;
+            background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 20px;
+        }
+
+        .title-slide .subtitle {
+            font-size: 1.8em;
+            color: var(--text-secondary);
+            margin-bottom: 10px;
+        }
+
+        .title-slide .meta {
+            font-size: 1.2em;
+            color: var(--text-secondary);
+            margin-top: 40px;
+        }
+
+        .week-badge {
+            display: inline-block;
+            background: var(--accent-purple);
+            color: white;
+            padding: 8px 24px;
+            border-radius: 20px;
+            font-size: 1.2em;
+            margin-bottom: 30px;
+        }
+
+        /* Code Blocks */
+        .code-block {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            margin: 20px 0;
+            overflow: hidden;
+        }
+
+        .code-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 15px;
+            background: var(--bg-tertiary);
+            border-bottom: 1px solid var(--border-color);
+            font-size: 0.9em;
+            color: var(--text-secondary);
+        }
+
+        .lang-badge {
+            background: var(--accent-blue);
+            color: var(--bg-primary);
+            padding: 2px 10px;
+            border-radius: 4px;
+            font-weight: 600;
+            font-size: 0.85em;
+        }
+
+        .code-block pre {
+            margin: 0;
+            padding: 15px;
+            overflow-x: auto;
+        }
+
+        .code-block code {
+            font-family: 'JetBrains Mono', 'Fira Code', Consolas, monospace;
+            font-size: 0.95em;
+            line-height: 1.5;
+        }
+
+        /* Info Boxes */
+        .info-box {
+            padding: 20px 25px;
+            border-radius: 8px;
+            margin: 20px 0;
+            border-left: 4px solid;
+        }
+
+        .info-box.tip {
+            background: rgba(63, 185, 80, 0.1);
+            border-color: var(--accent-green);
+        }
+
+        .info-box.warning {
+            background: rgba(210, 153, 34, 0.1);
+            border-color: var(--accent-yellow);
+        }
+
+        .info-box.danger {
+            background: rgba(248, 81, 73, 0.1);
+            border-color: var(--accent-red);
+        }
+
+        .info-box.note {
+            background: rgba(88, 166, 255, 0.1);
+            border-color: var(--accent-blue);
+        }
+
+        .info-box h4 {
+            font-size: 1.1em;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .info-box.tip h4 { color: var(--accent-green); }
+        .info-box.warning h4 { color: var(--accent-yellow); }
+        .info-box.danger h4 { color: var(--accent-red); }
+        .info-box.note h4 { color: var(--accent-blue); }
+
+        /* Tables */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            font-size: 0.95em;
+        }
+
+        th, td {
+            padding: 12px 15px;
+            text-align: left;
+            border: 1px solid var(--border-color);
+        }
+
+        th {
+            background: var(--bg-tertiary);
+            color: var(--accent-blue);
+            font-weight: 600;
+        }
+
+        tr:nth-child(even) {
+            background: var(--bg-secondary);
+        }
+
+        /* Two Column Layout */
+        .two-columns {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 40px;
+            margin: 20px 0;
+        }
+
+        .column {
+            background: var(--bg-secondary);
+            padding: 25px;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+        }
+
+        /* Grid Layout */
+        .grid-3 {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            margin: 20px 0;
+        }
+
+        .grid-item {
+            background: var(--bg-secondary);
+            padding: 20px;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            text-align: center;
+        }
+
+        .grid-item h4 {
+            color: var(--accent-cyan);
+            margin-bottom: 10px;
+        }
+
+        /* Highlight Text */
+        .highlight {
+            color: var(--accent-yellow);
+            font-weight: 600;
+        }
+
+        .accent {
+            color: var(--accent-blue);
+        }
+
+        /* Diagrams */
+        .diagram {
+            background: var(--bg-secondary);
+            padding: 30px;
+            border-radius: 8px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.9em;
+            white-space: pre;
+            overflow-x: auto;
+            border: 1px solid var(--border-color);
+            line-height: 1.4;
+        }
+
+        /* Quote Box */
+        .quote-box {
+            background: var(--bg-secondary);
+            border-left: 4px solid var(--accent-purple);
+            padding: 25px 30px;
+            margin: 25px 0;
+            font-style: italic;
+            border-radius: 0 8px 8px 0;
+        }
+
+        .quote-box .author {
+            margin-top: 15px;
+            font-style: normal;
+            color: var(--accent-purple);
+            font-weight: 600;
+        }
+
+        /* Summary Boxes */
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin: 20px 0;
+        }
+
+        .summary-item {
+            background: var(--bg-secondary);
+            padding: 15px 20px;
+            border-radius: 8px;
+            border-left: 3px solid var(--accent-green);
+        }
+
+        .summary-item h4 {
+            color: var(--accent-green);
+            font-size: 1em;
+            margin-bottom: 5px;
+        }
+
+        /* Timeline */
+        .timeline {
+            position: relative;
+            padding-left: 30px;
+            margin: 20px 0;
+        }
+
+        .timeline::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 3px;
+            background: linear-gradient(to bottom, var(--accent-blue), var(--accent-purple));
+        }
+
+        .timeline-item {
+            position: relative;
+            padding: 15px 0 15px 25px;
+        }
+
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            left: -36px;
+            top: 20px;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: var(--accent-blue);
+            border: 3px solid var(--bg-primary);
+        }
+
+        .timeline-item .year {
+            color: var(--accent-yellow);
+            font-weight: 600;
+            font-size: 1.1em;
+        }
+
+        /* Complexity Badge */
+        .complexity {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 0.9em;
+            margin: 2px;
+        }
+
+        .complexity.good {
+            background: rgba(63, 185, 80, 0.2);
+            color: var(--accent-green);
+        }
+
+        .complexity.medium {
+            background: rgba(210, 153, 34, 0.2);
+            color: var(--accent-yellow);
+        }
+
+        .complexity.bad {
+            background: rgba(248, 81, 73, 0.2);
+            color: var(--accent-red);
+        }
+
+        /* Keyboard Shortcuts */
+        kbd {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            padding: 2px 8px;
+            font-family: monospace;
+            font-size: 0.9em;
+        }
+
+        /* Scroll indicator for long slides */
+        .scroll-indicator {
+            position: absolute;
+            bottom: 60px;
+            right: 40px;
+            color: var(--text-secondary);
+            font-size: 0.9em;
+            animation: bounce 2s infinite;
+        }
+
+        @keyframes bounce {
+            0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+            40% { transform: translateY(-10px); }
+            60% { transform: translateY(-5px); }
+        }
+
+        /* Comparison Table Styling */
+        .comparison-table th {
+            text-align: center;
+        }
+
+        .comparison-table td:first-child {
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        /* Algorithm Card */
+        .algo-card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 20px;
+            margin: 10px 0;
+        }
+
+        .algo-card h4 {
+            color: var(--accent-cyan);
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        /* Final slide styling */
+        .end-slide {
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+        }
+
+        .end-slide h1 {
+            font-size: 3em;
+            margin-bottom: 30px;
+        }
+
+        /* Print styles */
+        @media print {
+            .slide {
+                page-break-after: always;
+                position: relative;
+                display: block !important;
+                opacity: 1 !important;
+                height: auto;
+                min-height: 100vh;
+            }
+            .nav-buttons, .slide-counter, .progress-container {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="progress-container">
+        <div class="progress-bar" id="progressBar"></div>
+    </div>
+
+    <div class="slides-container" id="slidesContainer">
+        
+        <!-- Slide 1: Title -->
+        <div class="slide title-slide active" data-slide="1">
+            <span class="week-badge">Week 14</span>
+            <h1>Advanced Topics and Comprehensive Review</h1>
+            <p class="subtitle">Algorithms and Programming Techniques</p>
+            <p class="meta">
+                ASE-CSIE • Computer Science and Information Economics<br>
+                Final Week • Course Synthesis and Optimisation
+            </p>
+        </div>
+
+        <!-- Slide 2: Learning Objectives -->
+        <div class="slide" data-slide="2">
+            <h2>🎯 Learning Objectives</h2>
+            <ul>
+                <li><strong>Remember</strong> — Recall characteristics, complexities and requirements of all major algorithms and data structures from the semester</li>
+                <li><strong>Understand</strong> — Explain theoretical foundations of divide-and-conquer, greedy methods, dynamic programming and backtracking</li>
+                <li><strong>Apply</strong> — Implement hybrid solutions combining multiple algorithmic techniques and data structures</li>
+                <li><strong>Analyse</strong> — Evaluate competing approaches through asymptotic analysis, profiling and benchmarking</li>
+                <li><strong>Evaluate</strong> — Critically assess trade-offs between time, space, maintainability and implementation effort</li>
+                <li><strong>Create</strong> — Design original solutions to novel problems by synthesising course knowledge</li>
+            </ul>
+        </div>
+
+        <!-- Slide 3: Course Journey Timeline -->
+        <div class="slide" data-slide="3">
+            <h2>📅 Course Journey</h2>
+            <div class="timeline">
+                <div class="timeline-item">
+                    <span class="year">Weeks 1-3</span>
+                    <p>Foundations: Function pointers, callbacks, file I/O (text and binary)</p>
+                </div>
+                <div class="timeline-item">
+                    <span class="year">Weeks 4-6</span>
+                    <p>Linear structures: Linked lists, stacks, queues</p>
+                </div>
+                <div class="timeline-item">
+                    <span class="year">Weeks 7-10</span>
+                    <p>Tree structures: Binary trees, BST, AVL trees, heaps</p>
+                </div>
+                <div class="timeline-item">
+                    <span class="year">Weeks 11-13</span>
+                    <p>Advanced structures: Hash tables, graphs, shortest paths</p>
+                </div>
+                <div class="timeline-item">
+                    <span class="year">Week 14</span>
+                    <p>Synthesis: Integration, optimisation, comprehensive review</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 4: Historical Context -->
+        <div class="slide" data-slide="4">
+            <h2>📜 Historical Context</h2>
+            <div class="two-columns">
+                <div class="column">
+                    <h3>Origins of Algorithm Study</h3>
+                    <p>The word "algorithm" derives from <span class="highlight">al-Khwārizmī</span> (c. 780–850 CE), Persian mathematician who introduced systematic computational procedures.</p>
+                    <p>Modern algorithm analysis emerged with <span class="accent">Donald Knuth's</span> "The Art of Computer Programming" (1968), establishing O-notation in computer science.</p>
+                </div>
+                <div class="column">
+                    <h3>Dynamic Programming</h3>
+                    <p>Developed by <span class="highlight">Richard Bellman</span> in the 1950s at RAND Corporation.</p>
+                    <p>The term "dynamic programming" was deliberately chosen to sound impressive whilst obscuring mathematical research from government officials.</p>
+                    <p>Revolutionised optimisation across operations research, economics and computer science.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 5: Key Figure - Donald Knuth -->
+        <div class="slide" data-slide="5">
+            <h2>👤 Key Figure: Donald Ervin Knuth</h2>
+            <div class="two-columns">
+                <div class="column">
+                    <h3>Biography (1938–present)</h3>
+                    <ul>
+                        <li>Born in Milwaukee, Wisconsin</li>
+                        <li>Ph.D. from Caltech (1963)</li>
+                        <li>Stanford Professor Emeritus</li>
+                        <li>Created TeX typesetting system</li>
+                        <li>Developed literate programming</li>
+                        <li>Turing Award recipient (1974)</li>
+                    </ul>
+                </div>
+                <div class="column">
+                    <div class="quote-box">
+                        "Premature optimisation is the root of all evil."
+                        <div class="author">— Donald E. Knuth, 1974</div>
+                    </div>
+                    <div class="info-box note">
+                        <h4>📚 Contribution</h4>
+                        <p>"The Art of Computer Programming" remains the definitive reference for algorithm study, with Knuth offering $2.56 rewards for finding errors.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 6: Algorithm Design Paradigms -->
+        <div class="slide" data-slide="6">
+            <h2>🧠 Algorithm Design Paradigms</h2>
+            <div class="grid-3">
+                <div class="grid-item">
+                    <h4>Divide and Conquer</h4>
+                    <p>Break into independent subproblems</p>
+                    <p class="highlight">Merge Sort, Quick Sort, Binary Search</p>
+                </div>
+                <div class="grid-item">
+                    <h4>Dynamic Programming</h4>
+                    <p>Overlapping subproblems with optimal substructure</p>
+                    <p class="highlight">Fibonacci, Knapsack, LCS</p>
+                </div>
+                <div class="grid-item">
+                    <h4>Greedy Strategy</h4>
+                    <p>Locally optimal choices lead to global optimum</p>
+                    <p class="highlight">Dijkstra, Prim, Kruskal</p>
+                </div>
+            </div>
+            <div class="two-columns" style="margin-top: 20px;">
+                <div class="grid-item">
+                    <h4>Backtracking</h4>
+                    <p>Systematic search with pruning</p>
+                    <p class="highlight">N-Queens, Sudoku, Graph Colouring</p>
+                </div>
+                <div class="grid-item">
+                    <h4>Branch and Bound</h4>
+                    <p>Backtracking with bounds-based pruning</p>
+                    <p class="highlight">TSP, Integer Programming</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 7: Paradigm Selection Guide -->
+        <div class="slide" data-slide="7">
+            <h2>🎯 Paradigm Selection Guide</h2>
+            <div class="diagram">
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                    CHOOSING THE RIGHT PARADIGM                              │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+    Problem has independent subproblems?
+    │
+    ├─ YES → Can combine solutions efficiently?
+    │         │
+    │         ├─ YES → DIVIDE AND CONQUER
+    │         │        (merge sort, quicksort)
+    │         │
+    │         └─ NO → Consider other approaches
+    │
+    └─ NO → Overlapping subproblems?
+             │
+             ├─ YES → Optimal substructure?
+             │         │
+             │         ├─ YES → DYNAMIC PROGRAMMING
+             │         │        (DP, memoisation)
+             │         │
+             │         └─ NO → BACKTRACKING
+             │
+             └─ NO → Local choices lead to global optimum?
+                      │
+                      ├─ YES → GREEDY STRATEGY
+                      │        (Dijkstra, Huffman)
+                      │
+                      └─ NO → BACKTRACKING / BRANCH AND BOUND
+            </div>
+        </div>
+
+        <!-- Slide 8: Complexity Analysis Summary -->
+        <div class="slide" data-slide="8">
+            <h2>📊 Complexity Analysis Summary</h2>
+            <table class="comparison-table">
+                <tr>
+                    <th>Algorithm</th>
+                    <th>Best</th>
+                    <th>Average</th>
+                    <th>Worst</th>
+                    <th>Space</th>
+                </tr>
+                <tr>
+                    <td>Quick Sort</td>
+                    <td><span class="complexity good">O(n log n)</span></td>
+                    <td><span class="complexity good">O(n log n)</span></td>
+                    <td><span class="complexity bad">O(n²)</span></td>
+                    <td><span class="complexity good">O(log n)</span></td>
+                </tr>
+                <tr>
+                    <td>Merge Sort</td>
+                    <td><span class="complexity good">O(n log n)</span></td>
+                    <td><span class="complexity good">O(n log n)</span></td>
+                    <td><span class="complexity good">O(n log n)</span></td>
+                    <td><span class="complexity medium">O(n)</span></td>
+                </tr>
+                <tr>
+                    <td>Heap Sort</td>
+                    <td><span class="complexity good">O(n log n)</span></td>
+                    <td><span class="complexity good">O(n log n)</span></td>
+                    <td><span class="complexity good">O(n log n)</span></td>
+                    <td><span class="complexity good">O(1)</span></td>
+                </tr>
+                <tr>
+                    <td>Binary Search</td>
+                    <td><span class="complexity good">O(1)</span></td>
+                    <td><span class="complexity good">O(log n)</span></td>
+                    <td><span class="complexity good">O(log n)</span></td>
+                    <td><span class="complexity good">O(1)</span></td>
+                </tr>
+                <tr>
+                    <td>Hash Table</td>
+                    <td><span class="complexity good">O(1)</span></td>
+                    <td><span class="complexity good">O(1)</span></td>
+                    <td><span class="complexity bad">O(n)</span></td>
+                    <td><span class="complexity medium">O(n)</span></td>
+                </tr>
+            </table>
+        </div>
+
+        <!-- Slide 9: Graph Algorithm Complexities -->
+        <div class="slide" data-slide="9">
+            <h2>📊 Graph Algorithm Complexities</h2>
+            <table class="comparison-table">
+                <tr>
+                    <th>Algorithm</th>
+                    <th>Time Complexity</th>
+                    <th>Space</th>
+                    <th>Use Case</th>
+                </tr>
+                <tr>
+                    <td>BFS / DFS</td>
+                    <td><span class="complexity good">O(V + E)</span></td>
+                    <td>O(V)</td>
+                    <td>Traversal, connectivity</td>
+                </tr>
+                <tr>
+                    <td>Dijkstra (binary heap)</td>
+                    <td><span class="complexity medium">O((V+E) log V)</span></td>
+                    <td>O(V)</td>
+                    <td>Single-source shortest path</td>
+                </tr>
+                <tr>
+                    <td>Bellman-Ford</td>
+                    <td><span class="complexity medium">O(VE)</span></td>
+                    <td>O(V)</td>
+                    <td>Negative weights allowed</td>
+                </tr>
+                <tr>
+                    <td>Floyd-Warshall</td>
+                    <td><span class="complexity bad">O(V³)</span></td>
+                    <td>O(V²)</td>
+                    <td>All-pairs shortest paths</td>
+                </tr>
+                <tr>
+                    <td>Prim (binary heap)</td>
+                    <td><span class="complexity medium">O((V+E) log V)</span></td>
+                    <td>O(V)</td>
+                    <td>MST (dense graphs)</td>
+                </tr>
+                <tr>
+                    <td>Kruskal</td>
+                    <td><span class="complexity medium">O(E log E)</span></td>
+                    <td>O(V)</td>
+                    <td>MST (sparse graphs)</td>
+                </tr>
+            </table>
+        </div>
+
+        <!-- Slide 10: Dynamic Programming Summary -->
+        <div class="slide" data-slide="10">
+            <h2>🔄 Dynamic Programming Patterns</h2>
+            <table class="comparison-table">
+                <tr>
+                    <th>Problem</th>
+                    <th>Subproblem</th>
+                    <th>Time</th>
+                    <th>Space</th>
+                </tr>
+                <tr>
+                    <td>Fibonacci</td>
+                    <td>F(n) = F(n-1) + F(n-2)</td>
+                    <td><span class="complexity good">O(n)</span></td>
+                    <td><span class="complexity good">O(1)</span></td>
+                </tr>
+                <tr>
+                    <td>0/1 Knapsack</td>
+                    <td>dp[i][w] = max include/exclude</td>
+                    <td><span class="complexity medium">O(nW)</span></td>
+                    <td><span class="complexity good">O(W)</span></td>
+                </tr>
+                <tr>
+                    <td>LCS</td>
+                    <td>dp[i][j] based on match/mismatch</td>
+                    <td><span class="complexity medium">O(mn)</span></td>
+                    <td><span class="complexity good">O(min(m,n))</span></td>
+                </tr>
+                <tr>
+                    <td>Edit Distance</td>
+                    <td>dp[i][j] = min of 3 operations</td>
+                    <td><span class="complexity medium">O(mn)</span></td>
+                    <td><span class="complexity good">O(n)</span></td>
+                </tr>
+                <tr>
+                    <td>Coin Change</td>
+                    <td>dp[i] = min coins for amount i</td>
+                    <td><span class="complexity medium">O(nS)</span></td>
+                    <td><span class="complexity good">O(S)</span></td>
+                </tr>
+                <tr>
+                    <td>Matrix Chain</td>
+                    <td>dp[i][j] = min ops for Ai...Aj</td>
+                    <td><span class="complexity medium">O(n³)</span></td>
+                    <td><span class="complexity medium">O(n²)</span></td>
+                </tr>
+            </table>
+        </div>
+
+        <!-- Slide 11: Function Pointers Review -->
+        <div class="slide" data-slide="11">
+            <h2>⚙️ Function Pointers: The Foundation</h2>
+            <div class="code-block">
+                <div class="code-header">
+                    <span>Generic Algorithm Interface</span>
+                    <span class="lang-badge">C</span>
+                </div>
+                <pre><code class="language-c">/* Comparator function type */
+typedef int (*Comparator)(const void *, const void *);
+
+/* Generic sorting interface */
+typedef void (*SortFunction)(void *base, size_t nmemb, 
+                              size_t size, Comparator cmp);
+
+/* Algorithm dispatch table */
+typedef struct {
+    const char *name;
+    SortFunction sort;
+} SortAlgorithm;
+
+SortAlgorithm algorithms[] = {
+    {"Quick Sort",  quick_sort},
+    {"Merge Sort",  merge_sort},
+    {"Heap Sort",   heap_sort},
+    {NULL, NULL}
+};
+
+/* Select and execute algorithm by name */
+void sort_by_name(const char *name, void *arr, size_t n, 
+                  size_t size, Comparator cmp) {
+    for (int i = 0; algorithms[i].name; i++) {
+        if (strcmp(algorithms[i].name, name) == 0) {
+            algorithms[i].sort(arr, n, size, cmp);
+            return;
+        }
+    }
+}</code></pre>
+            </div>
+        </div>
+
+        <!-- Slide 12: Standard Library Functions -->
+        <div class="slide" data-slide="12">
+            <h2>📚 Essential Standard Library Functions</h2>
+            <div class="two-columns">
+                <div class="column">
+                    <h3>Sorting and Searching</h3>
+                    <div class="code-block">
+                        <div class="code-header">
+                            <span>qsort and bsearch</span>
+                            <span class="lang-badge">C</span>
+                        </div>
+                        <pre><code class="language-c">/* Sort array in-place */
+qsort(array, count, sizeof(int), 
+      compare_ints);
+
+/* Binary search */
+int *found = bsearch(&key, array, 
+                     count, sizeof(int),
+                     compare_ints);
+
+/* Comparator for integers */
+int compare_ints(const void *a, 
+                 const void *b) {
+    return *(int*)a - *(int*)b;
+}</code></pre>
+                    </div>
+                </div>
+                <div class="column">
+                    <h3>Memory Management</h3>
+                    <div class="code-block">
+                        <div class="code-header">
+                            <span>Dynamic Allocation</span>
+                            <span class="lang-badge">C</span>
+                        </div>
+                        <pre><code class="language-c">/* Allocate and zero */
+int *arr = calloc(n, sizeof(int));
+
+/* Resize array */
+arr = realloc(arr, 
+              new_size * sizeof(int));
+
+/* Copy memory */
+memcpy(dest, src, n * sizeof(int));
+
+/* Set memory */
+memset(arr, 0, n * sizeof(int));
+
+/* Free memory */
+free(arr);
+arr = NULL;</code></pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 13: Data Structure Selection -->
+        <div class="slide" data-slide="13">
+            <h2>🗂️ Data Structure Selection Guide</h2>
+            <div class="diagram">
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                     CHOOSING THE RIGHT DATA STRUCTURE                       │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+    Need fast lookup by key?
+    │
+    ├─ YES → Keys comparable?
+    │         │
+    │         ├─ YES → Need ordered iteration?
+    │         │         │
+    │         │         ├─ YES → BST / AVL Tree
+    │         │         │
+    │         │         └─ NO → Hash Table (fastest)
+    │         │
+    │         └─ NO → Hash Table with custom hash
+    │
+    └─ NO → Need ordering / priority?
+             │
+             ├─ YES → Priority only (no arbitrary access)?
+             │         │
+             │         ├─ YES → Binary Heap
+             │         │
+             │         └─ NO → BST / AVL Tree
+             │
+             └─ NO → Need LIFO access?
+                      │
+                      ├─ YES → Stack
+                      │
+                      └─ NO → Need FIFO access?
+                               │
+                               ├─ YES → Queue / Circular Buffer
+                               │
+                               └─ NO → Array or Linked List
+            </div>
+        </div>
+
+        <!-- Slide 14: Memory Optimisation -->
+        <div class="slide" data-slide="14">
+            <h2>💾 Memory Optimisation Techniques</h2>
+            <div class="code-block">
+                <div class="code-header">
+                    <span>Space-Optimised LCS: O(min(m,n)) instead of O(mn)</span>
+                    <span class="lang-badge">C</span>
+                </div>
+                <pre><code class="language-c">int lcs_space_optimised(const char *X, const char *Y, int m, int n) {
+    /* Ensure X is shorter for minimal space */
+    if (m > n) {
+        const char *t = X; X = Y; Y = t;
+        int temp = m; m = n; n = temp;
+    }
+    
+    int *prev = calloc(m + 1, sizeof(int));
+    int *curr = calloc(m + 1, sizeof(int));
+    
+    for (int j = 1; j <= n; j++) {
+        for (int i = 1; i <= m; i++) {
+            if (X[i-1] == Y[j-1])
+                curr[i] = prev[i-1] + 1;
+            else
+                curr[i] = (prev[i] > curr[i-1]) ? prev[i] : curr[i-1];
+        }
+        /* Swap pointers - O(1) operation */
+        int *temp = prev; prev = curr; curr = temp;
+    }
+    
+    int result = prev[m];
+    free(prev); free(curr);
+    return result;
+}</code></pre>
+            </div>
+        </div>
+
+        <!-- Slide 15: Cache-Aware Programming -->
+        <div class="slide" data-slide="15">
+            <h2>⚡ Cache-Aware Programming</h2>
+            <div class="two-columns">
+                <div class="column">
+                    <h3>Poor Cache Usage</h3>
+                    <div class="code-block">
+                        <div class="code-header">
+                            <span>Column-major traversal</span>
+                            <span class="lang-badge">C</span>
+                        </div>
+                        <pre><code class="language-c">/* Cache misses: ~N² */
+for (int j = 0; j < N; j++) {
+    for (int i = 0; i < N; i++) {
+        sum += matrix[i][j];
+    }
+}</code></pre>
+                    </div>
+                    <div class="info-box danger">
+                        <h4>⚠️ Problem</h4>
+                        <p>Jumps across cache lines with each inner iteration. Memory access pattern is non-contiguous.</p>
+                    </div>
+                </div>
+                <div class="column">
+                    <h3>Good Cache Usage</h3>
+                    <div class="code-block">
+                        <div class="code-header">
+                            <span>Row-major traversal</span>
+                            <span class="lang-badge">C</span>
+                        </div>
+                        <pre><code class="language-c">/* Cache misses: ~N²/64 */
+for (int i = 0; i < N; i++) {
+    for (int j = 0; j < N; j++) {
+        sum += matrix[i][j];
+    }
+}</code></pre>
+                    </div>
+                    <div class="info-box tip">
+                        <h4>✓ Solution</h4>
+                        <p>Sequential memory access. Each cache line fetch provides ~64 bytes of useful data.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 16: Profiling and Benchmarking -->
+        <div class="slide" data-slide="16">
+            <h2>📈 Profiling and Benchmarking</h2>
+            <div class="code-block">
+                <div class="code-header">
+                    <span>High-Resolution Timing</span>
+                    <span class="lang-badge">C</span>
+                </div>
+                <pre><code class="language-c">#include &lt;time.h&gt;
+
+typedef struct {
+    const char *name;
+    double total_time;
+    int iterations;
+} BenchmarkResult;
+
+double benchmark_algorithm(void (*algo)(int*, int), int *data, int n, int runs) {
+    struct timespec start, end;
+    double total = 0.0;
+    
+    for (int r = 0; r < runs; r++) {
+        int *copy = malloc(n * sizeof(int));
+        memcpy(copy, data, n * sizeof(int));
+        
+        clock_gettime(CLOCK_MONOTONIC, &start);
+        algo(copy, n);
+        clock_gettime(CLOCK_MONOTONIC, &end);
+        
+        total += (end.tv_sec - start.tv_sec) + 
+                 (end.tv_nsec - start.tv_nsec) / 1e9;
+        free(copy);
+    }
+    
+    return total / runs;
+}</code></pre>
+            </div>
+        </div>
+
+        <!-- Slide 17: Valgrind Memory Checking -->
+        <div class="slide" data-slide="17">
+            <h2>🔍 Memory Debugging with Valgrind</h2>
+            <div class="code-block">
+                <div class="code-header">
+                    <span>Valgrind Commands</span>
+                    <span class="lang-badge">Bash</span>
+                </div>
+                <pre><code class="language-bash"># Basic memory leak detection
+valgrind --leak-check=full ./program
+
+# Detailed leak origins
+valgrind --leak-check=full --show-leak-kinds=all ./program
+
+# Track origins of uninitialised values
+valgrind --track-origins=yes ./program
+
+# Generate cachegrind profile
+valgrind --tool=cachegrind ./program
+
+# Generate callgrind profile (for KCachegrind)
+valgrind --tool=callgrind ./program</code></pre>
+            </div>
+            <div class="info-box warning">
+                <h4>⚠️ Common Memory Errors</h4>
+                <ul>
+                    <li><strong>Definitely lost</strong> — Memory with no pointer remaining</li>
+                    <li><strong>Indirectly lost</strong> — Memory reachable only via lost memory</li>
+                    <li><strong>Invalid read/write</strong> — Access beyond allocated bounds</li>
+                    <li><strong>Use of uninitialised value</strong> — Reading before writing</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Slide 18: GDB Debugging -->
+        <div class="slide" data-slide="18">
+            <h2>🐛 Debugging with GDB</h2>
+            <div class="two-columns">
+                <div class="column">
+                    <h3>Essential Commands</h3>
+                    <div class="code-block">
+                        <div class="code-header">
+                            <span>GDB Basics</span>
+                            <span class="lang-badge">GDB</span>
+                        </div>
+                        <pre><code class="language-bash"># Start debugging
+gdb ./program
+
+# Set breakpoint
+(gdb) break main
+(gdb) break file.c:42
+
+# Run program
+(gdb) run arg1 arg2
+
+# Step through code
+(gdb) next     # step over
+(gdb) step     # step into
+(gdb) continue # run to next bp
+
+# Examine state
+(gdb) print variable
+(gdb) print *pointer
+(gdb) print array[0]@10</code></pre>
+                    </div>
+                </div>
+                <div class="column">
+                    <h3>Advanced Features</h3>
+                    <div class="code-block">
+                        <div class="code-header">
+                            <span>GDB Advanced</span>
+                            <span class="lang-badge">GDB</span>
+                        </div>
+                        <pre><code class="language-bash"># Conditional breakpoint
+(gdb) break func if x > 100
+
+# Watchpoint (break on change)
+(gdb) watch variable
+
+# Backtrace
+(gdb) backtrace
+(gdb) frame 2
+
+# Memory examination
+(gdb) x/10xw pointer
+(gdb) x/s string_ptr
+
+# Disassembly
+(gdb) disassemble func</code></pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 19: Graph Representation Comparison -->
+        <div class="slide" data-slide="19">
+            <h2>🔗 Graph Representation Trade-offs</h2>
+            <div class="two-columns">
+                <div class="column">
+                    <h3>Adjacency Matrix</h3>
+                    <div class="code-block">
+                        <div class="code-header">
+                            <span>Matrix Implementation</span>
+                            <span class="lang-badge">C</span>
+                        </div>
+                        <pre><code class="language-c">typedef struct {
+    int V;
+    int **matrix;
+} GraphMatrix;
+
+/* O(1) edge check */
+bool has_edge(GraphMatrix *g, 
+              int u, int v) {
+    return g->matrix[u][v] != 0;
+}
+
+/* Space: O(V²) */</code></pre>
+                    </div>
+                    <p><strong>Best for:</strong> Dense graphs, frequent edge queries</p>
+                </div>
+                <div class="column">
+                    <h3>Adjacency List</h3>
+                    <div class="code-block">
+                        <div class="code-header">
+                            <span>List Implementation</span>
+                            <span class="lang-badge">C</span>
+                        </div>
+                        <pre><code class="language-c">typedef struct AdjNode {
+    int vertex;
+    int weight;
+    struct AdjNode *next;
+} AdjNode;
+
+typedef struct {
+    int V;
+    AdjNode **lists;
+} GraphList;
+
+/* Space: O(V + E) */</code></pre>
+                    </div>
+                    <p><strong>Best for:</strong> Sparse graphs, iteration over neighbours</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 20: Dijkstra's Algorithm Review -->
+        <div class="slide" data-slide="20">
+            <h2>🛤️ Dijkstra's Algorithm</h2>
+            <div class="code-block">
+                <div class="code-header">
+                    <span>Priority Queue Implementation</span>
+                    <span class="lang-badge">C</span>
+                </div>
+                <pre><code class="language-c">void dijkstra(Graph *g, int src, int *dist, int *prev) {
+    PriorityQueue *pq = pq_create(g->V);
+    
+    for (int v = 0; v < g->V; v++) {
+        dist[v] = INT_MAX;
+        prev[v] = -1;
+    }
+    dist[src] = 0;
+    pq_insert(pq, src, 0);
+    
+    while (!pq_is_empty(pq)) {
+        int u = pq_extract_min(pq);
+        
+        for (AdjNode *adj = g->lists[u]; adj; adj = adj->next) {
+            int v = adj->vertex;
+            int weight = adj->weight;
+            
+            if (dist[u] != INT_MAX && dist[u] + weight < dist[v]) {
+                dist[v] = dist[u] + weight;
+                prev[v] = u;
+                pq_decrease_key(pq, v, dist[v]);
+            }
+        }
+    }
+    pq_destroy(pq);
+}</code></pre>
+            </div>
+        </div>
+
+        <!-- Slide 21: Bellman-Ford Algorithm -->
+        <div class="slide" data-slide="21">
+            <h2>🔄 Bellman-Ford Algorithm</h2>
+            <div class="two-columns">
+                <div class="column">
+                    <div class="code-block">
+                        <div class="code-header">
+                            <span>Handles Negative Weights</span>
+                            <span class="lang-badge">C</span>
+                        </div>
+                        <pre><code class="language-c">bool bellman_ford(Graph *g, int src, 
+                  int *dist) {
+    for (int v = 0; v < g->V; v++)
+        dist[v] = INT_MAX;
+    dist[src] = 0;
+    
+    /* Relax all edges V-1 times */
+    for (int i = 0; i < g->V - 1; i++) {
+        for (int u = 0; u < g->V; u++) {
+            for (Edge *e = g->edges[u]; 
+                 e; e = e->next) {
+                if (dist[u] != INT_MAX &&
+                    dist[u] + e->weight 
+                    < dist[e->dest]) {
+                    dist[e->dest] = 
+                        dist[u] + e->weight;
+                }
+            }
+        }
+    }
+    
+    /* Check for negative cycles */
+    /* ... */
+    return true;
+}</code></pre>
+                    </div>
+                </div>
+                <div class="column">
+                    <h3>Comparison</h3>
+                    <table>
+                        <tr>
+                            <th>Aspect</th>
+                            <th>Dijkstra</th>
+                            <th>Bellman-Ford</th>
+                        </tr>
+                        <tr>
+                            <td>Time</td>
+                            <td>O((V+E) log V)</td>
+                            <td>O(VE)</td>
+                        </tr>
+                        <tr>
+                            <td>Negative edges</td>
+                            <td>No</td>
+                            <td>Yes</td>
+                        </tr>
+                        <tr>
+                            <td>Negative cycles</td>
+                            <td>No</td>
+                            <td>Detects</td>
+                        </tr>
+                        <tr>
+                            <td>Best for</td>
+                            <td>Non-negative</td>
+                            <td>General</td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 22: MST Algorithms -->
+        <div class="slide" data-slide="22">
+            <h2>🌳 Minimum Spanning Tree Algorithms</h2>
+            <div class="two-columns">
+                <div class="column">
+                    <h3>Prim's Algorithm</h3>
+                    <ul>
+                        <li>Grows tree from single vertex</li>
+                        <li>Uses priority queue</li>
+                        <li>Time: O((V+E) log V)</li>
+                        <li>Best for dense graphs</li>
+                    </ul>
+                    <div class="info-box note">
+                        <h4>Strategy</h4>
+                        <p>Always add minimum-weight edge connecting tree to non-tree vertex.</p>
+                    </div>
+                </div>
+                <div class="column">
+                    <h3>Kruskal's Algorithm</h3>
+                    <ul>
+                        <li>Sorts all edges first</li>
+                        <li>Uses Union-Find structure</li>
+                        <li>Time: O(E log E)</li>
+                        <li>Best for sparse graphs</li>
+                    </ul>
+                    <div class="info-box note">
+                        <h4>Strategy</h4>
+                        <p>Add edges in weight order, skipping those that create cycles.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 23: Union-Find Data Structure -->
+        <div class="slide" data-slide="23">
+            <h2>🔗 Union-Find (Disjoint Set)</h2>
+            <div class="code-block">
+                <div class="code-header">
+                    <span>Path Compression and Union by Rank</span>
+                    <span class="lang-badge">C</span>
+                </div>
+                <pre><code class="language-c">typedef struct {
+    int *parent;
+    int *rank;
+    int size;
+} UnionFind;
+
+/* Find with path compression - nearly O(1) amortised */
+int uf_find(UnionFind *uf, int x) {
+    if (uf->parent[x] != x)
+        uf->parent[x] = uf_find(uf, uf->parent[x]);
+    return uf->parent[x];
+}
+
+/* Union by rank - keeps trees shallow */
+void uf_union(UnionFind *uf, int x, int y) {
+    int rx = uf_find(uf, x);
+    int ry = uf_find(uf, y);
+    if (rx == ry) return;
+    
+    if (uf->rank[rx] < uf->rank[ry]) {
+        uf->parent[rx] = ry;
+    } else if (uf->rank[rx] > uf->rank[ry]) {
+        uf->parent[ry] = rx;
+    } else {
+        uf->parent[ry] = rx;
+        uf->rank[rx]++;
+    }
+}</code></pre>
+            </div>
+        </div>
+
+        <!-- Slide 24: Hash Table Implementation -->
+        <div class="slide" data-slide="24">
+            <h2>#️⃣ Hash Table Review</h2>
+            <div class="code-block">
+                <div class="code-header">
+                    <span>Chaining Implementation</span>
+                    <span class="lang-badge">C</span>
+                </div>
+                <pre><code class="language-c">typedef struct HashNode {
+    char *key;
+    void *value;
+    struct HashNode *next;
+} HashNode;
+
+typedef struct {
+    HashNode **buckets;
+    size_t size;
+    size_t count;
+    size_t (*hash)(const char *);
+} HashTable;
+
+/* djb2 hash function */
+size_t djb2_hash(const char *str) {
+    size_t hash = 5381;
+    int c;
+    while ((c = *str++))
+        hash = ((hash << 5) + hash) + c;  /* hash * 33 + c */
+    return hash;
+}
+
+void *ht_get(HashTable *ht, const char *key) {
+    size_t idx = ht->hash(key) % ht->size;
+    for (HashNode *n = ht->buckets[idx]; n; n = n->next)
+        if (strcmp(n->key, key) == 0)
+            return n->value;
+    return NULL;
+}</code></pre>
+            </div>
+        </div>
+
+        <!-- Slide 25: AVL Tree Rotations -->
+        <div class="slide" data-slide="25">
+            <h2>🔄 AVL Tree Rotations</h2>
+            <div class="diagram">
+         Right Rotation (LL case)           Left Rotation (RR case)
+         
+              y                                    x
+             / \                                  / \
+            x   T3     ──────►                  T1   y
+           / \         rotate                      / \
+          T1  T2       right                      T2  T3
+          
+          
+         Left-Right (LR case)              Right-Left (RL case)
+         
+              z                                    z
+             / \        Left then                 / \        Right then
+            y   T4      Right                   T1   y       Left
+           / \          ──────►                     / \      ──────►
+          T1  x                                    x   T4
+             / \                                  / \
+            T2  T3                               T2  T3
+            </div>
+            <div class="info-box tip">
+                <h4>✓ Balance Factor</h4>
+                <p>Balance = height(left) - height(right). Valid range: {-1, 0, 1}</p>
+            </div>
+        </div>
+
+        <!-- Slide 26: Binary Heap Operations -->
+        <div class="slide" data-slide="26">
+            <h2>📦 Binary Heap Operations</h2>
+            <div class="code-block">
+                <div class="code-header">
+                    <span>Min-Heap with Heapify</span>
+                    <span class="lang-badge">C</span>
+                </div>
+                <pre><code class="language-c">void heapify_down(Heap *h, int i) {
+    int smallest = i;
+    int left = 2 * i + 1;
+    int right = 2 * i + 2;
+    
+    if (left < h->size && h->data[left] < h->data[smallest])
+        smallest = left;
+    if (right < h->size && h->data[right] < h->data[smallest])
+        smallest = right;
+    
+    if (smallest != i) {
+        swap(&h->data[i], &h->data[smallest]);
+        heapify_down(h, smallest);
+    }
+}
+
+void heapify_up(Heap *h, int i) {
+    while (i > 0) {
+        int parent = (i - 1) / 2;
+        if (h->data[i] >= h->data[parent]) break;
+        swap(&h->data[i], &h->data[parent]);
+        i = parent;
+    }
+}
+
+/* Build heap from array: O(n) */
+void build_heap(Heap *h, int *arr, int n) {
+    memcpy(h->data, arr, n * sizeof(int));
+    h->size = n;
+    for (int i = n/2 - 1; i >= 0; i--)
+        heapify_down(h, i);
+}</code></pre>
+            </div>
+        </div>
+
+        <!-- Slide 27: Common Mistakes -->
+        <div class="slide" data-slide="27">
+            <h2>⚠️ Common Mistakes to Avoid</h2>
+            <div class="two-columns">
+                <div class="column">
+                    <div class="info-box danger">
+                        <h4>❌ Memory Errors</h4>
+                        <ul>
+                            <li>Forgetting to free dynamically allocated memory</li>
+                            <li>Using memory after free (dangling pointer)</li>
+                            <li>Double free</li>
+                            <li>Buffer overflow</li>
+                            <li>Not checking malloc return value</li>
+                        </ul>
+                    </div>
+                    <div class="info-box danger">
+                        <h4>❌ Algorithm Errors</h4>
+                        <ul>
+                            <li>Off-by-one errors in loops</li>
+                            <li>Wrong base case in recursion</li>
+                            <li>Integer overflow in calculations</li>
+                            <li>Not handling empty input</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="column">
+                    <div class="info-box tip">
+                        <h4>✓ Best Practices</h4>
+                        <ul>
+                            <li>Always initialise pointers to NULL</li>
+                            <li>Set freed pointers to NULL</li>
+                            <li>Use sizeof(*ptr) in malloc</li>
+                            <li>Check all memory allocations</li>
+                            <li>Use const for read-only parameters</li>
+                            <li>Document all ownership semantics</li>
+                        </ul>
+                    </div>
+                    <div class="info-box tip">
+                        <h4>✓ Testing Practices</h4>
+                        <ul>
+                            <li>Test edge cases first</li>
+                            <li>Test with empty input</li>
+                            <li>Test with single element</li>
+                            <li>Test with maximum values</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 28: Code Quality Standards -->
+        <div class="slide" data-slide="28">
+            <h2>✨ Code Quality Standards</h2>
+            <div class="code-block">
+                <div class="code-header">
+                    <span>Professional C Code Style</span>
+                    <span class="lang-badge">C</span>
+                </div>
+                <pre><code class="language-c">/**
+ * @brief Finds the shortest path between two vertices using Dijkstra's algorithm.
+ *
+ * @param graph  Pointer to the graph structure (must not be NULL)
+ * @param src    Source vertex index (0 <= src < graph->V)
+ * @param dest   Destination vertex index (0 <= dest < graph->V)
+ * @param path   Output array for path vertices (caller must free)
+ * @param length Output parameter for path length
+ *
+ * @return 0 on success, -1 if no path exists, -2 on memory error
+ *
+ * @note Caller is responsible for freeing the returned path array.
+ * @warning Graph must have non-negative edge weights.
+ */
+int find_shortest_path(const Graph *graph, int src, int dest,
+                       int **path, int *length) {
+    /* Validate input parameters */
+    if (!graph || !path || !length) return -2;
+    if (src < 0 || src >= graph->V) return -2;
+    if (dest < 0 || dest >= graph->V) return -2;
+    
+    /* Implementation... */
+}</code></pre>
+            </div>
+        </div>
+
+        <!-- Slide 29: Industrial Applications -->
+        <div class="slide" data-slide="29">
+            <h2>🏭 Industrial Applications</h2>
+            <div class="grid-3">
+                <div class="grid-item">
+                    <h4>Network Routing</h4>
+                    <p>OSPF protocol uses Dijkstra for shortest path calculations</p>
+                    <p class="accent">Graph algorithms</p>
+                </div>
+                <div class="grid-item">
+                    <h4>Database Query</h4>
+                    <p>Join ordering uses dynamic programming (System R)</p>
+                    <p class="accent">DP optimisation</p>
+                </div>
+                <div class="grid-item">
+                    <h4>Compiler Design</h4>
+                    <p>Register allocation via graph colouring</p>
+                    <p class="accent">Graph colouring</p>
+                </div>
+                <div class="grid-item">
+                    <h4>Version Control</h4>
+                    <p>Git diff uses LCS algorithm variants</p>
+                    <p class="accent">Dynamic programming</p>
+                </div>
+                <div class="grid-item">
+                    <h4>Bioinformatics</h4>
+                    <p>Smith-Waterman for sequence alignment</p>
+                    <p class="accent">Edit distance</p>
+                </div>
+                <div class="grid-item">
+                    <h4>GPS Navigation</h4>
+                    <p>A* and Dijkstra for route planning</p>
+                    <p class="accent">Shortest path</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 30: Interview Preparation -->
+        <div class="slide" data-slide="30">
+            <h2>💼 Interview Preparation</h2>
+            <div class="algo-card">
+                <h4>"Describe BFS vs DFS" <span class="complexity good">Common</span></h4>
+                <p>BFS: O(branching^depth) space, level-by-level, shortest path in unweighted graphs</p>
+                <p>DFS: O(depth) space, follows branches, used for topological sort, cycle detection</p>
+            </div>
+            <div class="algo-card">
+                <h4>"Detect cycle in linked list" <span class="complexity good">Common</span></h4>
+                <p>Floyd's tortoise and hare: O(n) time, O(1) space. Fast pointer moves 2x, slow moves 1x.</p>
+            </div>
+            <div class="algo-card">
+                <h4>"Explain dynamic programming" <span class="complexity medium">Medium</span></h4>
+                <p>Overlapping subproblems + optimal substructure. Memoisation (top-down) or tabulation (bottom-up).</p>
+            </div>
+            <div class="algo-card">
+                <h4>"Implement priority queue" <span class="complexity medium">Medium</span></h4>
+                <p>Binary heap: O(log n) insert/extract-min, O(1) find-min. Array-based with heapify operations.</p>
+            </div>
+        </div>
+
+        <!-- Slide 31: Exam Preparation Tips -->
+        <div class="slide" data-slide="31">
+            <h2>📝 Exam Preparation Tips</h2>
+            <div class="two-columns">
+                <div class="column">
+                    <h3>Theory Questions</h3>
+                    <ul>
+                        <li>Know complexity of all algorithms</li>
+                        <li>Understand when to use each data structure</li>
+                        <li>Be able to trace algorithm execution</li>
+                        <li>Explain trade-offs between approaches</li>
+                        <li>Draw diagrams for tree rotations</li>
+                        <li>Derive recurrence relations for DP</li>
+                    </ul>
+                </div>
+                <div class="column">
+                    <h3>Practical Questions</h3>
+                    <ul>
+                        <li>Implement core operations from memory</li>
+                        <li>Handle edge cases (empty, single element)</li>
+                        <li>Manage memory correctly (no leaks)</li>
+                        <li>Use function pointers for generic code</li>
+                        <li>Write clear, documented code</li>
+                        <li>Test your solutions mentally</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="info-box note">
+                <h4>📚 Key Topics to Review</h4>
+                <p>Sorting algorithms, BST operations, graph traversals, DP formulations, hash table collision handling, heap operations, MST algorithms</p>
+            </div>
+        </div>
+
+        <!-- Slide 32: Self-Assessment Checklist -->
+        <div class="slide" data-slide="32">
+            <h2>✅ Self-Assessment Checklist</h2>
+            <div class="two-columns">
+                <div class="column">
+                    <h3>Data Structures</h3>
+                    <ul>
+                        <li>☐ Implement linked list operations</li>
+                        <li>☐ Implement stack and queue</li>
+                        <li>☐ Implement BST insert/delete/search</li>
+                        <li>☐ Implement AVL rotations</li>
+                        <li>☐ Implement binary heap</li>
+                        <li>☐ Implement hash table with chaining</li>
+                        <li>☐ Implement graph representations</li>
+                    </ul>
+                </div>
+                <div class="column">
+                    <h3>Algorithms</h3>
+                    <ul>
+                        <li>☐ Implement quicksort and mergesort</li>
+                        <li>☐ Implement binary search</li>
+                        <li>☐ Implement BFS and DFS</li>
+                        <li>☐ Implement Dijkstra's algorithm</li>
+                        <li>☐ Implement Prim's or Kruskal's MST</li>
+                        <li>☐ Implement a DP solution (LCS, knapsack)</li>
+                        <li>☐ Analyse complexity of solutions</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 33: Laboratory Preview -->
+        <div class="slide" data-slide="33">
+            <h2>🔬 Laboratory Exercises</h2>
+            <div class="two-columns">
+                <div class="column">
+                    <h3>Exercise 1: Algorithm Portfolio</h3>
+                    <ul>
+                        <li>Implement multiple sorting algorithms</li>
+                        <li>Use function pointers for selection</li>
+                        <li>Benchmark performance across distributions</li>
+                        <li>Generate comparative reports</li>
+                        <li>Track memory usage</li>
+                    </ul>
+                    <div class="info-box note">
+                        <h4>Focus</h4>
+                        <p>Generic programming, performance analysis, function pointers</p>
+                    </div>
+                </div>
+                <div class="column">
+                    <h3>Exercise 2: Graph Analyser</h3>
+                    <ul>
+                        <li>Support multiple representations</li>
+                        <li>Implement BFS, DFS, Dijkstra</li>
+                        <li>Detect graph properties</li>
+                        <li>Compute MST (Prim and Kruskal)</li>
+                        <li>Export to Graphviz format</li>
+                    </ul>
+                    <div class="info-box note">
+                        <h4>Focus</h4>
+                        <p>Graph algorithms integration, modular design</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 34: Resources -->
+        <div class="slide" data-slide="34">
+            <h2>📖 Recommended Resources</h2>
+            <div class="two-columns">
+                <div class="column">
+                    <h3>Essential Textbooks</h3>
+                    <ul>
+                        <li><strong>CLRS</strong> — Introduction to Algorithms (4th ed.)</li>
+                        <li><strong>Sedgewick</strong> — Algorithms (4th ed.)</li>
+                        <li><strong>Skiena</strong> — Algorithm Design Manual (3rd ed.)</li>
+                    </ul>
+                    <h3>Advanced Reading</h3>
+                    <ul>
+                        <li><strong>Kleinberg & Tardos</strong> — Algorithm Design</li>
+                        <li><strong>Knuth</strong> — TAOCP Volumes 1-4A</li>
+                    </ul>
+                </div>
+                <div class="column">
+                    <h3>Online Resources</h3>
+                    <ul>
+                        <li>MIT OCW 6.006 — Video lectures</li>
+                        <li>Visualgo.net — Algorithm visualisations</li>
+                        <li>BigOCheatSheet.com — Complexity reference</li>
+                    </ul>
+                    <h3>Practice Platforms</h3>
+                    <ul>
+                        <li>LeetCode — Interview problems</li>
+                        <li>HackerRank — Skill assessment</li>
+                        <li>Codeforces — Competitive programming</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 35: Key Takeaways -->
+        <div class="slide" data-slide="35">
+            <h2>🎯 Key Takeaways</h2>
+            <div class="summary-grid">
+                <div class="summary-item">
+                    <h4>Choose Wisely</h4>
+                    <p>Select algorithms and data structures based on problem characteristics, not familiarity.</p>
+                </div>
+                <div class="summary-item">
+                    <h4>Analyse Rigorously</h4>
+                    <p>Always determine time and space complexity. Use profiling for real-world performance.</p>
+                </div>
+                <div class="summary-item">
+                    <h4>Manage Memory</h4>
+                    <p>Every malloc needs a free. Use Valgrind. Document ownership semantics.</p>
+                </div>
+                <div class="summary-item">
+                    <h4>Test Thoroughly</h4>
+                    <p>Edge cases first. Empty input, single element, maximum values, invalid input.</p>
+                </div>
+                <div class="summary-item">
+                    <h4>Write Cleanly</h4>
+                    <p>Clear naming, consistent style, comprehensive documentation. Code is read more than written.</p>
+                </div>
+                <div class="summary-item">
+                    <h4>Keep Learning</h4>
+                    <p>Algorithms evolve. New problems require creative combinations of known techniques.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 36: Course Conclusion -->
+        <div class="slide" data-slide="36">
+            <h2>🎓 Course Conclusion</h2>
+            <div class="quote-box">
+                "Computer science is no more about computers than astronomy is about telescopes."
+                <div class="author">— Edsger W. Dijkstra</div>
+            </div>
+            <p style="font-size: 1.3em; margin-top: 30px;">Throughout fourteen weeks, we have progressed from foundational concepts to sophisticated algorithmic techniques:</p>
+            <ul style="margin-top: 20px;">
+                <li>Function pointers and generic programming</li>
+                <li>File I/O and data persistence</li>
+                <li>Linear and tree-based data structures</li>
+                <li>Hash tables and efficient lookup</li>
+                <li>Graph algorithms and optimisation</li>
+                <li>Dynamic programming and problem decomposition</li>
+            </ul>
+            <p style="margin-top: 20px;"><strong>These foundations will serve throughout your computing careers.</strong></p>
+        </div>
+
+        <!-- Slide 37: Questions -->
+        <div class="slide end-slide" data-slide="37">
+            <h1>Questions?</h1>
+            <p class="subtitle" style="margin-bottom: 40px;">Thank you for a great semester!</p>
+            <div class="info-box note" style="max-width: 600px; margin: 0 auto;">
+                <h4>📧 Contact</h4>
+                <p>Office hours available for exam preparation questions.</p>
+                <p>Good luck with your examinations!</p>
+            </div>
+            <p style="margin-top: 50px; color: var(--text-secondary);">
+                <strong>ATP Course</strong> • Week 14 of 14 • ASE-CSIE
+            </p>
+        </div>
+
+    </div>
+
+    <div class="slide-counter">
+        <span id="currentSlide">1</span> / <span id="totalSlides">37</span>
+    </div>
+
+    <div class="nav-buttons">
+        <button class="nav-btn" onclick="goToSlide(1)">⏮ Start</button>
+        <button class="nav-btn" onclick="prevSlide()">← Prev</button>
+        <button class="nav-btn" onclick="nextSlide()">Next →</button>
+        <button class="nav-btn" onclick="goToSlide(totalSlides)">End ⏭</button>
+    </div>
+
+    <script>
+        hljs.highlightAll();
+        
+        let currentSlide = 1;
+        const slides = document.querySelectorAll('.slide');
+        const totalSlides = slides.length;
+        
+        document.getElementById('totalSlides').textContent = totalSlides;
+        
+        function updateSlide() {
+            slides.forEach((slide, index) => {
+                slide.classList.remove('active');
+                if (index + 1 === currentSlide) {
+                    slide.classList.add('active');
+                }
+            });
+            
+            document.getElementById('currentSlide').textContent = currentSlide;
+            document.getElementById('progressBar').style.width = 
+                ((currentSlide / totalSlides) * 100) + '%';
+        }
+        
+        function nextSlide() {
+            if (currentSlide < totalSlides) {
+                currentSlide++;
+                updateSlide();
+            }
+        }
+        
+        function prevSlide() {
+            if (currentSlide > 1) {
+                currentSlide--;
+                updateSlide();
+            }
+        }
+        
+        function goToSlide(n) {
+            if (n >= 1 && n <= totalSlides) {
+                currentSlide = n;
+                updateSlide();
+            }
+        }
+        
+        document.addEventListener('keydown', function(e) {
+            switch(e.key) {
+                case 'ArrowRight':
+                case ' ':
+                    e.preventDefault();
+                    nextSlide();
+                    break;
+                case 'ArrowLeft':
+                    prevSlide();
+                    break;
+                case 'Home':
+                    goToSlide(1);
+                    break;
+                case 'End':
+                    goToSlide(totalSlides);
+                    break;
+            }
+        });
+        
+        // Touch support for mobile
+        let touchStartX = 0;
+        let touchEndX = 0;
+        
+        document.addEventListener('touchstart', e => {
+            touchStartX = e.changedTouches[0].screenX;
+        });
+        
+        document.addEventListener('touchend', e => {
+            touchEndX = e.changedTouches[0].screenX;
+            if (touchStartX - touchEndX > 50) nextSlide();
+            if (touchEndX - touchStartX > 50) prevSlide();
+        });
+    </script>
+</body>
+</html>

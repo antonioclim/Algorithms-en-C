@@ -1,0 +1,2031 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Week 13: Graph Algorithms — Shortest Path | ATP</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/c.min.js"></script>
+    <style>
+        :root {
+            --bg-primary: #0d1117;
+            --bg-secondary: #161b22;
+            --bg-tertiary: #21262d;
+            --text-primary: #e6edf3;
+            --text-secondary: #8b949e;
+            --accent-blue: #58a6ff;
+            --accent-green: #3fb950;
+            --accent-yellow: #d29922;
+            --accent-red: #f85149;
+            --accent-purple: #a371f7;
+            --accent-cyan: #39c5cf;
+            --border-color: #30363d;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans', Helvetica, Arial, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.6;
+            overflow: hidden;
+        }
+        
+        /* Progress Bar */
+        .progress-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: var(--bg-tertiary);
+            z-index: 1000;
+        }
+        
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, var(--accent-blue), var(--accent-purple));
+            transition: width 0.3s ease;
+        }
+        
+        /* Slide Container */
+        .presentation {
+            width: 100vw;
+            height: 100vh;
+            overflow: hidden;
+            position: relative;
+        }
+        
+        .slide {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            padding: 60px 80px;
+            display: none;
+            opacity: 0;
+            transition: opacity 0.4s ease;
+            overflow-y: auto;
+        }
+        
+        .slide.active {
+            display: flex;
+            flex-direction: column;
+            opacity: 1;
+        }
+        
+        /* Slide Header */
+        .slide-header {
+            margin-bottom: 30px;
+        }
+        
+        .slide-header h1 {
+            font-size: 2.5rem;
+            color: var(--text-primary);
+            margin-bottom: 10px;
+        }
+        
+        .slide-header h2 {
+            font-size: 2rem;
+            color: var(--accent-blue);
+            margin-bottom: 8px;
+        }
+        
+        .slide-header h3 {
+            font-size: 1.5rem;
+            color: var(--text-secondary);
+        }
+        
+        .slide-header .subtitle {
+            color: var(--text-secondary);
+            font-size: 1.2rem;
+        }
+        
+        /* Content Styles */
+        .content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        
+        .content h3 {
+            color: var(--accent-blue);
+            font-size: 1.4rem;
+            margin-top: 15px;
+        }
+        
+        .content p {
+            font-size: 1.1rem;
+            color: var(--text-primary);
+            margin-bottom: 10px;
+        }
+        
+        /* Lists */
+        .content ul, .content ol {
+            margin-left: 30px;
+            font-size: 1.1rem;
+        }
+        
+        .content li {
+            margin-bottom: 12px;
+            color: var(--text-primary);
+        }
+        
+        .content li::marker {
+            color: var(--accent-green);
+        }
+        
+        /* Code Blocks */
+        .code-block {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            overflow: hidden;
+            margin: 15px 0;
+        }
+        
+        .code-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 15px;
+            background: var(--bg-tertiary);
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        .code-header span {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+        
+        .lang-badge {
+            background: var(--accent-blue);
+            color: var(--bg-primary);
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+        
+        .code-block pre {
+            margin: 0;
+            padding: 15px;
+            overflow-x: auto;
+        }
+        
+        .code-block code {
+            font-family: 'JetBrains Mono', 'Fira Code', 'Consolas', monospace;
+            font-size: 0.95rem;
+            line-height: 1.5;
+        }
+        
+        /* Info Boxes */
+        .info-box {
+            padding: 20px;
+            border-radius: 8px;
+            margin: 15px 0;
+        }
+        
+        .info-box.note {
+            background: rgba(88, 166, 255, 0.1);
+            border-left: 4px solid var(--accent-blue);
+        }
+        
+        .info-box.warning {
+            background: rgba(210, 153, 34, 0.1);
+            border-left: 4px solid var(--accent-yellow);
+        }
+        
+        .info-box.danger {
+            background: rgba(248, 81, 73, 0.1);
+            border-left: 4px solid var(--accent-red);
+        }
+        
+        .info-box.success {
+            background: rgba(63, 185, 80, 0.1);
+            border-left: 4px solid var(--accent-green);
+        }
+        
+        .info-box-title {
+            font-weight: 600;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        /* Tables */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+            font-size: 1rem;
+        }
+        
+        th, td {
+            padding: 12px 15px;
+            text-align: left;
+            border: 1px solid var(--border-color);
+        }
+        
+        th {
+            background: var(--bg-tertiary);
+            color: var(--accent-blue);
+            font-weight: 600;
+        }
+        
+        tr:nth-child(even) {
+            background: var(--bg-secondary);
+        }
+        
+        /* ASCII Diagrams */
+        .ascii-diagram {
+            font-family: 'JetBrains Mono', 'Consolas', monospace;
+            background: var(--bg-secondary);
+            padding: 20px;
+            border-radius: 8px;
+            white-space: pre;
+            overflow-x: auto;
+            font-size: 0.9rem;
+            line-height: 1.4;
+            color: var(--accent-cyan);
+            border: 1px solid var(--border-color);
+        }
+        
+        /* Two Column Layout */
+        .two-columns {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin: 20px 0;
+        }
+        
+        .column {
+            background: var(--bg-secondary);
+            padding: 20px;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+        }
+        
+        .column h4 {
+            color: var(--accent-green);
+            margin-bottom: 15px;
+            font-size: 1.1rem;
+        }
+        
+        /* Title Slide Specific */
+        .title-slide {
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+        }
+        
+        .title-slide h1 {
+            font-size: 3.5rem;
+            margin-bottom: 20px;
+            background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .title-slide .week-badge {
+            display: inline-block;
+            background: var(--accent-green);
+            color: var(--bg-primary);
+            padding: 8px 20px;
+            border-radius: 20px;
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-bottom: 30px;
+        }
+        
+        .title-slide .university {
+            color: var(--text-secondary);
+            font-size: 1.3rem;
+            margin-top: 40px;
+        }
+        
+        /* Quote */
+        blockquote {
+            border-left: 4px solid var(--accent-purple);
+            padding-left: 20px;
+            margin: 20px 0;
+            font-style: italic;
+            color: var(--text-secondary);
+        }
+        
+        blockquote cite {
+            display: block;
+            margin-top: 10px;
+            color: var(--accent-purple);
+            font-style: normal;
+        }
+        
+        /* Key Points Grid */
+        .key-points {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            margin: 20px 0;
+        }
+        
+        .key-point {
+            background: var(--bg-secondary);
+            padding: 20px;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            text-align: center;
+        }
+        
+        .key-point .icon {
+            font-size: 2rem;
+            margin-bottom: 10px;
+        }
+        
+        .key-point h4 {
+            color: var(--accent-blue);
+            margin-bottom: 8px;
+        }
+        
+        /* Timeline */
+        .timeline {
+            position: relative;
+            padding-left: 30px;
+        }
+        
+        .timeline::before {
+            content: '';
+            position: absolute;
+            left: 8px;
+            top: 0;
+            bottom: 0;
+            width: 3px;
+            background: var(--accent-purple);
+        }
+        
+        .timeline-item {
+            position: relative;
+            margin-bottom: 25px;
+            padding-left: 30px;
+        }
+        
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            left: -26px;
+            top: 5px;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: var(--accent-purple);
+            border: 3px solid var(--bg-primary);
+        }
+        
+        .timeline-item .year {
+            color: var(--accent-yellow);
+            font-weight: 600;
+        }
+        
+        /* Navigation */
+        .nav-container {
+            position: fixed;
+            bottom: 20px;
+            right: 30px;
+            display: flex;
+            gap: 10px;
+            z-index: 100;
+        }
+        
+        .nav-btn {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: all 0.2s ease;
+        }
+        
+        .nav-btn:hover {
+            background: var(--accent-blue);
+            border-color: var(--accent-blue);
+        }
+        
+        .nav-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        /* Slide Counter */
+        .slide-counter {
+            position: fixed;
+            bottom: 25px;
+            left: 30px;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            z-index: 100;
+        }
+        
+        /* Complexity Box */
+        .complexity-box {
+            display: inline-block;
+            background: var(--bg-tertiary);
+            padding: 5px 12px;
+            border-radius: 4px;
+            font-family: 'JetBrains Mono', monospace;
+            color: var(--accent-yellow);
+            font-size: 0.95rem;
+        }
+        
+        /* Highlight */
+        .highlight {
+            color: var(--accent-yellow);
+            font-weight: 600;
+        }
+        
+        .highlight-blue {
+            color: var(--accent-blue);
+            font-weight: 600;
+        }
+        
+        .highlight-green {
+            color: var(--accent-green);
+            font-weight: 600;
+        }
+        
+        .highlight-red {
+            color: var(--accent-red);
+            font-weight: 600;
+        }
+        
+        /* Steps */
+        .steps {
+            counter-reset: step;
+        }
+        
+        .step {
+            position: relative;
+            padding-left: 50px;
+            margin-bottom: 20px;
+        }
+        
+        .step::before {
+            counter-increment: step;
+            content: counter(step);
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 32px;
+            height: 32px;
+            background: var(--accent-blue);
+            color: var(--bg-primary);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+        }
+        
+        /* Algorithm Box */
+        .algorithm-box {
+            background: var(--bg-secondary);
+            border: 2px solid var(--accent-purple);
+            border-radius: 8px;
+            padding: 20px;
+            margin: 15px 0;
+        }
+        
+        .algorithm-box h4 {
+            color: var(--accent-purple);
+            margin-bottom: 15px;
+            font-size: 1.2rem;
+        }
+        
+        /* Keyboard hint */
+        kbd {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            padding: 2px 6px;
+            font-family: monospace;
+            font-size: 0.85rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="progress-container">
+        <div class="progress-bar" id="progressBar"></div>
+    </div>
+    
+    <div class="presentation" id="presentation">
+        
+        <!-- Slide 1: Title -->
+        <div class="slide title-slide active">
+            <span class="week-badge">Week 13</span>
+            <h1>Graph Algorithms</h1>
+            <h2 style="font-size: 2.2rem; color: var(--text-secondary);">Shortest Path: Dijkstra & Bellman-Ford</h2>
+            <p class="university">
+                Algorithms and Programming Techniques<br>
+                Academy of Economic Studies — Bucharest
+            </p>
+            <p style="color: var(--text-secondary); margin-top: 30px; font-size: 0.9rem;">
+                Navigate: <kbd>←</kbd> <kbd>→</kbd> <kbd>Space</kbd> <kbd>Home</kbd> <kbd>End</kbd>
+            </p>
+        </div>
+        
+        <!-- Slide 2: Learning Objectives -->
+        <div class="slide">
+            <div class="slide-header">
+                <h2>🎯 Learning Objectives</h2>
+            </div>
+            <div class="content">
+                <ol>
+                    <li><strong>Remember</strong> the definitions of weighted graphs, path costs and the single-source shortest path problem</li>
+                    <li><strong>Understand</strong> how priority queues optimise Dijkstra's algorithm and why relaxation is the central operation</li>
+                    <li><strong>Apply</strong> Dijkstra's algorithm to compute shortest paths in graphs with non-negative edge weights</li>
+                    <li><strong>Analyse</strong> the time and space complexity, comparing O(V²) versus O((V+E) log V) implementations</li>
+                    <li><strong>Evaluate</strong> which algorithm is appropriate based on edge weight constraints and graph characteristics</li>
+                    <li><strong>Create</strong> complete implementations of both algorithms with path reconstruction</li>
+                </ol>
+            </div>
+        </div>
+        
+        <!-- Slide 3: Historical Context -->
+        <div class="slide">
+            <div class="slide-header">
+                <h2>📜 Historical Context</h2>
+            </div>
+            <div class="content">
+                <div class="timeline">
+                    <div class="timeline-item">
+                        <span class="year">1956</span>
+                        <p>Dijkstra conceives his algorithm whilst at a café in Amsterdam — later published in 1959</p>
+                    </div>
+                    <div class="timeline-item">
+                        <span class="year">1958</span>
+                        <p>Bellman publishes dynamic programming approach; Ford contributes to negative cycle detection</p>
+                    </div>
+                    <div class="timeline-item">
+                        <span class="year">1962</span>
+                        <p>Floyd-Warshall algorithm for all-pairs shortest paths</p>
+                    </div>
+                    <div class="timeline-item">
+                        <span class="year">1984</span>
+                        <p>Fibonacci heaps reduce Dijkstra to O(V log V + E)</p>
+                    </div>
+                    <div class="timeline-item">
+                        <span class="year">1989</span>
+                        <p>OSPF protocol standardised, using Dijkstra's algorithm for internet routing</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Slide 4: Key Figure - Dijkstra -->
+        <div class="slide">
+            <div class="slide-header">
+                <h2>👤 Edsger Wybe Dijkstra (1930–2002)</h2>
+            </div>
+            <div class="content">
+                <div class="two-columns">
+                    <div class="column">
+                        <h4>Contributions</h4>
+                        <ul>
+                            <li>Shortest path algorithm (1956)</li>
+                            <li>Shunting yard algorithm</li>
+                            <li>Semaphores for process synchronisation</li>
+                            <li>Structured programming paradigm</li>
+                            <li>THE multiprogramming system</li>
+                        </ul>
+                        <p style="margin-top: 15px;"><strong>Turing Award:</strong> 1972</p>
+                    </div>
+                    <div class="column">
+                        <h4>The Café Moment</h4>
+                        <p>In twenty minutes at a café terrace with his fiancée, Dijkstra designed the algorithm to demonstrate the ARMAC computer's capabilities.</p>
+                        <blockquote style="margin-top: 15px;">
+                            "Computer Science is no more about computers than astronomy is about telescopes."
+                            <cite>— E.W. Dijkstra</cite>
+                        </blockquote>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Slide 5: The Problem Definition -->
+        <div class="slide">
+            <div class="slide-header">
+                <h2>📐 Single-Source Shortest Path Problem</h2>
+            </div>
+            <div class="content">
+                <div class="info-box note">
+                    <div class="info-box-title">📌 Problem Statement</div>
+                    <p>Given a weighted directed graph G = (V, E) with weight function w: E → ℝ and source vertex s, find the minimum-weight path from s to every other vertex.</p>
+                </div>
+                
+                <div class="ascii-diagram">
+                                    4
+                    (0) ─────────────→ (1)
+                     │                  │
+                   2 │                  │ 5
+                     ▼        3         ▼
+                    (2) ─────────────→ (3)
+                     │                  │
+                   1 │                  │ 2
+                     ▼                  ▼
+                    (4) ─────────────→ (5)
+                                6
+                </div>
+                
+                <p><span class="highlight">Path weight</span> w(p) for path p = ⟨v₀, v₁, ..., vₖ⟩ is the sum of edge weights.</p>
+                <p><span class="highlight-blue">Shortest-path weight</span> δ(s, v) = min{w(p) : s ⟿ v} or ∞ if no path exists.</p>
+            </div>
+        </div>
+        
+        <!-- Slide 6: Graph Representations -->
+        <div class="slide">
+            <div class="slide-header">
+                <h2>📊 Graph Representations in C</h2>
+            </div>
+            <div class="content">
+                <div class="two-columns">
+                    <div class="column">
+                        <h4>Adjacency Matrix</h4>
+                        <div class="code-block">
+                            <div class="code-header">
+                                <span>Matrix representation</span>
+                                <span class="lang-badge">C</span>
+                            </div>
+                            <pre><code class="language-c">#define V 6
+#define INF INT_MAX
+
+int graph[V][V] = {
+  /*    0    1    2    3    4    5  */
+  {    0,   4,   2, INF, INF, INF}, // 0
+  {  INF,   0, INF,   5, INF, INF}, // 1
+  {  INF, INF,   0,   3,   1, INF}, // 2
+  {  INF, INF, INF,   0, INF,   2}, // 3
+  {  INF, INF, INF, INF,   0,   6}, // 4
+  {  INF, INF, INF, INF, INF,   0}  // 5
+};</code></pre>
+                        </div>
+                        <p><span class="complexity-box">Space: O(V²)</span></p>
+                    </div>
+                    <div class="column">
+                        <h4>Adjacency List</h4>
+                        <div class="code-block">
+                            <div class="code-header">
+                                <span>List representation</span>
+                                <span class="lang-badge">C</span>
+                            </div>
+                            <pre><code class="language-c">typedef struct Edge {
+    int dest;
+    int weight;
+    struct Edge *next;
+} Edge;
+
+typedef struct Graph {
+    int V;
+    Edge **adj;  // Array of lists
+} Graph;</code></pre>
+                        </div>
+                        <p><span class="complexity-box">Space: O(V + E)</span></p>
+                    </div>
+                </div>
+                <div class="info-box note">
+                    <p>Use adjacency list for sparse graphs (E ≪ V²), adjacency matrix for dense graphs or when checking edge existence frequently.</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Slide 7: The Relaxation Operation -->
+        <div class="slide">
+            <div class="slide-header">
+                <h2>⚡ The Relaxation Operation</h2>
+                <p class="subtitle">The heart of all shortest path algorithms</p>
+            </div>
+            <div class="content">
+                <div class="code-block">
+                    <div class="code-header">
+                        <span>Relaxation: improve distance estimate</span>
+                        <span class="lang-badge">C</span>
+                    </div>
+                    <pre><code class="language-c">void relax(int u, int v, int weight, int dist[], int parent[]) {
+    // Can we reach v faster through u?
+    if (dist[u] != INT_MAX && dist[u] + weight < dist[v]) {
+        dist[v] = dist[u] + weight;  // Update distance
+        parent[v] = u;                // Remember path
+    }
+}</code></pre>
+                </div>
+                
+                <div class="ascii-diagram">
+    Before:                          After:
+    
+    dist[u] = 3                      dist[u] = 3
+       (u)                              (u)
+        │                                │
+        │ weight = 2                     │ weight = 2
+        ▼                                ▼
+       (v)                              (v)
+    dist[v] = 10                     dist[v] = 5 ✓
+    
+    Condition: 3 + 2 = 5 < 10  →  UPDATE!
+                </div>
+            </div>
+        </div>
+        
+        <!-- Slide 8: Dijkstra's Algorithm Overview -->
+        <div class="slide">
+            <div class="slide-header">
+                <h2>🔷 Dijkstra's Algorithm</h2>
+                <p class="subtitle">Greedy approach for non-negative weights</p>
+            </div>
+            <div class="content">
+                <div class="algorithm-box">
+                    <h4>DIJKSTRA(G, s)</h4>
+                    <div class="steps">
+                        <div class="step">
+                            <p>Initialise: dist[s] = 0, dist[v] = ∞ for all v ≠ s</p>
+                        </div>
+                        <div class="step">
+                            <p>Create priority queue Q containing all vertices</p>
+                        </div>
+                        <div class="step">
+                            <p>While Q is not empty:</p>
+                            <ul style="margin-left: 20px; margin-top: 10px;">
+                                <li>Extract vertex u with minimum dist[u]</li>
+                                <li>For each neighbour v of u: RELAX(u, v, w(u,v))</li>
+                                <li>Update v's position in Q if improved</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="info-box warning">
+                    <div class="info-box-title">⚠️ Critical Constraint</div>
+                    <p>Dijkstra's algorithm <strong>requires all edge weights to be non-negative</strong>. With negative weights, the greedy selection may finalise a vertex prematurely.</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Slide 9: Dijkstra Step-by-Step Example -->
+        <div class="slide">
+            <div class="slide-header">
+                <h2>📝 Dijkstra: Step-by-Step Example</h2>
+            </div>
+            <div class="content">
+                <div class="ascii-diagram">
+    Graph:              Step 0 (init):     Step 1 (u=0):      Step 2 (u=2):
+    
+        4                  dist[]             dist[]             dist[]
+    0 ───→ 1            0: 0  ←src          0: 0 ✓            0: 0 ✓
+    │      │            1: ∞                1: 4              1: 3 (via 2)
+  2 │    5 │            2: ∞                2: 2              2: 2 ✓
+    ▼      ▼            3: ∞                3: ∞              3: 5
+    2 ───→ 3            
+        3               Q = {0,1,2,3}       Q = {1,2,3}       Q = {1,3}
+                </div>
+                
+                <div class="ascii-diagram">
+    Step 3 (u=1):      Step 4 (u=3):      Final Result:
+    
+       dist[]             dist[]            Vertex  Distance  Path
+    0: 0 ✓             0: 0 ✓               0       0        (source)
+    1: 3 ✓             1: 3 ✓               1       3        0→2→1
+    2: 2 ✓             2: 2 ✓               2       2        0→2
+    3: 5               3: 5 ✓               3       5        0→2→3
+    
+    Q = {3}            Q = {}
+                </div>
+            </div>
+        </div>
+        
+        <!-- Slide 10: Dijkstra Implementation (Array) -->
+        <div class="slide">
+            <div class="slide-header">
+                <h2>💻 Dijkstra: Array Implementation</h2>
+                <p class="subtitle"><span class="complexity-box">Time: O(V²)</span> — suitable for dense graphs</p>
+            </div>
+            <div class="content">
+                <div class="code-block">
+                    <div class="code-header">
+                        <span>Simple O(V²) implementation</span>
+                        <span class="lang-badge">C</span>
+                    </div>
+                    <pre><code class="language-c">int minDistance(int dist[], int visited[], int V) {
+    int min = INT_MAX, min_idx = -1;
+    for (int v = 0; v < V; v++) {
+        if (!visited[v] && dist[v] < min) {
+            min = dist[v];
+            min_idx = v;
+        }
+    }
+    return min_idx;
+}
+
+void dijkstra(int graph[V][V], int src) {
+    int dist[V], visited[V], parent[V];
+    
+    for (int i = 0; i < V; i++) {
+        dist[i] = INT_MAX;
+        visited[i] = 0;
+        parent[i] = -1;
+    }
+    dist[src] = 0;
+    
+    for (int count = 0; count < V - 1; count++) {
+        int u = minDistance(dist, visited, V);
+        if (u == -1) break;  // Remaining vertices unreachable
+        visited[u] = 1;
+        
+        for (int v = 0; v < V; v++) {
+            if (!visited[v] && graph[u][v] && graph[u][v] != INT_MAX)
+                if (dist[u] + graph[u][v] < dist[v]) {
+                    dist[v] = dist[u] + graph[u][v];
+                    parent[v] = u;
+                }
+        }
+    }
+}</code></pre>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Slide 11: Priority Queue Concept -->
+        <div class="slide">
+            <div class="slide-header">
+                <h2>🔺 Priority Queue with Binary Heap</h2>
+            </div>
+            <div class="content">
+                <div class="two-columns">
+                    <div class="column">
+                        <h4>Min-Heap Properties</h4>
+                        <ul>
+                            <li>Parent ≤ children</li>
+                            <li>Complete binary tree</li>
+                            <li>Array representation</li>
+                        </ul>
+                        <div class="ascii-diagram" style="font-size: 0.8rem;">
+    Parent: (i-1)/2
+    Left:   2*i + 1
+    Right:  2*i + 2
+    
+         [0]          Index: 0
+        /   \
+      [1]   [2]       Index: 1, 2
+      / \   / \
+    [3][4][5][6]      Index: 3,4,5,6
+                        </div>
+                    </div>
+                    <div class="column">
+                        <h4>Key Operations</h4>
+                        <table style="font-size: 0.9rem;">
+                            <tr><th>Operation</th><th>Complexity</th></tr>
+                            <tr><td>Insert</td><td>O(log V)</td></tr>
+                            <tr><td>Extract-Min</td><td>O(log V)</td></tr>
+                            <tr><td>Decrease-Key</td><td>O(log V)</td></tr>
+                            <tr><td>Peek Min</td><td>O(1)</td></tr>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Slide 12: Min-Heap Implementation -->
+        <div class="slide">
+            <div class="slide-header">
+                <h2>💻 Min-Heap Implementation</h2>
+            </div>
+            <div class="content">
+                <div class="code-block">
+                    <div class="code-header">
+                        <span>Heap structure for Dijkstra</span>
+                        <span class="lang-badge">C</span>
+                    </div>
+                    <pre><code class="language-c">typedef struct {
+    int vertex;
+    int distance;
+} HeapNode;
+
+typedef struct {
+    HeapNode *nodes;
+    int *position;  // Maps vertex → heap index
+    int size;
+    int capacity;
+} MinHeap;
+
+void swap(MinHeap *h, int i, int j) {
+    h->position[h->nodes[i].vertex] = j;
+    h->position[h->nodes[j].vertex] = i;
+    HeapNode temp = h->nodes[i];
+    h->nodes[i] = h->nodes[j];
+    h->nodes[j] = temp;
+}
+
+void heapifyUp(MinHeap *h, int idx) {
+    while (idx > 0) {
+        int parent = (idx - 1) / 2;
+        if (h->nodes[idx].distance < h->nodes[parent].distance) {
+            swap(h, idx, parent);
+            idx = parent;
+        } else break;
+    }
+}</code></pre>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Slide 13: Decrease-Key Operation -->
+        <div class="slide">
+            <div class="slide-header">
+                <h2>🔑 The Decrease-Key Operation</h2>
+            </div>
+            <div class="content">
+                <div class="code-block">
+                    <div class="code-header">
+                        <span>Decrease key: update vertex distance</span>
+                        <span class="lang-badge">C</span>
+                    </div>
+                    <pre><code class="language-c">void decreaseKey(MinHeap *h, int vertex, int newDist) {
+    // Find vertex position in heap
+    int idx = h->position[vertex];
+    
+    // Update distance
+    h->nodes[idx].distance = newDist;
+    
+    // Restore heap property (bubble up)
+    heapifyUp(h, idx);
+}
+
+HeapNode extractMin(MinHeap *h) {
+    HeapNode min = h->nodes[0];
+    
+    // Move last element to root
+    h->nodes[0] = h->nodes[h->size - 1];
+    h->position[h->nodes[0].vertex] = 0;
+    h->size--;
+    
+    // Restore heap property (bubble down)
+    heapifyDown(h, 0);
+    
+    return min;
+}</code></pre>
+                </div>
+                <div class="info-box success">
+                    <p>The <code>position</code> array enables O(1) lookup of any vertex's location in the heap, making decrease-key O(log V).</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Slide 14: Dijkstra with Heap -->
+        <div class="slide">
+            <div class="slide-header">
+                <h2>💻 Dijkstra with Binary Heap</h2>
+                <p class="subtitle"><span class="complexity-box">Time: O((V + E) log V)</span></p>
+            </div>
+            <div class="content">
+                <div class="code-block">
+                    <div class="code-header">
+                        <span>Optimised implementation</span>
+                        <span class="lang-badge">C</span>
+                    </div>
+                    <pre><code class="language-c">void dijkstraHeap(Graph *g, int src, int dist[], int parent[]) {
+    MinHeap *heap = createMinHeap(g->V);
+    
+    for (int v = 0; v < g->V; v++) {
+        dist[v] = INT_MAX;
+        parent[v] = -1;
+        insertHeap(heap, v, INT_MAX);
+    }
+    dist[src] = 0;
+    decreaseKey(heap, src, 0);
+    
+    while (heap->size > 0) {
+        HeapNode min = extractMin(heap);
+        int u = min.vertex;
+        
+        // Traverse adjacency list
+        for (Edge *e = g->adj[u]; e != NULL; e = e->next) {
+            int v = e->dest;
+            int weight = e->weight;
+            
+            // Relax edge (u, v)
+            if (dist[u] != INT_MAX && dist[u] + weight < dist[v]) {
+                dist[v] = dist[u] + weight;
+                parent[v] = u;
+                decreaseKey(heap, v, dist[v]);
+            }
+        }
+    }
+    freeMinHeap(heap);
+}</code></pre>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Slide 15: Path Reconstruction -->
+        <div class="slide">
+            <div class="slide-header">
+                <h2>🛤️ Path Reconstruction</h2>
+            </div>
+            <div class="content">
+                <div class="code-block">
+                    <div class="code-header">
+                        <span>Reconstruct shortest path using parent array</span>
+                        <span class="lang-badge">C</span>
+                    </div>
+                    <pre><code class="language-c">void printPath(int parent[], int dest) {
+    if (parent[dest] == -1) {
+        printf("%d", dest);
+        return;
+    }
+    printPath(parent, parent[dest]);  // Recursive: print ancestors first
+    printf(" → %d", dest);
+}
+
+void printAllPaths(int dist[], int parent[], int V, int src) {
+    printf("Vertex\tDistance\tPath\n");
+    printf("══════════════════════════════════════════\n");
+    
+    for (int v = 0; v < V; v++) {
+        printf("%d\t", v);
+        if (dist[v] == INT_MAX) {
+            printf("∞\t\t(unreachable)\n");
+        } else {
+            printf("%d\t\t", dist[v]);
+            printPath(parent, v);
+            printf("\n");
+        }
+    }
+}</code></pre>
+                </div>
+                <div class="info-box note">
+                    <p>The <code>parent[]</code> array stores the predecessor of each vertex on the shortest path. Tracing backwards from destination to source reconstructs the path.</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Slide 16: Why Dijkstra Fails with Negative Weights -->
+        <div class="slide">
+            <div class="slide-header">
+                <h2>❌ Why Dijkstra Fails with Negative Weights</h2>
+            </div>
+            <div class="content">
+                <div class="ascii-diagram">
+    Graph with negative edge:
+    
+        1           Dijkstra's trace:
+    A ───→ B        ═══════════════════
+    │       │       1. Extract A, dist[A]=0
+  4 │       │ -3    2. Relax A→B: dist[B]=1
+    ▼       ▼       3. Relax A→C: dist[C]=4
+    C ←─────┘       4. Extract B (min=1), mark as FINAL ✗
+                    5. Relax B→C: dist[C]=min(4, 1-3)=-2
+    
+    Problem: B was finalised with dist=1
+             But we later found C=-2 through B!
+             
+    Correct answer: A→B→C with cost -2
+    Dijkstra gives: A→C with cost 4 (if C extracted before update)
+                </div>
+                <div class="info-box danger">
+                    <div class="info-box-title">🚫 The Greedy Assumption</div>
+                    <p>Dijkstra assumes: once a vertex is extracted with minimum distance, that distance is optimal. Negative edges violate this because later paths might reduce the distance.</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Slide 17: Bellman-Ford Introduction -->
+        <div class="slide">
+            <div class="slide-header">
+                <h2>🔶 Bellman-Ford Algorithm</h2>
+                <p class="subtitle">Handles negative weights and detects negative cycles</p>
+            </div>
+            <div class="content">
+                <div class="algorithm-box">
+                    <h4>BELLMAN-FORD(G, s)</h4>
+                    <div class="steps">
+                        <div class="step">
+                            <p>Initialise: dist[s] = 0, dist[v] = ∞ for all v ≠ s</p>
+                        </div>
+                        <div class="step">
+                            <p>Repeat |V| − 1 times:</p>
+                            <p style="margin-left: 20px;">For each edge (u, v) with weight w: RELAX(u, v, w)</p>
+                        </div>
+                        <div class="step">
+                            <p>For each edge (u, v) with weight w:</p>
+                            <p style="margin-left: 20px;">If dist[u] + w < dist[v]: report <span class="highlight-red">NEGATIVE CYCLE</span></p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="two-columns">
+                    <div class="column">
+                        <h4>Advantages</h4>
+                        <ul>
+                            <li>Handles negative edge weights</li>
+                            <li>Detects negative cycles</li>
+                            <li>Simpler implementation</li>
+                        </ul>
+                    </div>
+                    <div class="column">
+                        <h4>Complexity</h4>
+                        <p><span class="complexity-box">Time: O(V × E)</span></p>
+                        <p style="margin-top: 10px;">Slower than Dijkstra but more versatile</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Slide 18: Why V-1 Iterations? -->
+        <div class="slide">
+            <div class="slide-header">
+                <h2>🤔 Why |V| − 1 Iterations?</h2>
+            </div>
+            <div class="content">
+                <div class="info-box note">
+                    <div class="info-box-title">📐 Key Insight</div>
+                    <p>A shortest path from source to any vertex can have at most |V| − 1 edges (visiting each vertex at most once in an acyclic path).</p>
+                </div>
+                
+                <div class="ascii-diagram">
+    Iteration by iteration:
+    
+    Graph: 0 →(2)→ 1 →(3)→ 2 →(1)→ 3
+    
+    Init:     [0, ∞, ∞, ∞]
+    
+    Iter 1:   [0, 2, ∞, ∞]   (edge 0→1 relaxed)
+    
+    Iter 2:   [0, 2, 5, ∞]   (edge 1→2 relaxed)
+    
+    Iter 3:   [0, 2, 5, 6]   (edge 2→3 relaxed)
+    
+    After V-1 iterations, all shortest paths (with ≤V-1 edges) are found!
+                </div>
+                <p style="margin-top: 20px;"><span class="highlight">Intuition:</span> Each iteration propagates correct distances one edge further from the source. After |V| − 1 iterations, distances have propagated across all possible simple paths.</p>
+            </div>
+        </div>
+        
+        <!-- Slide 19: Bellman-Ford Implementation -->
+        <div class="slide">
+            <div class="slide-header">
+                <h2>💻 Bellman-Ford Implementation</h2>
+            </div>
+            <div class="content">
+                <div class="code-block">
+                    <div class="code-header">
+                        <span>Complete implementation with negative cycle detection</span>
+                        <span class="lang-badge">C</span>
+                    </div>
+                    <pre><code class="language-c">typedef struct { int src, dest, weight; } Edge;
+
+int bellmanFord(int V, Edge edges[], int E, int src, 
+                int dist[], int parent[]) {
+    // Initialise
+    for (int i = 0; i < V; i++) {
+        dist[i] = INT_MAX;
+        parent[i] = -1;
+    }
+    dist[src] = 0;
+    
+    // Relax all edges V-1 times
+    for (int i = 0; i < V - 1; i++) {
+        int changed = 0;
+        for (int j = 0; j < E; j++) {
+            int u = edges[j].src;
+            int v = edges[j].dest;
+            int w = edges[j].weight;
+            if (dist[u] != INT_MAX && dist[u] + w < dist[v]) {
+                dist[v] = dist[u] + w;
+                parent[v] = u;
+                changed = 1;
+            }
+        }
+        if (!changed) break;  // Early termination optimisation
+    }
+    
+    // Check for negative cycles
+    for (int j = 0; j < E; j++) {
+        int u = edges[j].src, v = edges[j].dest, w = edges[j].weight;
+        if (dist[u] != INT_MAX && dist[u] + w < dist[v])
+            return 0;  // Negative cycle detected!
+    }
+    return 1;  // Success
+}</code></pre>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Slide 20: Negative Cycle Detection -->
+        <div class="slide">
+            <div class="slide-header">
+                <h2>🔄 Negative Cycle Detection</h2>
+            </div>
+            <div class="content">
+                <div class="ascii-diagram">
+    Negative cycle example:
+    
+           A
+          ↙ ↖
+     w=2 ↙   ↖ w=-5
+        ↙     ↖
+       B ───→ C
+          w=1
+    
+    Cycle weight: 2 + 1 + (-5) = -2 < 0
+    
+    Infinite loop: Each traversal reduces total cost by 2!
+    A → B → C → A → B → C → A → ...
+                </div>
+                
+                <div class="info-box danger">
+                    <div class="info-box-title">🚫 Implications of Negative Cycles</div>
+                    <p>If a negative cycle is reachable from the source, shortest paths to vertices reachable from that cycle are <strong>undefined</strong> (can be made arbitrarily negative).</p>
+                </div>
+                
+                <div class="info-box success">
+                    <div class="info-box-title">✅ Detection Method</div>
+                    <p>After |V| − 1 iterations, if any edge can still be relaxed, a negative cycle exists. This is because all finite shortest paths should have been found.</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Slide 21: Algorithm Comparison -->
+        <div class="slide">
+            <div class="slide-header">
+                <h2>⚖️ Algorithm Comparison</h2>
+            </div>
+            <div class="content">
+                <table>
+                    <tr>
+                        <th>Criterion</th>
+                        <th>Dijkstra (Array)</th>
+                        <th>Dijkstra (Heap)</th>
+                        <th>Bellman-Ford</th>
+                    </tr>
+                    <tr>
+                        <td>Time Complexity</td>
+                        <td>O(V²)</td>
+                        <td>O((V+E) log V)</td>
+                        <td>O(V × E)</td>
+                    </tr>
+                    <tr>
+                        <td>Space Complexity</td>
+                        <td>O(V)</td>
+                        <td>O(V)</td>
+                        <td>O(V)</td>
+                    </tr>
+                    <tr>
+                        <td>Negative Weights</td>
+                        <td class="highlight-red">✗ No</td>
+                        <td class="highlight-red">✗ No</td>
+                        <td class="highlight-green">✓ Yes</td>
+                    </tr>
+                    <tr>
+                        <td>Negative Cycles</td>
+                        <td class="highlight-red">✗ No</td>
+                        <td class="highlight-red">✗ No</td>
+                        <td class="highlight-green">✓ Detects</td>
+                    </tr>
+                    <tr>
+                        <td>Best for</td>
+                        <td>Dense, non-negative</td>
+                        <td>Sparse, non-negative</td>
+                        <td>Any weights</td>
+                    </tr>
+                </table>
+                
+                <div class="info-box note" style="margin-top: 20px;">
+                    <p><strong>Rule of thumb:</strong> Use Dijkstra when all weights are non-negative (faster). Use Bellman-Ford when negative weights exist or you need cycle detection.</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Slide 22: Real-World Application: Network Routing -->
+        <div class="slide">
+            <div class="slide-header">
+                <h2>🌐 Application: Network Routing (OSPF)</h2>
+            </div>
+            <div class="content">
+                <p>The Open Shortest Path First (OSPF) protocol uses Dijkstra's algorithm in every router to compute optimal paths.</p>
+                
+                <div class="code-block">
+                    <div class="code-header">
+                        <span>Simplified OSPF concept</span>
+                        <span class="lang-badge">C</span>
+                    </div>
+                    <pre><code class="language-c">typedef struct {
+    int router_id;
+    int cost;        // Derived from bandwidth: 10^8 / bandwidth
+    int next_hop;    // Next router towards destination
+    int interface;   // Outgoing interface
+} RoutingEntry;
+
+void ospf_compute_routing_table(Graph *topology, int my_id) {
+    int dist[MAX_ROUTERS], parent[MAX_ROUTERS];
+    
+    dijkstra(topology, my_id, dist, parent);
+    
+    // Build routing table
+    for (int dest = 0; dest < topology->V; dest++) {
+        if (dest == my_id) continue;
+        
+        // Find next hop: trace back from dest until predecessor is me
+        int next = dest;
+        while (parent[next] != my_id && parent[next] != -1)
+            next = parent[next];
+        
+        routing_table[dest].next_hop = next;
+        routing_table[dest].cost = dist[dest];
+    }
+}</code></pre>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Slide 23: Application: GPS Navigation -->
+        <div class="slide">
+            <div class="slide-header">
+                <h2>🗺️ Application: GPS Navigation</h2>
+            </div>
+            <div class="content">
+                <div class="two-columns">
+                    <div class="column">
+                        <h4>Multi-Criteria Routing</h4>
+                        <div class="code-block">
+                            <div class="code-header">
+                                <span>Weight function</span>
+                                <span class="lang-badge">C</span>
+                            </div>
+                            <pre><code class="language-c">typedef struct {
+    double distance_km;
+    double time_mins;
+    double fuel_litres;
+    int toll_cost;
+} EdgeWeight;
+
+double compute_weight(EdgeWeight *e, 
+                      int priority) {
+    switch (priority) {
+        case SHORTEST:
+            return e->distance_km;
+        case FASTEST:
+            return e->time_mins;
+        case ECONOMICAL:
+            return e->fuel_litres;
+        case CHEAPEST:
+            return e->toll_cost;
+    }
+}</code></pre>
+                        </div>
+                    </div>
+                    <div class="column">
+                        <h4>A* Enhancement</h4>
+                        <p>GPS systems often use A*, which extends Dijkstra with a heuristic:</p>
+                        <div class="code-block">
+                            <div class="code-header">
+                                <span>A* priority</span>
+                                <span class="lang-badge">C</span>
+                            </div>
+                            <pre><code class="language-c">// f(n) = g(n) + h(n)
+// g(n) = actual distance
+// h(n) = heuristic estimate
+
+double heuristic(Point curr, 
+                 Point goal) {
+    // Euclidean distance
+    double dx = curr.x - goal.x;
+    double dy = curr.y - goal.y;
+    return sqrt(dx*dx + dy*dy);
+}</code></pre>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Slide 24: Application: Currency Arbitrage -->
+        <div class="slide">
+            <div class="slide-header">
+                <h2>💱 Application: Currency Arbitrage Detection</h2>
+            </div>
+            <div class="content">
+                <div class="info-box note">
+                    <div class="info-box-title">💡 Key Insight</div>
+                    <p>Convert exchange rates using negative logarithms. A negative cycle in the transformed graph indicates an arbitrage opportunity!</p>
+                </div>
+                
+                <div class="code-block">
+                    <div class="code-header">
+                        <span>Arbitrage detection using Bellman-Ford</span>
+                        <span class="lang-badge">C</span>
+                    </div>
+                    <pre><code class="language-c">#include &lt;math.h&gt;
+
+// Exchange rate r(u,v) means 1 unit of u = r(u,v) units of v
+// Transform: w(u,v) = -log(r(u,v))
+// Product of rates → sum of weights
+// rate > 1 (profit) → negative weight
+
+int detect_arbitrage(double rates[N][N], int N) {
+    Edge edges[N * N];
+    int E = 0;
+    
+    // Convert rates to negative log weights
+    for (int u = 0; u < N; u++) {
+        for (int v = 0; v < N; v++) {
+            if (u != v && rates[u][v] > 0) {
+                edges[E].src = u;
+                edges[E].dest = v;
+                edges[E].weight = -log(rates[u][v]);  // Transform!
+                E++;
+            }
+        }
+    }
+    
+    // Negative cycle = arbitrage opportunity
+    int dist[N], parent[N];
+    return !bellmanFord(N, edges, E, 0, dist, parent);
+}</code></pre>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Slide 25: Common Mistakes -->
+        <div class="slide">
+            <div class="slide-header">
+                <h2>⚠️ Common Mistakes</h2>
+            </div>
+            <div class="content">
+                <div class="info-box danger">
+                    <div class="info-box-title">🚫 Mistake 1: Integer Overflow</div>
+                    <pre style="color: var(--text-primary);"><code>// WRONG: Can overflow!
+if (dist[u] + weight < dist[v])
+
+// CORRECT: Check for infinity first
+if (dist[u] != INT_MAX && dist[u] + weight < dist[v])</code></pre>
+                </div>
+                
+                <div class="info-box danger">
+                    <div class="info-box-title">🚫 Mistake 2: Using Dijkstra with Negative Weights</div>
+                    <p>Always verify edge weights are non-negative before using Dijkstra!</p>
+                </div>
+                
+                <div class="info-box danger">
+                    <div class="info-box-title">🚫 Mistake 3: Forgetting to Initialise</div>
+                    <pre style="color: var(--text-primary);"><code>// WRONG: dist[] contains garbage
+for (int i = 0; i < V; i++)
+    dist[i] = 0;  // Should be INT_MAX!
+
+// CORRECT
+dist[src] = 0;
+for (int i = 0; i < V; i++)
+    if (i != src) dist[i] = INT_MAX;</code></pre>
+                </div>
+                
+                <div class="info-box danger">
+                    <div class="info-box-title">🚫 Mistake 4: Not Handling Disconnected Graphs</div>
+                    <p>Always check if <code>dist[v] == INT_MAX</code> before using the result.</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Slide 26: Memory Considerations -->
+        <div class="slide">
+            <div class="slide-header">
+                <h2>🧠 Memory Considerations</h2>
+            </div>
+            <div class="content">
+                <div class="two-columns">
+                    <div class="column">
+                        <h4>Adjacency Matrix</h4>
+                        <ul>
+                            <li>Space: O(V²)</li>
+                            <li>Cache-friendly for dense graphs</li>
+                            <li>Simple edge lookup: O(1)</li>
+                            <li>Wasteful for sparse graphs</li>
+                        </ul>
+                        <p style="margin-top: 15px;"><strong>Use when:</strong> V < 1000 and E ≈ V²</p>
+                    </div>
+                    <div class="column">
+                        <h4>Adjacency List</h4>
+                        <ul>
+                            <li>Space: O(V + E)</li>
+                            <li>Efficient for sparse graphs</li>
+                            <li>Slower edge lookup: O(degree)</li>
+                            <li>Dynamic: easy add/remove</li>
+                        </ul>
+                        <p style="margin-top: 15px;"><strong>Use when:</strong> E ≪ V²</p>
+                    </div>
+                </div>
+                
+                <div class="info-box note" style="margin-top: 20px;">
+                    <div class="info-box-title">📊 Practical Threshold</div>
+                    <p>For a graph with V = 10,000 vertices:</p>
+                    <ul>
+                        <li>Matrix: 10,000 × 10,000 × 4 bytes = 400 MB</li>
+                        <li>Sparse list (avg degree 10): ≈ 1.2 MB</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Slide 27: Debugging with GDB -->
+        <div class="slide">
+            <div class="slide-header">
+                <h2>🔍 Debugging with GDB</h2>
+            </div>
+            <div class="content">
+                <div class="code-block">
+                    <div class="code-header">
+                        <span>Useful GDB commands for graph algorithms</span>
+                        <span class="lang-badge">Bash</span>
+                    </div>
+                    <pre><code class="language-bash"># Compile with debug symbols
+gcc -g -O0 -o dijkstra dijkstra.c
+
+# Start GDB
+gdb ./dijkstra
+
+# Set breakpoint at relaxation
+(gdb) break relax
+
+# Run program
+(gdb) run < input.txt
+
+# Print distance array
+(gdb) print dist[0]@10    # Print first 10 elements
+
+# Print entire array
+(gdb) set print array on
+(gdb) print dist
+
+# Watch variable changes
+(gdb) watch dist[5]
+
+# Continue to next breakpoint
+(gdb) continue
+
+# Step through code
+(gdb) step    # Into functions
+(gdb) next    # Over functions</code></pre>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Slide 28: Memory Checking with Valgrind -->
+        <div class="slide">
+            <div class="slide-header">
+                <h2>🔬 Memory Checking with Valgrind</h2>
+            </div>
+            <div class="content">
+                <div class="code-block">
+                    <div class="code-header">
+                        <span>Valgrind commands</span>
+                        <span class="lang-badge">Bash</span>
+                    </div>
+                    <pre><code class="language-bash"># Basic memory check
+valgrind ./dijkstra < input.txt
+
+# Full leak check
+valgrind --leak-check=full --show-leak-kinds=all ./dijkstra
+
+# Track origins of uninitialised values
+valgrind --track-origins=yes ./dijkstra
+
+# Generate call graph for performance
+valgrind --tool=callgrind ./dijkstra
+kcachegrind callgrind.out.*</code></pre>
+                </div>
+                
+                <div class="info-box warning">
+                    <div class="info-box-title">⚠️ Common Memory Issues</div>
+                    <ul>
+                        <li><strong>Leak:</strong> forgetting to free graph/heap structures</li>
+                        <li><strong>Invalid read:</strong> accessing dist[v] where v ≥ V</li>
+                        <li><strong>Uninitialised:</strong> using dist[] before initialisation</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Slide 29: Best Practices -->
+        <div class="slide">
+            <div class="slide-header">
+                <h2>✅ Best Practices</h2>
+            </div>
+            <div class="content">
+                <div class="two-columns">
+                    <div class="column" style="border-left: 4px solid var(--accent-green);">
+                        <h4 style="color: var(--accent-green);">✓ Do</h4>
+                        <ul>
+                            <li>Always check for INT_MAX before adding</li>
+                            <li>Use adjacency list for sparse graphs</li>
+                            <li>Implement early termination in Bellman-Ford</li>
+                            <li>Free all dynamically allocated memory</li>
+                            <li>Validate input: V > 0, weights valid</li>
+                            <li>Use descriptive variable names</li>
+                            <li>Test with disconnected vertices</li>
+                        </ul>
+                    </div>
+                    <div class="column" style="border-left: 4px solid var(--accent-red);">
+                        <h4 style="color: var(--accent-red);">✗ Don't</h4>
+                        <ul>
+                            <li>Use Dijkstra with negative weights</li>
+                            <li>Forget to initialise dist[] to INT_MAX</li>
+                            <li>Assume graph is connected</li>
+                            <li>Use global variables unnecessarily</li>
+                            <li>Ignore compiler warnings</li>
+                            <li>Skip bounds checking</li>
+                            <li>Hardcode graph size</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Slide 30: Exercise 1 Preview -->
+        <div class="slide">
+            <div class="slide-header">
+                <h2>🔬 Exercise 1: Dijkstra with Path Reconstruction</h2>
+            </div>
+            <div class="content">
+                <div class="info-box note">
+                    <div class="info-box-title">📋 Requirements</div>
+                    <ul>
+                        <li>Implement min-heap priority queue with decrease-key</li>
+                        <li>Read graph from file in adjacency list format</li>
+                        <li>Compute shortest paths from source to all vertices</li>
+                        <li>Reconstruct and display actual paths</li>
+                        <li>Handle disconnected vertices correctly</li>
+                    </ul>
+                </div>
+                
+                <div class="two-columns">
+                    <div class="column">
+                        <h4>Input Format</h4>
+                        <pre style="color: var(--text-primary);">6 9          # V E
+0 1 4        # src dest weight
+0 2 2
+1 2 1
+1 3 5
+2 1 1
+2 3 8
+2 4 10
+3 4 2
+4 5 6</pre>
+                    </div>
+                    <div class="column">
+                        <h4>Expected Output</h4>
+                        <pre style="color: var(--text-primary);">Source: 0
+Vertex  Dist   Path
+0       0      0
+1       3      0 → 2 → 1
+2       2      0 → 2
+3       5      0 → 2 → 3
+4       7      0 → 2 → 3 → 4
+5       13     0 → 2 → 3 → 4 → 5</pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Slide 31: Exercise 2 Preview -->
+        <div class="slide">
+            <div class="slide-header">
+                <h2>🔬 Exercise 2: Bellman-Ford & Arbitrage</h2>
+            </div>
+            <div class="content">
+                <div class="info-box note">
+                    <div class="info-box-title">📋 Requirements</div>
+                    <ul>
+                        <li>Implement Bellman-Ford with early termination</li>
+                        <li>Detect and report negative cycles</li>
+                        <li>Model currency exchange as a graph problem</li>
+                        <li>Use logarithmic transformation for rates</li>
+                        <li>Report arbitrage opportunities if found</li>
+                    </ul>
+                </div>
+                
+                <div class="two-columns">
+                    <div class="column">
+                        <h4>Currency Data</h4>
+                        <pre style="color: var(--text-primary);">4
+USD EUR GBP JPY
+1.00  0.92  0.79  149.50
+1.09  1.00  0.86  163.04
+1.27  1.16  1.00  189.22
+0.0067 0.0061 0.0053 1.00</pre>
+                    </div>
+                    <div class="column">
+                        <h4>Expected Analysis</h4>
+                        <pre style="color: var(--text-primary);">Checking for arbitrage...
+
+Converting rates to -log weights
+Building edge list: 12 edges
+
+Running Bellman-Ford from USD...
+No negative cycle detected.
+
+Result: No arbitrage opportunity
+found in current rates.</pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Slide 32: Performance Optimisations -->
+        <div class="slide">
+            <div class="slide-header">
+                <h2>⚡ Performance Optimisations</h2>
+            </div>
+            <div class="content">
+                <div class="code-block">
+                    <div class="code-header">
+                        <span>Bellman-Ford early termination</span>
+                        <span class="lang-badge">C</span>
+                    </div>
+                    <pre><code class="language-c">// If no relaxation occurs in an iteration, algorithm can terminate
+for (int i = 0; i < V - 1; i++) {
+    int changed = 0;
+    for (int j = 0; j < E; j++) {
+        if (relax(edges[j], dist, parent))
+            changed = 1;
+    }
+    if (!changed) break;  // No more improvements possible
+}</code></pre>
+                </div>
+                
+                <div class="code-block">
+                    <div class="code-header">
+                        <span>Dijkstra: skip processed vertices</span>
+                        <span class="lang-badge">C</span>
+                    </div>
+                    <pre><code class="language-c">while (heap->size > 0) {
+    HeapNode min = extractMin(heap);
+    int u = min.vertex;
+    
+    // Skip if already processed with better distance
+    if (min.distance > dist[u]) continue;
+    
+    // Process neighbours...
+}</code></pre>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Slide 33: Bidirectional Dijkstra -->
+        <div class="slide">
+            <div class="slide-header">
+                <h2>🔄 Advanced: Bidirectional Dijkstra</h2>
+            </div>
+            <div class="content">
+                <p>For single-pair shortest path, run Dijkstra from both source and target simultaneously. Stop when searches meet.</p>
+                
+                <div class="ascii-diagram">
+    Standard Dijkstra:           Bidirectional Dijkstra:
+    
+    [S]----→----→----→[T]       [S]--→--→    ←--←--[T]
+    
+    Explores entire graph       Explores ~half each direction
+    from source                 Meets in the middle!
+    
+    Area explored: πr²          Area explored: 2 × π(r/2)² = πr²/2
+                </div>
+                
+                <div class="info-box success">
+                    <div class="info-box-title">✅ Benefit</div>
+                    <p>Reduces explored vertices by approximately half, making single-pair queries much faster in practice. Used in modern GPS systems.</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Slide 34: Johnson's Algorithm (Brief) -->
+        <div class="slide">
+            <div class="slide-header">
+                <h2>📚 Related: Johnson's Algorithm</h2>
+                <p class="subtitle">All-pairs shortest paths with negative weights</p>
+            </div>
+            <div class="content">
+                <div class="algorithm-box">
+                    <h4>JOHNSON'S ALGORITHM</h4>
+                    <ol>
+                        <li>Add a new vertex q connected to all vertices with weight 0</li>
+                        <li>Run Bellman-Ford from q to compute h(v) for all v</li>
+                        <li>Reweight edges: ŵ(u,v) = w(u,v) + h(u) − h(v)</li>
+                        <li>All reweighted edges are now non-negative!</li>
+                        <li>Run Dijkstra from each vertex on reweighted graph</li>
+                        <li>Adjust results: δ(u,v) = δ̂(u,v) − h(u) + h(v)</li>
+                    </ol>
+                </div>
+                
+                <p><span class="complexity-box">Time: O(VE + V(V+E) log V)</span></p>
+                <p style="margin-top: 10px;">Better than Floyd-Warshall O(V³) for sparse graphs.</p>
+            </div>
+        </div>
+        
+        <!-- Slide 35: Key Takeaways -->
+        <div class="slide">
+            <div class="slide-header">
+                <h2>🎯 Key Takeaways</h2>
+            </div>
+            <div class="content">
+                <div class="key-points">
+                    <div class="key-point">
+                        <div class="icon">⚡</div>
+                        <h4>Relaxation</h4>
+                        <p>Foundation of all shortest path algorithms</p>
+                    </div>
+                    <div class="key-point">
+                        <div class="icon">🔷</div>
+                        <h4>Dijkstra</h4>
+                        <p>Greedy, fast, non-negative weights only</p>
+                    </div>
+                    <div class="key-point">
+                        <div class="icon">🔶</div>
+                        <h4>Bellman-Ford</h4>
+                        <p>Handles negatives, detects cycles</p>
+                    </div>
+                    <div class="key-point">
+                        <div class="icon">📊</div>
+                        <h4>Representation</h4>
+                        <p>Matrix for dense, list for sparse</p>
+                    </div>
+                    <div class="key-point">
+                        <div class="icon">🔺</div>
+                        <h4>Priority Queue</h4>
+                        <p>Binary heap optimises Dijkstra</p>
+                    </div>
+                    <div class="key-point">
+                        <div class="icon">🛤️</div>
+                        <h4>Path Recovery</h4>
+                        <p>Parent array enables reconstruction</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Slide 36: Resources -->
+        <div class="slide">
+            <div class="slide-header">
+                <h2>📖 Resources</h2>
+            </div>
+            <div class="content">
+                <div class="two-columns">
+                    <div class="column">
+                        <h4>Essential Reading</h4>
+                        <ul>
+                            <li>Cormen et al. <em>Introduction to Algorithms</em>, Ch. 22–24</li>
+                            <li>Sedgewick & Wayne <em>Algorithms</em>, Ch. 4.4</li>
+                            <li>Dijkstra's original 1959 paper</li>
+                        </ul>
+                        
+                        <h4 style="margin-top: 20px;">Online Resources</h4>
+                        <ul>
+                            <li>MIT OCW 6.006 Shortest Paths</li>
+                            <li>Visualgo SSSP visualisations</li>
+                            <li>CP-Algorithms shortest paths</li>
+                        </ul>
+                    </div>
+                    <div class="column">
+                        <h4>Practice Problems</h4>
+                        <ul>
+                            <li>LeetCode: Network Delay Time</li>
+                            <li>LeetCode: Cheapest Flights</li>
+                            <li>Codeforces: Dijkstra? (20C)</li>
+                            <li>SPOJ: SHPATH</li>
+                        </ul>
+                        
+                        <h4 style="margin-top: 20px;">Tools</h4>
+                        <ul>
+                            <li>GDB: GNU Debugger</li>
+                            <li>Valgrind: Memory checker</li>
+                            <li>Graphviz: Graph visualisation</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Slide 37: Interview Questions -->
+        <div class="slide">
+            <div class="slide-header">
+                <h2>💼 Interview Questions</h2>
+            </div>
+            <div class="content">
+                <ol>
+                    <li style="margin-bottom: 15px;">
+                        <strong>Why can't Dijkstra handle negative edge weights?</strong>
+                        <p style="color: var(--text-secondary);">The greedy assumption fails: a vertex marked final may have a shorter path discovered later through negative edges.</p>
+                    </li>
+                    <li style="margin-bottom: 15px;">
+                        <strong>What is the time complexity of Dijkstra with a binary heap?</strong>
+                        <p style="color: var(--text-secondary);">O((V + E) log V) — each vertex extracted once, each edge relaxed once, heap operations are O(log V).</p>
+                    </li>
+                    <li style="margin-bottom: 15px;">
+                        <strong>How does Bellman-Ford detect negative cycles?</strong>
+                        <p style="color: var(--text-secondary);">After V−1 iterations, all shortest paths are found. If any edge can still be relaxed, a negative cycle exists.</p>
+                    </li>
+                    <li style="margin-bottom: 15px;">
+                        <strong>When would you use Floyd-Warshall over Dijkstra?</strong>
+                        <p style="color: var(--text-secondary);">For all-pairs shortest paths on dense graphs, or when negative weights exist and simplicity is preferred.</p>
+                    </li>
+                    <li style="margin-bottom: 15px;">
+                        <strong>How would you find the shortest path in a grid with obstacles?</strong>
+                        <p style="color: var(--text-secondary);">BFS for unweighted, Dijkstra for weighted, or A* with Manhattan/Euclidean heuristic for efficiency.</p>
+                    </li>
+                </ol>
+            </div>
+        </div>
+        
+        <!-- Slide 38: Questions & Next Week -->
+        <div class="slide title-slide">
+            <h1 style="font-size: 3rem;">Questions?</h1>
+            <div style="margin-top: 40px;">
+                <p style="font-size: 1.5rem; color: var(--text-secondary);">Next Week: Advanced Topics & Course Review</p>
+                <p style="font-size: 1.1rem; color: var(--text-secondary); margin-top: 20px;">
+                    Algorithm selection • Complexity analysis • Examination preparation
+                </p>
+            </div>
+            <p style="margin-top: 60px; color: var(--text-secondary);">
+                Week 13 — Graph Algorithms: Shortest Path<br>
+                Algorithms and Programming Techniques
+            </p>
+        </div>
+        
+    </div>
+    
+    <div class="slide-counter">
+        <span id="currentSlide">1</span> / <span id="totalSlides">38</span>
+    </div>
+    
+    <div class="nav-container">
+        <button class="nav-btn" id="prevBtn" onclick="changeSlide(-1)">← Previous</button>
+        <button class="nav-btn" id="nextBtn" onclick="changeSlide(1)">Next →</button>
+    </div>
+    
+    <script>
+        let currentSlide = 0;
+        const slides = document.querySelectorAll('.slide');
+        const totalSlides = slides.length;
+        
+        document.getElementById('totalSlides').textContent = totalSlides;
+        
+        function showSlide(n) {
+            slides[currentSlide].classList.remove('active');
+            currentSlide = (n + totalSlides) % totalSlides;
+            slides[currentSlide].classList.add('active');
+            
+            document.getElementById('currentSlide').textContent = currentSlide + 1;
+            document.getElementById('progressBar').style.width = 
+                ((currentSlide + 1) / totalSlides * 100) + '%';
+            
+            document.getElementById('prevBtn').disabled = currentSlide === 0;
+            document.getElementById('nextBtn').disabled = currentSlide === totalSlides - 1;
+        }
+        
+        function changeSlide(direction) {
+            showSlide(currentSlide + direction);
+        }
+        
+        document.addEventListener('keydown', (e) => {
+            switch(e.key) {
+                case 'ArrowRight':
+                case ' ':
+                    if (currentSlide < totalSlides - 1) changeSlide(1);
+                    e.preventDefault();
+                    break;
+                case 'ArrowLeft':
+                    if (currentSlide > 0) changeSlide(-1);
+                    e.preventDefault();
+                    break;
+                case 'Home':
+                    showSlide(0);
+                    e.preventDefault();
+                    break;
+                case 'End':
+                    showSlide(totalSlides - 1);
+                    e.preventDefault();
+                    break;
+            }
+        });
+        
+        // Initialise syntax highlighting
+        hljs.highlightAll();
+        
+        // Initial state
+        showSlide(0);
+    </script>
+</body>
+</html>

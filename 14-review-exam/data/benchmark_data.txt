@@ -1,0 +1,41 @@
+# Benchmark Configuration File
+# Week 14: Algorithm Benchmarking Suite
+#
+# Format: algorithm_name test_sizes runs_per_test
+# Lines starting with # are comments
+
+# Sorting Algorithms
+SelectionSort 100,500,1000,2000 3
+QuickSort 100,500,1000,2000,5000,10000 5
+MergeSort 100,500,1000,2000,5000,10000 5
+HeapSort 100,500,1000,2000,5000,10000 5
+
+# Search Algorithms (requires sorted input)
+LinearSearch 1000,5000,10000,50000 10
+BinarySearch 1000,5000,10000,50000,100000 10
+InterpolationSearch 1000,5000,10000,50000,100000 10
+
+# Dynamic Programming (Fibonacci)
+FibNaive 10,20,30,35 3
+FibMemoised 10,20,30,40,45 3
+FibTabulation 10,20,30,40,45,50 3
+FibOptimised 10,20,30,40,45,50,100 5
+
+# Test Data Generation Seeds
+# Use these seeds for reproducible benchmarks
+seed_random 42
+seed_sorted 0
+seed_reverse -1
+seed_partial 50
+
+# Expected Complexity Classes
+# Algorithm        Average    Worst      Space
+# SelectionSort    O(n²)      O(n²)      O(1)
+# QuickSort        O(n log n) O(n²)      O(log n)
+# MergeSort        O(n log n) O(n log n) O(n)
+# HeapSort         O(n log n) O(n log n) O(1)
+# LinearSearch     O(n)       O(n)       O(1)
+# BinarySearch     O(log n)   O(log n)   O(1)
+# FibNaive         O(2^n)     O(2^n)     O(n)
+# FibMemoised      O(n)       O(n)       O(n)
+# FibOptimised     O(n)       O(n)       O(1)

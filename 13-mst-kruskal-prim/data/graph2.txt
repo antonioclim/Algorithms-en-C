@@ -1,0 +1,22 @@
+# Graph 2: Larger graph with multiple paths
+# Format: V E S (vertices, edges, source)
+# Then E lines of: u v w (edge from u to v with weight w)
+#
+# This graph tests:
+# - Multiple shortest paths of equal length
+# - Unreachable vertices
+# - Longer paths through the graph
+
+8 12 0
+0 1 3
+0 2 6
+1 2 2
+1 3 4
+2 3 1
+2 4 9
+3 4 3
+3 5 7
+4 5 1
+4 6 5
+5 6 2
+5 7 8

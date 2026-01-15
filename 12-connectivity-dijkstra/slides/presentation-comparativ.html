@@ -1,0 +1,1222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Week 12: Language Comparison | Pseudocode • C • Python</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/c.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/python.min.js"></script>
+    <style>
+        :root {
+            --bg-primary: #0d1117;
+            --bg-secondary: #161b22;
+            --bg-tertiary: #21262d;
+            --text-primary: #e6edf3;
+            --text-secondary: #8b949e;
+            --accent-blue: #58a6ff;
+            --accent-green: #3fb950;
+            --accent-yellow: #d29922;
+            --accent-red: #f85149;
+            --accent-purple: #a371f7;
+            --border-color: #30363d;
+            --pseudo-color: #79c0ff;
+            --c-color: #3fb950;
+            --python-color: #d29922;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans', Helvetica, Arial, sans-serif;
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.5;
+            overflow: hidden;
+        }
+
+        .progress-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background-color: var(--bg-tertiary);
+            z-index: 1000;
+        }
+
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, var(--pseudo-color), var(--c-color), var(--python-color));
+            transition: width 0.3s ease;
+        }
+
+        .slides-container {
+            width: 100vw;
+            height: 100vh;
+            position: relative;
+        }
+
+        .slide {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            padding: 50px 60px;
+            display: none;
+            opacity: 0;
+            transition: opacity 0.4s ease;
+            overflow-y: auto;
+        }
+
+        .slide.active {
+            display: block;
+            opacity: 1;
+        }
+
+        h1 {
+            font-size: 2.5em;
+            margin-bottom: 0.5em;
+            color: var(--text-primary);
+            text-align: center;
+        }
+
+        h2 {
+            font-size: 1.8em;
+            margin-bottom: 0.8em;
+            color: var(--accent-blue);
+        }
+
+        h3 {
+            font-size: 1.3em;
+            margin-bottom: 0.5em;
+        }
+
+        p {
+            font-size: 1.1em;
+            margin-bottom: 1em;
+            color: var(--text-secondary);
+        }
+
+        .title-slide {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+        }
+
+        .title-slide h1 {
+            font-size: 2.8em;
+            margin-bottom: 0.3em;
+        }
+
+        .subtitle {
+            font-size: 1.5em;
+            color: var(--text-secondary);
+            margin-bottom: 1em;
+        }
+
+        .three-columns {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 15px;
+            margin: 1em 0;
+            height: calc(100% - 120px);
+        }
+
+        .column {
+            background-color: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 15px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .column.pseudocod {
+            border-top: 3px solid var(--pseudo-color);
+        }
+
+        .column.c-lang {
+            border-top: 3px solid var(--c-color);
+        }
+
+        .column.python {
+            border-top: 3px solid var(--python-color);
+        }
+
+        .column h3 {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 12px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .column.pseudocod h3 { color: var(--pseudo-color); }
+        .column.c-lang h3 { color: var(--c-color); }
+        .column.python h3 { color: var(--python-color); }
+
+        .code-content {
+            flex: 1;
+            overflow-y: auto;
+        }
+
+        .code-content pre {
+            margin: 0;
+            font-size: 0.85em;
+            line-height: 1.4;
+        }
+
+        .code-content code {
+            font-family: 'Fira Code', 'Consolas', 'Monaco', monospace;
+        }
+
+        .comparison-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1em 0;
+            font-size: 1em;
+        }
+
+        .comparison-table th,
+        .comparison-table td {
+            padding: 12px 15px;
+            text-align: left;
+            border: 1px solid var(--border-color);
+        }
+
+        .comparison-table th {
+            background-color: var(--bg-tertiary);
+        }
+
+        .comparison-table th:nth-child(2) { color: var(--pseudo-color); }
+        .comparison-table th:nth-child(3) { color: var(--c-color); }
+        .comparison-table th:nth-child(4) { color: var(--python-color); }
+
+        .comparison-table tr:nth-child(even) {
+            background-color: var(--bg-secondary);
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 0.8em;
+            font-weight: 600;
+        }
+
+        .badge.good { background-color: rgba(63, 185, 80, 0.2); color: var(--accent-green); }
+        .badge.medium { background-color: rgba(210, 153, 34, 0.2); color: var(--accent-yellow); }
+        .badge.neutral { background-color: rgba(88, 166, 255, 0.2); color: var(--accent-blue); }
+
+        .info-box {
+            padding: 15px 20px;
+            border-radius: 8px;
+            margin: 1em 0;
+            border-left: 4px solid var(--accent-blue);
+            background-color: rgba(88, 166, 255, 0.1);
+        }
+
+        .info-box-title {
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: var(--accent-blue);
+        }
+
+        .key-points {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin: 1em 0;
+        }
+
+        .key-point {
+            background-color: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 15px;
+            text-align: center;
+        }
+
+        .key-point .icon { font-size: 1.5em; margin-bottom: 8px; }
+        .key-point h4 { color: var(--accent-blue); margin-bottom: 5px; }
+        .key-point p { font-size: 0.95em; margin: 0; }
+
+        .slide-counter {
+            position: fixed;
+            bottom: 20px;
+            left: 25px;
+            font-size: 0.9em;
+            color: var(--text-secondary);
+            z-index: 1000;
+        }
+
+        .nav-container {
+            position: fixed;
+            bottom: 15px;
+            right: 20px;
+            display: flex;
+            gap: 8px;
+            z-index: 1000;
+        }
+
+        .nav-btn {
+            background-color: var(--bg-tertiary);
+            color: var(--text-primary);
+            border: 1px solid var(--border-color);
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9em;
+            transition: all 0.2s ease;
+        }
+
+        .nav-btn:hover {
+            background-color: var(--accent-blue);
+            color: var(--bg-primary);
+        }
+
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: var(--bg-secondary); }
+        ::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 3px; }
+    </style>
+</head>
+<body>
+    <div class="progress-container">
+        <div class="progress-bar" id="progressBar"></div>
+    </div>
+
+    <div class="slides-container" id="slidesContainer">
+
+        <!-- Slide 1: Title -->
+        <div class="slide title-slide active" data-slide="1">
+            <h1>Graph Algorithms: Language Comparison</h1>
+            <div class="subtitle">Pseudocode • C • Python</div>
+            <p style="font-size: 1.2em; margin-top: 1em;">Week 12 | Algorithms and Programming Techniques</p>
+            <div class="key-points" style="max-width: 700px; margin-top: 2em;">
+                <div class="key-point">
+                    <div class="icon">📝</div>
+                    <h4>Pseudocode</h4>
+                    <p>Abstract algorithm design</p>
+                </div>
+                <div class="key-point">
+                    <div class="icon">⚙️</div>
+                    <h4>C</h4>
+                    <p>Systems-level control</p>
+                </div>
+                <div class="key-point">
+                    <div class="icon">🐍</div>
+                    <h4>Python</h4>
+                    <p>Rapid prototyping</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 2: Why Compare? -->
+        <div class="slide" data-slide="2">
+            <h2>🤔 Why Compare Languages?</h2>
+            <div class="key-points">
+                <div class="key-point">
+                    <div class="icon">🎯</div>
+                    <h4>Algorithm Understanding</h4>
+                    <p>See the core logic without language-specific details</p>
+                </div>
+                <div class="key-point">
+                    <div class="icon">🔄</div>
+                    <h4>Translation Skills</h4>
+                    <p>Convert between abstraction levels</p>
+                </div>
+                <div class="key-point">
+                    <div class="icon">⚖️</div>
+                    <h4>Trade-off Analysis</h4>
+                    <p>Performance vs productivity</p>
+                </div>
+            </div>
+            <div class="info-box" style="margin-top: 2em;">
+                <div class="info-box-title">Learning Benefit</div>
+                <p>Understanding the same algorithm in multiple representations deepens comprehension and reveals what is essential versus incidental to each language.</p>
+            </div>
+        </div>
+
+        <!-- Slide 3: Graph Structure -->
+        <div class="slide" data-slide="3">
+            <h2>📊 Graph Data Structure</h2>
+            <div class="three-columns">
+                <div class="column pseudocod">
+                    <h3>📝 Pseudocode</h3>
+                    <div class="code-content">
+                        <pre><code>STRUCTURE Graph:
+    vertices: Integer
+    adjacency: List of Lists
+    directed: Boolean
+
+FUNCTION CreateGraph(n, directed):
+    g = new Graph
+    g.vertices = n
+    g.adjacency = empty list of n lists
+    g.directed = directed
+    RETURN g
+
+FUNCTION AddEdge(g, u, v):
+    append v to g.adjacency[u]
+    IF NOT g.directed:
+        append u to g.adjacency[v]</code></pre>
+                    </div>
+                </div>
+                <div class="column c-lang">
+                    <h3>⚙️ C</h3>
+                    <div class="code-content">
+                        <pre><code class="language-c">typedef struct AdjNode {
+    int vertex;
+    struct AdjNode *next;
+} AdjNode;
+
+typedef struct {
+    int num_vertices;
+    AdjNode **adj_list;
+    int is_directed;
+} Graph;
+
+Graph *create_graph(int n, int directed) {
+    Graph *g = malloc(sizeof(Graph));
+    g->num_vertices = n;
+    g->is_directed = directed;
+    g->adj_list = calloc(n, sizeof(AdjNode*));
+    return g;
+}
+
+void add_edge(Graph *g, int u, int v) {
+    AdjNode *node = malloc(sizeof(AdjNode));
+    node->vertex = v;
+    node->next = g->adj_list[u];
+    g->adj_list[u] = node;
+    
+    if (!g->is_directed) {
+        node = malloc(sizeof(AdjNode));
+        node->vertex = u;
+        node->next = g->adj_list[v];
+        g->adj_list[v] = node;
+    }
+}</code></pre>
+                    </div>
+                </div>
+                <div class="column python">
+                    <h3>🐍 Python</h3>
+                    <div class="code-content">
+                        <pre><code class="language-python">from collections import defaultdict
+
+class Graph:
+    def __init__(self, vertices, directed=False):
+        self.V = vertices
+        self.adj = defaultdict(list)
+        self.directed = directed
+    
+    def add_edge(self, u, v):
+        self.adj[u].append(v)
+        if not self.directed:
+            self.adj[v].append(u)
+
+
+# Alternative: Simple dictionary
+def create_graph(n):
+    return {i: [] for i in range(n)}
+
+def add_edge(graph, u, v, directed=False):
+    graph[u].append(v)
+    if not directed:
+        graph[v].append(u)</code></pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 4: BFS Algorithm -->
+        <div class="slide" data-slide="4">
+            <h2>🌊 Breadth-First Search (BFS)</h2>
+            <div class="three-columns">
+                <div class="column pseudocod">
+                    <h3>📝 Pseudocode</h3>
+                    <div class="code-content">
+                        <pre><code>FUNCTION BFS(graph, source):
+    visited = array of FALSE, size V
+    queue = empty queue
+    
+    visited[source] = TRUE
+    enqueue(queue, source)
+    
+    WHILE queue is not empty:
+        v = dequeue(queue)
+        process(v)
+        
+        FOR each neighbour u of v:
+            IF NOT visited[u]:
+                visited[u] = TRUE
+                enqueue(queue, u)</code></pre>
+                    </div>
+                </div>
+                <div class="column c-lang">
+                    <h3>⚙️ C</h3>
+                    <div class="code-content">
+                        <pre><code class="language-c">void bfs(Graph *g, int source) {
+    int *visited = calloc(g->num_vertices,
+                          sizeof(int));
+    
+    // Simple queue implementation
+    int *queue = malloc(g->num_vertices *
+                        sizeof(int));
+    int front = 0, rear = 0;
+    
+    visited[source] = 1;
+    queue[rear++] = source;
+    
+    while (front < rear) {
+        int v = queue[front++];
+        printf("%d ", v);
+        
+        for (AdjNode *adj = g->adj_list[v];
+             adj != NULL;
+             adj = adj->next) {
+            if (!visited[adj->vertex]) {
+                visited[adj->vertex] = 1;
+                queue[rear++] = adj->vertex;
+            }
+        }
+    }
+    
+    free(visited);
+    free(queue);
+}</code></pre>
+                    </div>
+                </div>
+                <div class="column python">
+                    <h3>🐍 Python</h3>
+                    <div class="code-content">
+                        <pre><code class="language-python">from collections import deque
+
+def bfs(graph, source):
+    visited = set()
+    queue = deque([source])
+    visited.add(source)
+    result = []
+    
+    while queue:
+        v = queue.popleft()
+        result.append(v)
+        
+        for neighbour in graph.adj[v]:
+            if neighbour not in visited:
+                visited.add(neighbour)
+                queue.append(neighbour)
+    
+    return result
+
+
+# One-liner generator version
+def bfs_gen(graph, source):
+    visited, queue = {source}, deque([source])
+    while queue:
+        v = queue.popleft()
+        yield v
+        for u in graph.adj[v]:
+            if u not in visited:
+                visited.add(u)
+                queue.append(u)</code></pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 5: DFS Algorithm -->
+        <div class="slide" data-slide="5">
+            <h2>🏔️ Depth-First Search (DFS) - Recursive</h2>
+            <div class="three-columns">
+                <div class="column pseudocod">
+                    <h3>📝 Pseudocode</h3>
+                    <div class="code-content">
+                        <pre><code>FUNCTION DFS(graph, source):
+    visited = array of FALSE, size V
+    DFS_Visit(graph, source, visited)
+
+FUNCTION DFS_Visit(graph, v, visited):
+    visited[v] = TRUE
+    process(v)
+    
+    FOR each neighbour u of v:
+        IF NOT visited[u]:
+            DFS_Visit(graph, u, visited)</code></pre>
+                    </div>
+                </div>
+                <div class="column c-lang">
+                    <h3>⚙️ C</h3>
+                    <div class="code-content">
+                        <pre><code class="language-c">void dfs_visit(Graph *g, int v, int *visited) {
+    visited[v] = 1;
+    printf("%d ", v);
+    
+    for (AdjNode *adj = g->adj_list[v];
+         adj != NULL;
+         adj = adj->next) {
+        if (!visited[adj->vertex]) {
+            dfs_visit(g, adj->vertex, visited);
+        }
+    }
+}
+
+void dfs(Graph *g, int source) {
+    int *visited = calloc(g->num_vertices,
+                          sizeof(int));
+    
+    dfs_visit(g, source, visited);
+    
+    free(visited);
+}</code></pre>
+                    </div>
+                </div>
+                <div class="column python">
+                    <h3>🐍 Python</h3>
+                    <div class="code-content">
+                        <pre><code class="language-python">def dfs_recursive(graph, source, visited=None):
+    if visited is None:
+        visited = set()
+    
+    visited.add(source)
+    result = [source]
+    
+    for neighbour in graph.adj[source]:
+        if neighbour not in visited:
+            result.extend(
+                dfs_recursive(graph, neighbour,
+                              visited)
+            )
+    
+    return result
+
+
+# Using yield for memory efficiency
+def dfs_gen(graph, v, visited=None):
+    if visited is None:
+        visited = set()
+    visited.add(v)
+    yield v
+    for u in graph.adj[v]:
+        if u not in visited:
+            yield from dfs_gen(graph, u, visited)</code></pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 6: DFS Iterative -->
+        <div class="slide" data-slide="6">
+            <h2>🏔️ Depth-First Search (DFS) - Iterative</h2>
+            <div class="three-columns">
+                <div class="column pseudocod">
+                    <h3>📝 Pseudocode</h3>
+                    <div class="code-content">
+                        <pre><code>FUNCTION DFS_Iterative(graph, source):
+    visited = array of FALSE, size V
+    stack = empty stack
+    
+    push(stack, source)
+    
+    WHILE stack is not empty:
+        v = pop(stack)
+        
+        IF NOT visited[v]:
+            visited[v] = TRUE
+            process(v)
+            
+            FOR each neighbour u of v:
+                IF NOT visited[u]:
+                    push(stack, u)</code></pre>
+                    </div>
+                </div>
+                <div class="column c-lang">
+                    <h3>⚙️ C</h3>
+                    <div class="code-content">
+                        <pre><code class="language-c">void dfs_iterative(Graph *g, int source) {
+    int *visited = calloc(g->num_vertices,
+                          sizeof(int));
+    
+    // Simple stack
+    int *stack = malloc(g->num_vertices *
+                        sizeof(int));
+    int top = 0;
+    
+    stack[top++] = source;
+    
+    while (top > 0) {
+        int v = stack[--top];
+        
+        if (!visited[v]) {
+            visited[v] = 1;
+            printf("%d ", v);
+            
+            for (AdjNode *adj = g->adj_list[v];
+                 adj != NULL;
+                 adj = adj->next) {
+                if (!visited[adj->vertex]) {
+                    stack[top++] = adj->vertex;
+                }
+            }
+        }
+    }
+    
+    free(visited);
+    free(stack);
+}</code></pre>
+                    </div>
+                </div>
+                <div class="column python">
+                    <h3>🐍 Python</h3>
+                    <div class="code-content">
+                        <pre><code class="language-python">def dfs_iterative(graph, source):
+    visited = set()
+    stack = [source]
+    result = []
+    
+    while stack:
+        v = stack.pop()
+        
+        if v not in visited:
+            visited.add(v)
+            result.append(v)
+            
+            # Add neighbours (reversed for order)
+            for neighbour in reversed(
+                    graph.adj[v]):
+                if neighbour not in visited:
+                    stack.append(neighbour)
+    
+    return result
+
+
+# Note: Python list as stack is O(1) for
+# append() and pop() from end</code></pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 7: Shortest Path -->
+        <div class="slide" data-slide="7">
+            <h2>🛤️ BFS Shortest Path (Unweighted)</h2>
+            <div class="three-columns">
+                <div class="column pseudocod">
+                    <h3>📝 Pseudocode</h3>
+                    <div class="code-content">
+                        <pre><code>FUNCTION ShortestPath(graph, source):
+    distance = array of -1, size V
+    queue = empty queue
+    
+    distance[source] = 0
+    enqueue(queue, source)
+    
+    WHILE queue is not empty:
+        v = dequeue(queue)
+        
+        FOR each neighbour u of v:
+            IF distance[u] == -1:
+                distance[u] = distance[v] + 1
+                enqueue(queue, u)
+    
+    RETURN distance</code></pre>
+                    </div>
+                </div>
+                <div class="column c-lang">
+                    <h3>⚙️ C</h3>
+                    <div class="code-content">
+                        <pre><code class="language-c">int *shortest_path(Graph *g, int source) {
+    int *dist = malloc(g->num_vertices *
+                       sizeof(int));
+    for (int i = 0; i < g->num_vertices; i++)
+        dist[i] = -1;
+    
+    int *queue = malloc(g->num_vertices *
+                        sizeof(int));
+    int front = 0, rear = 0;
+    
+    dist[source] = 0;
+    queue[rear++] = source;
+    
+    while (front < rear) {
+        int v = queue[front++];
+        
+        for (AdjNode *adj = g->adj_list[v];
+             adj; adj = adj->next) {
+            if (dist[adj->vertex] == -1) {
+                dist[adj->vertex] = dist[v] + 1;
+                queue[rear++] = adj->vertex;
+            }
+        }
+    }
+    
+    free(queue);
+    return dist;  // Caller frees
+}</code></pre>
+                    </div>
+                </div>
+                <div class="column python">
+                    <h3>🐍 Python</h3>
+                    <div class="code-content">
+                        <pre><code class="language-python">from collections import deque
+
+def shortest_path(graph, source):
+    dist = {source: 0}
+    queue = deque([source])
+    
+    while queue:
+        v = queue.popleft()
+        
+        for neighbour in graph.adj[v]:
+            if neighbour not in dist:
+                dist[neighbour] = dist[v] + 1
+                queue.append(neighbour)
+    
+    return dist
+
+
+# Returns -1 for unreachable vertices
+def shortest_path_full(graph, source):
+    dist = {i: -1 for i in range(graph.V)}
+    dist[source] = 0
+    queue = deque([source])
+    
+    while queue:
+        v = queue.popleft()
+        for u in graph.adj[v]:
+            if dist[u] == -1:
+                dist[u] = dist[v] + 1
+                queue.append(u)
+    
+    return dist</code></pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 8: Cycle Detection -->
+        <div class="slide" data-slide="8">
+            <h2>🔄 Cycle Detection (Directed Graph)</h2>
+            <div class="three-columns">
+                <div class="column pseudocod">
+                    <h3>📝 Pseudocode</h3>
+                    <div class="code-content">
+                        <pre><code>FUNCTION HasCycle(graph):
+    colour = array of WHITE, size V
+    
+    FOR each vertex v in graph:
+        IF colour[v] == WHITE:
+            IF DFS_Cycle(graph, v, colour):
+                RETURN TRUE
+    RETURN FALSE
+
+FUNCTION DFS_Cycle(graph, v, colour):
+    colour[v] = GREY  // In progress
+    
+    FOR each neighbour u of v:
+        IF colour[u] == GREY:
+            RETURN TRUE  // Back edge
+        IF colour[u] == WHITE:
+            IF DFS_Cycle(graph, u, colour):
+                RETURN TRUE
+    
+    colour[v] = BLACK  // Finished
+    RETURN FALSE</code></pre>
+                    </div>
+                </div>
+                <div class="column c-lang">
+                    <h3>⚙️ C</h3>
+                    <div class="code-content">
+                        <pre><code class="language-c">#define WHITE 0
+#define GREY  1
+#define BLACK 2
+
+int dfs_cycle(Graph *g, int v, int *colour) {
+    colour[v] = GREY;
+    
+    for (AdjNode *adj = g->adj_list[v];
+         adj; adj = adj->next) {
+        if (colour[adj->vertex] == GREY)
+            return 1;  // Cycle found
+        if (colour[adj->vertex] == WHITE)
+            if (dfs_cycle(g, adj->vertex, colour))
+                return 1;
+    }
+    
+    colour[v] = BLACK;
+    return 0;
+}
+
+int has_cycle(Graph *g) {
+    int *colour = calloc(g->num_vertices,
+                         sizeof(int));
+    
+    for (int v = 0; v < g->num_vertices; v++) {
+        if (colour[v] == WHITE) {
+            if (dfs_cycle(g, v, colour)) {
+                free(colour);
+                return 1;
+            }
+        }
+    }
+    free(colour);
+    return 0;
+}</code></pre>
+                    </div>
+                </div>
+                <div class="column python">
+                    <h3>🐍 Python</h3>
+                    <div class="code-content">
+                        <pre><code class="language-python">def has_cycle(graph):
+    WHITE, GREY, BLACK = 0, 1, 2
+    colour = [WHITE] * graph.V
+    
+    def dfs(v):
+        colour[v] = GREY
+        
+        for neighbour in graph.adj[v]:
+            if colour[neighbour] == GREY:
+                return True  # Cycle!
+            if colour[neighbour] == WHITE:
+                if dfs(neighbour):
+                    return True
+        
+        colour[v] = BLACK
+        return False
+    
+    for v in range(graph.V):
+        if colour[v] == WHITE:
+            if dfs(v):
+                return True
+    
+    return False
+
+
+# Using recursion limit handling
+import sys
+sys.setrecursionlimit(10000)</code></pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 9: Topological Sort -->
+        <div class="slide" data-slide="9">
+            <h2>📊 Topological Sort</h2>
+            <div class="three-columns">
+                <div class="column pseudocod">
+                    <h3>📝 Pseudocode</h3>
+                    <div class="code-content">
+                        <pre><code>FUNCTION TopologicalSort(graph):
+    visited = array of FALSE, size V
+    stack = empty stack
+    
+    FOR each vertex v in graph:
+        IF NOT visited[v]:
+            Topo_DFS(graph, v, visited, stack)
+    
+    RETURN reverse(stack)
+
+FUNCTION Topo_DFS(graph, v, visited, stack):
+    visited[v] = TRUE
+    
+    FOR each neighbour u of v:
+        IF NOT visited[u]:
+            Topo_DFS(graph, u, visited, stack)
+    
+    push(stack, v)  // Post-order</code></pre>
+                    </div>
+                </div>
+                <div class="column c-lang">
+                    <h3>⚙️ C</h3>
+                    <div class="code-content">
+                        <pre><code class="language-c">void topo_dfs(Graph *g, int v, int *visited,
+              int *stack, int *top) {
+    visited[v] = 1;
+    
+    for (AdjNode *adj = g->adj_list[v];
+         adj; adj = adj->next) {
+        if (!visited[adj->vertex]) {
+            topo_dfs(g, adj->vertex, visited,
+                     stack, top);
+        }
+    }
+    
+    stack[(*top)++] = v;
+}
+
+int *topological_sort(Graph *g) {
+    int *visited = calloc(g->num_vertices,
+                          sizeof(int));
+    int *stack = malloc(g->num_vertices *
+                        sizeof(int));
+    int top = 0;
+    
+    for (int v = 0; v < g->num_vertices; v++) {
+        if (!visited[v]) {
+            topo_dfs(g, v, visited, stack, &top);
+        }
+    }
+    
+    // Reverse the stack into result
+    int *result = malloc(g->num_vertices *
+                         sizeof(int));
+    for (int i = 0; i < g->num_vertices; i++) {
+        result[i] = stack[top - 1 - i];
+    }
+    
+    free(visited);
+    free(stack);
+    return result;
+}</code></pre>
+                    </div>
+                </div>
+                <div class="column python">
+                    <h3>🐍 Python</h3>
+                    <div class="code-content">
+                        <pre><code class="language-python">def topological_sort(graph):
+    visited = set()
+    stack = []
+    
+    def dfs(v):
+        visited.add(v)
+        for neighbour in graph.adj[v]:
+            if neighbour not in visited:
+                dfs(neighbour)
+        stack.append(v)  # Post-order
+    
+    for v in range(graph.V):
+        if v not in visited:
+            dfs(v)
+    
+    return stack[::-1]  # Reverse
+
+
+# Using functools for memoisation
+from functools import lru_cache
+
+def topo_sort_cached(graph):
+    visited = set()
+    result = []
+    
+    @lru_cache(maxsize=None)
+    def dfs(v):
+        for u in graph.adj[v]:
+            if u not in visited:
+                visited.add(u)
+                dfs(u)
+        result.append(v)
+    
+    for v in range(graph.V):
+        if v not in visited:
+            visited.add(v)
+            dfs(v)
+    
+    return result[::-1]</code></pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 10: Comparison Table -->
+        <div class="slide" data-slide="10">
+            <h2>📋 Language Comparison Summary</h2>
+            <table class="comparison-table">
+                <tr>
+                    <th>Aspect</th>
+                    <th>📝 Pseudocode</th>
+                    <th>⚙️ C</th>
+                    <th>🐍 Python</th>
+                </tr>
+                <tr>
+                    <td>Memory Management</td>
+                    <td><span class="badge neutral">Abstract</span></td>
+                    <td><span class="badge medium">Manual</span></td>
+                    <td><span class="badge good">Automatic</span></td>
+                </tr>
+                <tr>
+                    <td>Data Structures</td>
+                    <td><span class="badge neutral">Conceptual</span></td>
+                    <td><span class="badge medium">Build from scratch</span></td>
+                    <td><span class="badge good">Built-in</span></td>
+                </tr>
+                <tr>
+                    <td>Lines of Code (BFS)</td>
+                    <td>~15 lines</td>
+                    <td>~35 lines</td>
+                    <td>~12 lines</td>
+                </tr>
+                <tr>
+                    <td>Performance</td>
+                    <td><span class="badge neutral">N/A</span></td>
+                    <td><span class="badge good">Fastest</span></td>
+                    <td><span class="badge medium">~10-100× slower</span></td>
+                </tr>
+                <tr>
+                    <td>Debugging</td>
+                    <td><span class="badge neutral">Mental trace</span></td>
+                    <td><span class="badge medium">GDB/Valgrind</span></td>
+                    <td><span class="badge good">Print/pdb</span></td>
+                </tr>
+                <tr>
+                    <td>Learning Value</td>
+                    <td>Algorithm design</td>
+                    <td>Low-level understanding</td>
+                    <td>Rapid prototyping</td>
+                </tr>
+            </table>
+        </div>
+
+        <!-- Slide 11: When to Use Each -->
+        <div class="slide" data-slide="11">
+            <h2>🎯 When to Use Each Language</h2>
+            <div class="key-points">
+                <div class="key-point" style="border-top: 3px solid var(--pseudo-color);">
+                    <div class="icon">📝</div>
+                    <h4>Pseudocode</h4>
+                    <ul style="text-align: left; font-size: 0.9em; margin-top: 10px;">
+                        <li>Designing algorithms</li>
+                        <li>Communicating ideas</li>
+                        <li>Exam/interview answers</li>
+                        <li>Documentation</li>
+                    </ul>
+                </div>
+                <div class="key-point" style="border-top: 3px solid var(--c-color);">
+                    <div class="icon">⚙️</div>
+                    <h4>C</h4>
+                    <ul style="text-align: left; font-size: 0.9em; margin-top: 10px;">
+                        <li>Performance-critical code</li>
+                        <li>Systems programming</li>
+                        <li>Embedded systems</li>
+                        <li>Learning fundamentals</li>
+                    </ul>
+                </div>
+                <div class="key-point" style="border-top: 3px solid var(--python-color);">
+                    <div class="icon">🐍</div>
+                    <h4>Python</h4>
+                    <ul style="text-align: left; font-size: 0.9em; margin-top: 10px;">
+                        <li>Rapid prototyping</li>
+                        <li>Data analysis</li>
+                        <li>Competitive programming</li>
+                        <li>Verification testing</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="info-box" style="margin-top: 1.5em;">
+                <div class="info-box-title">Professional Tip</div>
+                <p>Prototype in Python, validate correctness, then implement performance-critical parts in C. Use pseudocode for documentation and team communication.</p>
+            </div>
+        </div>
+
+        <!-- Slide 12: Key Insights -->
+        <div class="slide title-slide" data-slide="12">
+            <h1>Key Insights</h1>
+            <div class="key-points" style="max-width: 900px; margin-top: 2em;">
+                <div class="key-point">
+                    <div class="icon">🎯</div>
+                    <h4>Algorithm First</h4>
+                    <p>Understand the algorithm before coding in any language</p>
+                </div>
+                <div class="key-point">
+                    <div class="icon">🔄</div>
+                    <h4>Translation Skill</h4>
+                    <p>Practice converting between abstraction levels</p>
+                </div>
+                <div class="key-point">
+                    <div class="icon">⚖️</div>
+                    <h4>Trade-offs Matter</h4>
+                    <p>Choose language based on requirements</p>
+                </div>
+            </div>
+            <div class="info-box" style="max-width: 700px; margin-top: 2em;">
+                <div class="info-box-title">Remember</div>
+                <p>The best programmers can implement the same algorithm in multiple languages, choosing the right tool for each situation.</p>
+            </div>
+            <p style="margin-top: 2em; font-size: 1.1em;">Week 12 | Graph Fundamentals</p>
+        </div>
+
+    </div>
+
+    <div class="slide-counter">
+        <span id="currentSlide">1</span> / <span id="totalSlides">12</span>
+    </div>
+
+    <div class="nav-container">
+        <button class="nav-btn" onclick="goToSlide(1)">⏮</button>
+        <button class="nav-btn" onclick="prevSlide()">←</button>
+        <button class="nav-btn" onclick="nextSlide()">→</button>
+        <button class="nav-btn" onclick="goToSlide(totalSlides)">⏭</button>
+    </div>
+
+    <script>
+        let currentSlide = 1;
+        const totalSlides = document.querySelectorAll('.slide').length;
+        
+        document.getElementById('totalSlides').textContent = totalSlides;
+
+        function updateSlide() {
+            document.querySelectorAll('.slide').forEach((slide, index) => {
+                slide.classList.remove('active');
+                if (index + 1 === currentSlide) {
+                    slide.classList.add('active');
+                }
+            });
+            
+            document.getElementById('currentSlide').textContent = currentSlide;
+            document.getElementById('progressBar').style.width = 
+                ((currentSlide / totalSlides) * 100) + '%';
+        }
+
+        function nextSlide() {
+            if (currentSlide < totalSlides) {
+                currentSlide++;
+                updateSlide();
+            }
+        }
+
+        function prevSlide() {
+            if (currentSlide > 1) {
+                currentSlide--;
+                updateSlide();
+            }
+        }
+
+        function goToSlide(n) {
+            currentSlide = Math.max(1, Math.min(n, totalSlides));
+            updateSlide();
+        }
+
+        document.addEventListener('keydown', (e) => {
+            switch(e.key) {
+                case 'ArrowRight':
+                case ' ':
+                    e.preventDefault();
+                    nextSlide();
+                    break;
+                case 'ArrowLeft':
+                    prevSlide();
+                    break;
+                case 'Home':
+                    goToSlide(1);
+                    break;
+                case 'End':
+                    goToSlide(totalSlides);
+                    break;
+            }
+        });
+
+        hljs.highlightAll();
+    </script>
+</body>
+</html>

@@ -1,0 +1,1613 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Week 11: Hash Tables | Algorithms and Programming Techniques</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/c.min.js"></script>
+    <style>
+        :root {
+            --bg-primary: #0d1117;
+            --bg-secondary: #161b22;
+            --bg-tertiary: #21262d;
+            --text-primary: #f0f6fc;
+            --text-secondary: #8b949e;
+            --accent-blue: #58a6ff;
+            --accent-green: #3fb950;
+            --accent-yellow: #d29922;
+            --accent-red: #f85149;
+            --accent-purple: #a371f7;
+            --accent-orange: #db6d28;
+            --border-color: #30363d;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans', Helvetica, Arial, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.6;
+            overflow: hidden;
+        }
+
+        /* Progress bar */
+        .progress-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: var(--bg-tertiary);
+            z-index: 1000;
+        }
+
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, var(--accent-blue), var(--accent-purple));
+            transition: width 0.3s ease;
+        }
+
+        /* Slide container */
+        .slides-container {
+            width: 100vw;
+            height: 100vh;
+            position: relative;
+        }
+
+        .slide {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            padding: 60px 80px;
+            display: none;
+            opacity: 0;
+            transition: opacity 0.4s ease;
+            overflow-y: auto;
+        }
+
+        .slide.active {
+            display: flex;
+            flex-direction: column;
+            opacity: 1;
+        }
+
+        /* Slide layouts */
+        .slide-title {
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            background: linear-gradient(135deg, var(--bg-primary) 0%, var(--bg-secondary) 100%);
+        }
+
+        .slide-content {
+            justify-content: flex-start;
+        }
+
+        /* Typography */
+        h1 {
+            font-size: 3.5rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        h2 {
+            font-size: 2.2rem;
+            font-weight: 600;
+            color: var(--accent-blue);
+            margin-bottom: 1.5rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid var(--border-color);
+        }
+
+        h3 {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: var(--accent-green);
+            margin: 1.5rem 0 1rem 0;
+        }
+
+        p {
+            font-size: 1.25rem;
+            color: var(--text-secondary);
+            margin-bottom: 1rem;
+        }
+
+        .subtitle {
+            font-size: 1.5rem;
+            color: var(--text-secondary);
+            margin-top: 1rem;
+        }
+
+        .course-info {
+            margin-top: 2rem;
+            padding: 1rem 2rem;
+            background: var(--bg-tertiary);
+            border-radius: 8px;
+            border-left: 4px solid var(--accent-blue);
+        }
+
+        /* Lists */
+        ul, ol {
+            font-size: 1.2rem;
+            margin-left: 2rem;
+            margin-bottom: 1rem;
+        }
+
+        li {
+            margin-bottom: 0.75rem;
+            color: var(--text-primary);
+        }
+
+        li::marker {
+            color: var(--accent-blue);
+        }
+
+        /* Code blocks */
+        .code-block {
+            background: var(--bg-secondary);
+            border-radius: 8px;
+            margin: 1rem 0;
+            overflow: hidden;
+            border: 1px solid var(--border-color);
+        }
+
+        .code-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.5rem 1rem;
+            background: var(--bg-tertiary);
+            border-bottom: 1px solid var(--border-color);
+            font-size: 0.9rem;
+        }
+
+        .lang-badge {
+            background: var(--accent-blue);
+            color: var(--bg-primary);
+            padding: 0.2rem 0.6rem;
+            border-radius: 4px;
+            font-weight: 600;
+            font-size: 0.8rem;
+        }
+
+        pre {
+            margin: 0;
+            padding: 1rem;
+            overflow-x: auto;
+        }
+
+        code {
+            font-family: 'JetBrains Mono', 'Fira Code', 'Consolas', monospace;
+            font-size: 0.95rem;
+            line-height: 1.5;
+        }
+
+        /* Boxes */
+        .info-box {
+            padding: 1.25rem;
+            border-radius: 8px;
+            margin: 1rem 0;
+            border-left: 4px solid;
+        }
+
+        .info-box.concept {
+            background: rgba(88, 166, 255, 0.1);
+            border-color: var(--accent-blue);
+        }
+
+        .info-box.warning {
+            background: rgba(248, 81, 73, 0.1);
+            border-color: var(--accent-red);
+        }
+
+        .info-box.tip {
+            background: rgba(63, 185, 80, 0.1);
+            border-color: var(--accent-green);
+        }
+
+        .info-box.example {
+            background: rgba(210, 153, 34, 0.1);
+            border-color: var(--accent-yellow);
+        }
+
+        .info-box h4 {
+            font-size: 1.1rem;
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .info-box.concept h4 { color: var(--accent-blue); }
+        .info-box.warning h4 { color: var(--accent-red); }
+        .info-box.tip h4 { color: var(--accent-green); }
+        .info-box.example h4 { color: var(--accent-yellow); }
+
+        /* Diagrams */
+        .diagram {
+            font-family: 'JetBrains Mono', monospace;
+            background: var(--bg-secondary);
+            padding: 1.5rem;
+            border-radius: 8px;
+            margin: 1rem 0;
+            white-space: pre;
+            overflow-x: auto;
+            font-size: 0.9rem;
+            line-height: 1.4;
+            border: 1px solid var(--border-color);
+        }
+
+        /* Tables */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+            font-size: 1rem;
+        }
+
+        th, td {
+            padding: 0.75rem 1rem;
+            text-align: left;
+            border: 1px solid var(--border-color);
+        }
+
+        th {
+            background: var(--bg-tertiary);
+            color: var(--accent-blue);
+            font-weight: 600;
+        }
+
+        tr:nth-child(even) {
+            background: var(--bg-secondary);
+        }
+
+        /* Grid layouts */
+        .two-columns {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            margin-top: 1rem;
+        }
+
+        .three-columns {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 1.5rem;
+            margin-top: 1rem;
+        }
+
+        .column {
+            background: var(--bg-secondary);
+            padding: 1.5rem;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+        }
+
+        /* Key figure styling */
+        .figure-card {
+            display: flex;
+            gap: 2rem;
+            background: var(--bg-secondary);
+            padding: 2rem;
+            border-radius: 12px;
+            margin: 1rem 0;
+            border: 1px solid var(--border-color);
+        }
+
+        .figure-photo {
+            width: 200px;
+            height: 200px;
+            background: var(--bg-tertiary);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-secondary);
+            flex-shrink: 0;
+        }
+
+        .figure-info {
+            flex: 1;
+        }
+
+        .figure-info h3 {
+            margin-top: 0;
+        }
+
+        .quote {
+            font-style: italic;
+            color: var(--accent-yellow);
+            padding: 1rem;
+            border-left: 3px solid var(--accent-yellow);
+            margin-top: 1rem;
+            background: rgba(210, 153, 34, 0.1);
+            border-radius: 0 8px 8px 0;
+        }
+
+        /* Summary boxes */
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .summary-box {
+            background: var(--bg-secondary);
+            padding: 1.25rem;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            text-align: center;
+        }
+
+        .summary-box h4 {
+            color: var(--accent-purple);
+            margin-bottom: 0.5rem;
+        }
+
+        /* Navigation */
+        .nav-controls {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            display: flex;
+            gap: 10px;
+            z-index: 1000;
+        }
+
+        .nav-btn {
+            width: 50px;
+            height: 50px;
+            border: none;
+            border-radius: 8px;
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+            font-size: 1.2rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border: 1px solid var(--border-color);
+        }
+
+        .nav-btn:hover {
+            background: var(--accent-blue);
+            color: var(--bg-primary);
+        }
+
+        .nav-btn:disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+        }
+
+        /* Slide counter */
+        .slide-counter {
+            position: fixed;
+            bottom: 25px;
+            left: 30px;
+            font-size: 1rem;
+            color: var(--text-secondary);
+            z-index: 1000;
+        }
+
+        /* Animations */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .slide.active > * {
+            animation: fadeInUp 0.5s ease forwards;
+        }
+
+        .slide.active > *:nth-child(2) { animation-delay: 0.1s; }
+        .slide.active > *:nth-child(3) { animation-delay: 0.2s; }
+        .slide.active > *:nth-child(4) { animation-delay: 0.3s; }
+        .slide.active > *:nth-child(5) { animation-delay: 0.4s; }
+
+        /* Highlight classes */
+        .highlight { color: var(--accent-yellow); font-weight: 600; }
+        .highlight-blue { color: var(--accent-blue); }
+        .highlight-green { color: var(--accent-green); }
+        .highlight-red { color: var(--accent-red); }
+        .highlight-purple { color: var(--accent-purple); }
+
+        /* Complexity badges */
+        .complexity {
+            display: inline-block;
+            padding: 0.2rem 0.6rem;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+
+        .complexity.good { background: var(--accent-green); color: var(--bg-primary); }
+        .complexity.medium { background: var(--accent-yellow); color: var(--bg-primary); }
+        .complexity.bad { background: var(--accent-red); color: var(--text-primary); }
+    </style>
+</head>
+<body>
+    <div class="progress-container">
+        <div class="progress-bar" id="progressBar"></div>
+    </div>
+
+    <div class="slides-container">
+        <!-- Slide 1: Title -->
+        <div class="slide slide-title active">
+            <h1>Hash Tables</h1>
+            <p class="subtitle">Constant-Time Data Access Through Key Transformation</p>
+            <div class="course-info">
+                <strong>Week 11</strong> | Algorithms and Programming Techniques<br>
+                Academy of Economic Studies, Bucharest
+            </div>
+        </div>
+
+        <!-- Slide 2: Learning Objectives -->
+        <div class="slide slide-content">
+            <h2>🎯 Learning Objectives</h2>
+            <ol>
+                <li><strong>Remember</strong> hash table terminology: buckets, load factor, collision and hash function</li>
+                <li><strong>Understand</strong> the mathematical principles underlying hash function design</li>
+                <li><strong>Apply</strong> chaining and open addressing collision resolution strategies</li>
+                <li><strong>Analyse</strong> performance characteristics of different hash functions</li>
+                <li><strong>Evaluate</strong> trade-offs between collision resolution approaches</li>
+                <li><strong>Create</strong> a complete hash table implementation with dynamic resizing</li>
+            </ol>
+            <div class="info-box concept">
+                <h4>📌 Core Skill</h4>
+                <p>By the end of this session, you will implement O(1) average-case lookups in C.</p>
+            </div>
+        </div>
+
+        <!-- Slide 3: Historical Context -->
+        <div class="slide slide-content">
+            <h2>📜 Historical Timeline</h2>
+            <div class="diagram">
+1953 │ Hans Peter Luhn (IBM)
+     │ └── First chaining implementation for document indexing
+     │
+1954 │ Amdahl, Boehme, Rochester (IBM)
+     │ └── Linear probing for IBM 701 assembler
+     │
+1956 │ Arnold Dumey
+     │ └── First formal analysis of hash table performance
+     │
+1963 │ W. Wesley Peterson
+     │ └── Analysis of open addressing methods
+     │
+1979 │ Carter & Wegman
+     │ └── Universal hashing theory
+     │
+1990s│ Modern applications
+     │ └── Web caching, database indexing, compilers
+            </div>
+            <div class="info-box tip">
+                <h4>💡 Etymology</h4>
+                <p>The term "hashing" derives from the culinary concept of "chopping" data into manageable pieces.</p>
+            </div>
+        </div>
+
+        <!-- Slide 4: Key Figure -->
+        <div class="slide slide-content">
+            <h2>👤 Key Figure: Hans Peter Luhn</h2>
+            <div class="figure-card">
+                <div class="figure-photo">[Photo: 1896–1964]</div>
+                <div class="figure-info">
+                    <h3>Hans Peter Luhn (1896–1964)</h3>
+                    <p>German-American researcher at IBM who pioneered information science. His contributions include:</p>
+                    <ul>
+                        <li>The Luhn algorithm for checksum validation (credit cards)</li>
+                        <li>KWIC (Keyword In Context) indexing</li>
+                        <li>First practical chained hash table implementation</li>
+                        <li>Automatic document abstracting</li>
+                    </ul>
+                    <div class="quote">
+                        "The acquisition of knowledge is not just a matter of volume but of accessibility. A fact unretrievable is a fact unknown."
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 5: What is a Hash Table? -->
+        <div class="slide slide-content">
+            <h2>What is a Hash Table?</h2>
+            <p>A hash table is a data structure that implements an <span class="highlight">associative array</span> — a structure that maps keys to values using a hash function.</p>
+            <div class="two-columns">
+                <div class="column">
+                    <h3>Core Components</h3>
+                    <ul>
+                        <li><strong>Array</strong> — storage for entries (buckets)</li>
+                        <li><strong>Hash function</strong> — maps keys to indices</li>
+                        <li><strong>Collision handler</strong> — resolves conflicts</li>
+                    </ul>
+                </div>
+                <div class="column">
+                    <h3>Key Operations</h3>
+                    <table>
+                        <tr><th>Operation</th><th>Average</th><th>Worst</th></tr>
+                        <tr><td>Insert</td><td class="complexity good">O(1)</td><td class="complexity bad">O(n)</td></tr>
+                        <tr><td>Search</td><td class="complexity good">O(1)</td><td class="complexity bad">O(n)</td></tr>
+                        <tr><td>Delete</td><td class="complexity good">O(1)</td><td class="complexity bad">O(n)</td></tr>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 6: Hash Function Concept -->
+        <div class="slide slide-content">
+            <h2>The Hash Function</h2>
+            <p>A function <code>h: U → {0, 1, ..., m-1}</code> mapping keys from universe U to table indices.</p>
+            <div class="diagram">
+Universe of Keys (U)                    Hash Table (size m = 8)
+┌─────────────────────┐                ┌───┬───────────────┐
+│  "alice"            │ ─── h(k) ────► │ 0 │               │
+│  "bob"              │ ─── h(k) ──┐   │ 1 │ ← "bob"       │
+│  "carol"            │ ─── h(k) ──│─► │ 2 │               │
+│  "dave"             │            │   │ 3 │ ← "alice"     │
+│  "eve"              │            └──►│ 4 │               │
+│  ...                │                │ 5 │ ← "carol"     │
+└─────────────────────┘                │ 6 │ ← "dave"      │
+                                       │ 7 │ ← "eve"       │
+                                       └───┴───────────────┘
+            </div>
+            <div class="info-box concept">
+                <h4>🔑 Ideal Properties</h4>
+                <p><strong>Deterministic:</strong> Same key → same index | <strong>Uniform:</strong> Even distribution | <strong>Efficient:</strong> O(1) computation</p>
+            </div>
+        </div>
+
+        <!-- Slide 7: Division Method -->
+        <div class="slide slide-content">
+            <h2>Hash Function: Division Method</h2>
+            <p>The simplest approach: <code>h(k) = k mod m</code></p>
+            <div class="code-block">
+                <div class="code-header">
+                    <span>Division Method for Strings</span>
+                    <span class="lang-badge">C</span>
+                </div>
+                <pre><code class="language-c">unsigned int hash_division(const char *key, int table_size) {
+    unsigned int hash = 0;
+    while (*key) {
+        hash = hash * 31 + *key;  /* Polynomial accumulation */
+        key++;
+    }
+    return hash % table_size;
+}
+
+/* Why 31? It's prime, and (hash << 5) - hash is fast */
+/* Example: "abc" → (97*31 + 98)*31 + 99 = 96354 */</code></pre>
+            </div>
+            <div class="info-box warning">
+                <h4>⚠️ Table Size Selection</h4>
+                <p>Choose m as a <strong>prime number</strong> distant from powers of 2 to avoid clustering from patterned keys.</p>
+            </div>
+        </div>
+
+        <!-- Slide 8: DJB2 Hash Function -->
+        <div class="slide slide-content">
+            <h2>Hash Function: djb2 Algorithm</h2>
+            <p>Created by Daniel J. Bernstein — one of the most effective string hash functions.</p>
+            <div class="code-block">
+                <div class="code-header">
+                    <span>djb2 Hash Function</span>
+                    <span class="lang-badge">C</span>
+                </div>
+                <pre><code class="language-c">unsigned int hash_djb2(const char *key) {
+    unsigned int hash = 5381;  /* Magic starting value */
+    int c;
+    
+    while ((c = *key++)) {
+        /* hash * 33 + c */
+        hash = ((hash << 5) + hash) + c;
+    }
+    
+    return hash;
+}
+
+/* Usage with table size m:
+   index = hash_djb2("alice") % m; */</code></pre>
+            </div>
+            <div class="info-box tip">
+                <h4>💡 Why 33?</h4>
+                <p>33 provides excellent distribution empirically. The bit-shift trick <code>(hash << 5) + hash</code> equals <code>hash * 33</code> but is faster.</p>
+            </div>
+        </div>
+
+        <!-- Slide 9: FNV-1a Hash Function -->
+        <div class="slide slide-content">
+            <h2>Hash Function: FNV-1a</h2>
+            <p>Fowler-Noll-Vo hash — fast, simple and well-distributed.</p>
+            <div class="code-block">
+                <div class="code-header">
+                    <span>FNV-1a Hash Function</span>
+                    <span class="lang-badge">C</span>
+                </div>
+                <pre><code class="language-c">#define FNV_OFFSET_BASIS 2166136261u
+#define FNV_PRIME        16777619u
+
+unsigned int hash_fnv1a(const char *key) {
+    unsigned int hash = FNV_OFFSET_BASIS;
+    
+    while (*key) {
+        hash ^= (unsigned char)*key++;  /* XOR with byte */
+        hash *= FNV_PRIME;              /* Multiply by prime */
+    }
+    
+    return hash;
+}
+
+/* Note: FNV-1a XORs first, then multiplies
+   FNV-1 multiplies first, then XORs (slightly worse) */</code></pre>
+            </div>
+            <div class="info-box example">
+                <h4>📊 Comparison</h4>
+                <p>FNV-1a typically outperforms djb2 for varied input but djb2 is simpler to remember.</p>
+            </div>
+        </div>
+
+        <!-- Slide 10: Collisions -->
+        <div class="slide slide-content">
+            <h2>The Collision Problem</h2>
+            <p>When two different keys map to the same index: <code>h(k₁) = h(k₂)</code> where <code>k₁ ≠ k₂</code></p>
+            <div class="diagram">
+Keys                    Hash Function              Table
+┌─────────┐                                    ┌───┬─────────┐
+│ "alice" │ ─────────┐                         │ 0 │         │
+└─────────┘          │     ┌───────┐           │ 1 │         │
+                     └────►│ h(k)  │──────────►│ 2 │ COLLISION!
+┌─────────┐          ┌────►│  = 2  │           │ 3 │         │
+│ "dave"  │ ─────────┘     └───────┘           │ 4 │         │
+└─────────┘                                    └───┴─────────┘
+
+Both "alice" and "dave" hash to index 2!
+            </div>
+            <div class="two-columns">
+                <div class="info-box concept">
+                    <h4>Resolution Strategy 1</h4>
+                    <p><strong>Chaining:</strong> Store collisions in linked lists</p>
+                </div>
+                <div class="info-box concept">
+                    <h4>Resolution Strategy 2</h4>
+                    <p><strong>Open Addressing:</strong> Find alternative slots</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 11: Chaining -->
+        <div class="slide slide-content">
+            <h2>Collision Resolution: Chaining</h2>
+            <p>Each bucket stores a linked list of entries that hash to that index.</p>
+            <div class="diagram">
+Hash Table with Chaining (m = 7)
+┌───┬──────────────────────────────────────────────────┐
+│ 0 │ → NULL                                            │
+├───┼──────────────────────────────────────────────────┤
+│ 1 │ → ["bob":42] → ["eve":28] → NULL                 │
+├───┼──────────────────────────────────────────────────┤
+│ 2 │ → ["alice":35] → NULL                            │
+├───┼──────────────────────────────────────────────────┤
+│ 3 │ → NULL                                            │
+├───┼──────────────────────────────────────────────────┤
+│ 4 │ → ["carol":19] → ["dave":51] → ["frank":33] → NULL│
+├───┼──────────────────────────────────────────────────┤
+│ 5 │ → NULL                                            │
+├───┼──────────────────────────────────────────────────┤
+│ 6 │ → ["grace":27] → NULL                            │
+└───┴──────────────────────────────────────────────────┘
+            </div>
+            <div class="info-box tip">
+                <h4>✅ Advantages</h4>
+                <p>Simple implementation • Graceful degradation • Load factor can exceed 1.0 • Easy deletion</p>
+            </div>
+        </div>
+
+        <!-- Slide 12: Chaining Implementation -->
+        <div class="slide slide-content">
+            <h2>Chaining: Data Structures</h2>
+            <div class="code-block">
+                <div class="code-header">
+                    <span>Hash Table with Chaining - Structures</span>
+                    <span class="lang-badge">C</span>
+                </div>
+                <pre><code class="language-c">/* Node in the chain */
+typedef struct HashNode {
+    char *key;
+    int value;
+    struct HashNode *next;
+} HashNode;
+
+/* The hash table */
+typedef struct HashTable {
+    HashNode **buckets;   /* Array of pointers to chains */
+    int size;             /* Number of buckets (m) */
+    int count;            /* Number of entries (n) */
+} HashTable;
+
+/* Create a new hash table */
+HashTable *ht_create(int size) {
+    HashTable *ht = malloc(sizeof(HashTable));
+    ht->size = size;
+    ht->count = 0;
+    ht->buckets = calloc(size, sizeof(HashNode *));
+    return ht;
+}</code></pre>
+            </div>
+        </div>
+
+        <!-- Slide 13: Chaining Insert -->
+        <div class="slide slide-content">
+            <h2>Chaining: Insert Operation</h2>
+            <div class="code-block">
+                <div class="code-header">
+                    <span>Insert with Chaining</span>
+                    <span class="lang-badge">C</span>
+                </div>
+                <pre><code class="language-c">void ht_insert(HashTable *ht, const char *key, int value) {
+    unsigned int index = hash_djb2(key) % ht->size;
+    
+    /* Check if key already exists */
+    HashNode *current = ht->buckets[index];
+    while (current != NULL) {
+        if (strcmp(current->key, key) == 0) {
+            current->value = value;  /* Update existing */
+            return;
+        }
+        current = current->next;
+    }
+    
+    /* Create new node and insert at head */
+    HashNode *new_node = malloc(sizeof(HashNode));
+    new_node->key = strdup(key);
+    new_node->value = value;
+    new_node->next = ht->buckets[index];
+    ht->buckets[index] = new_node;
+    ht->count++;
+}</code></pre>
+            </div>
+        </div>
+
+        <!-- Slide 14: Chaining Search & Delete -->
+        <div class="slide slide-content">
+            <h2>Chaining: Search and Delete</h2>
+            <div class="code-block">
+                <div class="code-header">
+                    <span>Search and Delete Operations</span>
+                    <span class="lang-badge">C</span>
+                </div>
+                <pre><code class="language-c">int *ht_search(HashTable *ht, const char *key) {
+    unsigned int index = hash_djb2(key) % ht->size;
+    HashNode *current = ht->buckets[index];
+    
+    while (current != NULL) {
+        if (strcmp(current->key, key) == 0) {
+            return &current->value;  /* Return pointer to value */
+        }
+        current = current->next;
+    }
+    return NULL;  /* Key not found */
+}
+
+void ht_delete(HashTable *ht, const char *key) {
+    unsigned int index = hash_djb2(key) % ht->size;
+    HashNode *current = ht->buckets[index];
+    HashNode *prev = NULL;
+    
+    while (current != NULL) {
+        if (strcmp(current->key, key) == 0) {
+            if (prev == NULL) ht->buckets[index] = current->next;
+            else prev->next = current->next;
+            free(current->key);
+            free(current);
+            ht->count--;
+            return;
+        }
+        prev = current;
+        current = current->next;
+    }
+}</code></pre>
+            </div>
+        </div>
+
+        <!-- Slide 15: Open Addressing Concept -->
+        <div class="slide slide-content">
+            <h2>Collision Resolution: Open Addressing</h2>
+            <p>All entries stored directly in the table. On collision, probe for an empty slot.</p>
+            <div class="diagram">
+Insert "dave" where h("dave") = 2 (but slot 2 is occupied)
+
+Linear Probing: Try slots 2, 3, 4, 5, ... until empty found
+
+┌───┬─────────┐      ┌───┬─────────┐      ┌───┬─────────┐
+│ 0 │         │      │ 0 │         │      │ 0 │         │
+│ 1 │ "bob"   │      │ 1 │ "bob"   │      │ 1 │ "bob"   │
+│ 2 │ "alice" │ ──►  │ 2 │ "alice" │ ──►  │ 2 │ "alice" │
+│ 3 │         │  X   │ 3 │         │  ✓   │ 3 │ "dave"  │
+│ 4 │ "carol" │      │ 4 │ "carol" │      │ 4 │ "carol" │
+│ 5 │         │      │ 5 │         │      │ 5 │         │
+└───┴─────────┘      └───┴─────────┘      └───┴─────────┘
+  Collision!           Probe to 3           Inserted!
+            </div>
+            <div class="info-box warning">
+                <h4>⚠️ Critical Constraint</h4>
+                <p>Load factor must remain below 1.0 (typically ≤ 0.7 for good performance).</p>
+            </div>
+        </div>
+
+        <!-- Slide 16: Probing Strategies -->
+        <div class="slide slide-content">
+            <h2>Probing Strategies</h2>
+            <div class="three-columns">
+                <div class="column">
+                    <h3>Linear Probing</h3>
+                    <p><code>h(k,i) = (h(k) + i) mod m</code></p>
+                    <p>Try slots: 0, 1, 2, 3, ...</p>
+                    <div class="info-box warning" style="margin-top:1rem;">
+                        <h4>Primary Clustering</h4>
+                        <p>Occupied slots form long runs</p>
+                    </div>
+                </div>
+                <div class="column">
+                    <h3>Quadratic Probing</h3>
+                    <p><code>h(k,i) = (h(k) + c₁i + c₂i²) mod m</code></p>
+                    <p>Try slots: 0, 1, 4, 9, ...</p>
+                    <div class="info-box tip" style="margin-top:1rem;">
+                        <h4>Less Clustering</h4>
+                        <p>May not probe all slots</p>
+                    </div>
+                </div>
+                <div class="column">
+                    <h3>Double Hashing</h3>
+                    <p><code>h(k,i) = (h₁(k) + i·h₂(k)) mod m</code></p>
+                    <p>Step size varies by key</p>
+                    <div class="info-box concept" style="margin-top:1rem;">
+                        <h4>Best Distribution</h4>
+                        <p>h₂(k) must be coprime to m</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 17: Double Hashing Implementation -->
+        <div class="slide slide-content">
+            <h2>Double Hashing Implementation</h2>
+            <div class="code-block">
+                <div class="code-header">
+                    <span>Open Addressing with Double Hashing</span>
+                    <span class="lang-badge">C</span>
+                </div>
+                <pre><code class="language-c">typedef struct {
+    char *key;
+    int value;
+    int is_deleted;  /* Tombstone marker */
+} Entry;
+
+typedef struct {
+    Entry *entries;
+    int size;
+    int count;
+} OpenHashTable;
+
+/* Primary hash function */
+unsigned int h1(const char *key, int size) {
+    return hash_djb2(key) % size;
+}
+
+/* Secondary hash function (must be coprime to size) */
+unsigned int h2(const char *key, int size) {
+    unsigned int hash = hash_fnv1a(key);
+    /* Ensure result is odd (coprime to power-of-2 size) */
+    return (hash % (size - 1)) | 1;
+}</code></pre>
+            </div>
+        </div>
+
+        <!-- Slide 18: Open Addressing Insert -->
+        <div class="slide slide-content">
+            <h2>Open Addressing: Insert</h2>
+            <div class="code-block">
+                <div class="code-header">
+                    <span>Insert with Double Hashing</span>
+                    <span class="lang-badge">C</span>
+                </div>
+                <pre><code class="language-c">int oht_insert(OpenHashTable *ht, const char *key, int value) {
+    if ((float)ht->count / ht->size > 0.7) {
+        oht_rehash(ht);  /* Resize when load factor > 0.7 */
+    }
+    
+    unsigned int index = h1(key, ht->size);
+    unsigned int step = h2(key, ht->size);
+    int probes = 0;
+    
+    while (ht->entries[index].key != NULL && 
+           !ht->entries[index].is_deleted) {
+        if (strcmp(ht->entries[index].key, key) == 0) {
+            ht->entries[index].value = value;  /* Update */
+            return probes;
+        }
+        index = (index + step) % ht->size;
+        probes++;
+    }
+    
+    /* Insert at empty or tombstone slot */
+    ht->entries[index].key = strdup(key);
+    ht->entries[index].value = value;
+    ht->entries[index].is_deleted = 0;
+    ht->count++;
+    return probes;
+}</code></pre>
+            </div>
+        </div>
+
+        <!-- Slide 19: Tombstone Deletion -->
+        <div class="slide slide-content">
+            <h2>Open Addressing: Tombstone Deletion</h2>
+            <p>Cannot simply empty a slot — would break probe sequences. Use tombstones.</p>
+            <div class="diagram">
+Search for "eve" after deleting "dave":
+
+Without tombstones (WRONG):           With tombstones (CORRECT):
+┌───┬─────────┐                       ┌───┬─────────────┐
+│ 2 │ "alice" │ ← h("eve")=2          │ 2 │ "alice"     │ ← Start
+│ 3 │ (empty) │ ← Stop! Not found!    │ 3 │ [TOMBSTONE] │ ← Continue probing
+│ 4 │ "carol" │                       │ 4 │ "carol"     │
+│ 5 │ "eve"   │ ← Never reached!      │ 5 │ "eve"       │ ← Found!
+└───┴─────────┘                       └───┴─────────────┘
+            </div>
+            <div class="code-block">
+                <div class="code-header">
+                    <span>Delete with Tombstone</span>
+                    <span class="lang-badge">C</span>
+                </div>
+                <pre><code class="language-c">void oht_delete(OpenHashTable *ht, const char *key) {
+    unsigned int index = h1(key, ht->size);
+    unsigned int step = h2(key, ht->size);
+    
+    while (ht->entries[index].key != NULL) {
+        if (!ht->entries[index].is_deleted &&
+            strcmp(ht->entries[index].key, key) == 0) {
+            ht->entries[index].is_deleted = 1;  /* Mark as tombstone */
+            ht->count--;
+            return;
+        }
+        index = (index + step) % ht->size;
+    }
+}</code></pre>
+            </div>
+        </div>
+
+        <!-- Slide 20: Load Factor -->
+        <div class="slide slide-content">
+            <h2>Load Factor Analysis</h2>
+            <p>Load factor α = n/m determines performance (n = entries, m = table size).</p>
+            <div class="two-columns">
+                <div class="column">
+                    <h3>Expected Probes</h3>
+                    <table>
+                        <tr><th>α</th><th>Unsuccessful</th><th>Successful</th></tr>
+                        <tr><td>0.50</td><td>2.0</td><td>1.4</td></tr>
+                        <tr><td>0.70</td><td>3.3</td><td>1.7</td></tr>
+                        <tr><td>0.80</td><td>5.0</td><td>2.0</td></tr>
+                        <tr><td>0.90</td><td>10.0</td><td>2.6</td></tr>
+                        <tr><td>0.95</td><td>20.0</td><td>3.2</td></tr>
+                    </table>
+                </div>
+                <div class="column">
+                    <h3>Recommendations</h3>
+                    <div class="info-box tip">
+                        <h4>Chaining</h4>
+                        <p>Keep α ≤ 1.0<br>Optimal around 0.75</p>
+                    </div>
+                    <div class="info-box warning">
+                        <h4>Open Addressing</h4>
+                        <p>Keep α ≤ 0.7<br>Rehash when exceeded</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 21: Rehashing -->
+        <div class="slide slide-content">
+            <h2>Dynamic Resizing: Rehashing</h2>
+            <p>When load factor exceeds threshold, double table size and reinsert all entries.</p>
+            <div class="code-block">
+                <div class="code-header">
+                    <span>Rehashing Implementation</span>
+                    <span class="lang-badge">C</span>
+                </div>
+                <pre><code class="language-c">void ht_rehash(HashTable *ht) {
+    int old_size = ht->size;
+    HashNode **old_buckets = ht->buckets;
+    
+    /* Create new larger table */
+    ht->size = old_size * 2;
+    ht->buckets = calloc(ht->size, sizeof(HashNode *));
+    ht->count = 0;
+    
+    /* Reinsert all entries */
+    for (int i = 0; i < old_size; i++) {
+        HashNode *current = old_buckets[i];
+        while (current != NULL) {
+            ht_insert(ht, current->key, current->value);
+            HashNode *temp = current;
+            current = current->next;
+            free(temp->key);
+            free(temp);
+        }
+    }
+    free(old_buckets);
+    
+    printf("Rehashed: %d → %d buckets\n", old_size, ht->size);
+}</code></pre>
+            </div>
+        </div>
+
+        <!-- Slide 22: Birthday Paradox -->
+        <div class="slide slide-content">
+            <h2>The Birthday Paradox</h2>
+            <p>Collisions occur sooner than intuition suggests.</p>
+            <div class="two-columns">
+                <div class="column">
+                    <h3>The Problem</h3>
+                    <p>In a group of 23 people, there's a <span class="highlight">50%</span> probability that two share a birthday.</p>
+                    <p>With 70 people, probability exceeds <span class="highlight">99.9%</span>!</p>
+                    <div class="info-box concept">
+                        <h4>For Hash Tables</h4>
+                        <p>With n insertions into m buckets, expect first collision around n ≈ √(2m)</p>
+                    </div>
+                </div>
+                <div class="column">
+                    <h3>Implications</h3>
+                    <table>
+                        <tr><th>Table Size</th><th>50% Collision</th></tr>
+                        <tr><td>100</td><td>~12 items</td></tr>
+                        <tr><td>1,000</td><td>~37 items</td></tr>
+                        <tr><td>10,000</td><td>~118 items</td></tr>
+                        <tr><td>1,000,000</td><td>~1,177 items</td></tr>
+                    </table>
+                    <p style="margin-top:1rem;"><strong>Lesson:</strong> Plan for collisions from the start!</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 23: Memory Layout -->
+        <div class="slide slide-content">
+            <h2>Memory Layout Comparison</h2>
+            <div class="diagram">
+CHAINING                                 OPEN ADDRESSING
+─────────────────────────────────────    ─────────────────────────────────────
+                                         
+HashTable struct (stack/heap)            OpenHashTable struct (stack/heap)
+┌──────────────────────┐                 ┌──────────────────────┐
+│ buckets: 0x1000  ────┼──┐              │ entries: 0x2000  ────┼──┐
+│ size: 8              │  │              │ size: 8              │  │
+│ count: 5             │  │              │ count: 5             │  │
+└──────────────────────┘  │              └──────────────────────┘  │
+                          │                                        │
+Array of pointers (heap)  ▼              Array of entries (heap)   ▼
+┌───┬───────┐                            ┌───┬─────────────────────┐
+│ 0 │ NULL  │                            │ 0 │ key=NULL            │
+│ 1 │ 0x3000├──► Node ──► Node ──► NULL  │ 1 │ key="bob" val=42    │
+│ 2 │ 0x4000├──► Node ──► NULL           │ 2 │ key="alice" val=35  │
+│ 3 │ NULL  │                            │ 3 │ key="dave" val=51   │
+│ 4 │ 0x5000├──► Node ──► NULL           │ 4 │ key="carol" val=19  │
+│ ...      │                             │ 5 │ [TOMBSTONE]         │
+└───┴───────┘                            │ 6 │ key=NULL            │
+                                         │ 7 │ key="eve" val=28    │
+Space: O(m) + O(n) for nodes             └───┴─────────────────────┘
+                                         Space: O(m) only
+            </div>
+        </div>
+
+        <!-- Slide 24: Performance Comparison -->
+        <div class="slide slide-content">
+            <h2>Chaining vs Open Addressing</h2>
+            <table>
+                <tr>
+                    <th>Criterion</th>
+                    <th>Chaining</th>
+                    <th>Open Addressing</th>
+                </tr>
+                <tr>
+                    <td>Cache performance</td>
+                    <td class="highlight-red">Poor (pointer chasing)</td>
+                    <td class="highlight-green">Better (contiguous memory)</td>
+                </tr>
+                <tr>
+                    <td>Space overhead</td>
+                    <td class="highlight-red">Pointers per entry</td>
+                    <td class="highlight-green">None (entries only)</td>
+                </tr>
+                <tr>
+                    <td>Deletion</td>
+                    <td class="highlight-green">Simple (unlink node)</td>
+                    <td class="highlight-red">Complex (tombstones)</td>
+                </tr>
+                <tr>
+                    <td>High load factor</td>
+                    <td class="highlight-green">Degrades gracefully</td>
+                    <td class="highlight-red">Degrades rapidly</td>
+                </tr>
+                <tr>
+                    <td>Implementation</td>
+                    <td class="highlight-green">Simpler</td>
+                    <td class="highlight-red">More complex</td>
+                </tr>
+                <tr>
+                    <td>Max load factor</td>
+                    <td>α > 1.0 possible</td>
+                    <td>α must be < 1.0</td>
+                </tr>
+            </table>
+            <div class="info-box tip">
+                <h4>💡 Rule of Thumb</h4>
+                <p>Use <strong>chaining</strong> when load is unpredictable. Use <strong>open addressing</strong> when memory is tight and α stays low.</p>
+            </div>
+        </div>
+
+        <!-- Slide 25: Common Mistakes -->
+        <div class="slide slide-content">
+            <h2>⚠️ Common Mistakes</h2>
+            <div class="two-columns">
+                <div class="column">
+                    <div class="info-box warning">
+                        <h4>1. Non-prime Table Size</h4>
+                        <p>Using powers of 2 causes clustering with patterned keys. Use primes or ensure hash function compensates.</p>
+                    </div>
+                    <div class="info-box warning">
+                        <h4>2. Forgetting Tombstones</h4>
+                        <p>In open addressing, deleting without tombstones breaks probe chains — items become unreachable.</p>
+                    </div>
+                    <div class="info-box warning">
+                        <h4>3. Ignoring Load Factor</h4>
+                        <p>Letting α approach 1.0 in open addressing causes probe counts to explode.</p>
+                    </div>
+                </div>
+                <div class="column">
+                    <div class="info-box warning">
+                        <h4>4. String Key Pitfalls</h4>
+                        <p>Using pointer comparison instead of strcmp() — different pointers can point to equal strings.</p>
+                    </div>
+                    <div class="info-box warning">
+                        <h4>5. Memory Leaks</h4>
+                        <p>Forgetting to free keys (strdup) and nodes during deletion or destruction.</p>
+                    </div>
+                    <div class="info-box warning">
+                        <h4>6. Poor Hash Functions</h4>
+                        <p>Simply summing character values produces terrible distribution — use djb2 or FNV-1a.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 26: Debugging with GDB -->
+        <div class="slide slide-content">
+            <h2>🔧 Debugging Hash Tables</h2>
+            <div class="code-block">
+                <div class="code-header">
+                    <span>GDB Commands for Hash Table Debugging</span>
+                    <span class="lang-badge">GDB</span>
+                </div>
+                <pre><code class="language-bash"># Compile with debug symbols
+$ gcc -Wall -g -o hash_demo hash_demo.c
+
+# Start GDB
+$ gdb ./hash_demo
+
+# Set breakpoint at insert function
+(gdb) break ht_insert
+
+# Run program
+(gdb) run
+
+# Examine hash table structure
+(gdb) print *ht
+(gdb) print ht->buckets[0]
+(gdb) print ht->buckets[0]->key
+
+# Walk a chain
+(gdb) set $node = ht->buckets[1]
+(gdb) while $node != 0
+ > print $node->key
+ > set $node = $node->next
+ > end
+
+# Check memory layout
+(gdb) x/20xg ht->buckets</code></pre>
+            </div>
+        </div>
+
+        <!-- Slide 27: Valgrind Memory Check -->
+        <div class="slide slide-content">
+            <h2>🔧 Memory Checking with Valgrind</h2>
+            <div class="code-block">
+                <div class="code-header">
+                    <span>Valgrind Commands</span>
+                    <span class="lang-badge">BASH</span>
+                </div>
+                <pre><code class="language-bash"># Full memory leak check
+$ valgrind --leak-check=full ./hash_demo
+
+# Track origins of uninitialised values
+$ valgrind --track-origins=yes ./hash_demo
+
+# Common output for hash table issues:
+==12345== HEAP SUMMARY:
+==12345==   in use at exit: 0 bytes in 0 blocks
+==12345==   total heap usage: 42 allocs, 42 frees, 4,096 bytes allocated
+==12345== All heap blocks were freed -- no leaks are possible
+
+# If you see this, there's a leak:
+==12345== LEAK SUMMARY:
+==12345==   definitely lost: 64 bytes in 4 blocks
+# → Check ht_destroy() frees all nodes and keys!</code></pre>
+            </div>
+            <div class="info-box tip">
+                <h4>💡 Checklist</h4>
+                <p>• Free every strdup() • Free every malloc() • Free chain nodes before buckets • Free table struct last</p>
+            </div>
+        </div>
+
+        <!-- Slide 28: Real-World: Database Indexing -->
+        <div class="slide slide-content">
+            <h2>🏭 Real-World: Database Indexing</h2>
+            <p>PostgreSQL uses hash indexes for equality lookups on large tables.</p>
+            <div class="code-block">
+                <div class="code-header">
+                    <span>Simplified PostgreSQL Hash Index</span>
+                    <span class="lang-badge">C</span>
+                </div>
+                <pre><code class="language-c">/* Hash index lookup (conceptual) */
+typedef struct {
+    uint32_t hash;
+    ItemPointer tuple;  /* Pointer to row in table */
+    struct HashBucket *next;
+} HashBucket;
+
+Row *hash_index_lookup(HashIndex *idx, Datum key) {
+    uint32_t hash = hash_any(&key, sizeof(key));
+    uint32_t bucket = hash & idx->bucket_mask;
+    
+    for (HashBucket *b = idx->buckets[bucket]; b; b = b->next) {
+        if (b->hash == hash) {
+            Row *row = fetch_tuple(b->tuple);
+            if (datum_equals(row->indexed_col, key)) {
+                return row;  /* Found! */
+            }
+        }
+    }
+    return NULL;
+}</code></pre>
+            </div>
+            <div class="info-box concept">
+                <h4>📊 When to Use Hash Index</h4>
+                <p>Equality queries (<code>WHERE id = 123</code>) • NOT for range queries • NOT for ordering</p>
+            </div>
+        </div>
+
+        <!-- Slide 29: Real-World: Caching -->
+        <div class="slide slide-content">
+            <h2>🏭 Real-World: In-Memory Caching</h2>
+            <p>Redis and Memcached use hash tables for O(1) key-value access.</p>
+            <div class="code-block">
+                <div class="code-header">
+                    <span>Simplified Cache Implementation</span>
+                    <span class="lang-badge">C</span>
+                </div>
+                <pre><code class="language-c">typedef struct CacheEntry {
+    char *key;
+    void *value;
+    time_t expiry;
+    struct CacheEntry *next;
+} CacheEntry;
+
+void *cache_get(Cache *cache, const char *key) {
+    uint32_t idx = hash_djb2(key) % cache->size;
+    
+    pthread_rwlock_rdlock(&cache->lock);
+    for (CacheEntry *e = cache->buckets[idx]; e; e = e->next) {
+        if (strcmp(e->key, key) == 0) {
+            if (e->expiry > time(NULL)) {
+                void *val = e->value;
+                pthread_rwlock_unlock(&cache->lock);
+                return val;  /* Cache hit */
+            }
+            break;  /* Expired */
+        }
+    }
+    pthread_rwlock_unlock(&cache->lock);
+    return NULL;  /* Cache miss */
+}</code></pre>
+            </div>
+        </div>
+
+        <!-- Slide 30: Universal Hashing -->
+        <div class="slide slide-content">
+            <h2>Advanced: Universal Hashing</h2>
+            <p>Defence against adversarial inputs that deliberately cause collisions.</p>
+            <div class="two-columns">
+                <div class="column">
+                    <h3>The Attack</h3>
+                    <p>If attacker knows h(), they can craft keys that all hash to same bucket → O(n) operations.</p>
+                    <p>Real attack: 2011 "HashDoS" affected PHP, Java, Ruby web servers.</p>
+                </div>
+                <div class="column">
+                    <h3>The Solution</h3>
+                    <p>Choose h randomly from a family of hash functions at runtime.</p>
+                    <p>Attacker cannot predict which function is used.</p>
+                </div>
+            </div>
+            <div class="code-block">
+                <div class="code-header">
+                    <span>Universal Hash Family</span>
+                    <span class="lang-badge">C</span>
+                </div>
+                <pre><code class="language-c">/* h_ab(k) = ((a*k + b) mod p) mod m
+   where p is prime > |U|, a ∈ {1,...,p-1}, b ∈ {0,...,p-1} */
+unsigned int universal_hash(int key, int a, int b, int p, int m) {
+    return ((a * key + b) % p) % m;
+}
+
+/* At table creation, choose random a, b */
+ht->hash_a = 1 + rand() % (PRIME - 1);
+ht->hash_b = rand() % PRIME;</code></pre>
+            </div>
+        </div>
+
+        <!-- Slide 31: Bloom Filters -->
+        <div class="slide slide-content">
+            <h2>Advanced: Bloom Filters</h2>
+            <p>Space-efficient probabilistic structure for set membership testing.</p>
+            <div class="diagram">
+Bloom Filter: "Is X in the set?" → "Definitely NO" or "Probably YES"
+
+Insert "cat":  h₁("cat")=2, h₂("cat")=5, h₃("cat")=7
+┌─┬─┬─┬─┬─┬─┬─┬─┬─┬─┐
+│0│0│1│0│0│1│0│1│0│0│  ← Set bits at positions 2, 5, 7
+└─┴─┴─┴─┴─┴─┴─┴─┴─┴─┘
+    ↑     ↑   ↑
+
+Query "dog": h₁("dog")=1, h₂("dog")=5, h₃("dog")=8
+Position 1 = 0 → Definitely NOT in set!
+
+Query "rat": h₁("rat")=2, h₂("rat")=5, h₃("rat")=7
+All bits = 1 → Probably in set (could be false positive)
+            </div>
+            <div class="info-box concept">
+                <h4>📊 Use Cases</h4>
+                <p>Spell checkers • Web crawlers (visited URLs) • Database query optimisation • Network routing</p>
+            </div>
+        </div>
+
+        <!-- Slide 32: Best Practices -->
+        <div class="slide slide-content">
+            <h2>✅ Best Practices</h2>
+            <div class="two-columns">
+                <div class="column">
+                    <h3 style="color: var(--accent-green);">✓ Do</h3>
+                    <ul>
+                        <li>Use established hash functions (djb2, FNV-1a)</li>
+                        <li>Monitor and limit load factor</li>
+                        <li>Rehash when performance degrades</li>
+                        <li>Use prime table sizes (or good hash)</li>
+                        <li>Free all memory in destructor</li>
+                        <li>Test with adversarial inputs</li>
+                    </ul>
+                </div>
+                <div class="column">
+                    <h3 style="color: var(--accent-red);">✗ Don't</h3>
+                    <ul>
+                        <li>Use naive hash (sum of chars)</li>
+                        <li>Let α exceed 0.7 in open addressing</li>
+                        <li>Forget tombstones for deletion</li>
+                        <li>Compare string pointers directly</li>
+                        <li>Assume strings are interned</li>
+                        <li>Ignore memory leak potential</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="info-box tip" style="margin-top: 1.5rem;">
+                <h4>💡 Pro Tip</h4>
+                <p>Always print hash table statistics during development: bucket distribution, longest chain, average probe count.</p>
+            </div>
+        </div>
+
+        <!-- Slide 33: Laboratory Preview -->
+        <div class="slide slide-content">
+            <h2>💻 Laboratory Exercises</h2>
+            <div class="two-columns">
+                <div class="column">
+                    <div class="info-box example">
+                        <h4>Exercise 1: Chained Hash Table</h4>
+                        <p>Implement a student records system:</p>
+                        <ul>
+                            <li>djb2 hash function</li>
+                            <li>Insert, search, delete operations</li>
+                            <li>Load factor tracking</li>
+                            <li>Read data from file</li>
+                        </ul>
+                        <p><strong>8 TODO markers</strong></p>
+                    </div>
+                </div>
+                <div class="column">
+                    <div class="info-box example">
+                        <h4>Exercise 2: Open Addressing</h4>
+                        <p>Implement a word frequency counter:</p>
+                        <ul>
+                            <li>Double hashing with FNV-1a</li>
+                            <li>Tombstone deletion</li>
+                            <li>Automatic rehashing at α > 0.7</li>
+                            <li>Performance statistics</li>
+                        </ul>
+                        <p><strong>12 TODO markers</strong></p>
+                    </div>
+                </div>
+            </div>
+            <div class="info-box tip" style="margin-top: 1rem;">
+                <h4>🛠️ Getting Started</h4>
+                <p><code>make all</code> to build | <code>make run</code> to execute | <code>make test</code> to verify | <code>make valgrind</code> to check memory</p>
+            </div>
+        </div>
+
+        <!-- Slide 34: Key Takeaways -->
+        <div class="slide slide-content">
+            <h2>📌 Key Takeaways</h2>
+            <div class="summary-grid">
+                <div class="summary-box">
+                    <h4>Hash Function</h4>
+                    <p>Maps keys to indices<br>Use djb2 or FNV-1a</p>
+                </div>
+                <div class="summary-box">
+                    <h4>Chaining</h4>
+                    <p>Linked lists per bucket<br>Handles any load factor</p>
+                </div>
+                <div class="summary-box">
+                    <h4>Open Addressing</h4>
+                    <p>Probe for empty slots<br>Keep α ≤ 0.7</p>
+                </div>
+                <div class="summary-box">
+                    <h4>Load Factor</h4>
+                    <p>α = n/m<br>Triggers rehashing</p>
+                </div>
+                <div class="summary-box">
+                    <h4>Complexity</h4>
+                    <p>O(1) average<br>O(n) worst case</p>
+                </div>
+                <div class="summary-box">
+                    <h4>Applications</h4>
+                    <p>Databases, caches<br>Compilers, networks</p>
+                </div>
+            </div>
+            <div class="info-box concept" style="margin-top: 1.5rem;">
+                <h4>🎯 Master This</h4>
+                <p>Hash tables are the most frequently used data structure in software development. Every language provides them: C++ unordered_map, Java HashMap, Python dict, JavaScript Object/Map.</p>
+            </div>
+        </div>
+
+        <!-- Slide 35: Resources -->
+        <div class="slide slide-content">
+            <h2>📖 Resources</h2>
+            <div class="two-columns">
+                <div class="column">
+                    <h3>Essential Reading</h3>
+                    <ul>
+                        <li><strong>CLRS</strong> Chapter 11: Hash Tables</li>
+                        <li><strong>Sedgewick</strong> Section 3.4</li>
+                        <li><strong>Knuth Vol. 3</strong> Section 6.4</li>
+                    </ul>
+                    <h3 style="margin-top: 1.5rem;">Online Resources</h3>
+                    <ul>
+                        <li>Visualgo.net - Hash table visualisation</li>
+                        <li>SMHasher test suite</li>
+                        <li>Hash Function Benchmark</li>
+                    </ul>
+                </div>
+                <div class="column">
+                    <h3>Advanced Topics</h3>
+                    <ul>
+                        <li>Cuckoo Hashing (Pagh & Rodler)</li>
+                        <li>Robin Hood Hashing</li>
+                        <li>Swiss Table (Google)</li>
+                        <li>Hopscotch Hashing</li>
+                    </ul>
+                    <h3 style="margin-top: 1.5rem;">Practice</h3>
+                    <ul>
+                        <li>LeetCode: Two Sum (#1)</li>
+                        <li>LeetCode: Group Anagrams (#49)</li>
+                        <li>LeetCode: LRU Cache (#146)</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 36: Questions -->
+        <div class="slide slide-title">
+            <h1>Questions?</h1>
+            <p class="subtitle">Hash Tables: Constant-Time Data Access</p>
+            <div class="course-info">
+                <strong>Next Week:</strong> Graphs — Representation and Basic Algorithms<br>
+                Adjacency matrix vs list • BFS • DFS • Topological sort
+            </div>
+        </div>
+    </div>
+
+    <div class="slide-counter">
+        <span id="currentSlide">1</span> / <span id="totalSlides">36</span>
+    </div>
+
+    <div class="nav-controls">
+        <button class="nav-btn" id="prevBtn" onclick="changeSlide(-1)">←</button>
+        <button class="nav-btn" id="nextBtn" onclick="changeSlide(1)">→</button>
+    </div>
+
+    <script>
+        let currentSlide = 0;
+        const slides = document.querySelectorAll('.slide');
+        const totalSlides = slides.length;
+
+        document.getElementById('totalSlides').textContent = totalSlides;
+
+        function showSlide(n) {
+            slides[currentSlide].classList.remove('active');
+            currentSlide = (n + totalSlides) % totalSlides;
+            slides[currentSlide].classList.add('active');
+            
+            document.getElementById('currentSlide').textContent = currentSlide + 1;
+            document.getElementById('progressBar').style.width = 
+                ((currentSlide + 1) / totalSlides * 100) + '%';
+            
+            document.getElementById('prevBtn').disabled = currentSlide === 0;
+            document.getElementById('nextBtn').disabled = currentSlide === totalSlides - 1;
+        }
+
+        function changeSlide(direction) {
+            showSlide(currentSlide + direction);
+        }
+
+        document.addEventListener('keydown', (e) => {
+            switch(e.key) {
+                case 'ArrowRight':
+                case ' ':
+                    if (currentSlide < totalSlides - 1) changeSlide(1);
+                    e.preventDefault();
+                    break;
+                case 'ArrowLeft':
+                    if (currentSlide > 0) changeSlide(-1);
+                    e.preventDefault();
+                    break;
+                case 'Home':
+                    showSlide(0);
+                    e.preventDefault();
+                    break;
+                case 'End':
+                    showSlide(totalSlides - 1);
+                    e.preventDefault();
+                    break;
+            }
+        });
+
+        // Initialize highlight.js
+        hljs.highlightAll();
+        
+        // Show first slide
+        showSlide(0);
+    </script>
+</body>
+</html>
