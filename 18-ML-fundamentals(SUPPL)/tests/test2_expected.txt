@@ -1,0 +1,50 @@
+╔═══════════════════════════════════════════════════════════════╗
+║                                                               ║
+║     WEEK 18: MACHINE LEARNING FUNDAMENTALS IN C               ║
+║     Exercise 2: K-NN and K-Means on Iris Dataset              ║
+║                                                               ║
+╚═══════════════════════════════════════════════════════════════╝
+Loaded 150 samples from 'data/iris.csv'
+
+╔═══════════════════════════════════════════════════════════════╗
+║                    DATASET STATISTICS                         ║
+╚═══════════════════════════════════════════════════════════════╝
+
+Feature              Min        Max       Mean        Std
+─────────────────────────────────────────────────────────────────
+Sepal Length       4.300      7.900      5.843      0.828
+Sepal Width        2.000      4.400      3.054      0.434
+Petal Length       1.000      6.900      3.759      1.764
+Petal Width        0.100      2.500      1.199      0.763
+
+Class distribution:
+  Iris-setosa         : 50 samples (33.3%)
+  Iris-versicolor     : 50 samples (33.3%)
+  Iris-virginica      : 50 samples (33.3%)
+
+╔═══════════════════════════════════════════════════════════════╗
+║      PART 1: K-NEAREST NEIGHBOURS CLASSIFICATION              ║
+╚═══════════════════════════════════════════════════════════════╝
+
+K-NN is a non-parametric, instance-based learning algorithm.
+Testing different values of K with 80/20 train/test split:
+
+K     Euclidean Acc   Manhattan Acc
+─────────────────────────────────────────
+Expected accuracy range: 90-97%
+
+╔═══════════════════════════════════════════════════════════════╗
+║      PART 2: K-MEANS CLUSTERING                               ║
+╚═══════════════════════════════════════════════════════════════╝
+
+K-Means is an unsupervised learning algorithm.
+Running K-Means with K=3 (matching Iris classes)...
+
+Clustering Results:
+─────────────────────────────────────────
+Silhouette Score: reasonable value (0.4-0.6)
+Cluster Purity: > 85%
+
+╔═══════════════════════════════════════════════════════════════╗
+║                    EXERCISE COMPLETE                          ║
+╚═══════════════════════════════════════════════════════════════╝

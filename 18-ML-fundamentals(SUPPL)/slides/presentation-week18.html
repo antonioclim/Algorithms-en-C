@@ -1,0 +1,1868 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Week 18: Machine Learning Fundamentals in C | ATP Course</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/c.min.js"></script>
+    <style>
+        :root {
+            --bg-primary: #0d1117;
+            --bg-secondary: #161b22;
+            --bg-tertiary: #21262d;
+            --accent-blue: #58a6ff;
+            --accent-green: #3fb950;
+            --accent-orange: #d29922;
+            --accent-red: #f85149;
+            --accent-purple: #a371f7;
+            --accent-cyan: #39c5cf;
+            --text-primary: #e6edf3;
+            --text-secondary: #8b949e;
+            --border-color: #30363d;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            overflow: hidden;
+            height: 100vh;
+        }
+
+        /* Progress Bar */
+        .progress-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: var(--bg-tertiary);
+            z-index: 1000;
+        }
+
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, var(--accent-blue), var(--accent-purple));
+            transition: width 0.3s ease;
+        }
+
+        /* Slide Container */
+        .slides-container {
+            height: 100vh;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .slide {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            padding: 60px 80px;
+            display: none;
+            flex-direction: column;
+            opacity: 0;
+            transition: opacity 0.4s ease;
+        }
+
+        .slide.active {
+            display: flex;
+            opacity: 1;
+        }
+
+        /* Slide Types */
+        .slide-title {
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            background: linear-gradient(135deg, var(--bg-primary) 0%, var(--bg-secondary) 100%);
+        }
+
+        .slide-content {
+            background: var(--bg-primary);
+        }
+
+        .slide-section {
+            justify-content: center;
+            align-items: center;
+            background: linear-gradient(135deg, var(--bg-secondary) 0%, var(--bg-tertiary) 100%);
+        }
+
+        /* Typography */
+        h1 {
+            font-size: 3.5rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        h2 {
+            font-size: 2.5rem;
+            font-weight: 600;
+            color: var(--accent-blue);
+            margin-bottom: 1.5rem;
+            border-bottom: 2px solid var(--border-color);
+            padding-bottom: 0.5rem;
+        }
+
+        h3 {
+            font-size: 1.8rem;
+            font-weight: 600;
+            color: var(--accent-green);
+            margin-bottom: 1rem;
+        }
+
+        h4 {
+            font-size: 1.4rem;
+            color: var(--accent-orange);
+            margin-bottom: 0.5rem;
+        }
+
+        p {
+            font-size: 1.3rem;
+            line-height: 1.6;
+            color: var(--text-secondary);
+            margin-bottom: 1rem;
+        }
+
+        .subtitle {
+            font-size: 1.8rem;
+            color: var(--text-secondary);
+        }
+
+        .highlight {
+            color: var(--accent-green);
+            font-weight: 600;
+        }
+
+        .warning {
+            color: var(--accent-orange);
+        }
+
+        .error {
+            color: var(--accent-red);
+        }
+
+        /* Lists */
+        ul, ol {
+            font-size: 1.25rem;
+            line-height: 1.8;
+            margin-left: 2rem;
+            color: var(--text-primary);
+        }
+
+        li {
+            margin-bottom: 0.5rem;
+        }
+
+        li::marker {
+            color: var(--accent-blue);
+        }
+
+        /* Code Blocks */
+        pre {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 1rem;
+            overflow-x: auto;
+            margin: 1rem 0;
+            font-size: 0.95rem;
+        }
+
+        code {
+            font-family: 'JetBrains Mono', 'Fira Code', 'Consolas', monospace;
+        }
+
+        .inline-code {
+            background: var(--bg-tertiary);
+            padding: 0.2rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.9em;
+            color: var(--accent-cyan);
+        }
+
+        /* Two Column Layout */
+        .two-columns {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            flex: 1;
+        }
+
+        .column {
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Boxes */
+        .info-box {
+            background: var(--bg-secondary);
+            border-left: 4px solid var(--accent-blue);
+            padding: 1rem 1.5rem;
+            border-radius: 0 8px 8px 0;
+            margin: 1rem 0;
+        }
+
+        .warning-box {
+            background: rgba(210, 153, 34, 0.1);
+            border-left: 4px solid var(--accent-orange);
+            padding: 1rem 1.5rem;
+            border-radius: 0 8px 8px 0;
+            margin: 1rem 0;
+        }
+
+        .success-box {
+            background: rgba(63, 185, 80, 0.1);
+            border-left: 4px solid var(--accent-green);
+            padding: 1rem 1.5rem;
+            border-radius: 0 8px 8px 0;
+            margin: 1rem 0;
+        }
+
+        /* Tables */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+            font-size: 1rem;
+        }
+
+        th, td {
+            padding: 0.75rem 1rem;
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        th {
+            background: var(--bg-tertiary);
+            color: var(--accent-blue);
+            font-weight: 600;
+        }
+
+        tr:hover {
+            background: var(--bg-secondary);
+        }
+
+        /* ASCII Diagrams */
+        .ascii-diagram {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 1rem;
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 0.85rem;
+            line-height: 1.4;
+            white-space: pre;
+            overflow-x: auto;
+            color: var(--accent-cyan);
+        }
+
+        /* Formula Display */
+        .formula {
+            background: var(--bg-secondary);
+            padding: 1rem 2rem;
+            border-radius: 8px;
+            font-family: 'Times New Roman', serif;
+            font-size: 1.4rem;
+            text-align: center;
+            margin: 1rem 0;
+            color: var(--text-primary);
+            border: 1px solid var(--border-color);
+        }
+
+        .formula-inline {
+            font-family: 'Times New Roman', serif;
+            font-style: italic;
+            color: var(--accent-cyan);
+        }
+
+        /* Quote */
+        blockquote {
+            background: var(--bg-secondary);
+            border-left: 4px solid var(--accent-purple);
+            padding: 1rem 1.5rem;
+            margin: 1rem 0;
+            font-style: italic;
+            color: var(--text-secondary);
+            border-radius: 0 8px 8px 0;
+        }
+
+        blockquote cite {
+            display: block;
+            margin-top: 0.5rem;
+            color: var(--accent-purple);
+            font-style: normal;
+        }
+
+        /* Navigation */
+        .nav-controls {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            display: flex;
+            gap: 10px;
+            z-index: 100;
+        }
+
+        .nav-btn {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: all 0.2s ease;
+        }
+
+        .nav-btn:hover {
+            background: var(--accent-blue);
+            border-color: var(--accent-blue);
+        }
+
+        .slide-counter {
+            position: fixed;
+            bottom: 25px;
+            left: 20px;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            z-index: 100;
+        }
+
+        /* Animations */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .animate-in {
+            animation: fadeInUp 0.5s ease forwards;
+        }
+
+        /* Learning Flow Diagram */
+        .flow-diagram {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 1rem;
+            margin: 2rem 0;
+            flex-wrap: wrap;
+        }
+
+        .flow-box {
+            background: var(--bg-secondary);
+            border: 2px solid var(--accent-blue);
+            padding: 1rem 1.5rem;
+            border-radius: 8px;
+            text-align: center;
+            min-width: 150px;
+        }
+
+        .flow-arrow {
+            color: var(--accent-green);
+            font-size: 2rem;
+        }
+
+        /* Badge */
+        .badge {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-right: 0.5rem;
+        }
+
+        .badge-blue {
+            background: rgba(88, 166, 255, 0.2);
+            color: var(--accent-blue);
+        }
+
+        .badge-green {
+            background: rgba(63, 185, 80, 0.2);
+            color: var(--accent-green);
+        }
+
+        .badge-orange {
+            background: rgba(210, 153, 34, 0.2);
+            color: var(--accent-orange);
+        }
+
+        /* Icon placeholders */
+        .icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+
+        /* Grid layout for features */
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1.5rem;
+            margin: 1rem 0;
+        }
+
+        .feature-card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 1.5rem;
+            text-align: center;
+            transition: transform 0.2s ease, border-color 0.2s ease;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-5px);
+            border-color: var(--accent-blue);
+        }
+
+        .feature-card h4 {
+            margin-bottom: 0.5rem;
+        }
+
+        .feature-card p {
+            font-size: 1rem;
+            margin: 0;
+        }
+
+        /* Small text */
+        .small {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+        }
+
+        /* Complexity badge */
+        .complexity {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: var(--bg-tertiary);
+            padding: 0.3rem 0.8rem;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            margin: 0.5rem 0;
+        }
+
+        /* Footer */
+        .slide-footer {
+            margin-top: auto;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border-color);
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            display: flex;
+            justify-content: space-between;
+        }
+    </style>
+</head>
+<body>
+    <!-- Progress Bar -->
+    <div class="progress-container">
+        <div class="progress-bar" id="progressBar"></div>
+    </div>
+
+    <!-- Slide Counter -->
+    <div class="slide-counter">
+        <span id="currentSlide">1</span> / <span id="totalSlides">40</span>
+    </div>
+
+    <!-- Navigation Controls -->
+    <div class="nav-controls">
+        <button class="nav-btn" onclick="prevSlide()">← Previous</button>
+        <button class="nav-btn" onclick="nextSlide()">Next →</button>
+    </div>
+
+    <!-- Slides Container -->
+    <div class="slides-container">
+
+        <!-- Slide 1: Title -->
+        <div class="slide slide-title active">
+            <div class="icon">🤖</div>
+            <h1>Machine Learning Fundamentals in C</h1>
+            <p class="subtitle">Week 18 | ATP Course</p>
+            <p style="margin-top: 2rem; color: var(--text-secondary);">
+                Academy of Economic Studies - CSIE Bucharest
+            </p>
+            <p class="small" style="margin-top: 3rem;">
+                Press → or Space to navigate | Press ← to go back
+            </p>
+        </div>
+
+        <!-- Slide 2: Learning Objectives -->
+        <div class="slide slide-content">
+            <h2>🎯 Learning Objectives</h2>
+            <div class="two-columns">
+                <div class="column">
+                    <h4>Knowledge & Comprehension</h4>
+                    <ul>
+                        <li><strong>Remember</strong> core ML terminology and concepts</li>
+                        <li><strong>Understand</strong> the difference between supervised and unsupervised learning</li>
+                        <li><strong>Explain</strong> gradient descent optimisation</li>
+                    </ul>
+                </div>
+                <div class="column">
+                    <h4>Application & Analysis</h4>
+                    <ul>
+                        <li><strong>Apply</strong> linear regression to prediction problems</li>
+                        <li><strong>Implement</strong> K-NN and K-Means from scratch</li>
+                        <li><strong>Analyse</strong> model performance with metrics</li>
+                        <li><strong>Create</strong> a simple neural network</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="info-box" style="margin-top: 2rem;">
+                <strong>Key Insight:</strong> Understanding ML algorithms at the implementation level provides deep intuition that black-box library usage cannot offer.
+            </div>
+        </div>
+
+        <!-- Slide 3: Historical Context -->
+        <div class="slide slide-content">
+            <h2>📜 Historical Context</h2>
+            <div class="two-columns">
+                <div class="column">
+                    <h4>Pioneers of Machine Learning</h4>
+                    <ul>
+                        <li><strong>Arthur Samuel (1959)</strong> — Coined "machine learning"</li>
+                        <li><strong>Frank Rosenblatt (1958)</strong> — Perceptron algorithm</li>
+                        <li><strong>Geoffrey Hinton (1986)</strong> — Backpropagation revival</li>
+                        <li><strong>Vladimir Vapnik (1995)</strong> — Support Vector Machines</li>
+                    </ul>
+                </div>
+                <div class="column">
+                    <blockquote>
+                        "Programming computers to learn from experience should eventually eliminate the need for much of this detailed programming effort."
+                        <cite>— Arthur Samuel, 1959</cite>
+                    </blockquote>
+                    <div class="info-box">
+                        The foundations of modern ML were established decades before computing power made them practical.
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 4: Section - Mathematical Foundations -->
+        <div class="slide slide-section">
+            <h1>Part 1</h1>
+            <p class="subtitle">Mathematical Foundations</p>
+            <p style="margin-top: 2rem;">Linear Algebra • Gradient Descent • Loss Functions</p>
+        </div>
+
+        <!-- Slide 5: Vectors and Matrices -->
+        <div class="slide slide-content">
+            <h2>Vectors and Matrices in C</h2>
+            <div class="two-columns">
+                <div class="column">
+                    <h4>Structure Definition</h4>
+                    <pre><code class="language-c">typedef struct {
+    double *data;
+    size_t rows;
+    size_t cols;
+} Matrix;
+
+Matrix *matrix_create(size_t rows, size_t cols) {
+    Matrix *m = malloc(sizeof(Matrix));
+    m->rows = rows;
+    m->cols = cols;
+    m->data = calloc(rows * cols, sizeof(double));
+    return m;
+}
+
+// Access element at (i, j)
+#define MAT_AT(m, i, j) ((m)->data[(i) * (m)->cols + (j)])</code></pre>
+                </div>
+                <div class="column">
+                    <h4>Why Row-Major Order?</h4>
+                    <div class="ascii-diagram">
+Matrix 2×3:       Memory Layout:
+┌─────────────┐   ┌───┬───┬───┬───┬───┬───┐
+│ a₀₀ a₀₁ a₀₂│   │a₀₀│a₀₁│a₀₂│a₁₀│a₁₁│a₁₂│
+│ a₁₀ a₁₁ a₁₂│   └───┴───┴───┴───┴───┴───┘
+└─────────────┘     0   1   2   3   4   5
+                    ↑ Row 0 ↑   ↑ Row 1 ↑</div>
+                    <div class="info-box">
+                        Row-major storage enables efficient row traversal — critical for matrix multiplication.
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 6: Matrix Multiplication -->
+        <div class="slide slide-content">
+            <h2>Matrix Multiplication</h2>
+            <div class="formula">
+                C[i][j] = Σₖ A[i][k] × B[k][j]
+            </div>
+            <pre><code class="language-c">Matrix *matrix_multiply(const Matrix *A, const Matrix *B) {
+    assert(A->cols == B->rows);  // Dimension check
+    
+    Matrix *C = matrix_create(A->rows, B->cols);
+    
+    for (size_t i = 0; i < A->rows; i++) {
+        for (size_t j = 0; j < B->cols; j++) {
+            double sum = 0.0;
+            for (size_t k = 0; k < A->cols; k++) {
+                sum += MAT_AT(A, i, k) * MAT_AT(B, k, j);
+            }
+            MAT_AT(C, i, j) = sum;
+        }
+    }
+    return C;
+}</code></pre>
+            <div class="complexity">
+                <span class="badge badge-orange">Time: O(n³)</span>
+                <span class="badge badge-blue">Space: O(n²)</span>
+            </div>
+        </div>
+
+        <!-- Slide 7: Gradient Descent Concept -->
+        <div class="slide slide-content">
+            <h2>Gradient Descent Intuition</h2>
+            <div class="two-columns">
+                <div class="column">
+                    <h4>The Optimisation Problem</h4>
+                    <p>Find parameters θ that minimise loss function L(θ)</p>
+                    <div class="formula">
+                        θ ← θ - α · ∇L(θ)
+                    </div>
+                    <ul>
+                        <li><strong>α</strong> — Learning rate (step size)</li>
+                        <li><strong>∇L</strong> — Gradient (direction of steepest ascent)</li>
+                        <li>We move <em>opposite</em> to gradient (descent)</li>
+                    </ul>
+                </div>
+                <div class="column">
+                    <h4>Visualisation</h4>
+                    <div class="ascii-diagram">
+Loss
+  ↑
+  │    *
+  │   * *
+  │  *   *
+  │ *     *
+  │*       *──────────→ Optimal
+  │         * * * ●
+  └─────────────────────→ θ
+    
+    * = Loss surface
+    ● = Minimum (goal)</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 8: Gradient Descent Implementation -->
+        <div class="slide slide-content">
+            <h2>Gradient Descent Implementation</h2>
+            <pre><code class="language-c">typedef struct {
+    double learning_rate;
+    int max_iterations;
+    double tolerance;
+} GradientDescentConfig;
+
+void gradient_descent(double *params, int n_params,
+                      double (*loss_fn)(double *),
+                      void (*gradient_fn)(double *, double *),
+                      GradientDescentConfig *config) {
+    double *gradient = malloc(n_params * sizeof(double));
+    
+    for (int iter = 0; iter < config->max_iterations; iter++) {
+        // Compute gradient at current position
+        gradient_fn(params, gradient);
+        
+        // Update parameters: θ ← θ - α∇L
+        double max_update = 0.0;
+        for (int i = 0; i < n_params; i++) {
+            double update = config->learning_rate * gradient[i];
+            params[i] -= update;
+            if (fabs(update) > max_update) max_update = fabs(update);
+        }
+        
+        // Check convergence
+        if (max_update < config->tolerance) break;
+    }
+    free(gradient);
+}</code></pre>
+        </div>
+
+        <!-- Slide 9: Learning Rate Selection -->
+        <div class="slide slide-content">
+            <h2>Learning Rate: The Critical Hyperparameter</h2>
+            <div class="ascii-diagram" style="font-size: 0.8rem;">
+Too Small (α = 0.001)         Good (α = 0.1)              Too Large (α = 1.0)
+        
+Loss                         Loss                         Loss
+  │                            │                            │
+  │****                        │****                        │    *
+  │    ****                    │    **                      │   * *
+  │        ****                │      **                    │  *   *
+  │            ****            │        *                   │ *     *
+  │                ****        │         *                  │*       *
+  │                    ****    │          ●                 │         *  Diverges!
+  └──────────────────────→     └──────────────────────→     └────────────────────→
+   Slow convergence            Fast convergence              Overshooting</div>
+            <div class="warning-box" style="margin-top: 2rem;">
+                <strong>Common Practice:</strong> Start with α = 0.01, then adjust. Monitor loss — if increasing, reduce α.
+            </div>
+        </div>
+
+        <!-- Slide 10: Section - Linear Regression -->
+        <div class="slide slide-section">
+            <h1>Part 2</h1>
+            <p class="subtitle">Linear Regression</p>
+            <p style="margin-top: 2rem;">The Foundation of Predictive Modelling</p>
+        </div>
+
+        <!-- Slide 11: Linear Regression Model -->
+        <div class="slide slide-content">
+            <h2>Linear Regression Model</h2>
+            <div class="two-columns">
+                <div class="column">
+                    <h4>Simple Linear Regression</h4>
+                    <div class="formula">
+                        ŷ = w·x + b
+                    </div>
+                    <ul>
+                        <li><strong>w</strong> — Weight (slope)</li>
+                        <li><strong>b</strong> — Bias (intercept)</li>
+                        <li><strong>ŷ</strong> — Prediction</li>
+                    </ul>
+                    <h4 style="margin-top: 1.5rem;">Multiple Linear Regression</h4>
+                    <div class="formula">
+                        ŷ = w₁x₁ + w₂x₂ + ... + wₙxₙ + b
+                    </div>
+                </div>
+                <div class="column">
+                    <h4>Visualisation</h4>
+                    <div class="ascii-diagram">
+y ↑
+  │           *
+  │        * /
+  │     *   /  *
+  │   *    /
+  │  *    / *
+  │     */
+  │    / *
+  │   /
+  │  / ← Best fit line
+  └─────────────────→ x
+  
+  * = Data points
+  / = Regression line</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 12: Mean Squared Error -->
+        <div class="slide slide-content">
+            <h2>Loss Function: Mean Squared Error</h2>
+            <div class="formula">
+                MSE = (1/n) Σᵢ (yᵢ - ŷᵢ)²
+            </div>
+            <div class="two-columns">
+                <div class="column">
+                    <h4>Why Squared?</h4>
+                    <ul>
+                        <li>Penalises large errors more than small</li>
+                        <li>Differentiable everywhere</li>
+                        <li>Convex — guaranteed global minimum</li>
+                    </ul>
+                    <h4 style="margin-top: 1rem;">Gradient Computation</h4>
+                    <div class="formula" style="font-size: 1.1rem;">
+                        ∂MSE/∂w = (2/n) Σᵢ xᵢ(ŷᵢ - yᵢ)
+                    </div>
+                    <div class="formula" style="font-size: 1.1rem;">
+                        ∂MSE/∂b = (2/n) Σᵢ (ŷᵢ - yᵢ)
+                    </div>
+                </div>
+                <div class="column">
+                    <pre><code class="language-c">double compute_mse(double *y_true, double *y_pred, 
+                   int n) {
+    double sum = 0.0;
+    for (int i = 0; i < n; i++) {
+        double error = y_pred[i] - y_true[i];
+        sum += error * error;
+    }
+    return sum / n;
+}
+
+void compute_gradients(LinearRegression *model,
+                       double **X, double *y, int n) {
+    model->grad_w = 0.0;
+    model->grad_b = 0.0;
+    
+    for (int i = 0; i < n; i++) {
+        double pred = model->w * X[i][0] + model->b;
+        double error = pred - y[i];
+        model->grad_w += (2.0/n) * error * X[i][0];
+        model->grad_b += (2.0/n) * error;
+    }
+}</code></pre>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 13: Complete Linear Regression -->
+        <div class="slide slide-content">
+            <h2>Complete Linear Regression Implementation</h2>
+            <pre><code class="language-c">typedef struct {
+    double *weights;      // Weight for each feature
+    double bias;          // Intercept term
+    int n_features;
+} LinearRegression;
+
+void linear_regression_fit(LinearRegression *model, double **X, double *y,
+                           int n_samples, double learning_rate, int iterations) {
+    for (int iter = 0; iter < iterations; iter++) {
+        // Forward pass: compute predictions
+        double mse = 0.0;
+        double *grad_w = calloc(model->n_features, sizeof(double));
+        double grad_b = 0.0;
+        
+        for (int i = 0; i < n_samples; i++) {
+            // Compute prediction: ŷ = Σ(wⱼxⱼ) + b
+            double pred = model->bias;
+            for (int j = 0; j < model->n_features; j++) {
+                pred += model->weights[j] * X[i][j];
+            }
+            
+            double error = pred - y[i];
+            mse += error * error;
+            
+            // Accumulate gradients
+            for (int j = 0; j < model->n_features; j++) {
+                grad_w[j] += (2.0 / n_samples) * error * X[i][j];
+            }
+            grad_b += (2.0 / n_samples) * error;
+        }
+        
+        // Update parameters
+        for (int j = 0; j < model->n_features; j++) {
+            model->weights[j] -= learning_rate * grad_w[j];
+        }
+        model->bias -= learning_rate * grad_b;
+        free(grad_w);
+    }
+}</code></pre>
+        </div>
+
+        <!-- Slide 14: Feature Normalisation -->
+        <div class="slide slide-content">
+            <h2>Feature Normalisation</h2>
+            <div class="two-columns">
+                <div class="column">
+                    <h4>Why Normalise?</h4>
+                    <ul>
+                        <li>Features on different scales bias learning</li>
+                        <li>Gradient descent converges faster</li>
+                        <li>Prevents numerical instability</li>
+                    </ul>
+                    <h4 style="margin-top: 1rem;">Z-Score Normalisation</h4>
+                    <div class="formula">
+                        x' = (x - μ) / σ
+                    </div>
+                    <h4 style="margin-top: 1rem;">Min-Max Normalisation</h4>
+                    <div class="formula">
+                        x' = (x - min) / (max - min)
+                    </div>
+                </div>
+                <div class="column">
+                    <pre><code class="language-c">typedef struct {
+    double *means;
+    double *stds;
+    int n_features;
+} Normaliser;
+
+void normaliser_fit(Normaliser *norm, double **X, 
+                    int n_samples) {
+    for (int j = 0; j < norm->n_features; j++) {
+        // Compute mean
+        double sum = 0.0;
+        for (int i = 0; i < n_samples; i++) {
+            sum += X[i][j];
+        }
+        norm->means[j] = sum / n_samples;
+        
+        // Compute std
+        double sq_sum = 0.0;
+        for (int i = 0; i < n_samples; i++) {
+            double diff = X[i][j] - norm->means[j];
+            sq_sum += diff * diff;
+        }
+        norm->stds[j] = sqrt(sq_sum / n_samples);
+        if (norm->stds[j] < 1e-10) 
+            norm->stds[j] = 1.0;  // Avoid div by 0
+    }
+}</code></pre>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 15: Evaluation Metrics -->
+        <div class="slide slide-content">
+            <h2>Regression Evaluation Metrics</h2>
+            <table>
+                <tr>
+                    <th>Metric</th>
+                    <th>Formula</th>
+                    <th>Interpretation</th>
+                </tr>
+                <tr>
+                    <td><strong>MSE</strong></td>
+                    <td>(1/n) Σ(y - ŷ)²</td>
+                    <td>Average squared error (same units²)</td>
+                </tr>
+                <tr>
+                    <td><strong>RMSE</strong></td>
+                    <td>√MSE</td>
+                    <td>Root MSE (same units as target)</td>
+                </tr>
+                <tr>
+                    <td><strong>MAE</strong></td>
+                    <td>(1/n) Σ|y - ŷ|</td>
+                    <td>Average absolute error (robust to outliers)</td>
+                </tr>
+                <tr>
+                    <td><strong>R²</strong></td>
+                    <td>1 - SS_res / SS_tot</td>
+                    <td>Proportion of variance explained (0-1)</td>
+                </tr>
+            </table>
+            <pre><code class="language-c">double compute_r_squared(double *y_true, double *y_pred, int n) {
+    double y_mean = 0.0;
+    for (int i = 0; i < n; i++) y_mean += y_true[i];
+    y_mean /= n;
+    
+    double ss_tot = 0.0, ss_res = 0.0;
+    for (int i = 0; i < n; i++) {
+        ss_tot += (y_true[i] - y_mean) * (y_true[i] - y_mean);
+        ss_res += (y_true[i] - y_pred[i]) * (y_true[i] - y_pred[i]);
+    }
+    return 1.0 - (ss_res / ss_tot);
+}</code></pre>
+        </div>
+
+        <!-- Slide 16: Section - K-NN -->
+        <div class="slide slide-section">
+            <h1>Part 3</h1>
+            <p class="subtitle">K-Nearest Neighbours</p>
+            <p style="margin-top: 2rem;">Instance-Based Learning</p>
+        </div>
+
+        <!-- Slide 17: K-NN Concept -->
+        <div class="slide slide-content">
+            <h2>K-Nearest Neighbours: The Idea</h2>
+            <div class="two-columns">
+                <div class="column">
+                    <h4>Algorithm</h4>
+                    <ol>
+                        <li>Store all training data</li>
+                        <li>For new sample, find K nearest neighbours</li>
+                        <li>Classification: majority vote</li>
+                        <li>Regression: average of neighbours</li>
+                    </ol>
+                    <div class="success-box" style="margin-top: 1rem;">
+                        <strong>No Training Phase!</strong> K-NN is a "lazy learner" — all computation happens at prediction time.
+                    </div>
+                </div>
+                <div class="column">
+                    <div class="ascii-diagram">
+       K=3 Classification
+       
+     │  ○        △
+     │    ○   ?      △
+     │  ○        △
+     │        ○      △
+     │    ○        △
+     │──────────────────
+     
+     ○ = Class A (blue)
+     △ = Class B (orange)
+     ? = Query point
+     
+     3 nearest: ○○△ → Class A wins!</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 18: Distance Metrics -->
+        <div class="slide slide-content">
+            <h2>Distance Metrics</h2>
+            <div class="two-columns">
+                <div class="column">
+                    <h4>Euclidean Distance</h4>
+                    <div class="formula">
+                        d(a,b) = √(Σᵢ (aᵢ - bᵢ)²)
+                    </div>
+                    <pre><code class="language-c">double euclidean_distance(double *a, double *b, 
+                          int dim) {
+    double sum = 0.0;
+    for (int i = 0; i < dim; i++) {
+        double diff = a[i] - b[i];
+        sum += diff * diff;
+    }
+    return sqrt(sum);
+}</code></pre>
+                </div>
+                <div class="column">
+                    <h4>Manhattan Distance</h4>
+                    <div class="formula">
+                        d(a,b) = Σᵢ |aᵢ - bᵢ|
+                    </div>
+                    <pre><code class="language-c">double manhattan_distance(double *a, double *b,
+                          int dim) {
+    double sum = 0.0;
+    for (int i = 0; i < dim; i++) {
+        sum += fabs(a[i] - b[i]);
+    }
+    return sum;
+}</code></pre>
+                    <div class="info-box">
+                        Manhattan: better for high dimensions, grid-like data
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 19: K-NN Implementation -->
+        <div class="slide slide-content">
+            <h2>K-NN Classification Implementation</h2>
+            <pre><code class="language-c">int knn_predict(KNN *model, double *query) {
+    // Compute distances to all training samples
+    double *distances = malloc(model->n_samples * sizeof(double));
+    int *indices = malloc(model->n_samples * sizeof(int));
+    
+    for (int i = 0; i < model->n_samples; i++) {
+        distances[i] = euclidean_distance(query, model->X[i], model->n_features);
+        indices[i] = i;
+    }
+    
+    // Partial sort to find K smallest (more efficient than full sort)
+    for (int i = 0; i < model->k; i++) {
+        int min_idx = i;
+        for (int j = i + 1; j < model->n_samples; j++) {
+            if (distances[j] < distances[min_idx]) min_idx = j;
+        }
+        // Swap
+        double tmp_d = distances[i]; distances[i] = distances[min_idx]; distances[min_idx] = tmp_d;
+        int tmp_i = indices[i]; indices[i] = indices[min_idx]; indices[min_idx] = tmp_i;
+    }
+    
+    // Majority vote among K nearest
+    int *votes = calloc(model->n_classes, sizeof(int));
+    for (int i = 0; i < model->k; i++) {
+        int label = model->y[indices[i]];
+        votes[label]++;
+    }
+    
+    int best_class = 0;
+    for (int c = 1; c < model->n_classes; c++) {
+        if (votes[c] > votes[best_class]) best_class = c;
+    }
+    
+    free(distances); free(indices); free(votes);
+    return best_class;
+}</code></pre>
+        </div>
+
+        <!-- Slide 20: Choosing K -->
+        <div class="slide slide-content">
+            <h2>Choosing the Right K</h2>
+            <div class="two-columns">
+                <div class="column">
+                    <h4>K Too Small (e.g., K=1)</h4>
+                    <ul>
+                        <li>Sensitive to noise</li>
+                        <li>Overfitting</li>
+                        <li>Jagged decision boundaries</li>
+                    </ul>
+                    <h4 style="margin-top: 1.5rem;">K Too Large</h4>
+                    <ul>
+                        <li>Over-smoothing</li>
+                        <li>Underfitting</li>
+                        <li>May include samples from other classes</li>
+                    </ul>
+                </div>
+                <div class="column">
+                    <h4>Selection Strategy</h4>
+                    <ol>
+                        <li>Use cross-validation</li>
+                        <li>Try K = 1, 3, 5, 7, 9, ...</li>
+                        <li>Odd K for binary classification</li>
+                        <li>K ≤ √n as rule of thumb</li>
+                    </ol>
+                    <div class="ascii-diagram" style="margin-top: 1rem;">
+Error
+  │
+  │  *
+  │   *
+  │    *  *
+  │      *  * ← Sweet spot
+  │          *  *  *  *
+  └──────────────────────→ K
+      1  3  5  7  9 11</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 21: Section - K-Means -->
+        <div class="slide slide-section">
+            <h1>Part 4</h1>
+            <p class="subtitle">K-Means Clustering</p>
+            <p style="margin-top: 2rem;">Unsupervised Learning</p>
+        </div>
+
+        <!-- Slide 22: K-Means Concept -->
+        <div class="slide slide-content">
+            <h2>K-Means: Unsupervised Clustering</h2>
+            <div class="two-columns">
+                <div class="column">
+                    <h4>Goal</h4>
+                    <p>Partition n samples into K clusters where each sample belongs to the cluster with nearest centroid.</p>
+                    <h4 style="margin-top: 1rem;">Lloyd's Algorithm</h4>
+                    <ol>
+                        <li><strong>Initialise</strong>: Choose K centroids</li>
+                        <li><strong>Assignment</strong>: Assign each point to nearest centroid</li>
+                        <li><strong>Update</strong>: Recompute centroids as cluster means</li>
+                        <li><strong>Repeat</strong> until convergence</li>
+                    </ol>
+                </div>
+                <div class="column">
+                    <div class="ascii-diagram">
+   Step 1: Init        Step 2: Assign
+   
+   ·  ·  ·   ·         ○  ○  ○   △
+      ★        ★          ★        ★
+   ·     ·  ·          ○     ○  △
+     ·  ·     ·          ○  ○     △
+   
+   Step 3: Update      Step 4: Converge
+   
+   ○  ○  ○   △         ○  ○  ○   △
+     ★          ★        ★          ★
+   ○     ○  △          ○     ○  △
+     ○  ○     △          ○  ○     △
+   
+   ★ = Centroid (moves)</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 23: K-Means++ Initialisation -->
+        <div class="slide slide-content">
+            <h2>K-Means++ Initialisation</h2>
+            <div class="warning-box">
+                <strong>Problem:</strong> Random initialisation can lead to poor convergence or suboptimal clusters.
+            </div>
+            <h4>K-Means++ Algorithm</h4>
+            <ol>
+                <li>Choose first centroid uniformly at random</li>
+                <li>For each remaining centroid:
+                    <ul>
+                        <li>Compute D(x)² = distance to nearest existing centroid for each point</li>
+                        <li>Select new centroid with probability proportional to D(x)²</li>
+                    </ul>
+                </li>
+            </ol>
+            <pre><code class="language-c">void kmeans_plusplus_init(KMeans *km, double **data, int n) {
+    // First centroid: random
+    int idx = rand() % n;
+    memcpy(km->centroids[0], data[idx], km->dim * sizeof(double));
+    
+    for (int c = 1; c < km->k; c++) {
+        double *dist_sq = malloc(n * sizeof(double));
+        double total = 0.0;
+        
+        for (int i = 0; i < n; i++) {
+            double min_d = INFINITY;
+            for (int j = 0; j < c; j++) {
+                double d = euclidean_distance(data[i], km->centroids[j], km->dim);
+                if (d < min_d) min_d = d;
+            }
+            dist_sq[i] = min_d * min_d;
+            total += dist_sq[i];
+        }
+        
+        // Weighted random selection
+        double r = ((double)rand() / RAND_MAX) * total;
+        double cumsum = 0.0;
+        for (int i = 0; i < n; i++) {
+            cumsum += dist_sq[i];
+            if (cumsum >= r) {
+                memcpy(km->centroids[c], data[i], km->dim * sizeof(double));
+                break;
+            }
+        }
+        free(dist_sq);
+    }
+}</code></pre>
+        </div>
+
+        <!-- Slide 24: K-Means Implementation -->
+        <div class="slide slide-content">
+            <h2>K-Means Core Loop</h2>
+            <pre><code class="language-c">void kmeans_fit(KMeans *km, double **data, int n) {
+    kmeans_plusplus_init(km, data, n);
+    
+    for (int iter = 0; iter < km->max_iterations; iter++) {
+        // Assignment step: assign each point to nearest centroid
+        for (int i = 0; i < n; i++) {
+            double min_dist = INFINITY;
+            for (int c = 0; c < km->k; c++) {
+                double d = euclidean_distance(data[i], km->centroids[c], km->dim);
+                if (d < min_dist) {
+                    min_dist = d;
+                    km->assignments[i] = c;
+                }
+            }
+        }
+        
+        // Update step: recompute centroids
+        double max_shift = 0.0;
+        for (int c = 0; c < km->k; c++) {
+            double *new_centroid = calloc(km->dim, sizeof(double));
+            int count = 0;
+            
+            for (int i = 0; i < n; i++) {
+                if (km->assignments[i] == c) {
+                    for (int d = 0; d < km->dim; d++) {
+                        new_centroid[d] += data[i][d];
+                    }
+                    count++;
+                }
+            }
+            
+            if (count > 0) {
+                for (int d = 0; d < km->dim; d++) {
+                    new_centroid[d] /= count;
+                }
+                double shift = euclidean_distance(km->centroids[c], new_centroid, km->dim);
+                if (shift > max_shift) max_shift = shift;
+                memcpy(km->centroids[c], new_centroid, km->dim * sizeof(double));
+            }
+            free(new_centroid);
+        }
+        
+        if (max_shift < km->tolerance) break;  // Converged
+    }
+}</code></pre>
+        </div>
+
+        <!-- Slide 25: Elbow Method -->
+        <div class="slide slide-content">
+            <h2>Choosing K: The Elbow Method</h2>
+            <div class="two-columns">
+                <div class="column">
+                    <h4>Within-Cluster Sum of Squares (WCSS)</h4>
+                    <div class="formula">
+                        WCSS = Σₖ Σₓ∈Cₖ ||x - μₖ||²
+                    </div>
+                    <ul>
+                        <li>WCSS decreases as K increases</li>
+                        <li>At K=n, WCSS=0 (each point is its own cluster)</li>
+                        <li>Look for the "elbow" — diminishing returns</li>
+                    </ul>
+                </div>
+                <div class="column">
+                    <div class="ascii-diagram">
+WCSS
+  │
+  │  *
+  │    *
+  │      *
+  │        * ← Elbow (K=3)
+  │          *  *  *  *  *
+  │
+  └──────────────────────→ K
+      1  2  3  4  5  6  7</div>
+                    <div class="info-box">
+                        The elbow indicates where adding more clusters provides minimal improvement.
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 26: Section - Neural Networks -->
+        <div class="slide slide-section">
+            <h1>Part 5</h1>
+            <p class="subtitle">Neural Networks</p>
+            <p style="margin-top: 2rem;">From Perceptron to Multi-Layer Networks</p>
+        </div>
+
+        <!-- Slide 27: The Perceptron -->
+        <div class="slide slide-content">
+            <h2>The Perceptron: Single Neuron</h2>
+            <div class="two-columns">
+                <div class="column">
+                    <h4>Model</h4>
+                    <div class="formula">
+                        y = σ(w·x + b)
+                    </div>
+                    <ul>
+                        <li><strong>Inputs</strong>: x₁, x₂, ..., xₙ</li>
+                        <li><strong>Weights</strong>: w₁, w₂, ..., wₙ</li>
+                        <li><strong>Bias</strong>: b</li>
+                        <li><strong>Activation</strong>: σ (step or sigmoid)</li>
+                    </ul>
+                    <blockquote style="margin-top: 1rem;">
+                        Invented by Frank Rosenblatt in 1958 at Cornell.
+                    </blockquote>
+                </div>
+                <div class="column">
+                    <div class="ascii-diagram">
+       x₁ ──w₁──┐
+                │
+       x₂ ──w₂──┼──► Σ ──► σ ──► y
+                │      ↑
+       x₃ ──w₃──┘      │
+                       b
+                       
+   z = w₁x₁ + w₂x₂ + w₃x₃ + b
+   y = σ(z)</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 28: Activation Functions -->
+        <div class="slide slide-content">
+            <h2>Activation Functions</h2>
+            <div class="feature-grid">
+                <div class="feature-card">
+                    <h4>Sigmoid</h4>
+                    <div class="formula" style="font-size: 1rem;">σ(x) = 1/(1+e⁻ˣ)</div>
+                    <p>Output: (0, 1)<br>Smooth, differentiable</p>
+                </div>
+                <div class="feature-card">
+                    <h4>ReLU</h4>
+                    <div class="formula" style="font-size: 1rem;">f(x) = max(0, x)</div>
+                    <p>Output: [0, ∞)<br>Sparse, fast to compute</p>
+                </div>
+                <div class="feature-card">
+                    <h4>Softmax</h4>
+                    <div class="formula" style="font-size: 1rem;">σᵢ = eˣⁱ / Σⱼeˣʲ</div>
+                    <p>Output: probabilities<br>Multi-class output layer</p>
+                </div>
+            </div>
+            <pre><code class="language-c">double sigmoid(double x) {
+    return 1.0 / (1.0 + exp(-x));
+}
+
+double sigmoid_derivative(double x) {
+    double s = sigmoid(x);
+    return s * (1.0 - s);
+}
+
+double relu(double x) {
+    return x > 0 ? x : 0;
+}
+
+double relu_derivative(double x) {
+    return x > 0 ? 1.0 : 0.0;
+}</code></pre>
+        </div>
+
+        <!-- Slide 29: XOR Problem -->
+        <div class="slide slide-content">
+            <h2>The XOR Problem</h2>
+            <div class="two-columns">
+                <div class="column">
+                    <h4>Why XOR Matters</h4>
+                    <p>XOR is not linearly separable — a single perceptron cannot learn it!</p>
+                    <table>
+                        <tr><th>x₁</th><th>x₂</th><th>XOR</th></tr>
+                        <tr><td>0</td><td>0</td><td>0</td></tr>
+                        <tr><td>0</td><td>1</td><td>1</td></tr>
+                        <tr><td>1</td><td>0</td><td>1</td></tr>
+                        <tr><td>1</td><td>1</td><td>0</td></tr>
+                    </table>
+                    <div class="warning-box" style="margin-top: 1rem;">
+                        This limitation led to the "AI Winter" of the 1970s!
+                    </div>
+                </div>
+                <div class="column">
+                    <div class="ascii-diagram">
+       Single Perceptron        Multi-Layer Network
+       
+       x₂                       x₂
+        │  ●         ○           │  ●         ○
+        │                        │     ╲   ╱
+        │                        │      ╲ ╱
+        │─────────────── x₁      │───────X──────── x₁
+        │                        │      ╱ ╲
+        │                        │     ╱   ╲
+        │  ○         ●           │  ○         ●
+        
+       No line separates!       Hidden layer creates
+                                 non-linear boundary</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 30: Multi-Layer Network -->
+        <div class="slide slide-content">
+            <h2>Multi-Layer Neural Network</h2>
+            <div class="ascii-diagram" style="font-size: 0.9rem;">
+                INPUT LAYER          HIDDEN LAYER           OUTPUT LAYER
+                
+                   x₁ ○──────────────○──────────────○ y₁
+                        ╲          ╱│╲            ╱
+                         ╲        ╱ │ ╲          ╱
+                   x₂ ○───╲──────╱──○──╲────────╱───○ y₂
+                          ╲    ╱   ╱│   ╲      ╱
+                           ╲  ╱   ╱ │    ╲    ╱
+                   x₃ ○─────╲╱───╱──○─────╲──╱
+                            ╱╲  ╱         ╲╱
+                           ╱  ╲╱           ╲
+                   x₄ ○───╱───○─────────────○ y₃
+                
+                   4 inputs      5 hidden        3 outputs
+                                 neurons
+                
+                Forward pass: z⁽¹⁾ = W⁽¹⁾x + b⁽¹⁾, a⁽¹⁾ = σ(z⁽¹⁾)
+                              z⁽²⁾ = W⁽²⁾a⁽¹⁾ + b⁽²⁾, y = σ(z⁽²⁾)</div>
+        </div>
+
+        <!-- Slide 31: Neural Network Structure -->
+        <div class="slide slide-content">
+            <h2>Neural Network in C</h2>
+            <pre><code class="language-c">typedef enum { ACTIVATION_SIGMOID, ACTIVATION_RELU, ACTIVATION_SOFTMAX } ActivationType;
+
+typedef struct {
+    double **weights;       // weights[layer][i*prev_size + j]
+    double **biases;        // biases[layer][i]
+    double **activations;   // Store for backprop
+    double **z_values;      // Pre-activation values
+    int *layer_sizes;       // Size of each layer
+    int num_layers;
+    ActivationType *activation_types;
+} NeuralNetwork;
+
+NeuralNetwork *nn_create(int *sizes, int num_layers) {
+    NeuralNetwork *nn = malloc(sizeof(NeuralNetwork));
+    nn->num_layers = num_layers;
+    nn->layer_sizes = malloc(num_layers * sizeof(int));
+    memcpy(nn->layer_sizes, sizes, num_layers * sizeof(int));
+    
+    // Allocate weights and biases for connections between layers
+    nn->weights = malloc((num_layers - 1) * sizeof(double *));
+    nn->biases = malloc((num_layers - 1) * sizeof(double *));
+    
+    for (int l = 0; l < num_layers - 1; l++) {
+        int n_weights = sizes[l] * sizes[l + 1];
+        nn->weights[l] = malloc(n_weights * sizeof(double));
+        nn->biases[l] = calloc(sizes[l + 1], sizeof(double));
+        
+        // Xavier initialisation
+        double scale = sqrt(2.0 / (sizes[l] + sizes[l + 1]));
+        for (int i = 0; i < n_weights; i++) {
+            nn->weights[l][i] = ((double)rand() / RAND_MAX * 2 - 1) * scale;
+        }
+    }
+    return nn;
+}</code></pre>
+        </div>
+
+        <!-- Slide 32: Forward Propagation -->
+        <div class="slide slide-content">
+            <h2>Forward Propagation</h2>
+            <pre><code class="language-c">void nn_forward(NeuralNetwork *nn, double *input, double *output) {
+    // Copy input to first activation
+    memcpy(nn->activations[0], input, nn->layer_sizes[0] * sizeof(double));
+    
+    // Propagate through layers
+    for (int l = 0; l < nn->num_layers - 1; l++) {
+        int prev_size = nn->layer_sizes[l];
+        int curr_size = nn->layer_sizes[l + 1];
+        
+        // For each neuron in current layer
+        for (int j = 0; j < curr_size; j++) {
+            double sum = nn->biases[l][j];
+            
+            // Weighted sum from previous layer
+            for (int i = 0; i < prev_size; i++) {
+                sum += nn->weights[l][i * curr_size + j] * nn->activations[l][i];
+            }
+            
+            nn->z_values[l + 1][j] = sum;
+            
+            // Apply activation
+            if (nn->activation_types[l] == ACTIVATION_SIGMOID) {
+                nn->activations[l + 1][j] = sigmoid(sum);
+            } else if (nn->activation_types[l] == ACTIVATION_RELU) {
+                nn->activations[l + 1][j] = relu(sum);
+            }
+        }
+        
+        // Softmax for output layer (if applicable)
+        if (l == nn->num_layers - 2 && nn->activation_types[l] == ACTIVATION_SOFTMAX) {
+            apply_softmax(nn->activations[l + 1], curr_size);
+        }
+    }
+    
+    // Copy to output
+    memcpy(output, nn->activations[nn->num_layers - 1], 
+           nn->layer_sizes[nn->num_layers - 1] * sizeof(double));
+}</code></pre>
+        </div>
+
+        <!-- Slide 33: Backpropagation Concept -->
+        <div class="slide slide-content">
+            <h2>Backpropagation: The Chain Rule</h2>
+            <div class="two-columns">
+                <div class="column">
+                    <h4>The Key Insight</h4>
+                    <p>Use chain rule to compute gradients layer by layer, from output back to input.</p>
+                    <div class="formula">
+                        ∂L/∂wᵢⱼ = ∂L/∂aⱼ · ∂aⱼ/∂zⱼ · ∂zⱼ/∂wᵢⱼ
+                    </div>
+                    <h4 style="margin-top: 1rem;">Components</h4>
+                    <ul>
+                        <li><strong>∂L/∂a</strong>: How output affects loss</li>
+                        <li><strong>∂a/∂z</strong>: Activation derivative</li>
+                        <li><strong>∂z/∂w</strong>: Input to that neuron</li>
+                    </ul>
+                </div>
+                <div class="column">
+                    <div class="ascii-diagram">
+   Forward Pass:
+   x → [W¹] → z¹ → σ → a¹ → [W²] → z² → σ → y
+   
+   Backward Pass:
+   ∂L/∂y ← ∂L/∂z² ← ∂L/∂a¹ ← ∂L/∂z¹ ← ∂L/∂x
+      │       │         │        │
+      │       │         │        └─ ∂L/∂W¹
+      │       │         └────────── ∂L/∂b¹
+      │       └──────────────────── ∂L/∂W²
+      └──────────────────────────── ∂L/∂b²</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 34: Backpropagation Implementation -->
+        <div class="slide slide-content">
+            <h2>Backpropagation Implementation</h2>
+            <pre><code class="language-c">void nn_backward(NeuralNetwork *nn, double *target, double learning_rate) {
+    int output_size = nn->layer_sizes[nn->num_layers - 1];
+    
+    // Compute output layer error (delta)
+    double *delta = malloc(output_size * sizeof(double));
+    for (int j = 0; j < output_size; j++) {
+        double output = nn->activations[nn->num_layers - 1][j];
+        delta[j] = (output - target[j]) * sigmoid_derivative(nn->z_values[nn->num_layers - 1][j]);
+    }
+    
+    // Backpropagate through layers
+    for (int l = nn->num_layers - 2; l >= 0; l--) {
+        int curr_size = nn->layer_sizes[l + 1];
+        int prev_size = nn->layer_sizes[l];
+        
+        // Compute gradients and update weights
+        for (int j = 0; j < curr_size; j++) {
+            for (int i = 0; i < prev_size; i++) {
+                double grad = delta[j] * nn->activations[l][i];
+                nn->weights[l][i * curr_size + j] -= learning_rate * grad;
+            }
+            nn->biases[l][j] -= learning_rate * delta[j];
+        }
+        
+        // Compute delta for previous layer (if not input)
+        if (l > 0) {
+            double *new_delta = calloc(prev_size, sizeof(double));
+            for (int i = 0; i < prev_size; i++) {
+                for (int j = 0; j < curr_size; j++) {
+                    new_delta[i] += delta[j] * nn->weights[l][i * curr_size + j];
+                }
+                new_delta[i] *= sigmoid_derivative(nn->z_values[l][i]);
+            }
+            free(delta);
+            delta = new_delta;
+        }
+    }
+    free(delta);
+}</code></pre>
+        </div>
+
+        <!-- Slide 35: Training Loop -->
+        <div class="slide slide-content">
+            <h2>Training the Neural Network</h2>
+            <pre><code class="language-c">void nn_train(NeuralNetwork *nn, double **X, double **y, int n_samples,
+              int epochs, double learning_rate) {
+    double *output = malloc(nn->layer_sizes[nn->num_layers - 1] * sizeof(double));
+    
+    for (int epoch = 0; epoch < epochs; epoch++) {
+        double total_loss = 0.0;
+        int correct = 0;
+        
+        // Shuffle training data
+        shuffle_data(X, y, n_samples);
+        
+        for (int i = 0; i < n_samples; i++) {
+            // Forward pass
+            nn_forward(nn, X[i], output);
+            
+            // Compute loss (cross-entropy for classification)
+            for (int j = 0; j < nn->layer_sizes[nn->num_layers - 1]; j++) {
+                total_loss -= y[i][j] * log(output[j] + 1e-10);
+            }
+            
+            // Check accuracy
+            int pred = argmax(output, nn->layer_sizes[nn->num_layers - 1]);
+            int true_label = argmax(y[i], nn->layer_sizes[nn->num_layers - 1]);
+            if (pred == true_label) correct++;
+            
+            // Backward pass
+            nn_backward(nn, y[i], learning_rate);
+        }
+        
+        if (epoch % 100 == 0) {
+            printf("Epoch %4d: Loss = %.4f, Accuracy = %.2f%%\n",
+                   epoch, total_loss / n_samples, 100.0 * correct / n_samples);
+        }
+    }
+    free(output);
+}</code></pre>
+        </div>
+
+        <!-- Slide 36: Section - Practical Applications -->
+        <div class="slide slide-section">
+            <h1>Part 6</h1>
+            <p class="subtitle">Practical Applications</p>
+            <p style="margin-top: 2rem;">Real-World ML Systems</p>
+        </div>
+
+        <!-- Slide 37: ML Pipeline -->
+        <div class="slide slide-content">
+            <h2>Complete ML Pipeline</h2>
+            <div class="flow-diagram">
+                <div class="flow-box">
+                    <strong>Data Collection</strong><br>
+                    <span class="small">CSV, databases</span>
+                </div>
+                <span class="flow-arrow">→</span>
+                <div class="flow-box">
+                    <strong>Preprocessing</strong><br>
+                    <span class="small">Clean, normalise</span>
+                </div>
+                <span class="flow-arrow">→</span>
+                <div class="flow-box">
+                    <strong>Train/Test Split</strong><br>
+                    <span class="small">80/20 typically</span>
+                </div>
+            </div>
+            <div class="flow-diagram">
+                <div class="flow-box">
+                    <strong>Model Training</strong><br>
+                    <span class="small">Gradient descent</span>
+                </div>
+                <span class="flow-arrow">→</span>
+                <div class="flow-box">
+                    <strong>Evaluation</strong><br>
+                    <span class="small">Metrics, CV</span>
+                </div>
+                <span class="flow-arrow">→</span>
+                <div class="flow-box">
+                    <strong>Deployment</strong><br>
+                    <span class="small">Inference</span>
+                </div>
+            </div>
+            <div class="warning-box" style="margin-top: 2rem;">
+                <strong>Critical Rule:</strong> Never use test data during training! This includes for normalisation statistics.
+            </div>
+        </div>
+
+        <!-- Slide 38: Model Comparison -->
+        <div class="slide slide-content">
+            <h2>Choosing the Right Algorithm</h2>
+            <table>
+                <tr>
+                    <th>Algorithm</th>
+                    <th>Type</th>
+                    <th>Strengths</th>
+                    <th>Weaknesses</th>
+                </tr>
+                <tr>
+                    <td><strong>Linear Regression</strong></td>
+                    <td>Supervised</td>
+                    <td>Fast, interpretable, works on linear data</td>
+                    <td>Cannot capture non-linearity</td>
+                </tr>
+                <tr>
+                    <td><strong>K-NN</strong></td>
+                    <td>Supervised</td>
+                    <td>No training, handles non-linearity</td>
+                    <td>Slow prediction, curse of dimensionality</td>
+                </tr>
+                <tr>
+                    <td><strong>K-Means</strong></td>
+                    <td>Unsupervised</td>
+                    <td>Fast, simple, scalable</td>
+                    <td>Requires K selection, spherical clusters</td>
+                </tr>
+                <tr>
+                    <td><strong>Neural Network</strong></td>
+                    <td>Supervised</td>
+                    <td>Universal approximator, handles complexity</td>
+                    <td>Requires much data, hard to interpret</td>
+                </tr>
+            </table>
+            <div class="info-box" style="margin-top: 1rem;">
+                <strong>Rule of Thumb:</strong> Start simple (linear models), add complexity only if needed.
+            </div>
+        </div>
+
+        <!-- Slide 39: Summary -->
+        <div class="slide slide-content">
+            <h2>✅ Key Takeaways</h2>
+            <div class="two-columns">
+                <div class="column">
+                    <h4>Concepts Mastered</h4>
+                    <ul>
+                        <li>Matrix operations in C</li>
+                        <li>Gradient descent optimisation</li>
+                        <li>Linear regression with MSE loss</li>
+                        <li>Feature normalisation importance</li>
+                        <li>K-NN classification and distance metrics</li>
+                        <li>K-Means clustering with K-Means++ init</li>
+                        <li>Neural network forward/backward propagation</li>
+                    </ul>
+                </div>
+                <div class="column">
+                    <h4>Skills Developed</h4>
+                    <ul>
+                        <li>Implementing ML algorithms from scratch</li>
+                        <li>Understanding trade-offs (bias/variance)</li>
+                        <li>Evaluating model performance</li>
+                        <li>Debugging numerical code</li>
+                        <li>Working with data in C</li>
+                    </ul>
+                    <div class="success-box" style="margin-top: 1rem;">
+                        Understanding implementation details provides intuition that library usage alone cannot!
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 40: Next Week Preview -->
+        <div class="slide slide-title">
+            <h2>Next Week</h2>
+            <h1>Week 19: IoT & Stream Processing</h1>
+            <p class="subtitle" style="margin-top: 2rem;">
+                Circular Buffers • Sliding Windows • Kalman Filtering<br>
+                Anomaly Detection • MQTT Simulation
+            </p>
+            <div class="info-box" style="margin-top: 3rem; text-align: left; max-width: 600px;">
+                <strong>Preparation:</strong>
+                <ul style="margin-top: 0.5rem;">
+                    <li>Review circular buffer concepts</li>
+                    <li>Read about streaming algorithms</li>
+                    <li>Familiarise with publish/subscribe patterns</li>
+                </ul>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // Initialize highlight.js
+        hljs.highlightAll();
+
+        // Slide navigation
+        let currentSlide = 0;
+        const slides = document.querySelectorAll('.slide');
+        const totalSlides = slides.length;
+
+        // Update display
+        document.getElementById('totalSlides').textContent = totalSlides;
+
+        function showSlide(n) {
+            slides[currentSlide].classList.remove('active');
+            currentSlide = (n + totalSlides) % totalSlides;
+            slides[currentSlide].classList.add('active');
+            
+            // Update counter
+            document.getElementById('currentSlide').textContent = currentSlide + 1;
+            
+            // Update progress bar
+            const progress = ((currentSlide + 1) / totalSlides) * 100;
+            document.getElementById('progressBar').style.width = progress + '%';
+        }
+
+        function nextSlide() {
+            showSlide(currentSlide + 1);
+        }
+
+        function prevSlide() {
+            showSlide(currentSlide - 1);
+        }
+
+        // Keyboard navigation
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowRight' || e.key === ' ') {
+                e.preventDefault();
+                nextSlide();
+            } else if (e.key === 'ArrowLeft') {
+                e.preventDefault();
+                prevSlide();
+            } else if (e.key === 'Home') {
+                e.preventDefault();
+                showSlide(0);
+            } else if (e.key === 'End') {
+                e.preventDefault();
+                showSlide(totalSlides - 1);
+            }
+        });
+
+        // Touch navigation for mobile
+        let touchStartX = 0;
+        document.addEventListener('touchstart', (e) => {
+            touchStartX = e.touches[0].clientX;
+        });
+
+        document.addEventListener('touchend', (e) => {
+            const touchEndX = e.changedTouches[0].clientX;
+            const diff = touchStartX - touchEndX;
+            
+            if (Math.abs(diff) > 50) {
+                if (diff > 0) {
+                    nextSlide();
+                } else {
+                    prevSlide();
+                }
+            }
+        });
+
+        // Click navigation
+        document.querySelector('.slides-container').addEventListener('click', (e) => {
+            if (e.target.closest('.nav-controls') || e.target.closest('pre') || e.target.closest('code')) {
+                return;
+            }
+            
+            const rect = e.currentTarget.getBoundingClientRect();
+            const clickX = e.clientX - rect.left;
+            
+            if (clickX > rect.width / 2) {
+                nextSlide();
+            } else {
+                prevSlide();
+            }
+        });
+    </script>
+</body>
+</html>

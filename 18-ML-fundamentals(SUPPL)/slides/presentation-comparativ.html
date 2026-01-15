@@ -1,0 +1,2214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Week 18: ML Fundamentals - Comparative Analysis | ATP Course</title>
+    
+    <!-- highlight.js for syntax highlighting -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/c.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/python.min.js"></script>
+    
+    <style>
+        /* ============================================================
+         * CSS VARIABLES - Dark Theme
+         * ============================================================ */
+        :root {
+            --bg-primary: #0d1117;
+            --bg-secondary: #161b22;
+            --bg-tertiary: #21262d;
+            --bg-code: #1a1f29;
+            
+            --accent-blue: #58a6ff;
+            --accent-green: #3fb950;
+            --accent-orange: #d29922;
+            --accent-red: #f85149;
+            --accent-purple: #bc8cff;
+            --accent-cyan: #56d4dd;
+            --accent-pink: #ff7b72;
+            
+            --text-primary: #e6edf3;
+            --text-secondary: #8b949e;
+            --text-muted: #6e7681;
+            
+            --border-color: #30363d;
+            --shadow-color: rgba(0, 0, 0, 0.4);
+            
+            --font-sans: 'Segoe UI', 'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif;
+            --font-mono: 'JetBrains Mono', 'Fira Code', 'Consolas', monospace;
+        }
+        
+        /* ============================================================
+         * BASE STYLES
+         * ============================================================ */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        html, body {
+            height: 100%;
+            overflow: hidden;
+            font-family: var(--font-sans);
+            background: var(--bg-primary);
+            color: var(--text-primary);
+        }
+        
+        /* ============================================================
+         * PROGRESS BAR
+         * ============================================================ */
+        .progress-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: var(--bg-tertiary);
+            z-index: 1000;
+        }
+        
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, var(--accent-blue), var(--accent-purple));
+            transition: width 0.3s ease-out;
+            width: 0%;
+        }
+        
+        /* ============================================================
+         * SLIDE CONTAINER
+         * ============================================================ */
+        .slide-container {
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 60px 40px 40px;
+        }
+        
+        .slide {
+            display: none;
+            width: 100%;
+            max-width: 1600px;
+            height: calc(100vh - 120px);
+            background: var(--bg-secondary);
+            border-radius: 16px;
+            border: 1px solid var(--border-color);
+            box-shadow: 0 20px 60px var(--shadow-color);
+            overflow: hidden;
+            animation: fadeIn 0.4s ease-out;
+        }
+        
+        .slide.active {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        /* ============================================================
+         * SLIDE HEADER
+         * ============================================================ */
+        .slide-header {
+            padding: 24px 32px;
+            border-bottom: 1px solid var(--border-color);
+            background: var(--bg-tertiary);
+        }
+        
+        .slide-header h1 {
+            font-size: 1.75rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 6px;
+        }
+        
+        .slide-header .subtitle {
+            font-size: 1rem;
+            color: var(--accent-blue);
+            font-weight: 500;
+        }
+        
+        /* ============================================================
+         * SLIDE CONTENT
+         * ============================================================ */
+        .slide-content {
+            flex: 1;
+            padding: 24px 32px;
+            overflow-y: auto;
+        }
+        
+        /* ============================================================
+         * THREE-COLUMN COMPARISON LAYOUT
+         * ============================================================ */
+        .comparison-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 20px;
+            height: 100%;
+        }
+        
+        .comparison-column {
+            display: flex;
+            flex-direction: column;
+            background: var(--bg-primary);
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+            overflow: hidden;
+        }
+        
+        .column-header {
+            padding: 14px 18px;
+            font-weight: 600;
+            font-size: 0.95rem;
+            text-align: center;
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        .column-header.pseudocode {
+            background: linear-gradient(135deg, #2d333b 0%, #21262d 100%);
+            color: var(--accent-orange);
+        }
+        
+        .column-header.c-lang {
+            background: linear-gradient(135deg, #1a2332 0%, #161b22 100%);
+            color: var(--accent-blue);
+        }
+        
+        .column-header.python {
+            background: linear-gradient(135deg, #1e2a1e 0%, #161b22 100%);
+            color: var(--accent-green);
+        }
+        
+        .column-content {
+            flex: 1;
+            padding: 16px;
+            overflow-y: auto;
+        }
+        
+        /* ============================================================
+         * CODE BLOCKS
+         * ============================================================ */
+        pre {
+            margin: 0;
+            border-radius: 8px;
+            background: var(--bg-code) !important;
+            overflow-x: auto;
+        }
+        
+        pre code {
+            font-family: var(--font-mono);
+            font-size: 0.8rem;
+            line-height: 1.55;
+            display: block;
+            padding: 14px !important;
+        }
+        
+        .pseudocode-block {
+            font-family: var(--font-mono);
+            font-size: 0.8rem;
+            line-height: 1.6;
+            background: var(--bg-code);
+            padding: 14px;
+            border-radius: 8px;
+            color: var(--text-primary);
+            white-space: pre-wrap;
+        }
+        
+        .pseudocode-block .keyword {
+            color: var(--accent-orange);
+            font-weight: 600;
+        }
+        
+        .pseudocode-block .comment {
+            color: var(--text-muted);
+            font-style: italic;
+        }
+        
+        .pseudocode-block .function {
+            color: var(--accent-purple);
+        }
+        
+        .pseudocode-block .variable {
+            color: var(--accent-cyan);
+        }
+        
+        /* ============================================================
+         * TITLE SLIDE
+         * ============================================================ */
+        .title-slide {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 60px;
+        }
+        
+        .title-slide h1 {
+            font-size: 3rem;
+            font-weight: 700;
+            margin-bottom: 20px;
+            background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .title-slide h2 {
+            font-size: 1.5rem;
+            color: var(--text-secondary);
+            margin-bottom: 40px;
+            font-weight: 400;
+        }
+        
+        .title-slide .info-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 30px;
+            margin-top: 40px;
+        }
+        
+        .info-item {
+            padding: 24px;
+            background: var(--bg-tertiary);
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+        }
+        
+        .info-item .label {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            margin-bottom: 8px;
+        }
+        
+        .info-item .value {
+            font-size: 1.2rem;
+            color: var(--accent-blue);
+            font-weight: 600;
+        }
+        
+        /* ============================================================
+         * NAVIGATION
+         * ============================================================ */
+        .nav-container {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 12px;
+            padding: 12px 20px;
+            background: var(--bg-secondary);
+            border-radius: 30px;
+            border: 1px solid var(--border-color);
+            box-shadow: 0 10px 30px var(--shadow-color);
+            z-index: 100;
+        }
+        
+        .nav-btn {
+            width: 44px;
+            height: 44px;
+            border: none;
+            border-radius: 50%;
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+            font-size: 1.2rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .nav-btn:hover {
+            background: var(--accent-blue);
+            color: var(--bg-primary);
+        }
+        
+        .nav-btn:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+        
+        .slide-counter {
+            display: flex;
+            align-items: center;
+            padding: 0 16px;
+            font-size: 0.95rem;
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+        
+        .slide-counter .current {
+            color: var(--accent-blue);
+            font-weight: 700;
+        }
+        
+        /* ============================================================
+         * COMPLEXITY TABLE
+         * ============================================================ */
+        .complexity-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 16px 0;
+            font-size: 0.85rem;
+        }
+        
+        .complexity-table th,
+        .complexity-table td {
+            padding: 10px 14px;
+            border: 1px solid var(--border-color);
+            text-align: center;
+        }
+        
+        .complexity-table th {
+            background: var(--bg-tertiary);
+            color: var(--accent-blue);
+            font-weight: 600;
+        }
+        
+        .complexity-table td {
+            background: var(--bg-primary);
+        }
+        
+        .complexity-table .highlight {
+            color: var(--accent-green);
+            font-weight: 600;
+        }
+        
+        /* ============================================================
+         * NOTES SECTION
+         * ============================================================ */
+        .notes-section {
+            margin-top: 20px;
+            padding: 16px;
+            background: var(--bg-tertiary);
+            border-radius: 10px;
+            border-left: 4px solid var(--accent-orange);
+        }
+        
+        .notes-section h3 {
+            font-size: 0.9rem;
+            color: var(--accent-orange);
+            margin-bottom: 10px;
+            font-weight: 600;
+        }
+        
+        .notes-section ul {
+            margin-left: 20px;
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+            line-height: 1.6;
+        }
+        
+        .notes-section li {
+            margin-bottom: 6px;
+        }
+        
+        /* ============================================================
+         * KEY DIFFERENCES BOX
+         * ============================================================ */
+        .key-differences {
+            margin-top: 16px;
+            padding: 14px;
+            background: linear-gradient(135deg, rgba(88, 166, 255, 0.1) 0%, rgba(188, 140, 255, 0.1) 100%);
+            border: 1px solid var(--accent-blue);
+            border-radius: 10px;
+        }
+        
+        .key-differences h4 {
+            font-size: 0.9rem;
+            color: var(--accent-blue);
+            margin-bottom: 10px;
+        }
+        
+        .key-differences p {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            line-height: 1.6;
+        }
+        
+        /* ============================================================
+         * SUMMARY SLIDE
+         * ============================================================ */
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+        }
+        
+        .summary-card {
+            padding: 24px;
+            background: var(--bg-tertiary);
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+        }
+        
+        .summary-card h3 {
+            font-size: 1.1rem;
+            color: var(--accent-blue);
+            margin-bottom: 12px;
+        }
+        
+        .summary-card ul {
+            margin-left: 16px;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            line-height: 1.7;
+        }
+        
+        /* ============================================================
+         * SCROLLBAR STYLING
+         * ============================================================ */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: var(--bg-primary);
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: var(--border-color);
+            border-radius: 4px;
+        }
+        
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--text-muted);
+        }
+        
+        /* ============================================================
+         * KEYBOARD HINT
+         * ============================================================ */
+        .keyboard-hint {
+            position: fixed;
+            bottom: 80px;
+            right: 20px;
+            padding: 10px 16px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+        
+        .keyboard-hint kbd {
+            display: inline-block;
+            padding: 2px 6px;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            font-family: var(--font-mono);
+            font-size: 0.7rem;
+        }
+    </style>
+</head>
+<body>
+    <!-- Progress Bar -->
+    <div class="progress-container">
+        <div class="progress-bar" id="progressBar"></div>
+    </div>
+    
+    <!-- Slide Container -->
+    <div class="slide-container">
+        
+        <!-- ============================================================
+             SLIDE 1: Title Slide
+             ============================================================ -->
+        <div class="slide active" id="slide-1">
+            <div class="slide-content title-slide">
+                <h1>Machine Learning in C</h1>
+                <h2>Comparative Analysis: Pseudocode • C • Python</h2>
+                
+                <div class="info-grid">
+                    <div class="info-item">
+                        <div class="label">Week</div>
+                        <div class="value">18</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="label">Algorithms</div>
+                        <div class="value">6 Core ML</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="label">Comparison</div>
+                        <div class="value">3 Languages</div>
+                    </div>
+                </div>
+                
+                <div style="margin-top: 50px; color: var(--text-muted); font-size: 0.9rem;">
+                    ATP Course • Academy of Economic Studies - CSIE Bucharest
+                </div>
+            </div>
+        </div>
+        
+        <!-- ============================================================
+             SLIDE 2: Gradient Descent
+             ============================================================ -->
+        <div class="slide" id="slide-2">
+            <div class="slide-header">
+                <h1>Gradient Descent Optimisation</h1>
+                <div class="subtitle">The Foundation of Machine Learning Training</div>
+            </div>
+            <div class="slide-content">
+                <div class="comparison-grid">
+                    <div class="comparison-column">
+                        <div class="column-header pseudocode">Pseudocode</div>
+                        <div class="column-content">
+                            <div class="pseudocode-block"><span class="keyword">FUNCTION</span> <span class="function">GradientDescent</span>(<span class="variable">θ</span>, <span class="variable">X</span>, <span class="variable">y</span>, <span class="variable">α</span>, <span class="variable">iterations</span>):
+    <span class="comment">// θ = initial parameters</span>
+    <span class="comment">// X = feature matrix</span>
+    <span class="comment">// y = target values</span>
+    <span class="comment">// α = learning rate</span>
+    
+    <span class="keyword">FOR</span> i = 1 <span class="keyword">TO</span> iterations:
+        <span class="comment">// Compute predictions</span>
+        <span class="variable">predictions</span> ← X · θ
+        
+        <span class="comment">// Compute error</span>
+        <span class="variable">error</span> ← <span class="variable">predictions</span> - y
+        
+        <span class="comment">// Compute gradient</span>
+        <span class="variable">gradient</span> ← (1/m) × Xᵀ · <span class="variable">error</span>
+        
+        <span class="comment">// Update parameters</span>
+        <span class="variable">θ</span> ← <span class="variable">θ</span> - α × <span class="variable">gradient</span>
+        
+        <span class="comment">// Check convergence</span>
+        <span class="keyword">IF</span> ‖<span class="variable">gradient</span>‖ < ε <span class="keyword">THEN</span>
+            <span class="keyword">BREAK</span>
+    
+    <span class="keyword">RETURN</span> <span class="variable">θ</span></div>
+                        </div>
+                    </div>
+                    
+                    <div class="comparison-column">
+                        <div class="column-header c-lang">C Implementation</div>
+                        <div class="column-content">
+                            <pre><code class="language-c">void gradient_descent(
+    double *theta,      /* Parameters */
+    double **X,         /* Features (m x n) */
+    double *y,          /* Targets (m) */
+    int m, int n,       /* Dimensions */
+    double alpha,       /* Learning rate */
+    int max_iter)
+{
+    double *gradient = calloc(n, sizeof(double));
+    double *pred = malloc(m * sizeof(double));
+    
+    for (int iter = 0; iter < max_iter; iter++) {
+        /* Compute predictions: pred = X · theta */
+        for (int i = 0; i < m; i++) {
+            pred[i] = 0.0;
+            for (int j = 0; j < n; j++)
+                pred[i] += X[i][j] * theta[j];
+        }
+        
+        /* Compute gradient */
+        for (int j = 0; j < n; j++) {
+            gradient[j] = 0.0;
+            for (int i = 0; i < m; i++)
+                gradient[j] += X[i][j] * (pred[i] - y[i]);
+            gradient[j] /= m;
+        }
+        
+        /* Update parameters */
+        double norm = 0.0;
+        for (int j = 0; j < n; j++) {
+            theta[j] -= alpha * gradient[j];
+            norm += gradient[j] * gradient[j];
+        }
+        
+        /* Convergence check */
+        if (sqrt(norm) < 1e-6) break;
+    }
+    
+    free(gradient);
+    free(pred);
+}</code></pre>
+                        </div>
+                    </div>
+                    
+                    <div class="comparison-column">
+                        <div class="column-header python">Python (NumPy)</div>
+                        <div class="column-content">
+                            <pre><code class="language-python">import numpy as np
+
+def gradient_descent(
+    theta: np.ndarray,
+    X: np.ndarray,
+    y: np.ndarray,
+    alpha: float = 0.01,
+    max_iter: int = 1000,
+    tol: float = 1e-6
+) -> np.ndarray:
+    """
+    Gradient descent optimisation.
+    
+    Parameters
+    ----------
+    theta : Initial parameters
+    X : Feature matrix (m x n)
+    y : Target vector (m,)
+    alpha : Learning rate
+    max_iter : Maximum iterations
+    tol : Convergence tolerance
+    """
+    m = len(y)
+    
+    for _ in range(max_iter):
+        # Vectorised prediction
+        predictions = X @ theta
+        
+        # Vectorised gradient
+        error = predictions - y
+        gradient = (1/m) * (X.T @ error)
+        
+        # Update parameters
+        theta = theta - alpha * gradient
+        
+        # Check convergence
+        if np.linalg.norm(gradient) < tol:
+            break
+    
+    return theta</code></pre>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="key-differences">
+                    <h4>Key Implementation Differences</h4>
+                    <p><strong>C:</strong> Manual memory management, explicit loops for matrix operations, requires careful index handling. <strong>Python:</strong> Vectorised operations via NumPy eliminate loops, automatic memory management, cleaner syntax but abstracts away computational details.</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- ============================================================
+             SLIDE 3: Linear Regression - Model
+             ============================================================ -->
+        <div class="slide" id="slide-3">
+            <div class="slide-header">
+                <h1>Linear Regression: Model Representation</h1>
+                <div class="subtitle">Hypothesis Function and Cost Computation</div>
+            </div>
+            <div class="slide-content">
+                <div class="comparison-grid">
+                    <div class="comparison-column">
+                        <div class="column-header pseudocode">Pseudocode</div>
+                        <div class="column-content">
+                            <div class="pseudocode-block"><span class="comment">// Linear Regression Model</span>
+<span class="comment">// h(x) = θ₀ + θ₁x₁ + θ₂x₂ + ... + θₙxₙ</span>
+<span class="comment">// h(x) = θᵀx (vector form)</span>
+
+<span class="keyword">STRUCTURE</span> LinearRegression:
+    <span class="variable">weights</span>[]     <span class="comment">// θ coefficients</span>
+    <span class="variable">bias</span>          <span class="comment">// θ₀ intercept</span>
+    <span class="variable">n_features</span>    <span class="comment">// Number of features</span>
+
+<span class="keyword">FUNCTION</span> <span class="function">Predict</span>(<span class="variable">model</span>, <span class="variable">x</span>[]):
+    <span class="variable">result</span> ← <span class="variable">model</span>.<span class="variable">bias</span>
+    <span class="keyword">FOR</span> j = 0 <span class="keyword">TO</span> <span class="variable">n_features</span> - 1:
+        <span class="variable">result</span> ← <span class="variable">result</span> + <span class="variable">model</span>.<span class="variable">weights</span>[j] × <span class="variable">x</span>[j]
+    <span class="keyword">RETURN</span> <span class="variable">result</span>
+
+<span class="keyword">FUNCTION</span> <span class="function">ComputeMSE</span>(<span class="variable">model</span>, <span class="variable">X</span>[][], <span class="variable">y</span>[], <span class="variable">m</span>):
+    <span class="variable">total_error</span> ← 0
+    <span class="keyword">FOR</span> i = 0 <span class="keyword">TO</span> m - 1:
+        <span class="variable">pred</span> ← <span class="function">Predict</span>(<span class="variable">model</span>, <span class="variable">X</span>[i])
+        <span class="variable">total_error</span> ← <span class="variable">total_error</span> + (<span class="variable">pred</span> - <span class="variable">y</span>[i])²
+    <span class="keyword">RETURN</span> <span class="variable">total_error</span> / m</div>
+                        </div>
+                    </div>
+                    
+                    <div class="comparison-column">
+                        <div class="column-header c-lang">C Implementation</div>
+                        <div class="column-content">
+                            <pre><code class="language-c">typedef struct {
+    double *weights;  /* Coefficients θ₁..θₙ */
+    double bias;      /* Intercept θ₀ */
+    int n_features;   /* Dimension */
+} LinearRegression;
+
+/* Initialise model */
+void lr_init(LinearRegression *lr, int n) {
+    lr->n_features = n;
+    lr->weights = calloc(n, sizeof(double));
+    lr->bias = 0.0;
+}
+
+/* Predict single sample */
+double lr_predict(LinearRegression *lr,
+                  double *x) {
+    double result = lr->bias;
+    for (int j = 0; j < lr->n_features; j++)
+        result += lr->weights[j] * x[j];
+    return result;
+}
+
+/* Compute Mean Squared Error */
+double lr_compute_mse(LinearRegression *lr,
+                      double **X, double *y,
+                      int m) {
+    double total = 0.0;
+    for (int i = 0; i < m; i++) {
+        double pred = lr_predict(lr, X[i]);
+        double error = pred - y[i];
+        total += error * error;
+    }
+    return total / m;
+}
+
+/* Free model memory */
+void lr_free(LinearRegression *lr) {
+    free(lr->weights);
+}</code></pre>
+                        </div>
+                    </div>
+                    
+                    <div class="comparison-column">
+                        <div class="column-header python">Python (NumPy)</div>
+                        <div class="column-content">
+                            <pre><code class="language-python">import numpy as np
+
+class LinearRegression:
+    """Linear Regression model."""
+    
+    def __init__(self, n_features: int):
+        self.weights = np.zeros(n_features)
+        self.bias = 0.0
+        self.n_features = n_features
+    
+    def predict(self, X: np.ndarray) -> np.ndarray:
+        """
+        Predict targets for input X.
+        
+        h(x) = Xw + b (vectorised)
+        """
+        return X @ self.weights + self.bias
+    
+    def compute_mse(self, X: np.ndarray,
+                    y: np.ndarray) -> float:
+        """
+        Compute Mean Squared Error.
+        
+        MSE = (1/m) Σ(ŷ - y)²
+        """
+        predictions = self.predict(X)
+        errors = predictions - y
+        return np.mean(errors ** 2)
+    
+    def compute_r2(self, X: np.ndarray,
+                   y: np.ndarray) -> float:
+        """Coefficient of determination."""
+        ss_res = np.sum((y - self.predict(X))**2)
+        ss_tot = np.sum((y - np.mean(y))**2)
+        return 1 - (ss_res / ss_tot)</code></pre>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- ============================================================
+             SLIDE 4: Linear Regression - Training
+             ============================================================ -->
+        <div class="slide" id="slide-4">
+            <div class="slide-header">
+                <h1>Linear Regression: Training Loop</h1>
+                <div class="subtitle">Gradient Descent Parameter Updates</div>
+            </div>
+            <div class="slide-content">
+                <div class="comparison-grid">
+                    <div class="comparison-column">
+                        <div class="column-header pseudocode">Pseudocode</div>
+                        <div class="column-content">
+                            <div class="pseudocode-block"><span class="keyword">FUNCTION</span> <span class="function">TrainLinearRegression</span>(<span class="variable">model</span>, <span class="variable">X</span>, <span class="variable">y</span>, <span class="variable">α</span>, <span class="variable">epochs</span>):
+    <span class="variable">m</span> ← <span class="function">LENGTH</span>(<span class="variable">y</span>)
+    <span class="variable">n</span> ← <span class="variable">model</span>.<span class="variable">n_features</span>
+    
+    <span class="keyword">FOR</span> epoch = 1 <span class="keyword">TO</span> epochs:
+        <span class="comment">// Initialise gradients</span>
+        <span class="variable">grad_w</span>[] ← <span class="function">ZEROS</span>(<span class="variable">n</span>)
+        <span class="variable">grad_b</span> ← 0
+        
+        <span class="comment">// Accumulate gradients</span>
+        <span class="keyword">FOR</span> i = 0 <span class="keyword">TO</span> m - 1:
+            <span class="variable">pred</span> ← <span class="function">Predict</span>(<span class="variable">model</span>, <span class="variable">X</span>[i])
+            <span class="variable">error</span> ← <span class="variable">pred</span> - <span class="variable">y</span>[i]
+            
+            <span class="keyword">FOR</span> j = 0 <span class="keyword">TO</span> n - 1:
+                <span class="variable">grad_w</span>[j] ← <span class="variable">grad_w</span>[j] + <span class="variable">error</span> × <span class="variable">X</span>[i][j]
+            <span class="variable">grad_b</span> ← <span class="variable">grad_b</span> + <span class="variable">error</span>
+        
+        <span class="comment">// Average and update</span>
+        <span class="keyword">FOR</span> j = 0 <span class="keyword">TO</span> n - 1:
+            <span class="variable">model</span>.<span class="variable">weights</span>[j] ← <span class="variable">model</span>.<span class="variable">weights</span>[j] - α × <span class="variable">grad_w</span>[j] / m
+        <span class="variable">model</span>.<span class="variable">bias</span> ← <span class="variable">model</span>.<span class="variable">bias</span> - α × <span class="variable">grad_b</span> / m
+        
+        <span class="comment">// Optional: track loss</span>
+        <span class="variable">loss</span> ← <span class="function">ComputeMSE</span>(<span class="variable">model</span>, <span class="variable">X</span>, <span class="variable">y</span>, <span class="variable">m</span>)</div>
+                        </div>
+                    </div>
+                    
+                    <div class="comparison-column">
+                        <div class="column-header c-lang">C Implementation</div>
+                        <div class="column-content">
+                            <pre><code class="language-c">void lr_train(LinearRegression *lr,
+              double **X, double *y, int m,
+              double alpha, int epochs)
+{
+    int n = lr->n_features;
+    double *grad_w = calloc(n, sizeof(double));
+    
+    for (int epoch = 0; epoch < epochs; epoch++) {
+        /* Reset gradients */
+        memset(grad_w, 0, n * sizeof(double));
+        double grad_b = 0.0;
+        
+        /* Accumulate over all samples */
+        for (int i = 0; i < m; i++) {
+            double pred = lr_predict(lr, X[i]);
+            double error = pred - y[i];
+            
+            for (int j = 0; j < n; j++)
+                grad_w[j] += error * X[i][j];
+            grad_b += error;
+        }
+        
+        /* Update weights */
+        for (int j = 0; j < n; j++)
+            lr->weights[j] -= alpha * grad_w[j] / m;
+        lr->bias -= alpha * grad_b / m;
+        
+        /* Optional: print progress */
+        if ((epoch + 1) % 100 == 0) {
+            double mse = lr_compute_mse(lr, X, y, m);
+            printf("Epoch %d: MSE = %.6f\n",
+                   epoch + 1, mse);
+        }
+    }
+    
+    free(grad_w);
+}</code></pre>
+                        </div>
+                    </div>
+                    
+                    <div class="comparison-column">
+                        <div class="column-header python">Python (NumPy)</div>
+                        <div class="column-content">
+                            <pre><code class="language-python">def train(self, X: np.ndarray, y: np.ndarray,
+          alpha: float = 0.01,
+          epochs: int = 1000,
+          verbose: bool = True) -> list:
+    """
+    Train using batch gradient descent.
+    
+    ∂MSE/∂w = (2/m) Xᵀ(Xw + b - y)
+    ∂MSE/∂b = (2/m) Σ(Xw + b - y)
+    """
+    m = len(y)
+    history = []
+    
+    for epoch in range(epochs):
+        # Vectorised gradient computation
+        predictions = self.predict(X)
+        errors = predictions - y
+        
+        # Gradient of weights: (1/m) Xᵀe
+        grad_w = (1/m) * (X.T @ errors)
+        grad_b = (1/m) * np.sum(errors)
+        
+        # Parameter update
+        self.weights -= alpha * grad_w
+        self.bias -= alpha * grad_b
+        
+        # Track loss
+        mse = self.compute_mse(X, y)
+        history.append(mse)
+        
+        if verbose and (epoch + 1) % 100 == 0:
+            print(f"Epoch {epoch+1}: MSE={mse:.6f}")
+    
+    return history</code></pre>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- ============================================================
+             SLIDE 5: K-Nearest Neighbours
+             ============================================================ -->
+        <div class="slide" id="slide-5">
+            <div class="slide-header">
+                <h1>K-Nearest Neighbours (K-NN)</h1>
+                <div class="subtitle">Instance-Based Learning Algorithm</div>
+            </div>
+            <div class="slide-content">
+                <div class="comparison-grid">
+                    <div class="comparison-column">
+                        <div class="column-header pseudocode">Pseudocode</div>
+                        <div class="column-content">
+                            <div class="pseudocode-block"><span class="keyword">FUNCTION</span> <span class="function">EuclideanDistance</span>(<span class="variable">a</span>[], <span class="variable">b</span>[], <span class="variable">dim</span>):
+    <span class="variable">sum</span> ← 0
+    <span class="keyword">FOR</span> i = 0 <span class="keyword">TO</span> dim - 1:
+        <span class="variable">diff</span> ← <span class="variable">a</span>[i] - <span class="variable">b</span>[i]
+        <span class="variable">sum</span> ← <span class="variable">sum</span> + <span class="variable">diff</span> × <span class="variable">diff</span>
+    <span class="keyword">RETURN</span> <span class="function">SQRT</span>(<span class="variable">sum</span>)
+
+<span class="keyword">FUNCTION</span> <span class="function">KNN_Classify</span>(<span class="variable">X_train</span>, <span class="variable">y_train</span>, <span class="variable">x_query</span>, <span class="variable">k</span>):
+    <span class="comment">// Compute all distances</span>
+    <span class="variable">distances</span>[] ← []
+    <span class="keyword">FOR</span> i = 0 <span class="keyword">TO</span> <span class="function">LENGTH</span>(<span class="variable">X_train</span>) - 1:
+        <span class="variable">d</span> ← <span class="function">EuclideanDistance</span>(<span class="variable">X_train</span>[i], <span class="variable">x_query</span>)
+        <span class="function">APPEND</span>(<span class="variable">distances</span>, (<span class="variable">d</span>, <span class="variable">y_train</span>[i]))
+    
+    <span class="comment">// Sort by distance</span>
+    <span class="function">SORT</span>(<span class="variable">distances</span>, <span class="keyword">BY</span> distance)
+    
+    <span class="comment">// Take k nearest</span>
+    <span class="variable">neighbours</span> ← <span class="variable">distances</span>[0:k]
+    
+    <span class="comment">// Majority voting</span>
+    <span class="variable">votes</span> ← <span class="function">COUNT_LABELS</span>(<span class="variable">neighbours</span>)
+    <span class="keyword">RETURN</span> <span class="function">ARGMAX</span>(<span class="variable">votes</span>)</div>
+                        </div>
+                    </div>
+                    
+                    <div class="comparison-column">
+                        <div class="column-header c-lang">C Implementation</div>
+                        <div class="column-content">
+                            <pre><code class="language-c">typedef struct {
+    double distance;
+    int label;
+} Neighbour;
+
+double euclidean_dist(double *a, double *b, int dim) {
+    double sum = 0.0;
+    for (int i = 0; i < dim; i++) {
+        double diff = a[i] - b[i];
+        sum += diff * diff;
+    }
+    return sqrt(sum);
+}
+
+int cmp_neighbours(const void *a, const void *b) {
+    double da = ((Neighbour *)a)->distance;
+    double db = ((Neighbour *)b)->distance;
+    return (da > db) - (da < db);
+}
+
+int knn_classify(double **X_train, int *y_train,
+                 int n_train, double *query,
+                 int dim, int k, int n_classes)
+{
+    Neighbour *nb = malloc(n_train * sizeof(Neighbour));
+    
+    /* Compute all distances */
+    for (int i = 0; i < n_train; i++) {
+        nb[i].distance = euclidean_dist(
+            X_train[i], query, dim);
+        nb[i].label = y_train[i];
+    }
+    
+    /* Sort by distance */
+    qsort(nb, n_train, sizeof(Neighbour), cmp_neighbours);
+    
+    /* Count votes for k nearest */
+    int *votes = calloc(n_classes, sizeof(int));
+    for (int i = 0; i < k; i++)
+        votes[nb[i].label]++;
+    
+    /* Find majority */
+    int best = 0;
+    for (int c = 1; c < n_classes; c++)
+        if (votes[c] > votes[best]) best = c;
+    
+    free(nb);
+    free(votes);
+    return best;
+}</code></pre>
+                        </div>
+                    </div>
+                    
+                    <div class="comparison-column">
+                        <div class="column-header python">Python (NumPy)</div>
+                        <div class="column-content">
+                            <pre><code class="language-python">import numpy as np
+from collections import Counter
+
+class KNN:
+    def __init__(self, k: int = 5):
+        self.k = k
+        self.X_train = None
+        self.y_train = None
+    
+    def fit(self, X: np.ndarray, y: np.ndarray):
+        """Store training data."""
+        self.X_train = X
+        self.y_train = y
+    
+    def _euclidean(self, a: np.ndarray,
+                   b: np.ndarray) -> float:
+        return np.sqrt(np.sum((a - b) ** 2))
+    
+    def predict_one(self, x: np.ndarray) -> int:
+        """Predict single sample."""
+        # Compute all distances
+        distances = [
+            self._euclidean(x, x_train)
+            for x_train in self.X_train
+        ]
+        
+        # Get k nearest indices
+        k_indices = np.argsort(distances)[:self.k]
+        k_labels = self.y_train[k_indices]
+        
+        # Majority vote
+        most_common = Counter(k_labels).most_common(1)
+        return most_common[0][0]
+    
+    def predict(self, X: np.ndarray) -> np.ndarray:
+        """Predict multiple samples."""
+        return np.array([
+            self.predict_one(x) for x in X
+        ])</code></pre>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- ============================================================
+             SLIDE 6: K-Means Clustering - Initialisation
+             ============================================================ -->
+        <div class="slide" id="slide-6">
+            <div class="slide-header">
+                <h1>K-Means Clustering: K-Means++ Initialisation</h1>
+                <div class="subtitle">Smart Centroid Selection for Better Convergence</div>
+            </div>
+            <div class="slide-content">
+                <div class="comparison-grid">
+                    <div class="comparison-column">
+                        <div class="column-header pseudocode">Pseudocode</div>
+                        <div class="column-content">
+                            <div class="pseudocode-block"><span class="keyword">FUNCTION</span> <span class="function">KMeansPlusPlus</span>(<span class="variable">X</span>[][], <span class="variable">k</span>):
+    <span class="variable">n</span> ← <span class="function">LENGTH</span>(<span class="variable">X</span>)
+    <span class="variable">centroids</span>[] ← []
+    
+    <span class="comment">// Step 1: Choose first centroid randomly</span>
+    <span class="variable">idx</span> ← <span class="function">RANDOM</span>(0, <span class="variable">n</span>-1)
+    <span class="function">APPEND</span>(<span class="variable">centroids</span>, <span class="function">COPY</span>(<span class="variable">X</span>[<span class="variable">idx</span>]))
+    
+    <span class="comment">// Step 2: Choose remaining centroids</span>
+    <span class="keyword">FOR</span> c = 1 <span class="keyword">TO</span> k - 1:
+        <span class="variable">distances</span>[] ← <span class="function">ZEROS</span>(<span class="variable">n</span>)
+        
+        <span class="comment">// Find min distance to existing centroids</span>
+        <span class="keyword">FOR</span> i = 0 <span class="keyword">TO</span> n - 1:
+            <span class="variable">min_dist</span> ← ∞
+            <span class="keyword">FOR EACH</span> <span class="variable">centroid</span> <span class="keyword">IN</span> <span class="variable">centroids</span>:
+                <span class="variable">d</span> ← <span class="function">Distance</span>(<span class="variable">X</span>[i], <span class="variable">centroid</span>)
+                <span class="variable">min_dist</span> ← <span class="function">MIN</span>(<span class="variable">min_dist</span>, <span class="variable">d</span>)
+            <span class="variable">distances</span>[i] ← <span class="variable">min_dist</span>²
+        
+        <span class="comment">// Sample proportional to D²</span>
+        <span class="variable">probs</span> ← <span class="variable">distances</span> / <span class="function">SUM</span>(<span class="variable">distances</span>)
+        <span class="variable">idx</span> ← <span class="function">SAMPLE</span>(<span class="variable">probs</span>)
+        <span class="function">APPEND</span>(<span class="variable">centroids</span>, <span class="function">COPY</span>(<span class="variable">X</span>[<span class="variable">idx</span>]))
+    
+    <span class="keyword">RETURN</span> <span class="variable">centroids</span></div>
+                        </div>
+                    </div>
+                    
+                    <div class="comparison-column">
+                        <div class="column-header c-lang">C Implementation</div>
+                        <div class="column-content">
+                            <pre><code class="language-c">void kmeans_plusplus_init(
+    double **X, int n, int dim, int k,
+    double **centroids)
+{
+    double *distances = malloc(n * sizeof(double));
+    
+    /* First centroid: random point */
+    int first = rand() % n;
+    memcpy(centroids[0], X[first],
+           dim * sizeof(double));
+    
+    /* Remaining centroids */
+    for (int c = 1; c < k; c++) {
+        double total = 0.0;
+        
+        /* Compute D² to nearest centroid */
+        for (int i = 0; i < n; i++) {
+            double min_dist = DBL_MAX;
+            for (int j = 0; j < c; j++) {
+                double d = euclidean_dist(
+                    X[i], centroids[j], dim);
+                if (d < min_dist) min_dist = d;
+            }
+            distances[i] = min_dist * min_dist;
+            total += distances[i];
+        }
+        
+        /* Sample proportional to D² */
+        double r = (rand() / (double)RAND_MAX) * total;
+        double cumsum = 0.0;
+        int selected = n - 1;
+        
+        for (int i = 0; i < n; i++) {
+            cumsum += distances[i];
+            if (cumsum >= r) {
+                selected = i;
+                break;
+            }
+        }
+        
+        memcpy(centroids[c], X[selected],
+               dim * sizeof(double));
+    }
+    
+    free(distances);
+}</code></pre>
+                        </div>
+                    </div>
+                    
+                    <div class="comparison-column">
+                        <div class="column-header python">Python (NumPy)</div>
+                        <div class="column-content">
+                            <pre><code class="language-python">def kmeans_plusplus_init(
+    X: np.ndarray,
+    k: int
+) -> np.ndarray:
+    """
+    K-Means++ initialisation.
+    
+    Chooses centroids that are far apart,
+    leading to better convergence.
+    """
+    n, dim = X.shape
+    centroids = np.zeros((k, dim))
+    
+    # First centroid: random point
+    first_idx = np.random.randint(n)
+    centroids[0] = X[first_idx].copy()
+    
+    for c in range(1, k):
+        # Compute D² to nearest centroid
+        distances = np.zeros(n)
+        for i in range(n):
+            min_dist = np.min([
+                np.linalg.norm(X[i] - centroids[j])
+                for j in range(c)
+            ])
+            distances[i] = min_dist ** 2
+        
+        # Sample proportional to D²
+        probs = distances / distances.sum()
+        idx = np.random.choice(n, p=probs)
+        centroids[c] = X[idx].copy()
+    
+    return centroids</code></pre>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="notes-section">
+                    <h3>Why K-Means++?</h3>
+                    <ul>
+                        <li>Random initialisation can lead to poor local minima</li>
+                        <li>K-Means++ spreads initial centroids apart (D² sampling)</li>
+                        <li>Provides O(log k) competitive guarantee on final clustering</li>
+                        <li>Standard in scikit-learn and most modern implementations</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        
+        <!-- ============================================================
+             SLIDE 7: K-Means - Lloyd's Algorithm
+             ============================================================ -->
+        <div class="slide" id="slide-7">
+            <div class="slide-header">
+                <h1>K-Means: Lloyd's Algorithm</h1>
+                <div class="subtitle">Iterative Assignment and Update Steps</div>
+            </div>
+            <div class="slide-content">
+                <div class="comparison-grid">
+                    <div class="comparison-column">
+                        <div class="column-header pseudocode">Pseudocode</div>
+                        <div class="column-content">
+                            <div class="pseudocode-block"><span class="keyword">FUNCTION</span> <span class="function">KMeans</span>(<span class="variable">X</span>, <span class="variable">k</span>, <span class="variable">max_iter</span>):
+    <span class="comment">// Initialise centroids (K-Means++)</span>
+    <span class="variable">centroids</span> ← <span class="function">KMeansPlusPlus</span>(<span class="variable">X</span>, <span class="variable">k</span>)
+    <span class="variable">assignments</span> ← <span class="function">ZEROS</span>(<span class="function">LENGTH</span>(<span class="variable">X</span>))
+    
+    <span class="keyword">FOR</span> iter = 1 <span class="keyword">TO</span> max_iter:
+        <span class="comment">// ASSIGNMENT STEP</span>
+        <span class="variable">changed</span> ← <span class="keyword">FALSE</span>
+        <span class="keyword">FOR</span> i = 0 <span class="keyword">TO</span> <span class="function">LENGTH</span>(<span class="variable">X</span>) - 1:
+            <span class="variable">best_cluster</span> ← 0
+            <span class="variable">best_dist</span> ← ∞
+            <span class="keyword">FOR</span> c = 0 <span class="keyword">TO</span> k - 1:
+                <span class="variable">d</span> ← <span class="function">Distance</span>(<span class="variable">X</span>[i], <span class="variable">centroids</span>[c])
+                <span class="keyword">IF</span> <span class="variable">d</span> < <span class="variable">best_dist</span>:
+                    <span class="variable">best_dist</span> ← <span class="variable">d</span>
+                    <span class="variable">best_cluster</span> ← c
+            <span class="keyword">IF</span> <span class="variable">assignments</span>[i] ≠ <span class="variable">best_cluster</span>:
+                <span class="variable">assignments</span>[i] ← <span class="variable">best_cluster</span>
+                <span class="variable">changed</span> ← <span class="keyword">TRUE</span>
+        
+        <span class="keyword">IF NOT</span> <span class="variable">changed</span>: <span class="keyword">BREAK</span>
+        
+        <span class="comment">// UPDATE STEP</span>
+        <span class="keyword">FOR</span> c = 0 <span class="keyword">TO</span> k - 1:
+            <span class="variable">centroids</span>[c] ← <span class="function">MEAN</span>(<span class="variable">X</span>[<span class="variable">assignments</span> = c])
+    
+    <span class="keyword">RETURN</span> <span class="variable">centroids</span>, <span class="variable">assignments</span></div>
+                        </div>
+                    </div>
+                    
+                    <div class="comparison-column">
+                        <div class="column-header c-lang">C Implementation</div>
+                        <div class="column-content">
+                            <pre><code class="language-c">typedef struct {
+    double **centroids;
+    int *assignments;
+    int k, n, dim;
+    double inertia;
+} KMeansResult;
+
+void kmeans_fit(double **X, int n, int dim,
+                int k, int max_iter,
+                KMeansResult *result)
+{
+    /* Allocate */
+    result->k = k; result->n = n; result->dim = dim;
+    result->centroids = alloc_matrix(k, dim);
+    result->assignments = calloc(n, sizeof(int));
+    
+    /* Initialise (K-Means++) */
+    kmeans_plusplus_init(X, n, dim, k, result->centroids);
+    
+    for (int iter = 0; iter < max_iter; iter++) {
+        bool changed = false;
+        
+        /* ASSIGNMENT: Find nearest centroid */
+        for (int i = 0; i < n; i++) {
+            int best = 0;
+            double best_d = euclidean_dist(
+                X[i], result->centroids[0], dim);
+            
+            for (int c = 1; c < k; c++) {
+                double d = euclidean_dist(
+                    X[i], result->centroids[c], dim);
+                if (d < best_d) {
+                    best_d = d;
+                    best = c;
+                }
+            }
+            if (result->assignments[i] != best) {
+                result->assignments[i] = best;
+                changed = true;
+            }
+        }
+        
+        if (!changed) break;
+        
+        /* UPDATE: Recompute centroids */
+        for (int c = 0; c < k; c++) {
+            int count = 0;
+            memset(result->centroids[c], 0, dim * sizeof(double));
+            for (int i = 0; i < n; i++) {
+                if (result->assignments[i] == c) {
+                    for (int d = 0; d < dim; d++)
+                        result->centroids[c][d] += X[i][d];
+                    count++;
+                }
+            }
+            if (count > 0)
+                for (int d = 0; d < dim; d++)
+                    result->centroids[c][d] /= count;
+        }
+    }
+    
+    /* Compute inertia */
+    result->inertia = compute_inertia(X, result);
+}</code></pre>
+                        </div>
+                    </div>
+                    
+                    <div class="comparison-column">
+                        <div class="column-header python">Python (NumPy)</div>
+                        <div class="column-content">
+                            <pre><code class="language-python">class KMeans:
+    def __init__(self, k: int = 3,
+                 max_iter: int = 100):
+        self.k = k
+        self.max_iter = max_iter
+        self.centroids = None
+        self.labels_ = None
+        self.inertia_ = None
+    
+    def fit(self, X: np.ndarray) -> 'KMeans':
+        n, dim = X.shape
+        
+        # K-Means++ init
+        self.centroids = kmeans_plusplus_init(X, self.k)
+        self.labels_ = np.zeros(n, dtype=int)
+        
+        for _ in range(self.max_iter):
+            # ASSIGNMENT STEP
+            old_labels = self.labels_.copy()
+            for i in range(n):
+                dists = [
+                    np.linalg.norm(X[i] - c)
+                    for c in self.centroids
+                ]
+                self.labels_[i] = np.argmin(dists)
+            
+            # Check convergence
+            if np.all(self.labels_ == old_labels):
+                break
+            
+            # UPDATE STEP
+            for c in range(self.k):
+                mask = (self.labels_ == c)
+                if mask.sum() > 0:
+                    self.centroids[c] = X[mask].mean(axis=0)
+        
+        # Compute inertia (WCSS)
+        self.inertia_ = sum(
+            np.linalg.norm(X[i] - self.centroids[self.labels_[i]])**2
+            for i in range(n)
+        )
+        
+        return self</code></pre>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- ============================================================
+             SLIDE 8: Perceptron
+             ============================================================ -->
+        <div class="slide" id="slide-8">
+            <div class="slide-header">
+                <h1>The Perceptron</h1>
+                <div class="subtitle">Single Neuron Binary Classifier (Rosenblatt, 1958)</div>
+            </div>
+            <div class="slide-content">
+                <div class="comparison-grid">
+                    <div class="comparison-column">
+                        <div class="column-header pseudocode">Pseudocode</div>
+                        <div class="column-content">
+                            <div class="pseudocode-block"><span class="comment">// Perceptron: Single-layer neural network</span>
+<span class="comment">// Output: y = sign(w·x + b)</span>
+
+<span class="keyword">STRUCTURE</span> Perceptron:
+    <span class="variable">weights</span>[]     <span class="comment">// Weight vector</span>
+    <span class="variable">bias</span>          <span class="comment">// Bias term</span>
+
+<span class="keyword">FUNCTION</span> <span class="function">Predict</span>(<span class="variable">p</span>, <span class="variable">x</span>[]):
+    <span class="variable">activation</span> ← <span class="variable">p</span>.<span class="variable">bias</span>
+    <span class="keyword">FOR</span> j = 0 <span class="keyword">TO</span> <span class="function">LENGTH</span>(<span class="variable">x</span>) - 1:
+        <span class="variable">activation</span> ← <span class="variable">activation</span> + <span class="variable">p</span>.<span class="variable">weights</span>[j] × <span class="variable">x</span>[j]
+    <span class="keyword">RETURN</span> <span class="function">SIGN</span>(<span class="variable">activation</span>)  <span class="comment">// +1 or -1</span>
+
+<span class="keyword">FUNCTION</span> <span class="function">Train</span>(<span class="variable">p</span>, <span class="variable">X</span>, <span class="variable">y</span>, <span class="variable">epochs</span>, <span class="variable">lr</span>):
+    <span class="keyword">FOR</span> epoch = 1 <span class="keyword">TO</span> epochs:
+        <span class="variable">errors</span> ← 0
+        <span class="keyword">FOR</span> i = 0 <span class="keyword">TO</span> <span class="function">LENGTH</span>(<span class="variable">X</span>) - 1:
+            <span class="variable">pred</span> ← <span class="function">Predict</span>(<span class="variable">p</span>, <span class="variable">X</span>[i])
+            <span class="keyword">IF</span> <span class="variable">pred</span> ≠ <span class="variable">y</span>[i]:
+                <span class="comment">// Update rule (Perceptron Learning)</span>
+                <span class="keyword">FOR</span> j = 0 <span class="keyword">TO</span> <span class="function">LENGTH</span>(<span class="variable">X</span>[i]) - 1:
+                    <span class="variable">p</span>.<span class="variable">weights</span>[j] ← <span class="variable">p</span>.<span class="variable">weights</span>[j] + <span class="variable">lr</span> × <span class="variable">y</span>[i] × <span class="variable">X</span>[i][j]
+                <span class="variable">p</span>.<span class="variable">bias</span> ← <span class="variable">p</span>.<span class="variable">bias</span> + <span class="variable">lr</span> × <span class="variable">y</span>[i]
+                <span class="variable">errors</span> ← <span class="variable">errors</span> + 1
+        
+        <span class="keyword">IF</span> <span class="variable">errors</span> = 0:
+            <span class="keyword">BREAK</span>  <span class="comment">// Converged</span></div>
+                        </div>
+                    </div>
+                    
+                    <div class="comparison-column">
+                        <div class="column-header c-lang">C Implementation</div>
+                        <div class="column-content">
+                            <pre><code class="language-c">typedef struct {
+    double *weights;
+    double bias;
+    int n_features;
+} Perceptron;
+
+void perceptron_init(Perceptron *p, int n) {
+    p->n_features = n;
+    p->weights = calloc(n, sizeof(double));
+    p->bias = 0.0;
+}
+
+int perceptron_predict(Perceptron *p, double *x) {
+    double activation = p->bias;
+    for (int j = 0; j < p->n_features; j++)
+        activation += p->weights[j] * x[j];
+    return (activation >= 0) ? 1 : -1;
+}
+
+void perceptron_train(Perceptron *p,
+                      double **X, int *y, int m,
+                      int epochs, double lr)
+{
+    for (int epoch = 0; epoch < epochs; epoch++) {
+        int errors = 0;
+        
+        for (int i = 0; i < m; i++) {
+            int pred = perceptron_predict(p, X[i]);
+            
+            if (pred != y[i]) {
+                /* Perceptron update rule */
+                for (int j = 0; j < p->n_features; j++)
+                    p->weights[j] += lr * y[i] * X[i][j];
+                p->bias += lr * y[i];
+                errors++;
+            }
+        }
+        
+        printf("Epoch %d: %d errors\n", epoch + 1, errors);
+        
+        if (errors == 0) {
+            printf("Converged!\n");
+            break;
+        }
+    }
+}</code></pre>
+                        </div>
+                    </div>
+                    
+                    <div class="comparison-column">
+                        <div class="column-header python">Python (NumPy)</div>
+                        <div class="column-content">
+                            <pre><code class="language-python">class Perceptron:
+    """
+    Perceptron classifier.
+    
+    Labels must be +1 or -1.
+    """
+    
+    def __init__(self, n_features: int,
+                 lr: float = 0.1):
+        self.weights = np.zeros(n_features)
+        self.bias = 0.0
+        self.lr = lr
+    
+    def predict(self, X: np.ndarray) -> np.ndarray:
+        """Compute sign(w·x + b)."""
+        activation = X @ self.weights + self.bias
+        return np.sign(activation).astype(int)
+    
+    def fit(self, X: np.ndarray, y: np.ndarray,
+            epochs: int = 100) -> list:
+        """Train using perceptron learning rule."""
+        history = []
+        
+        for epoch in range(epochs):
+            errors = 0
+            for i in range(len(X)):
+                pred = np.sign(
+                    np.dot(X[i], self.weights) + self.bias
+                )
+                
+                if pred != y[i]:
+                    # Update: w += lr * y * x
+                    self.weights += self.lr * y[i] * X[i]
+                    self.bias += self.lr * y[i]
+                    errors += 1
+            
+            history.append(errors)
+            
+            if errors == 0:
+                print(f"Converged at epoch {epoch+1}")
+                break
+        
+        return history</code></pre>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="key-differences">
+                    <h4>Limitation: XOR Problem</h4>
+                    <p>The Perceptron can only learn <strong>linearly separable</strong> functions. XOR (0⊕0=0, 0⊕1=1, 1⊕0=1, 1⊕1=0) is NOT linearly separable, requiring multi-layer networks to solve.</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- ============================================================
+             SLIDE 9: Neural Network - Forward Pass
+             ============================================================ -->
+        <div class="slide" id="slide-9">
+            <div class="slide-header">
+                <h1>Neural Network: Forward Propagation</h1>
+                <div class="subtitle">Computing Activations Layer by Layer</div>
+            </div>
+            <div class="slide-content">
+                <div class="comparison-grid">
+                    <div class="comparison-column">
+                        <div class="column-header pseudocode">Pseudocode</div>
+                        <div class="column-content">
+                            <div class="pseudocode-block"><span class="comment">// For each layer l = 1 to L:</span>
+<span class="comment">//   z[l] = W[l] · a[l-1] + b[l]</span>
+<span class="comment">//   a[l] = activation(z[l])</span>
+
+<span class="keyword">FUNCTION</span> <span class="function">Forward</span>(<span class="variable">nn</span>, <span class="variable">input</span>[]):
+    <span class="variable">a</span> ← <span class="variable">input</span>  <span class="comment">// a[0] = input</span>
+    
+    <span class="keyword">FOR</span> l = 1 <span class="keyword">TO</span> <span class="variable">nn</span>.<span class="variable">num_layers</span> - 1:
+        <span class="comment">// Linear transformation</span>
+        <span class="variable">z</span> ← <span class="function">ZEROS</span>(<span class="variable">nn</span>.<span class="variable">layer_sizes</span>[l])
+        <span class="keyword">FOR</span> j = 0 <span class="keyword">TO</span> <span class="variable">nn</span>.<span class="variable">layer_sizes</span>[l] - 1:
+            <span class="variable">z</span>[j] ← <span class="variable">nn</span>.<span class="variable">biases</span>[l][j]
+            <span class="keyword">FOR</span> i = 0 <span class="keyword">TO</span> <span class="variable">nn</span>.<span class="variable">layer_sizes</span>[l-1] - 1:
+                <span class="variable">z</span>[j] ← <span class="variable">z</span>[j] + <span class="variable">nn</span>.<span class="variable">weights</span>[l][j][i] × <span class="variable">a</span>[i]
+        
+        <span class="comment">// Activation function</span>
+        <span class="keyword">IF</span> l = <span class="variable">nn</span>.<span class="variable">num_layers</span> - 1:
+            <span class="variable">a</span> ← <span class="function">Softmax</span>(<span class="variable">z</span>)  <span class="comment">// Output layer</span>
+        <span class="keyword">ELSE</span>:
+            <span class="variable">a</span> ← <span class="function">ReLU</span>(<span class="variable">z</span>)     <span class="comment">// Hidden layers</span>
+        
+        <span class="comment">// Store for backprop</span>
+        <span class="variable">nn</span>.<span class="variable">z_cache</span>[l] ← <span class="variable">z</span>
+        <span class="variable">nn</span>.<span class="variable">a_cache</span>[l] ← <span class="variable">a</span>
+    
+    <span class="keyword">RETURN</span> <span class="variable">a</span>  <span class="comment">// Final output</span>
+
+<span class="keyword">FUNCTION</span> <span class="function">ReLU</span>(<span class="variable">z</span>[]):
+    <span class="keyword">RETURN</span> [<span class="function">MAX</span>(0, <span class="variable">z</span>[i]) <span class="keyword">FOR EACH</span> i]
+
+<span class="keyword">FUNCTION</span> <span class="function">Sigmoid</span>(<span class="variable">z</span>):
+    <span class="keyword">RETURN</span> 1 / (1 + <span class="function">EXP</span>(-<span class="variable">z</span>))</div>
+                        </div>
+                    </div>
+                    
+                    <div class="comparison-column">
+                        <div class="column-header c-lang">C Implementation</div>
+                        <div class="column-content">
+                            <pre><code class="language-c">typedef struct {
+    int num_layers;
+    int *layer_sizes;
+    double **weights;   /* weights[l][j * prev_size + i] */
+    double **biases;    /* biases[l][j] */
+    double **z_cache;   /* Pre-activation */
+    double **a_cache;   /* Post-activation */
+} NeuralNetwork;
+
+void relu(double *z, double *a, int n) {
+    for (int i = 0; i < n; i++)
+        a[i] = (z[i] > 0) ? z[i] : 0;
+}
+
+double sigmoid(double z) {
+    return 1.0 / (1.0 + exp(-z));
+}
+
+void softmax(double *z, double *a, int n) {
+    double max_z = z[0];
+    for (int i = 1; i < n; i++)
+        if (z[i] > max_z) max_z = z[i];
+    
+    double sum = 0.0;
+    for (int i = 0; i < n; i++) {
+        a[i] = exp(z[i] - max_z);
+        sum += a[i];
+    }
+    for (int i = 0; i < n; i++)
+        a[i] /= sum;
+}
+
+void nn_forward(NeuralNetwork *nn, double *input,
+                double *output) {
+    double *a = input;
+    
+    for (int l = 1; l < nn->num_layers; l++) {
+        int n_in = nn->layer_sizes[l-1];
+        int n_out = nn->layer_sizes[l];
+        double *z = nn->z_cache[l];
+        double *a_next = nn->a_cache[l];
+        
+        /* z = W·a + b */
+        for (int j = 0; j < n_out; j++) {
+            z[j] = nn->biases[l][j];
+            for (int i = 0; i < n_in; i++)
+                z[j] += nn->weights[l][j*n_in + i] * a[i];
+        }
+        
+        /* Apply activation */
+        if (l == nn->num_layers - 1)
+            softmax(z, a_next, n_out);
+        else
+            relu(z, a_next, n_out);
+        
+        a = a_next;
+    }
+    
+    memcpy(output, a, nn->layer_sizes[nn->num_layers-1] * sizeof(double));
+}</code></pre>
+                        </div>
+                    </div>
+                    
+                    <div class="comparison-column">
+                        <div class="column-header python">Python (NumPy)</div>
+                        <div class="column-content">
+                            <pre><code class="language-python">class NeuralNetwork:
+    def __init__(self, layer_sizes: list):
+        self.num_layers = len(layer_sizes)
+        self.sizes = layer_sizes
+        
+        # Xavier initialisation
+        self.weights = [
+            np.random.randn(layer_sizes[l], layer_sizes[l-1])
+            * np.sqrt(2.0 / layer_sizes[l-1])
+            for l in range(1, self.num_layers)
+        ]
+        self.biases = [
+            np.zeros(layer_sizes[l])
+            for l in range(1, self.num_layers)
+        ]
+        
+        # Cache for backprop
+        self.z_cache = [None] * self.num_layers
+        self.a_cache = [None] * self.num_layers
+    
+    def relu(self, z: np.ndarray) -> np.ndarray:
+        return np.maximum(0, z)
+    
+    def softmax(self, z: np.ndarray) -> np.ndarray:
+        exp_z = np.exp(z - np.max(z))
+        return exp_z / exp_z.sum()
+    
+    def forward(self, x: np.ndarray) -> np.ndarray:
+        """Forward propagation."""
+        self.a_cache[0] = x
+        a = x
+        
+        for l in range(1, self.num_layers):
+            # z = W·a + b
+            z = self.weights[l-1] @ a + self.biases[l-1]
+            self.z_cache[l] = z
+            
+            # Activation
+            if l == self.num_layers - 1:
+                a = self.softmax(z)
+            else:
+                a = self.relu(z)
+            
+            self.a_cache[l] = a
+        
+        return a</code></pre>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- ============================================================
+             SLIDE 10: Neural Network - Backpropagation
+             ============================================================ -->
+        <div class="slide" id="slide-10">
+            <div class="slide-header">
+                <h1>Neural Network: Backpropagation</h1>
+                <div class="subtitle">Computing Gradients via Chain Rule</div>
+            </div>
+            <div class="slide-content">
+                <div class="comparison-grid">
+                    <div class="comparison-column">
+                        <div class="column-header pseudocode">Pseudocode</div>
+                        <div class="column-content">
+                            <div class="pseudocode-block"><span class="comment">// Backprop: Compute ∂Loss/∂W and ∂Loss/∂b</span>
+<span class="comment">// Key insight: Chain rule propagates errors backwards</span>
+
+<span class="keyword">FUNCTION</span> <span class="function">Backward</span>(<span class="variable">nn</span>, <span class="variable">target</span>[]):
+    <span class="variable">L</span> ← <span class="variable">nn</span>.<span class="variable">num_layers</span> - 1
+    
+    <span class="comment">// Output layer error (softmax + cross-entropy)</span>
+    <span class="variable">δ</span>[<span class="variable">L</span>] ← <span class="variable">nn</span>.<span class="variable">a_cache</span>[<span class="variable">L</span>] - <span class="variable">target</span>
+    
+    <span class="comment">// Backpropagate through layers</span>
+    <span class="keyword">FOR</span> l = <span class="variable">L</span>-1 <span class="keyword">DOWN TO</span> 1:
+        <span class="comment">// δ[l] = (Wᵀ[l+1] · δ[l+1]) ⊙ activation'(z[l])</span>
+        <span class="variable">δ</span>[l] ← (<span class="variable">nn</span>.<span class="variable">W</span>[l+1]ᵀ · <span class="variable">δ</span>[l+1]) ⊙ <span class="function">ReLU_derivative</span>(<span class="variable">nn</span>.<span class="variable">z_cache</span>[l])
+    
+    <span class="comment">// Compute gradients</span>
+    <span class="keyword">FOR</span> l = 1 <span class="keyword">TO</span> <span class="variable">L</span>:
+        <span class="comment">// ∂Loss/∂W[l] = δ[l] ⊗ a[l-1]ᵀ</span>
+        <span class="variable">grad_W</span>[l] ← <span class="variable">δ</span>[l] ⊗ <span class="variable">nn</span>.<span class="variable">a_cache</span>[l-1]ᵀ
+        <span class="comment">// ∂Loss/∂b[l] = δ[l]</span>
+        <span class="variable">grad_b</span>[l] ← <span class="variable">δ</span>[l]
+    
+    <span class="keyword">RETURN</span> <span class="variable">grad_W</span>, <span class="variable">grad_b</span>
+
+<span class="keyword">FUNCTION</span> <span class="function">ReLU_derivative</span>(<span class="variable">z</span>[]):
+    <span class="keyword">RETURN</span> [1 <span class="keyword">IF</span> <span class="variable">z</span>[i] > 0 <span class="keyword">ELSE</span> 0]</div>
+                        </div>
+                    </div>
+                    
+                    <div class="comparison-column">
+                        <div class="column-header c-lang">C Implementation</div>
+                        <div class="column-content">
+                            <pre><code class="language-c">void relu_derivative(double *z, double *out, int n) {
+    for (int i = 0; i < n; i++)
+        out[i] = (z[i] > 0) ? 1.0 : 0.0;
+}
+
+void nn_backward(NeuralNetwork *nn, double *target,
+                 double **grad_W, double **grad_b)
+{
+    int L = nn->num_layers - 1;
+    double **delta = alloc_cache(nn);
+    
+    /* Output layer: δ = a - y (softmax + CE) */
+    int n_out = nn->layer_sizes[L];
+    for (int j = 0; j < n_out; j++)
+        delta[L][j] = nn->a_cache[L][j] - target[j];
+    
+    /* Backpropagate */
+    for (int l = L - 1; l >= 1; l--) {
+        int n_curr = nn->layer_sizes[l];
+        int n_next = nn->layer_sizes[l + 1];
+        
+        /* δ[l] = (Wᵀ · δ[l+1]) ⊙ f'(z[l]) */
+        double *relu_d = malloc(n_curr * sizeof(double));
+        relu_derivative(nn->z_cache[l], relu_d, n_curr);
+        
+        for (int i = 0; i < n_curr; i++) {
+            delta[l][i] = 0.0;
+            for (int j = 0; j < n_next; j++)
+                delta[l][i] += nn->weights[l+1][j*n_curr + i]
+                             * delta[l+1][j];
+            delta[l][i] *= relu_d[i];
+        }
+        free(relu_d);
+    }
+    
+    /* Compute gradients */
+    for (int l = 1; l <= L; l++) {
+        int n_in = nn->layer_sizes[l-1];
+        int n_out = nn->layer_sizes[l];
+        
+        for (int j = 0; j < n_out; j++) {
+            grad_b[l][j] = delta[l][j];
+            for (int i = 0; i < n_in; i++)
+                grad_W[l][j*n_in + i] =
+                    delta[l][j] * nn->a_cache[l-1][i];
+        }
+    }
+    
+    free_cache(delta, nn);
+}</code></pre>
+                        </div>
+                    </div>
+                    
+                    <div class="comparison-column">
+                        <div class="column-header python">Python (NumPy)</div>
+                        <div class="column-content">
+                            <pre><code class="language-python">def relu_derivative(self, z: np.ndarray) -> np.ndarray:
+    """ReLU gradient: 1 if z > 0, else 0."""
+    return (z > 0).astype(float)
+
+def backward(self, target: np.ndarray):
+    """Backpropagation."""
+    L = self.num_layers - 1
+    delta = [None] * self.num_layers
+    
+    # Output layer (softmax + cross-entropy)
+    # Simplified gradient: δ = a - y
+    delta[L] = self.a_cache[L] - target
+    
+    # Backpropagate
+    for l in range(L - 1, 0, -1):
+        # δ[l] = (Wᵀ · δ[l+1]) ⊙ f'(z[l])
+        delta[l] = (
+            self.weights[l].T @ delta[l + 1]
+        ) * self.relu_derivative(self.z_cache[l])
+    
+    # Compute gradients
+    self.grad_W = []
+    self.grad_b = []
+    
+    for l in range(1, self.num_layers):
+        # ∂L/∂W = δ ⊗ aᵀ
+        grad_W = np.outer(delta[l], self.a_cache[l-1])
+        grad_b = delta[l]
+        
+        self.grad_W.append(grad_W)
+        self.grad_b.append(grad_b)
+
+def update_weights(self, lr: float):
+    """Gradient descent update."""
+    for l in range(len(self.weights)):
+        self.weights[l] -= lr * self.grad_W[l]
+        self.biases[l] -= lr * self.grad_b[l]</code></pre>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- ============================================================
+             SLIDE 11: Feature Normalisation
+             ============================================================ -->
+        <div class="slide" id="slide-11">
+            <div class="slide-header">
+                <h1>Feature Normalisation</h1>
+                <div class="subtitle">Z-Score and Min-Max Scaling</div>
+            </div>
+            <div class="slide-content">
+                <div class="comparison-grid">
+                    <div class="comparison-column">
+                        <div class="column-header pseudocode">Pseudocode</div>
+                        <div class="column-content">
+                            <div class="pseudocode-block"><span class="comment">// Z-Score: x' = (x - μ) / σ</span>
+<span class="comment">// Result: mean = 0, std = 1</span>
+
+<span class="keyword">FUNCTION</span> <span class="function">ZScoreNormalise</span>(<span class="variable">X</span>[][], <span class="variable">m</span>, <span class="variable">n</span>):
+    <span class="variable">means</span> ← <span class="function">ZEROS</span>(<span class="variable">n</span>)
+    <span class="variable">stds</span> ← <span class="function">ZEROS</span>(<span class="variable">n</span>)
+    
+    <span class="comment">// Compute statistics per feature</span>
+    <span class="keyword">FOR</span> j = 0 <span class="keyword">TO</span> n - 1:
+        <span class="variable">sum</span> ← 0
+        <span class="keyword">FOR</span> i = 0 <span class="keyword">TO</span> m - 1:
+            <span class="variable">sum</span> ← <span class="variable">sum</span> + <span class="variable">X</span>[i][j]
+        <span class="variable">means</span>[j] ← <span class="variable">sum</span> / m
+        
+        <span class="variable">var_sum</span> ← 0
+        <span class="keyword">FOR</span> i = 0 <span class="keyword">TO</span> m - 1:
+            <span class="variable">var_sum</span> ← <span class="variable">var_sum</span> + (<span class="variable">X</span>[i][j] - <span class="variable">means</span>[j])²
+        <span class="variable">stds</span>[j] ← <span class="function">SQRT</span>(<span class="variable">var_sum</span> / m)
+    
+    <span class="comment">// Apply transformation</span>
+    <span class="keyword">FOR</span> i = 0 <span class="keyword">TO</span> m - 1:
+        <span class="keyword">FOR</span> j = 0 <span class="keyword">TO</span> n - 1:
+            <span class="keyword">IF</span> <span class="variable">stds</span>[j] > 0:
+                <span class="variable">X</span>[i][j] ← (<span class="variable">X</span>[i][j] - <span class="variable">means</span>[j]) / <span class="variable">stds</span>[j]
+    
+    <span class="keyword">RETURN</span> <span class="variable">means</span>, <span class="variable">stds</span>
+
+<span class="comment">// Min-Max: x' = (x - min) / (max - min)</span>
+<span class="comment">// Result: values in [0, 1]</span>
+
+<span class="keyword">FUNCTION</span> <span class="function">MinMaxNormalise</span>(<span class="variable">X</span>[][], <span class="variable">m</span>, <span class="variable">n</span>):
+    <span class="comment">// Similar structure...</span></div>
+                        </div>
+                    </div>
+                    
+                    <div class="comparison-column">
+                        <div class="column-header c-lang">C Implementation</div>
+                        <div class="column-content">
+                            <pre><code class="language-c">typedef struct {
+    double *means;
+    double *stds;
+    int n_features;
+} ZScoreScaler;
+
+void zscore_fit(ZScoreScaler *scaler, double **X,
+                int m, int n)
+{
+    scaler->n_features = n;
+    scaler->means = calloc(n, sizeof(double));
+    scaler->stds = calloc(n, sizeof(double));
+    
+    /* Compute means */
+    for (int j = 0; j < n; j++) {
+        double sum = 0.0;
+        for (int i = 0; i < m; i++)
+            sum += X[i][j];
+        scaler->means[j] = sum / m;
+    }
+    
+    /* Compute standard deviations */
+    for (int j = 0; j < n; j++) {
+        double var_sum = 0.0;
+        for (int i = 0; i < m; i++) {
+            double diff = X[i][j] - scaler->means[j];
+            var_sum += diff * diff;
+        }
+        scaler->stds[j] = sqrt(var_sum / m);
+        if (scaler->stds[j] < 1e-8)
+            scaler->stds[j] = 1.0;  /* Prevent div by 0 */
+    }
+}
+
+void zscore_transform(ZScoreScaler *scaler,
+                      double **X, int m)
+{
+    for (int i = 0; i < m; i++) {
+        for (int j = 0; j < scaler->n_features; j++) {
+            X[i][j] = (X[i][j] - scaler->means[j])
+                    / scaler->stds[j];
+        }
+    }
+}</code></pre>
+                        </div>
+                    </div>
+                    
+                    <div class="comparison-column">
+                        <div class="column-header python">Python (NumPy)</div>
+                        <div class="column-content">
+                            <pre><code class="language-python">class ZScoreScaler:
+    """
+    Z-Score (Standard) normalisation.
+    
+    Transforms features to have mean=0, std=1.
+    """
+    
+    def __init__(self):
+        self.means = None
+        self.stds = None
+    
+    def fit(self, X: np.ndarray) -> 'ZScoreScaler':
+        """Compute statistics from training data."""
+        self.means = np.mean(X, axis=0)
+        self.stds = np.std(X, axis=0)
+        
+        # Prevent division by zero
+        self.stds[self.stds < 1e-8] = 1.0
+        return self
+    
+    def transform(self, X: np.ndarray) -> np.ndarray:
+        """Apply normalisation."""
+        return (X - self.means) / self.stds
+    
+    def fit_transform(self, X: np.ndarray) -> np.ndarray:
+        """Fit and transform in one step."""
+        return self.fit(X).transform(X)
+    
+    def inverse_transform(self, X: np.ndarray) -> np.ndarray:
+        """Reverse the normalisation."""
+        return X * self.stds + self.means
+
+
+# Usage example
+scaler = ZScoreScaler()
+X_train_scaled = scaler.fit_transform(X_train)
+X_test_scaled = scaler.transform(X_test)  # Use train stats!</code></pre>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="notes-section">
+                    <h3>Important: Train/Test Split</h3>
+                    <ul>
+                        <li>Always fit scaler on <strong>training data only</strong></li>
+                        <li>Use the same statistics to transform test data</li>
+                        <li>This prevents <strong>data leakage</strong> from test set</li>
+                        <li>Z-score preferred when features have different units</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        
+        <!-- ============================================================
+             SLIDE 12: Summary and Comparison Table
+             ============================================================ -->
+        <div class="slide" id="slide-12">
+            <div class="slide-header">
+                <h1>Summary: Implementation Comparison</h1>
+                <div class="subtitle">C vs Python Trade-offs for Machine Learning</div>
+            </div>
+            <div class="slide-content">
+                <table class="complexity-table">
+                    <thead>
+                        <tr>
+                            <th>Aspect</th>
+                            <th>C Implementation</th>
+                            <th>Python (NumPy)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>Memory Management</strong></td>
+                            <td>Manual (malloc/free)</td>
+                            <td>Automatic (garbage collection)</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Matrix Operations</strong></td>
+                            <td>Explicit nested loops</td>
+                            <td>Vectorised (@ operator)</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Performance</strong></td>
+                            <td class="highlight">Faster (compiled)</td>
+                            <td>Fast (C backend)</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Code Length</strong></td>
+                            <td>~3-5× longer</td>
+                            <td class="highlight">Concise</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Debugging</strong></td>
+                            <td>Harder (segfaults)</td>
+                            <td class="highlight">Easier (exceptions)</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Portability</strong></td>
+                            <td class="highlight">Standalone binary</td>
+                            <td>Requires interpreter</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Learning Value</strong></td>
+                            <td class="highlight">Exposes all details</td>
+                            <td>Abstracts complexity</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Production Use</strong></td>
+                            <td>Embedded/Edge systems</td>
+                            <td class="highlight">Research/Prototyping</td>
+                        </tr>
+                    </tbody>
+                </table>
+                
+                <div class="summary-grid" style="margin-top: 24px;">
+                    <div class="summary-card">
+                        <h3>When to Use C</h3>
+                        <ul>
+                            <li>Embedded systems with limited resources</li>
+                            <li>Real-time inference requirements</li>
+                            <li>Learning how algorithms work internally</li>
+                            <li>Integration with existing C/C++ codebases</li>
+                            <li>Maximum performance critical applications</li>
+                        </ul>
+                    </div>
+                    <div class="summary-card">
+                        <h3>When to Use Python</h3>
+                        <ul>
+                            <li>Rapid prototyping and experimentation</li>
+                            <li>Research and data exploration</li>
+                            <li>Access to extensive ML ecosystem</li>
+                            <li>Visualisation and reporting</li>
+                            <li>Production APIs and web services</li>
+                        </ul>
+                    </div>
+                </div>
+                
+                <div style="text-align: center; margin-top: 30px; padding: 20px; background: var(--bg-tertiary); border-radius: 12px;">
+                    <p style="font-size: 1.1rem; color: var(--text-secondary);">
+                        <strong style="color: var(--accent-blue);">Key Takeaway:</strong> Understanding C implementations provides deep insight into how ML algorithms actually work, making you a better practitioner regardless of which language you use in production.
+                    </p>
+                </div>
+            </div>
+        </div>
+        
+    </div>
+    
+    <!-- Navigation -->
+    <div class="nav-container">
+        <button class="nav-btn" id="prevBtn" onclick="changeSlide(-1)">←</button>
+        <div class="slide-counter">
+            <span class="current" id="currentSlide">1</span>
+            <span>&nbsp;/&nbsp;</span>
+            <span id="totalSlides">12</span>
+        </div>
+        <button class="nav-btn" id="nextBtn" onclick="changeSlide(1)">→</button>
+    </div>
+    
+    <!-- Keyboard Hint -->
+    <div class="keyboard-hint">
+        <kbd>←</kbd> <kbd>→</kbd> or <kbd>Space</kbd> to navigate
+    </div>
+    
+    <script>
+        /* ============================================================
+         * PRESENTATION LOGIC
+         * ============================================================ */
+        
+        let currentSlide = 1;
+        const totalSlides = document.querySelectorAll('.slide').length;
+        
+        document.getElementById('totalSlides').textContent = totalSlides;
+        
+        function showSlide(n) {
+            const slides = document.querySelectorAll('.slide');
+            
+            if (n > totalSlides) currentSlide = totalSlides;
+            if (n < 1) currentSlide = 1;
+            
+            slides.forEach(slide => slide.classList.remove('active'));
+            slides[currentSlide - 1].classList.add('active');
+            
+            document.getElementById('currentSlide').textContent = currentSlide;
+            
+            // Update progress bar
+            const progress = (currentSlide / totalSlides) * 100;
+            document.getElementById('progressBar').style.width = progress + '%';
+            
+            // Update button states
+            document.getElementById('prevBtn').disabled = (currentSlide === 1);
+            document.getElementById('nextBtn').disabled = (currentSlide === totalSlides);
+            
+            // Re-highlight code blocks
+            document.querySelectorAll('pre code').forEach((block) => {
+                hljs.highlightElement(block);
+            });
+        }
+        
+        function changeSlide(direction) {
+            currentSlide += direction;
+            showSlide(currentSlide);
+        }
+        
+        // Keyboard navigation
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowRight' || e.key === ' ') {
+                e.preventDefault();
+                changeSlide(1);
+            } else if (e.key === 'ArrowLeft') {
+                e.preventDefault();
+                changeSlide(-1);
+            } else if (e.key === 'Home') {
+                e.preventDefault();
+                currentSlide = 1;
+                showSlide(currentSlide);
+            } else if (e.key === 'End') {
+                e.preventDefault();
+                currentSlide = totalSlides;
+                showSlide(currentSlide);
+            }
+        });
+        
+        // Touch support for mobile
+        let touchStartX = 0;
+        let touchEndX = 0;
+        
+        document.addEventListener('touchstart', (e) => {
+            touchStartX = e.changedTouches[0].screenX;
+        });
+        
+        document.addEventListener('touchend', (e) => {
+            touchEndX = e.changedTouches[0].screenX;
+            handleSwipe();
+        });
+        
+        function handleSwipe() {
+            const swipeThreshold = 50;
+            const diff = touchStartX - touchEndX;
+            
+            if (diff > swipeThreshold) {
+                changeSlide(1);  // Swipe left = next
+            } else if (diff < -swipeThreshold) {
+                changeSlide(-1); // Swipe right = prev
+            }
+        }
+        
+        // Initialise
+        showSlide(1);
+        hljs.highlightAll();
+    </script>
+</body>
+</html>

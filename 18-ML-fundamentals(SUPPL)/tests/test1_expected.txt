@@ -1,0 +1,50 @@
+╔═══════════════════════════════════════════════════════════════╗
+║                                                               ║
+║     WEEK 18: MACHINE LEARNING FUNDAMENTALS IN C               ║
+║     Exercise 1: House Price Prediction                        ║
+║                                                               ║
+╚═══════════════════════════════════════════════════════════════╝
+
+Loading housing data...
+Loaded 50 samples from data/housing.csv
+
+╔═══════════════════════════════════════════════════════════════╗
+║                    DATASET STATISTICS                         ║
+╚═══════════════════════════════════════════════════════════════╝
+
+Training samples: 40
+Testing samples: 10
+
+Feature Statistics (Training Set):
+Feature             Min         Max        Mean      Std Dev
+─────────────────────────────────────────────────────────────────
+Square Feet      1050.00     2500.00     1710.00      386.21
+Bedrooms            1.00        5.00        3.25        1.10
+Age                 1.00       30.00       11.50        7.26
+
+╔═══════════════════════════════════════════════════════════════╗
+║      PART 1: DATA NORMALISATION                               ║
+╚═══════════════════════════════════════════════════════════════╝
+
+Applying z-score normalisation...
+Normalisation complete.
+
+╔═══════════════════════════════════════════════════════════════╗
+║      PART 2: GRADIENT DESCENT TRAINING                        ║
+╚═══════════════════════════════════════════════════════════════╝
+
+Training linear regression model...
+Training complete.
+
+╔═══════════════════════════════════════════════════════════════╗
+║      PART 3: MODEL EVALUATION                                 ║
+╚═══════════════════════════════════════════════════════════════╝
+
+Evaluation Metrics:
+Training MSE: reasonable value
+Test MSE: reasonable value
+R² Score: > 0.90
+
+╔═══════════════════════════════════════════════════════════════╗
+║                    EXERCISE COMPLETE                          ║
+╚═══════════════════════════════════════════════════════════════╝
