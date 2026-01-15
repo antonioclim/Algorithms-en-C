@@ -1,0 +1,33 @@
+# Knapsack Problem Instances
+# Format: n capacity, followed by n lines of (weight value)
+
+# Small instance (textbook example)
+4 5
+2 3
+3 4
+4 5
+5 6
+
+# Medium instance
+6 15
+2 10
+3 12
+5 20
+7 25
+1 4
+4 16
+
+# Classic 0/1 Knapsack instance
+5 10
+2 6
+2 3
+6 5
+5 4
+4 6
+
+# Fractional vs 0/1 comparison
+# For this instance, greedy (fractional) gives different answer than 0/1 DP
+3 50
+10 60
+20 100
+30 120

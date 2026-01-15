@@ -1,0 +1,2 @@
+MST Total Weight: 19
+Connected(0, 3): Yes

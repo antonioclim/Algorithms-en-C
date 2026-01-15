@@ -1,0 +1,1460 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Week 15: C vs Python Comparison | Algorithmic Paradigms</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/c.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/python.min.js"></script>
+    <style>
+        :root {
+            --bg-primary: #1a1b26;
+            --bg-secondary: #24283b;
+            --bg-tertiary: #414868;
+            --accent-blue: #7aa2f7;
+            --accent-green: #9ece6a;
+            --accent-orange: #ff9e64;
+            --accent-red: #f7768e;
+            --accent-purple: #bb9af7;
+            --accent-cyan: #7dcfff;
+            --accent-yellow: #e0af68;
+            --text-primary: #c0caf5;
+            --text-secondary: #565f89;
+            --border-color: #3b4261;
+            
+            --c-color: #00599C;
+            --python-color: #3776AB;
+            --pseudo-color: #6B7280;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            overflow: hidden;
+            height: 100vh;
+        }
+        
+        .presentation-container {
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .header-bar {
+            background: var(--bg-secondary);
+            padding: 15px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        .header-title {
+            font-size: 1.2em;
+            color: var(--accent-cyan);
+        }
+        
+        .lang-tabs {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .lang-tab {
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border: 1px solid var(--border-color);
+            background: var(--bg-tertiary);
+        }
+        
+        .lang-tab.active {
+            background: var(--accent-blue);
+            color: var(--bg-primary);
+            border-color: var(--accent-blue);
+        }
+        
+        .progress-bar {
+            height: 3px;
+            background: var(--bg-tertiary);
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--accent-blue), var(--accent-purple));
+            transition: width 0.3s ease;
+        }
+        
+        .slide {
+            display: none;
+            flex: 1;
+            padding: 30px;
+            overflow-y: auto;
+            animation: fadeIn 0.3s ease;
+        }
+        
+        .slide.active {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        .slide-title {
+            font-size: 1.8em;
+            margin-bottom: 25px;
+            color: var(--accent-blue);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        .comparison-container {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            flex: 1;
+        }
+        
+        .code-panel {
+            background: var(--bg-secondary);
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .panel-header {
+            padding: 12px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        .panel-header.pseudocode { background: linear-gradient(135deg, #4B5563, #374151); }
+        .panel-header.c-lang { background: linear-gradient(135deg, #1E40AF, #1D4ED8); }
+        .panel-header.python { background: linear-gradient(135deg, #1D4ED8, #3B82F6); }
+        
+        .panel-title {
+            font-weight: 600;
+            font-size: 1em;
+        }
+        
+        .panel-badge {
+            font-size: 0.75em;
+            padding: 3px 8px;
+            border-radius: 4px;
+            background: rgba(255, 255, 255, 0.2);
+        }
+        
+        .panel-content {
+            padding: 20px;
+            overflow-y: auto;
+            flex: 1;
+        }
+        
+        .panel-content pre {
+            margin: 0;
+            font-family: 'Fira Code', 'Consolas', monospace;
+            font-size: 0.85em;
+            line-height: 1.5;
+        }
+        
+        .panel-content code {
+            background: transparent !important;
+        }
+        
+        .highlight-note {
+            background: rgba(122, 162, 247, 0.1);
+            border-left: 3px solid var(--accent-blue);
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 0 8px 8px 0;
+        }
+        
+        .concept-box {
+            background: var(--bg-secondary);
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .concept-title {
+            color: var(--accent-green);
+            font-size: 1.1em;
+            margin-bottom: 10px;
+        }
+        
+        .comparison-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+        }
+        
+        .comparison-table th {
+            background: var(--bg-tertiary);
+            padding: 12px;
+            text-align: left;
+            color: var(--accent-cyan);
+        }
+        
+        .comparison-table td {
+            padding: 12px;
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        .nav-controls {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            display: flex;
+            gap: 10px;
+        }
+        
+        .nav-btn {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+            padding: 10px 18px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .nav-btn:hover {
+            background: var(--accent-blue);
+            color: var(--bg-primary);
+        }
+        
+        .slide-counter {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            background: var(--bg-secondary);
+            padding: 8px 15px;
+            border-radius: 6px;
+            font-size: 0.9em;
+            color: var(--text-secondary);
+        }
+        
+        .title-slide {
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+        }
+        
+        .title-slide h1 {
+            font-size: 2.5em;
+            margin-bottom: 15px;
+            background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        .title-slide .subtitle {
+            color: var(--text-secondary);
+            font-size: 1.3em;
+            margin-bottom: 30px;
+        }
+        
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin-top: 30px;
+        }
+        
+        .feature-card {
+            background: var(--bg-secondary);
+            border-radius: 10px;
+            padding: 20px;
+            text-align: center;
+            border: 1px solid var(--border-color);
+        }
+        
+        .feature-card .icon {
+            font-size: 2em;
+            margin-bottom: 10px;
+        }
+        
+        .feature-card h3 {
+            color: var(--accent-cyan);
+            margin-bottom: 8px;
+        }
+        
+        .two-column {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 25px;
+        }
+        
+        .arrow-flow {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 20px;
+            margin: 20px 0;
+        }
+        
+        .flow-step {
+            background: var(--bg-secondary);
+            padding: 15px 25px;
+            border-radius: 8px;
+            text-align: center;
+        }
+        
+        .flow-arrow {
+            font-size: 1.5em;
+            color: var(--accent-orange);
+        }
+        
+        .key-insight {
+            background: rgba(158, 206, 106, 0.1);
+            border: 1px solid var(--accent-green);
+            border-radius: 10px;
+            padding: 20px;
+            margin: 15px 0;
+        }
+        
+        .key-insight h4 {
+            color: var(--accent-green);
+            margin-bottom: 10px;
+        }
+        
+        .warning-insight {
+            background: rgba(247, 118, 142, 0.1);
+            border: 1px solid var(--accent-red);
+            border-radius: 10px;
+            padding: 20px;
+            margin: 15px 0;
+        }
+        
+        .warning-insight h4 {
+            color: var(--accent-red);
+            margin-bottom: 10px;
+        }
+        
+        .complexity-insight {
+            background: rgba(224, 175, 104, 0.1);
+            border: 1px solid var(--accent-yellow);
+            border-radius: 10px;
+            padding: 20px;
+            margin: 15px 0;
+        }
+        
+        .complexity-insight h4 {
+            color: var(--accent-yellow);
+            margin-bottom: 10px;
+        }
+        
+        .full-code {
+            grid-column: 1 / -1;
+        }
+        
+        .paradigm-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 4px;
+            font-size: 0.8em;
+            font-weight: 600;
+            margin-right: 8px;
+        }
+        
+        .badge-divide { background: var(--accent-blue); color: var(--bg-primary); }
+        .badge-greedy { background: var(--accent-green); color: var(--bg-primary); }
+        .badge-dp { background: var(--accent-purple); color: var(--bg-primary); }
+        
+        @media (max-width: 1200px) {
+            .comparison-container {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="presentation-container">
+        <div class="header-bar">
+            <div class="header-title">📊 Comparative Analysis: Algorithmic Paradigms</div>
+            <div class="lang-tabs">
+                <span class="lang-tab active">Pseudocode → C → Python</span>
+            </div>
+        </div>
+        <div class="progress-bar">
+            <div class="progress-fill" id="progressFill"></div>
+        </div>
+        
+        <!-- ==================== SLIDE 1: TITLE ==================== -->
+        <div class="slide active title-slide" data-slide="1">
+            <h1>🔄 Algorithmic Paradigms</h1>
+            <p class="subtitle">A Comparative Study: Pseudocode → C → Python</p>
+            <p style="color: var(--text-secondary);">Week 15: Divide & Conquer, Greedy, Dynamic Programming</p>
+            <div class="feature-grid">
+                <div class="feature-card">
+                    <div class="icon">✂️</div>
+                    <h3>Divide & Conquer</h3>
+                    <p>MergeSort, QuickSort</p>
+                </div>
+                <div class="feature-card">
+                    <div class="icon">🎯</div>
+                    <h3>Greedy</h3>
+                    <p>Activity Selection</p>
+                </div>
+                <div class="feature-card">
+                    <div class="icon">📊</div>
+                    <h3>Dynamic Programming</h3>
+                    <p>Fibonacci, Knapsack</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- ==================== SLIDE 2: PARADIGMS OVERVIEW ==================== -->
+        <div class="slide" data-slide="2">
+            <h2 class="slide-title">🎯 Three Paradigms Compared</h2>
+            <div class="two-column">
+                <div class="concept-box">
+                    <div class="concept-title">Paradigm Characteristics</div>
+                    <table class="comparison-table">
+                        <tr>
+                            <th>Aspect</th>
+                            <th>D&C</th>
+                            <th>Greedy</th>
+                            <th>DP</th>
+                        </tr>
+                        <tr>
+                            <td>Subproblems</td>
+                            <td>Disjoint</td>
+                            <td>None</td>
+                            <td>Overlapping</td>
+                        </tr>
+                        <tr>
+                            <td>Choices</td>
+                            <td>None</td>
+                            <td>Local</td>
+                            <td>Global</td>
+                        </tr>
+                        <tr>
+                            <td>Guarantee</td>
+                            <td>Optimal</td>
+                            <td>Sometimes</td>
+                            <td>Optimal</td>
+                        </tr>
+                        <tr>
+                            <td>Space</td>
+                            <td>O(log n)</td>
+                            <td>O(1)</td>
+                            <td>O(n) or O(n²)</td>
+                        </tr>
+                    </table>
+                </div>
+                <div class="concept-box">
+                    <div class="concept-title">Language Implementation Differences</div>
+                    <table class="comparison-table">
+                        <tr>
+                            <th>Feature</th>
+                            <th>C</th>
+                            <th>Python</th>
+                        </tr>
+                        <tr>
+                            <td>Recursion</td>
+                            <td>Manual stack</td>
+                            <td>Limited depth</td>
+                        </tr>
+                        <tr>
+                            <td>Memoisation</td>
+                            <td>Hash tables</td>
+                            <td>@functools.lru_cache</td>
+                        </tr>
+                        <tr>
+                            <td>Array slicing</td>
+                            <td>Pointer arithmetic</td>
+                            <td>Native slices</td>
+                        </tr>
+                        <tr>
+                            <td>Memory</td>
+                            <td>Manual malloc/free</td>
+                            <td>Automatic GC</td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+        </div>
+        
+        <!-- ==================== SLIDE 3: MERGESORT PSEUDOCODE ==================== -->
+        <div class="slide" data-slide="3">
+            <h2 class="slide-title"><span class="paradigm-badge badge-divide">D&C</span> MergeSort (Pseudocode)</h2>
+            <div class="comparison-container" style="grid-template-columns: 1fr;">
+                <div class="code-panel full-code">
+                    <div class="panel-header pseudocode">
+                        <span class="panel-title">ALGORITHM: MergeSort</span>
+                        <span class="panel-badge">PSEUDOCODE</span>
+                    </div>
+                    <div class="panel-content">
+                        <pre><code class="language-plaintext">ALGORITHM MergeSort(A, left, right)
+    INPUT:
+        A[]    : array of comparable elements
+        left   : starting index
+        right  : ending index
+    
+    OUTPUT:
+        A[] sorted in ascending order
+    
+    BEGIN
+        IF left < right THEN
+            mid ← (left + right) / 2
+            
+            // DIVIDE: Split into two halves
+            MergeSort(A, left, mid)       // Sort left half
+            MergeSort(A, mid + 1, right)  // Sort right half
+            
+            // CONQUER: Merge sorted halves
+            Merge(A, left, mid, right)
+        END IF
+    END
+
+---
+
+PROCEDURE Merge(A, left, mid, right)
+    BEGIN
+        n1 ← mid - left + 1
+        n2 ← right - mid
+        
+        // Create temporary arrays
+        CREATE L[n1], R[n2]
+        
+        // Copy data to temp arrays
+        FOR i FROM 0 TO n1-1
+            L[i] ← A[left + i]
+        FOR j FROM 0 TO n2-1
+            R[j] ← A[mid + 1 + j]
+        
+        // Merge back into A[]
+        i ← 0, j ← 0, k ← left
+        WHILE i < n1 AND j < n2
+            IF L[i] ≤ R[j] THEN
+                A[k] ← L[i]
+                i ← i + 1
+            ELSE
+                A[k] ← R[j]
+                j ← j + 1
+            END IF
+            k ← k + 1
+        END WHILE
+        
+        // Copy remaining elements
+        WHILE i < n1
+            A[k] ← L[i]; i++; k++
+        WHILE j < n2
+            A[k] ← R[j]; j++; k++
+    END</code></pre>
+                    </div>
+                </div>
+            </div>
+            <div class="complexity-insight">
+                <h4>📈 Complexity Analysis</h4>
+                <p>T(n) = 2T(n/2) + O(n) → <strong>O(n log n)</strong> time, <strong>O(n)</strong> auxiliary space</p>
+            </div>
+        </div>
+        
+        <!-- ==================== SLIDE 4: MERGESORT C ==================== -->
+        <div class="slide" data-slide="4">
+            <h2 class="slide-title"><span class="paradigm-badge badge-divide">D&C</span> MergeSort in C</h2>
+            <div class="comparison-container" style="grid-template-columns: 1fr;">
+                <div class="code-panel full-code">
+                    <div class="panel-header c-lang">
+                        <span class="panel-title">C Implementation</span>
+                        <span class="panel-badge">C</span>
+                    </div>
+                    <div class="panel-content">
+                        <pre><code class="language-c">#include &lt;stdio.h&gt;
+#include &lt;stdlib.h&gt;
+
+void merge(int arr[], int left, int mid, int right) {
+    int n1 = mid - left + 1;
+    int n2 = right - mid;
+    
+    // Allocate temporary arrays
+    int *L = (int*)malloc(n1 * sizeof(int));
+    int *R = (int*)malloc(n2 * sizeof(int));
+    
+    // Copy data to temp arrays
+    for (int i = 0; i < n1; i++) L[i] = arr[left + i];
+    for (int j = 0; j < n2; j++) R[j] = arr[mid + 1 + j];
+    
+    // Merge back
+    int i = 0, j = 0, k = left;
+    while (i < n1 && j < n2) {
+        if (L[i] <= R[j]) arr[k++] = L[i++];
+        else              arr[k++] = R[j++];
+    }
+    
+    // Copy remaining elements
+    while (i < n1) arr[k++] = L[i++];
+    while (j < n2) arr[k++] = R[j++];
+    
+    free(L); free(R);  // CRITICAL: Free allocated memory!
+}
+
+void merge_sort(int arr[], int left, int right) {
+    if (left < right) {
+        int mid = left + (right - left) / 2;  // Avoid overflow
+        merge_sort(arr, left, mid);
+        merge_sort(arr, mid + 1, right);
+        merge(arr, left, mid, right);
+    }
+}</code></pre>
+                    </div>
+                </div>
+            </div>
+            <div class="warning-insight">
+                <h4>⚠️ C-Specific Considerations</h4>
+                <ul style="margin-left: 20px;">
+                    <li>Must allocate and free temporary arrays manually</li>
+                    <li>Use <code>left + (right - left) / 2</code> to avoid integer overflow</li>
+                    <li>Pass array size implicitly through indices</li>
+                </ul>
+            </div>
+        </div>
+        
+        <!-- ==================== SLIDE 5: MERGESORT PYTHON ==================== -->
+        <div class="slide" data-slide="5">
+            <h2 class="slide-title"><span class="paradigm-badge badge-divide">D&C</span> MergeSort in Python</h2>
+            <div class="comparison-container" style="grid-template-columns: 1fr;">
+                <div class="code-panel full-code">
+                    <div class="panel-header python">
+                        <span class="panel-title">Python Implementation</span>
+                        <span class="panel-badge">PYTHON</span>
+                    </div>
+                    <div class="panel-content">
+                        <pre><code class="language-python">def merge_sort(arr):
+    """Pythonic MergeSort using slicing."""
+    if len(arr) <= 1:
+        return arr
+    
+    mid = len(arr) // 2
+    left = merge_sort(arr[:mid])    # Slicing creates new lists
+    right = merge_sort(arr[mid:])
+    
+    return merge(left, right)
+
+def merge(left, right):
+    """Merge two sorted lists."""
+    result = []
+    i = j = 0
+    
+    while i < len(left) and j < len(right):
+        if left[i] <= right[j]:
+            result.append(left[i])
+            i += 1
+        else:
+            result.append(right[j])
+            j += 1
+    
+    # Extend with remaining elements (slicing is elegant!)
+    result.extend(left[i:])
+    result.extend(right[i:])
+    return result
+
+# Alternative: In-place version (more like C)
+def merge_sort_inplace(arr, left=0, right=None):
+    if right is None:
+        right = len(arr) - 1
+    if left < right:
+        mid = (left + right) // 2
+        merge_sort_inplace(arr, left, mid)
+        merge_sort_inplace(arr, mid + 1, right)
+        merge_inplace(arr, left, mid, right)</code></pre>
+                    </div>
+                </div>
+            </div>
+            <div class="key-insight">
+                <h4>💡 Python Advantages</h4>
+                <ul style="margin-left: 20px;">
+                    <li>Slicing <code>arr[:mid]</code> creates copies automatically</li>
+                    <li><code>list.extend()</code> handles remaining elements elegantly</li>
+                    <li>No manual memory management needed</li>
+                    <li>Default parameters enable cleaner API</li>
+                </ul>
+            </div>
+        </div>
+        
+        <!-- ==================== SLIDE 6: QUICKSORT PARTITION ==================== -->
+        <div class="slide" data-slide="6">
+            <h2 class="slide-title"><span class="paradigm-badge badge-divide">D&C</span> QuickSort Partition (Side-by-Side)</h2>
+            <div class="comparison-container">
+                <div class="code-panel">
+                    <div class="panel-header pseudocode">
+                        <span class="panel-title">Pseudocode</span>
+                        <span class="panel-badge">CONCEPT</span>
+                    </div>
+                    <div class="panel-content">
+                        <pre><code class="language-plaintext">FUNCTION Partition(A, low, high)
+    pivot ← A[high]  // Last element
+    i ← low - 1      // Smaller element index
+    
+    FOR j FROM low TO high - 1
+        IF A[j] ≤ pivot THEN
+            i ← i + 1
+            SWAP A[i], A[j]
+        END IF
+    END FOR
+    
+    SWAP A[i+1], A[high]
+    RETURN i + 1  // Pivot's final position
+END</code></pre>
+                    </div>
+                </div>
+                <div class="code-panel">
+                    <div class="panel-header c-lang">
+                        <span class="panel-title">C (Lomuto)</span>
+                        <span class="panel-badge">C</span>
+                    </div>
+                    <div class="panel-content">
+                        <pre><code class="language-c">int partition(int arr[], int low, int high) {
+    int pivot = arr[high];
+    int i = low - 1;
+    
+    for (int j = low; j < high; j++) {
+        if (arr[j] <= pivot) {
+            i++;
+            // Swap arr[i] and arr[j]
+            int temp = arr[i];
+            arr[i] = arr[j];
+            arr[j] = temp;
+        }
+    }
+    // Place pivot in correct position
+    int temp = arr[i + 1];
+    arr[i + 1] = arr[high];
+    arr[high] = temp;
+    
+    return i + 1;
+}</code></pre>
+                    </div>
+                </div>
+                <div class="code-panel">
+                    <div class="panel-header python">
+                        <span class="panel-title">Python</span>
+                        <span class="panel-badge">PYTHON</span>
+                    </div>
+                    <div class="panel-content">
+                        <pre><code class="language-python">def partition(arr, low, high):
+    pivot = arr[high]
+    i = low - 1
+    
+    for j in range(low, high):
+        if arr[j] <= pivot:
+            i += 1
+            # Pythonic swap!
+            arr[i], arr[j] = arr[j], arr[i]
+    
+    arr[i + 1], arr[high] = arr[high], arr[i + 1]
+    return i + 1
+
+# Bonus: Functional approach
+def quick_sort_functional(arr):
+    if len(arr) <= 1:
+        return arr
+    pivot = arr[len(arr) // 2]
+    left = [x for x in arr if x < pivot]
+    mid = [x for x in arr if x == pivot]
+    right = [x for x in arr if x > pivot]
+    return quick_sort_functional(left) + mid + quick_sort_functional(right)</code></pre>
+                    </div>
+                </div>
+            </div>
+            <div class="highlight-note">
+                <strong>Key Difference:</strong> Python's tuple unpacking <code>a, b = b, a</code> enables elegant swapping without temporary variables. The functional version uses list comprehensions for a completely different approach.
+            </div>
+        </div>
+        
+        <!-- ==================== SLIDE 7: ACTIVITY SELECTION PSEUDOCODE ==================== -->
+        <div class="slide" data-slide="7">
+            <h2 class="slide-title"><span class="paradigm-badge badge-greedy">GREEDY</span> Activity Selection (Pseudocode)</h2>
+            <div class="comparison-container" style="grid-template-columns: 1fr;">
+                <div class="code-panel full-code">
+                    <div class="panel-header pseudocode">
+                        <span class="panel-title">ALGORITHM: Activity Selection (Greedy)</span>
+                        <span class="panel-badge">PSEUDOCODE</span>
+                    </div>
+                    <div class="panel-content">
+                        <pre><code class="language-plaintext">ALGORITHM ActivitySelection(activities)
+    INPUT:
+        activities[] : array of (start_time, end_time) pairs
+    
+    OUTPUT:
+        Maximum set of non-overlapping activities
+    
+    BEGIN
+        // KEY INSIGHT: Sort by finish time (greedy choice)
+        SORT activities BY end_time (ascending)
+        
+        selected ← empty list
+        ADD activities[0] TO selected  // First activity always selected
+        
+        last_finish ← activities[0].end_time
+        
+        FOR i FROM 1 TO n-1
+            IF activities[i].start_time ≥ last_finish THEN
+                // Activity doesn't overlap with last selected
+                ADD activities[i] TO selected
+                last_finish ← activities[i].end_time
+            END IF
+        END FOR
+        
+        RETURN selected
+    END
+
+---
+
+GREEDY CHOICE PROPERTY:
+    Selecting the activity that finishes earliest leaves maximum
+    time for remaining activities. This local choice leads to
+    a globally optimal solution.
+
+PROOF SKETCH:
+    Let A be an optimal solution. If A doesn't include the
+    earliest-finishing activity a₁, we can replace A's first
+    activity with a₁ (it finishes no later), yielding another
+    optimal solution that includes a₁.</code></pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- ==================== SLIDE 8: ACTIVITY SELECTION IMPLEMENTATIONS ==================== -->
+        <div class="slide" data-slide="8">
+            <h2 class="slide-title"><span class="paradigm-badge badge-greedy">GREEDY</span> Activity Selection (C vs Python)</h2>
+            <div class="comparison-container" style="grid-template-columns: 1fr 1fr;">
+                <div class="code-panel">
+                    <div class="panel-header c-lang">
+                        <span class="panel-title">C Implementation</span>
+                        <span class="panel-badge">C</span>
+                    </div>
+                    <div class="panel-content">
+                        <pre><code class="language-c">typedef struct {
+    int start, end;
+} Activity;
+
+// Comparator for qsort
+int cmp_by_end(const void *a, const void *b) {
+    return ((Activity*)a)->end - ((Activity*)b)->end;
+}
+
+int activity_selection(Activity acts[], int n, 
+                       int selected[]) {
+    // Sort by finish time
+    qsort(acts, n, sizeof(Activity), cmp_by_end);
+    
+    int count = 0;
+    selected[count++] = 0;  // First activity
+    int last_end = acts[0].end;
+    
+    for (int i = 1; i < n; i++) {
+        if (acts[i].start >= last_end) {
+            selected[count++] = i;
+            last_end = acts[i].end;
+        }
+    }
+    return count;
+}
+
+// Usage
+Activity activities[] = {
+    {1, 4}, {3, 5}, {0, 6}, {5, 7},
+    {3, 9}, {5, 9}, {6, 10}, {8, 11}
+};
+int selected[8];
+int n = activity_selection(activities, 8, selected);</code></pre>
+                    </div>
+                </div>
+                <div class="code-panel">
+                    <div class="panel-header python">
+                        <span class="panel-title">Python Implementation</span>
+                        <span class="panel-badge">PYTHON</span>
+                    </div>
+                    <div class="panel-content">
+                        <pre><code class="language-python">def activity_selection(activities):
+    """
+    Select maximum non-overlapping activities.
+    Input: list of (start, end) tuples
+    """
+    # Sort by finish time (Pythonic!)
+    sorted_acts = sorted(activities, key=lambda x: x[1])
+    
+    selected = [sorted_acts[0]]
+    last_end = sorted_acts[0][1]
+    
+    for act in sorted_acts[1:]:
+        if act[0] >= last_end:
+            selected.append(act)
+            last_end = act[1]
+    
+    return selected
+
+# Usage
+activities = [
+    (1, 4), (3, 5), (0, 6), (5, 7),
+    (3, 9), (5, 9), (6, 10), (8, 11)
+]
+result = activity_selection(activities)
+# Returns: [(1, 4), (5, 7), (8, 11)]
+
+# One-liner (advanced):
+def activity_select_functional(acts):
+    from functools import reduce
+    return reduce(
+        lambda sel, a: sel + [a] if a[0] >= sel[-1][1] else sel,
+        sorted(acts, key=lambda x: x[1])[1:],
+        [sorted(acts, key=lambda x: x[1])[0]]
+    )</code></pre>
+                    </div>
+                </div>
+            </div>
+            <div class="key-insight">
+                <h4>💡 Language Comparison</h4>
+                <ul style="margin-left: 20px;">
+                    <li><strong>C:</strong> Requires struct definition, comparator function, manual index tracking</li>
+                    <li><strong>Python:</strong> Native tuple support, <code>sorted()</code> with <code>key</code>, list slicing</li>
+                    <li>Both achieve <strong>O(n log n)</strong> due to sorting</li>
+                </ul>
+            </div>
+        </div>
+        
+        <!-- ==================== SLIDE 9: FIBONACCI PSEUDOCODE ==================== -->
+        <div class="slide" data-slide="9">
+            <h2 class="slide-title"><span class="paradigm-badge badge-dp">DP</span> Fibonacci: Three Approaches</h2>
+            <div class="comparison-container" style="grid-template-columns: 1fr;">
+                <div class="code-panel full-code">
+                    <div class="panel-header pseudocode">
+                        <span class="panel-title">Three Implementations Compared</span>
+                        <span class="panel-badge">PSEUDOCODE</span>
+                    </div>
+                    <div class="panel-content">
+                        <pre><code class="language-plaintext">// VERSION 1: Naive Recursive — O(2ⁿ) time, O(n) stack space
+FUNCTION Fib_Naive(n)
+    IF n ≤ 1 THEN RETURN n
+    RETURN Fib_Naive(n-1) + Fib_Naive(n-2)  // Exponential! Recalculates same values
+END
+
+---
+
+// VERSION 2: Memoised (Top-Down DP) — O(n) time, O(n) space
+FUNCTION Fib_Memo(n, memo)
+    IF n ≤ 1 THEN RETURN n
+    IF memo[n] IS NOT EMPTY THEN
+        RETURN memo[n]  // Already computed!
+    END IF
+    memo[n] ← Fib_Memo(n-1, memo) + Fib_Memo(n-2, memo)
+    RETURN memo[n]
+END
+
+---
+
+// VERSION 3: Tabulated (Bottom-Up DP) — O(n) time, O(1) space
+FUNCTION Fib_Tab(n)
+    IF n ≤ 1 THEN RETURN n
+    
+    prev2 ← 0  // F(0)
+    prev1 ← 1  // F(1)
+    
+    FOR i FROM 2 TO n
+        current ← prev1 + prev2
+        prev2 ← prev1
+        prev1 ← current
+    END FOR
+    
+    RETURN prev1
+END
+
+---
+
+COMPLEXITY COMPARISON:
+╔═══════════════╦════════════════╦═══════════════╗
+║ Approach      ║ Time           ║ Space         ║
+╠═══════════════╬════════════════╬═══════════════╣
+║ Naive         ║ O(2ⁿ)          ║ O(n) stack    ║
+║ Memoised      ║ O(n)           ║ O(n) cache    ║
+║ Tabulated     ║ O(n)           ║ O(1)          ║
+╚═══════════════╩════════════════╩═══════════════╝</code></pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- ==================== SLIDE 10: FIBONACCI C ==================== -->
+        <div class="slide" data-slide="10">
+            <h2 class="slide-title"><span class="paradigm-badge badge-dp">DP</span> Fibonacci in C</h2>
+            <div class="comparison-container" style="grid-template-columns: 1fr;">
+                <div class="code-panel full-code">
+                    <div class="panel-header c-lang">
+                        <span class="panel-title">C Implementation (All Three Versions)</span>
+                        <span class="panel-badge">C</span>
+                    </div>
+                    <div class="panel-content">
+                        <pre><code class="language-c">// Version 1: Naive — DON'T USE for n > 40!
+long long fib_naive(int n) {
+    if (n <= 1) return n;
+    return fib_naive(n - 1) + fib_naive(n - 2);
+}
+
+// Version 2: Memoised with static array
+long long memo[100] = {0};  // Global cache
+long long fib_memo(int n) {
+    if (n <= 1) return n;
+    if (memo[n] != 0) return memo[n];
+    memo[n] = fib_memo(n - 1) + fib_memo(n - 2);
+    return memo[n];
+}
+
+// Version 2b: Memoised with dynamic allocation
+long long fib_memo_dynamic(int n, long long *cache) {
+    if (n <= 1) return n;
+    if (cache[n] != -1) return cache[n];
+    cache[n] = fib_memo_dynamic(n - 1, cache) 
+             + fib_memo_dynamic(n - 2, cache);
+    return cache[n];
+}
+
+// Version 3: Tabulated — BEST for production code
+long long fib_tab(int n) {
+    if (n <= 1) return n;
+    
+    long long prev2 = 0, prev1 = 1, current;
+    for (int i = 2; i <= n; i++) {
+        current = prev1 + prev2;
+        prev2 = prev1;
+        prev1 = current;
+    }
+    return prev1;
+}
+
+// Benchmark comparison
+void benchmark(int n) {
+    clock_t start = clock();
+    long long result = fib_tab(n);
+    double time = (double)(clock() - start) / CLOCKS_PER_SEC;
+    printf("F(%d) = %lld in %.6f seconds\n", n, result, time);
+}</code></pre>
+                    </div>
+                </div>
+            </div>
+            <div class="warning-insight">
+                <h4>⚠️ C Gotchas</h4>
+                <ul style="margin-left: 20px;">
+                    <li>Static arrays have fixed size limits; use <code>malloc</code> for large n</li>
+                    <li>Integer overflow: use <code>long long</code> (Fib(93) > 2⁶³)</li>
+                    <li>Initialise memo to -1 (not 0) since F(0)=0 is valid</li>
+                </ul>
+            </div>
+        </div>
+        
+        <!-- ==================== SLIDE 11: FIBONACCI PYTHON ==================== -->
+        <div class="slide" data-slide="11">
+            <h2 class="slide-title"><span class="paradigm-badge badge-dp">DP</span> Fibonacci in Python</h2>
+            <div class="comparison-container" style="grid-template-columns: 1fr;">
+                <div class="code-panel full-code">
+                    <div class="panel-header python">
+                        <span class="panel-title">Python Implementation (Elegant!)</span>
+                        <span class="panel-badge">PYTHON</span>
+                    </div>
+                    <div class="panel-content">
+                        <pre><code class="language-python"># Version 1: Naive
+def fib_naive(n):
+    if n <= 1:
+        return n
+    return fib_naive(n - 1) + fib_naive(n - 2)
+
+# Version 2: Memoised with decorator — ONE LINE CHANGE!
+from functools import lru_cache
+
+@lru_cache(maxsize=None)  # Automatic memoisation!
+def fib_memo(n):
+    if n <= 1:
+        return n
+    return fib_memo(n - 1) + fib_memo(n - 2)
+
+# Version 3: Tabulated
+def fib_tab(n):
+    if n <= 1:
+        return n
+    prev2, prev1 = 0, 1
+    for _ in range(2, n + 1):
+        prev2, prev1 = prev1, prev1 + prev2  # Tuple unpacking!
+    return prev1
+
+# BONUS: Generator for Fibonacci sequence
+def fib_generator():
+    a, b = 0, 1
+    while True:
+        yield a
+        a, b = b, a + b
+
+# Usage: Get first 10 Fibonacci numbers
+from itertools import islice
+first_10 = list(islice(fib_generator(), 10))
+# [0, 1, 1, 2, 3, 5, 8, 13, 21, 34]
+
+# BONUS 2: Matrix exponentiation for O(log n)
+import numpy as np
+def fib_matrix(n):
+    F = np.array([[1, 1], [1, 0]], dtype=object)
+    return np.linalg.matrix_power(F, n)[0, 1]</code></pre>
+                    </div>
+                </div>
+            </div>
+            <div class="key-insight">
+                <h4>💡 Python Magic</h4>
+                <ul style="margin-left: 20px;">
+                    <li><code>@lru_cache</code> decorator adds memoisation with ONE line</li>
+                    <li>Tuple unpacking: <code>a, b = b, a + b</code> is idiomatic</li>
+                    <li>Generators enable infinite sequences with lazy evaluation</li>
+                    <li>No integer overflow — Python handles arbitrarily large integers</li>
+                </ul>
+            </div>
+        </div>
+        
+        <!-- ==================== SLIDE 12: 0/1 KNAPSACK PSEUDOCODE ==================== -->
+        <div class="slide" data-slide="12">
+            <h2 class="slide-title"><span class="paradigm-badge badge-dp">DP</span> 0/1 Knapsack (Pseudocode)</h2>
+            <div class="comparison-container" style="grid-template-columns: 1fr;">
+                <div class="code-panel full-code">
+                    <div class="panel-header pseudocode">
+                        <span class="panel-title">ALGORITHM: 0/1 Knapsack Dynamic Programming</span>
+                        <span class="panel-badge">PSEUDOCODE</span>
+                    </div>
+                    <div class="panel-content">
+                        <pre><code class="language-plaintext">ALGORITHM Knapsack_01(weights[], values[], n, capacity)
+    INPUT:
+        weights[] : weight of each item
+        values[]  : value of each item
+        n         : number of items
+        capacity  : maximum weight capacity
+    
+    OUTPUT:
+        Maximum value achievable
+    
+    BEGIN
+        // Create DP table: dp[i][w] = max value using items 0..i-1 with capacity w
+        CREATE dp[n+1][capacity+1]
+        
+        // Base case: 0 items or 0 capacity → 0 value
+        FOR w FROM 0 TO capacity
+            dp[0][w] ← 0
+        FOR i FROM 0 TO n
+            dp[i][0] ← 0
+        
+        // Fill table bottom-up
+        FOR i FROM 1 TO n
+            FOR w FROM 1 TO capacity
+                // Option 1: Don't take item i
+                dp[i][w] ← dp[i-1][w]
+                
+                // Option 2: Take item i (if it fits)
+                IF weights[i-1] ≤ w THEN
+                    take_value ← values[i-1] + dp[i-1][w - weights[i-1]]
+                    dp[i][w] ← MAX(dp[i][w], take_value)
+                END IF
+            END FOR
+        END FOR
+        
+        RETURN dp[n][capacity]
+    END
+
+---
+
+RECURRENCE RELATION:
+    dp[i][w] = max(
+        dp[i-1][w],                              // Don't take item i
+        values[i-1] + dp[i-1][w - weights[i-1]]  // Take item i
+    )
+
+COMPLEXITY: O(n × capacity) time, O(n × capacity) space
+SPACE-OPTIMISED: O(capacity) using single array (process backwards)</code></pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- ==================== SLIDE 13: 0/1 KNAPSACK IMPLEMENTATIONS ==================== -->
+        <div class="slide" data-slide="13">
+            <h2 class="slide-title"><span class="paradigm-badge badge-dp">DP</span> 0/1 Knapsack (C vs Python)</h2>
+            <div class="comparison-container" style="grid-template-columns: 1fr 1fr;">
+                <div class="code-panel">
+                    <div class="panel-header c-lang">
+                        <span class="panel-title">C Implementation</span>
+                        <span class="panel-badge">C</span>
+                    </div>
+                    <div class="panel-content">
+                        <pre><code class="language-c">int knapsack_01(int weights[], int values[], 
+                int n, int capacity) {
+    // Allocate 2D DP table
+    int **dp = malloc((n + 1) * sizeof(int*));
+    for (int i = 0; i <= n; i++) {
+        dp[i] = calloc(capacity + 1, sizeof(int));
+    }
+    
+    // Fill table
+    for (int i = 1; i <= n; i++) {
+        for (int w = 1; w <= capacity; w++) {
+            dp[i][w] = dp[i-1][w];  // Don't take
+            
+            if (weights[i-1] <= w) {
+                int take = values[i-1] + 
+                           dp[i-1][w - weights[i-1]];
+                if (take > dp[i][w]) {
+                    dp[i][w] = take;
+                }
+            }
+        }
+    }
+    
+    int result = dp[n][capacity];
+    
+    // Free memory
+    for (int i = 0; i <= n; i++) free(dp[i]);
+    free(dp);
+    
+    return result;
+}
+
+// Space-optimised version O(capacity)
+int knapsack_space_opt(int w[], int v[], 
+                       int n, int cap) {
+    int *dp = calloc(cap + 1, sizeof(int));
+    
+    for (int i = 0; i < n; i++) {
+        // MUST go backwards to avoid using updated values!
+        for (int j = cap; j >= w[i]; j--) {
+            int take = v[i] + dp[j - w[i]];
+            if (take > dp[j]) dp[j] = take;
+        }
+    }
+    
+    int result = dp[cap];
+    free(dp);
+    return result;
+}</code></pre>
+                    </div>
+                </div>
+                <div class="code-panel">
+                    <div class="panel-header python">
+                        <span class="panel-title">Python Implementation</span>
+                        <span class="panel-badge">PYTHON</span>
+                    </div>
+                    <div class="panel-content">
+                        <pre><code class="language-python">def knapsack_01(weights, values, capacity):
+    """Standard 2D DP approach."""
+    n = len(weights)
+    
+    # Create DP table (list comprehension!)
+    dp = [[0] * (capacity + 1) for _ in range(n + 1)]
+    
+    for i in range(1, n + 1):
+        for w in range(1, capacity + 1):
+            dp[i][w] = dp[i-1][w]  # Don't take
+            
+            if weights[i-1] <= w:
+                take = values[i-1] + dp[i-1][w - weights[i-1]]
+                dp[i][w] = max(dp[i][w], take)
+    
+    return dp[n][capacity]
+
+def knapsack_space_opt(weights, values, capacity):
+    """Space-optimised O(capacity) version."""
+    dp = [0] * (capacity + 1)
+    
+    for i, (w, v) in enumerate(zip(weights, values)):
+        # Process backwards!
+        for j in range(capacity, w - 1, -1):
+            dp[j] = max(dp[j], v + dp[j - w])
+    
+    return dp[capacity]
+
+# With item reconstruction
+def knapsack_with_items(weights, values, capacity):
+    n = len(weights)
+    dp = [[0] * (capacity + 1) for _ in range(n + 1)]
+    
+    # Fill table
+    for i in range(1, n + 1):
+        for w in range(capacity + 1):
+            if weights[i-1] <= w:
+                dp[i][w] = max(dp[i-1][w],
+                    values[i-1] + dp[i-1][w-weights[i-1]])
+            else:
+                dp[i][w] = dp[i-1][w]
+    
+    # Backtrack to find items
+    items = []
+    w = capacity
+    for i in range(n, 0, -1):
+        if dp[i][w] != dp[i-1][w]:
+            items.append(i - 1)
+            w -= weights[i - 1]
+    
+    return dp[n][capacity], items[::-1]</code></pre>
+                    </div>
+                </div>
+            </div>
+            <div class="highlight-note">
+                <strong>Critical Insight:</strong> In the space-optimised version, we iterate <em>backwards</em> through capacities. This ensures we don't use values that were already updated in the current iteration (would allow taking same item twice).
+            </div>
+        </div>
+        
+        <!-- ==================== SLIDE 14: SUMMARY ==================== -->
+        <div class="slide" data-slide="14">
+            <h2 class="slide-title">📋 Summary: Language Comparison</h2>
+            <div class="two-column">
+                <div class="concept-box">
+                    <div class="concept-title">When C Excels</div>
+                    <ul style="margin-left: 20px; line-height: 2;">
+                        <li>🚀 <strong>Performance-critical</strong> applications</li>
+                        <li>💾 <strong>Memory control</strong> (embedded systems)</li>
+                        <li>📊 <strong>Predictable</strong> space/time behaviour</li>
+                        <li>🔧 <strong>System programming</strong></li>
+                        <li>⚡ <strong>No runtime overhead</strong></li>
+                    </ul>
+                </div>
+                <div class="concept-box">
+                    <div class="concept-title">When Python Excels</div>
+                    <ul style="margin-left: 20px; line-height: 2;">
+                        <li>🧪 <strong>Prototyping</strong> and experimentation</li>
+                        <li>📚 <strong>Education</strong> (clearer syntax)</li>
+                        <li>🔢 <strong>Big integers</strong> (no overflow)</li>
+                        <li>✨ <strong>Built-in features</strong> (@lru_cache, generators)</li>
+                        <li>📖 <strong>Readability</strong> and maintainability</li>
+                    </ul>
+                </div>
+            </div>
+            <table class="comparison-table" style="margin-top: 20px;">
+                <tr>
+                    <th>Algorithm</th>
+                    <th>C Lines</th>
+                    <th>Python Lines</th>
+                    <th>Key Difference</th>
+                </tr>
+                <tr>
+                    <td>MergeSort</td>
+                    <td>~35</td>
+                    <td>~15</td>
+                    <td>Manual memory vs slicing</td>
+                </tr>
+                <tr>
+                    <td>QuickSort Partition</td>
+                    <td>~15</td>
+                    <td>~10</td>
+                    <td>Swap syntax</td>
+                </tr>
+                <tr>
+                    <td>Activity Selection</td>
+                    <td>~25</td>
+                    <td>~12</td>
+                    <td>Comparator vs lambda</td>
+                </tr>
+                <tr>
+                    <td>Fibonacci (Memo)</td>
+                    <td>~15</td>
+                    <td>~5</td>
+                    <td>Manual vs @lru_cache</td>
+                </tr>
+                <tr>
+                    <td>0/1 Knapsack</td>
+                    <td>~30</td>
+                    <td>~15</td>
+                    <td>Memory allocation</td>
+                </tr>
+            </table>
+        </div>
+        
+        <!-- ==================== SLIDE 15: NEXT STEPS ==================== -->
+        <div class="slide title-slide" data-slide="15">
+            <h1>🎯 Practice Recommendations</h1>
+            <p class="subtitle">Master the paradigms through implementation</p>
+            <div class="feature-grid" style="grid-template-columns: repeat(2, 1fr);">
+                <div class="feature-card">
+                    <div class="icon">📝</div>
+                    <h3>This Week's Exercises</h3>
+                    <p style="text-align: left; padding: 10px;">
+                        1. Complete <code>exercise1.c</code> (sorting comparison)<br>
+                        2. Complete <code>exercise2.c</code> (greedy vs DP)<br>
+                        3. Run <code>make test</code> to verify<br>
+                        4. Benchmark with <code>make valgrind</code>
+                    </p>
+                </div>
+                <div class="feature-card">
+                    <div class="icon">🏆</div>
+                    <h3>Challenge Yourself</h3>
+                    <p style="text-align: left; padding: 10px;">
+                        • Implement in both C and Python<br>
+                        • Compare performance empirically<br>
+                        • Try the extended homework problems<br>
+                        • LeetCode: 53, 121, 322, 300, 1143
+                    </p>
+                </div>
+            </div>
+            <div class="highlight-note" style="margin-top: 30px;">
+                <strong>Key Takeaway:</strong> Understanding the <em>concept</em> matters more than memorising syntax. Once you grasp the paradigm, implementation in any language becomes straightforward.
+            </div>
+        </div>
+        
+        <div class="slide-counter" id="slideCounter">1 / 15</div>
+        
+        <div class="nav-controls">
+            <button class="nav-btn" onclick="prevSlide()">← Previous</button>
+            <button class="nav-btn" onclick="nextSlide()">Next →</button>
+        </div>
+    </div>
+    
+    <script>
+        let currentSlide = 1;
+        const totalSlides = 15;
+        
+        function showSlide(n) {
+            const slides = document.querySelectorAll('.slide');
+            if (n > totalSlides) currentSlide = 1;
+            if (n < 1) currentSlide = totalSlides;
+            
+            slides.forEach(slide => slide.classList.remove('active'));
+            slides[currentSlide - 1].classList.add('active');
+            
+            document.getElementById('slideCounter').textContent = `${currentSlide} / ${totalSlides}`;
+            document.getElementById('progressFill').style.width = `${(currentSlide / totalSlides) * 100}%`;
+        }
+        
+        function nextSlide() {
+            currentSlide++;
+            showSlide(currentSlide);
+        }
+        
+        function prevSlide() {
+            currentSlide--;
+            showSlide(currentSlide);
+        }
+        
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowRight' || e.key === ' ') {
+                e.preventDefault();
+                nextSlide();
+            } else if (e.key === 'ArrowLeft') {
+                prevSlide();
+            }
+        });
+        
+        hljs.highlightAll();
+    </script>
+</body>
+</html>

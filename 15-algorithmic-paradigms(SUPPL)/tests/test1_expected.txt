@@ -1,0 +1,33 @@
+╔═══════════════════════════════════════════════════════════════╗
+║     EXERCISE 1: Sorting Algorithm Comparison                 ║
+╚═══════════════════════════════════════════════════════════════╝
+
+Enter array size: Enter 7 integers: 
+Original: 64 34 25 12 22 11 90 
+
+─────────────────────────────────────────────────────────────
+MergeSort:
+  Sorted: 11 12 22 25 34 64 90 
+  Comparisons: 13, Swaps: 0, Time: 0.000 ms
+
+─────────────────────────────────────────────────────────────
+QuickSort (last element pivot):
+  Sorted: 11 12 22 25 34 64 90 
+  Comparisons: 14, Swaps: 8, Time: 0.000 ms
+
+─────────────────────────────────────────────────────────────
+QuickSort (median-of-three pivot):
+  Sorted: 11 12 22 25 34 64 90 
+  Comparisons: 17, Swaps: 11, Time: 0.000 ms
+
+─────────────────────────────────────────────────────────────
+QuickSort (random pivot):
+  Sorted: 11 12 22 25 34 64 90 
+  Comparisons: 15, Swaps: 9, Time: 0.000 ms
+
+─────────────────────────────────────────────────────────────
+ShellSort (Hibbard gaps):
+  Sorted: 11 12 22 25 34 64 90 
+  Comparisons: 18, Swaps: 9, Time: 0.000 ms
+
+═════════════════════════════════════════════════════════════

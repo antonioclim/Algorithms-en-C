@@ -1,0 +1,2476 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Week 16: Advanced Graph Algorithms & Backtracking | ATP Course</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/c.min.js"></script>
+    <style>
+        :root {
+            --bg-primary: #0d1117;
+            --bg-secondary: #161b22;
+            --bg-tertiary: #21262d;
+            --accent-blue: #58a6ff;
+            --accent-green: #3fb950;
+            --accent-orange: #d29922;
+            --accent-red: #f85149;
+            --accent-purple: #a371f7;
+            --accent-cyan: #39c5cf;
+            --text-primary: #e6edf3;
+            --text-secondary: #8b949e;
+            --border-color: #30363d;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            overflow: hidden;
+            height: 100vh;
+        }
+        
+        .presentation-container {
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .progress-bar {
+            height: 4px;
+            background: var(--bg-tertiary);
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--accent-blue), var(--accent-purple));
+            transition: width 0.3s ease;
+        }
+        
+        .slide {
+            display: none;
+            flex: 1;
+            padding: 40px 60px;
+            overflow-y: auto;
+            animation: fadeIn 0.4s ease;
+        }
+        
+        .slide.active {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .slide-title {
+            font-size: 2.2em;
+            margin-bottom: 30px;
+            color: var(--accent-blue);
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .slide-title .emoji {
+            font-size: 1.2em;
+        }
+        
+        .slide-subtitle {
+            font-size: 1.3em;
+            color: var(--accent-orange);
+            margin-bottom: 20px;
+        }
+        
+        .content-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            flex: 1;
+        }
+        
+        .content-grid-3 {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 20px;
+            flex: 1;
+        }
+        
+        .content-box {
+            background: var(--bg-secondary);
+            border-radius: 12px;
+            padding: 25px;
+            border: 1px solid var(--border-color);
+        }
+        
+        .content-box h3 {
+            color: var(--accent-green);
+            margin-bottom: 15px;
+            font-size: 1.2em;
+        }
+        
+        .content-box ul {
+            list-style: none;
+        }
+        
+        .content-box li {
+            padding: 8px 0;
+            padding-left: 25px;
+            position: relative;
+            color: var(--text-secondary);
+        }
+        
+        .content-box li::before {
+            content: "→";
+            position: absolute;
+            left: 0;
+            color: var(--accent-blue);
+        }
+        
+        .code-block {
+            background: #1e1e1e;
+            border-radius: 10px;
+            overflow: hidden;
+            margin: 15px 0;
+        }
+        
+        .code-header {
+            background: var(--bg-tertiary);
+            padding: 10px 15px;
+            font-size: 0.85em;
+            color: var(--text-secondary);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .code-header .lang-badge {
+            background: var(--accent-blue);
+            color: var(--bg-primary);
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 0.85em;
+        }
+        
+        .code-content {
+            padding: 15px;
+            overflow-x: auto;
+        }
+        
+        .code-content pre {
+            margin: 0;
+            font-family: 'Fira Code', 'Consolas', monospace;
+            font-size: 0.9em;
+            line-height: 1.5;
+        }
+        
+        .highlight-box {
+            background: rgba(88, 166, 255, 0.1);
+            border-left: 4px solid var(--accent-blue);
+            padding: 15px 20px;
+            border-radius: 0 10px 10px 0;
+            margin: 20px 0;
+        }
+        
+        .warning-box {
+            background: rgba(210, 153, 34, 0.1);
+            border-left: 4px solid var(--accent-orange);
+            padding: 15px 20px;
+            border-radius: 0 10px 10px 0;
+            margin: 20px 0;
+        }
+        
+        .success-box {
+            background: rgba(63, 185, 80, 0.1);
+            border-left: 4px solid var(--accent-green);
+            padding: 15px 20px;
+            border-radius: 0 10px 10px 0;
+            margin: 20px 0;
+        }
+        
+        .quote-box {
+            background: var(--bg-secondary);
+            border-left: 4px solid var(--accent-purple);
+            padding: 20px 25px;
+            border-radius: 0 10px 10px 0;
+            margin: 20px 0;
+            font-style: italic;
+        }
+        
+        .quote-author {
+            text-align: right;
+            color: var(--text-secondary);
+            margin-top: 10px;
+            font-style: normal;
+        }
+        
+        .graph-diagram {
+            display: flex;
+            gap: 10px;
+            margin: 20px 0;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        
+        .graph-node {
+            width: 50px;
+            height: 50px;
+            background: var(--bg-tertiary);
+            border: 3px solid var(--accent-blue);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 1.2em;
+            transition: all 0.3s ease;
+        }
+        
+        .graph-node:hover {
+            transform: scale(1.1);
+            border-color: var(--accent-green);
+        }
+        
+        .graph-node.active {
+            background: var(--accent-green);
+            color: var(--bg-primary);
+        }
+        
+        .graph-node.visited {
+            background: var(--accent-purple);
+            border-color: var(--accent-purple);
+        }
+        
+        .complexity-card {
+            background: var(--bg-secondary);
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+            border: 1px solid var(--border-color);
+        }
+        
+        .complexity-card .big-o {
+            font-size: 2em;
+            color: var(--accent-green);
+            font-family: 'Fira Code', monospace;
+        }
+        
+        .complexity-card .label {
+            color: var(--text-secondary);
+            margin-top: 10px;
+        }
+        
+        .comparison-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+        
+        .comparison-table th {
+            background: var(--bg-tertiary);
+            padding: 15px;
+            text-align: left;
+            color: var(--accent-blue);
+            border-bottom: 2px solid var(--accent-blue);
+        }
+        
+        .comparison-table td {
+            padding: 15px;
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        .comparison-table tr:hover {
+            background: var(--bg-secondary);
+        }
+        
+        .tree-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 5px;
+            margin: 20px 0;
+        }
+        
+        .tree-row {
+            display: flex;
+            gap: 20px;
+        }
+        
+        .tree-node {
+            width: 40px;
+            height: 40px;
+            background: var(--bg-tertiary);
+            border: 2px solid var(--accent-blue);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
+        
+        .tree-node.queen {
+            background: var(--accent-green);
+            color: var(--bg-primary);
+        }
+        
+        .tree-node.attacked {
+            background: var(--accent-red);
+            color: var(--bg-primary);
+        }
+        
+        .chessboard {
+            display: grid;
+            grid-template-columns: repeat(8, 40px);
+            gap: 2px;
+            margin: 20px auto;
+        }
+        
+        .chess-cell {
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5em;
+        }
+        
+        .chess-cell.light {
+            background: #f0d9b5;
+        }
+        
+        .chess-cell.dark {
+            background: #b58863;
+        }
+        
+        .sudoku-grid {
+            display: grid;
+            grid-template-columns: repeat(9, 35px);
+            gap: 1px;
+            background: var(--border-color);
+            padding: 1px;
+            margin: 20px auto;
+        }
+        
+        .sudoku-cell {
+            width: 35px;
+            height: 35px;
+            background: var(--bg-secondary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
+        
+        .sudoku-cell.filled {
+            color: var(--accent-blue);
+        }
+        
+        .sudoku-cell.solving {
+            background: var(--accent-green);
+            color: var(--bg-primary);
+        }
+        
+        .profile-card {
+            background: var(--bg-secondary);
+            border-radius: 12px;
+            padding: 25px;
+            text-align: center;
+            border: 1px solid var(--border-color);
+        }
+        
+        .profile-card .name {
+            font-size: 1.3em;
+            color: var(--accent-blue);
+            margin-bottom: 5px;
+        }
+        
+        .profile-card .years {
+            color: var(--text-secondary);
+            font-size: 0.9em;
+        }
+        
+        .profile-card .achievements {
+            margin-top: 15px;
+            text-align: left;
+            font-size: 0.9em;
+        }
+        
+        .timeline {
+            position: relative;
+            padding-left: 30px;
+        }
+        
+        .timeline::before {
+            content: '';
+            position: absolute;
+            left: 10px;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: var(--accent-blue);
+        }
+        
+        .timeline-item {
+            position: relative;
+            margin-bottom: 25px;
+            padding-left: 25px;
+        }
+        
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            left: -24px;
+            top: 5px;
+            width: 12px;
+            height: 12px;
+            background: var(--accent-blue);
+            border-radius: 50%;
+        }
+        
+        .timeline-year {
+            color: var(--accent-orange);
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+        
+        .algorithm-step {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 15px;
+            background: var(--bg-secondary);
+            border-radius: 8px;
+            margin: 10px 0;
+        }
+        
+        .step-number {
+            width: 40px;
+            height: 40px;
+            background: var(--accent-blue);
+            color: var(--bg-primary);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            flex-shrink: 0;
+        }
+        
+        .nav-controls {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            display: flex;
+            gap: 10px;
+            z-index: 100;
+        }
+        
+        .nav-btn {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+            padding: 12px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1em;
+            transition: all 0.2s ease;
+        }
+        
+        .nav-btn:hover {
+            background: var(--accent-blue);
+            color: var(--bg-primary);
+        }
+        
+        .slide-counter {
+            position: fixed;
+            bottom: 30px;
+            left: 30px;
+            background: var(--bg-tertiary);
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-size: 0.9em;
+            color: var(--text-secondary);
+        }
+        
+        .title-slide {
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+        }
+        
+        .title-slide h1 {
+            font-size: 3em;
+            margin-bottom: 20px;
+            background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .title-slide .subtitle {
+            font-size: 1.5em;
+            color: var(--text-secondary);
+            margin-bottom: 30px;
+        }
+        
+        .title-slide .meta {
+            color: var(--text-secondary);
+            font-size: 1.1em;
+        }
+        
+        .kbd {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            padding: 3px 8px;
+            font-family: 'Fira Code', monospace;
+            font-size: 0.9em;
+        }
+        
+        .full-width {
+            grid-column: 1 / -1;
+        }
+        
+        .formula {
+            font-family: 'Fira Code', monospace;
+            background: var(--bg-tertiary);
+            padding: 10px 15px;
+            border-radius: 6px;
+            display: inline-block;
+            color: var(--accent-cyan);
+        }
+        
+        .tag {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 4px;
+            font-size: 0.85em;
+            margin: 2px;
+        }
+        
+        .tag-green { background: rgba(63, 185, 80, 0.2); color: var(--accent-green); }
+        .tag-blue { background: rgba(88, 166, 255, 0.2); color: var(--accent-blue); }
+        .tag-orange { background: rgba(210, 153, 34, 0.2); color: var(--accent-orange); }
+        .tag-red { background: rgba(248, 81, 73, 0.2); color: var(--accent-red); }
+        .tag-purple { background: rgba(163, 113, 247, 0.2); color: var(--accent-purple); }
+        
+        @media (max-width: 900px) {
+            .content-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .slide {
+                padding: 20px;
+            }
+            
+            .slide-title {
+                font-size: 1.6em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="presentation-container">
+        <div class="progress-bar">
+            <div class="progress-fill" id="progressFill"></div>
+        </div>
+        
+        <!-- ==================== SLIDE 1: TITLE ==================== -->
+        <div class="slide active title-slide" data-slide="1">
+            <h1>🌲 Advanced Graph Algorithms & Backtracking</h1>
+            <p class="subtitle">Week 16 | Algorithms and Programming Techniques</p>
+            <p class="meta">ASE-CSIE | Computer Science Department</p>
+            <div style="margin-top: 40px;">
+                <span class="kbd">←</span> <span class="kbd">→</span> or click buttons to navigate
+            </div>
+            <div style="margin-top: 20px; display: flex; justify-content: center; gap: 20px;">
+                <span class="tag tag-green">MST</span>
+                <span class="tag tag-blue">Topological Sort</span>
+                <span class="tag tag-orange">SCC</span>
+                <span class="tag tag-purple">Backtracking</span>
+            </div>
+        </div>
+        
+        <!-- ==================== SLIDE 2: LEARNING OBJECTIVES ==================== -->
+        <div class="slide" data-slide="2">
+            <h2 class="slide-title"><span class="emoji">🎯</span> Learning Objectives</h2>
+            <div class="content-grid">
+                <div class="content-box">
+                    <h3>By the end of this lecture, you will be able to:</h3>
+                    <ul>
+                        <li><strong>Remember:</strong> State the cut property for MST</li>
+                        <li><strong>Understand:</strong> Explain why backtracking systematically explores solution space</li>
+                        <li><strong>Apply:</strong> Implement Kruskal's and Prim's algorithms</li>
+                        <li><strong>Analyse:</strong> Determine when to use Kruskal vs Prim</li>
+                        <li><strong>Evaluate:</strong> Assess pruning strategies in backtracking</li>
+                        <li><strong>Create:</strong> Design backtracking solutions for constraint satisfaction</li>
+                    </ul>
+                </div>
+                <div class="content-box">
+                    <h3>Prerequisites:</h3>
+                    <ul>
+                        <li>Graph representations (adjacency list/matrix)</li>
+                        <li>BFS and DFS traversals</li>
+                        <li>Basic recursion concepts</li>
+                        <li>Sorting algorithms</li>
+                        <li>Union operations on sets</li>
+                    </ul>
+                    <div class="highlight-box" style="margin-top: 20px;">
+                        <strong>Course Conclusion:</strong> This is the final week of the ATP laboratory series!
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- ==================== SLIDE 3: HISTORICAL CONTEXT ==================== -->
+        <div class="slide" data-slide="3">
+            <h2 class="slide-title"><span class="emoji">📜</span> Historical Context: The Pioneers</h2>
+            <div class="content-grid-3">
+                <div class="profile-card">
+                    <div class="name">Joseph Kruskal</div>
+                    <div class="years">1928–2010</div>
+                    <div class="achievements">
+                        <ul style="list-style: none; padding: 0;">
+                            <li>→ MST Algorithm (1956)</li>
+                            <li>→ Multidimensional scaling</li>
+                            <li>→ Kruskal-Wallis test</li>
+                            <li>→ Bell Labs researcher</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="profile-card">
+                    <div class="name">Robert C. Prim</div>
+                    <div class="years">1921–2019</div>
+                    <div class="achievements">
+                        <ul style="list-style: none; padding: 0;">
+                            <li>→ Prim's Algorithm (1957)</li>
+                            <li>→ Bell Labs engineer</li>
+                            <li>→ Network design pioneer</li>
+                            <li>→ Also: Jarník (1930)</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="profile-card">
+                    <div class="name">Robert Tarjan</div>
+                    <div class="years">1948–present</div>
+                    <div class="achievements">
+                        <ul style="list-style: none; padding: 0;">
+                            <li>→ Union-Find optimisation</li>
+                            <li>→ Tarjan's SCC algorithm</li>
+                            <li>→ Turing Award (1986)</li>
+                            <li>→ Splay trees, Fibonacci heaps</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            <div class="quote-box" style="margin-top: 20px;">
+                "An algorithm must be seen to be believed."
+                <div class="quote-author">— Donald Knuth, The Art of Computer Programming</div>
+            </div>
+        </div>
+        
+        <!-- ==================== SLIDE 4: MST DEFINITION ==================== -->
+        <div class="slide" data-slide="4">
+            <h2 class="slide-title"><span class="emoji">🌲</span> Minimum Spanning Tree: Definition</h2>
+            <div class="content-grid">
+                <div class="content-box">
+                    <h3>What is a Spanning Tree?</h3>
+                    <p style="color: var(--text-secondary); margin-bottom: 15px;">
+                        A <strong style="color: var(--accent-blue);">spanning tree</strong> of a connected, undirected graph G = (V, E) is a subgraph that:
+                    </p>
+                    <ul>
+                        <li>Contains <strong>all vertices</strong> V</li>
+                        <li>Is a <strong>tree</strong> (connected, acyclic)</li>
+                        <li>Has exactly <strong>|V| - 1 edges</strong></li>
+                    </ul>
+                    <div class="highlight-box" style="margin-top: 20px;">
+                        <strong>MST:</strong> A spanning tree with minimum total edge weight.
+                    </div>
+                </div>
+                <div class="content-box">
+                    <h3>Example Graph → MST</h3>
+                    <div style="display: flex; gap: 40px; justify-content: center; margin-top: 20px;">
+                        <div style="text-align: center;">
+                            <div style="font-size: 0.9em; color: var(--text-secondary); margin-bottom: 10px;">Original Graph</div>
+                            <pre style="color: var(--accent-green); font-family: monospace;">
+    (A)---4---(B)
+     |  \      |
+     2   5     3
+     |    \    |
+    (C)---1---(D)
+                            </pre>
+                            <div style="font-size: 0.85em; color: var(--text-secondary);">Total: 15</div>
+                        </div>
+                        <div style="text-align: center;">
+                            <div style="font-size: 0.9em; color: var(--text-secondary); margin-bottom: 10px;">MST</div>
+                            <pre style="color: var(--accent-blue); font-family: monospace;">
+    (A)       (B)
+     |         |
+     2         3
+     |         |
+    (C)---1---(D)
+                            </pre>
+                            <div style="font-size: 0.85em; color: var(--accent-green);">Total: 6 ✓</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- ==================== SLIDE 5: CUT PROPERTY ==================== -->
+        <div class="slide" data-slide="5">
+            <h2 class="slide-title"><span class="emoji">✂️</span> The Cut Property (Foundation of MST Algorithms)</h2>
+            <div class="content-grid">
+                <div class="content-box">
+                    <h3>Cut Property Theorem</h3>
+                    <p style="color: var(--text-secondary); margin-bottom: 15px;">
+                        Let <strong style="color: var(--accent-blue);">(S, V-S)</strong> be any cut of graph G. The minimum weight edge crossing the cut is in some MST of G.
+                    </p>
+                    <div class="warning-box">
+                        <strong>Key Insight:</strong> Both Kruskal's and Prim's algorithms exploit this property!
+                    </div>
+                    <div style="margin-top: 20px;">
+                        <h4 style="color: var(--accent-orange); margin-bottom: 10px;">Cycle Property (Dual)</h4>
+                        <p style="color: var(--text-secondary);">
+                            The maximum weight edge in any cycle is NOT in any MST.
+                        </p>
+                    </div>
+                </div>
+                <div class="content-box">
+                    <h3>Visual Proof Sketch</h3>
+                    <pre style="color: var(--text-secondary); font-family: monospace; font-size: 0.9em;">
+   Cut separates S from V-S:
+   
+   ┌─────────────┐     ┌─────────────┐
+   │      S      │     │    V - S    │
+   │   ┌───┐     │     │     ┌───┐   │
+   │   │ A │─────┼──e──┼─────│ C │   │
+   │   └───┘     │  ↑  │     └───┘   │
+   │     │       │  │  │       │     │
+   │   ┌─┴─┐     │  │  │     ┌─┴─┐   │
+   │   │ B │     │  │  │     │ D │   │
+   │   └───┘     │  │  │     └───┘   │
+   └─────────────┘  │  └─────────────┘
+                    │
+           If e is minimum crossing
+           edge, e ∈ some MST
+                    </pre>
+                </div>
+            </div>
+        </div>
+        
+        <!-- ==================== SLIDE 6: UNION-FIND INTRODUCTION ==================== -->
+        <div class="slide" data-slide="6">
+            <h2 class="slide-title"><span class="emoji">🔗</span> Union-Find Data Structure</h2>
+            <div class="content-grid">
+                <div class="content-box">
+                    <h3>The Disjoint Set Problem</h3>
+                    <p style="color: var(--text-secondary); margin-bottom: 15px;">
+                        Maintain a collection of disjoint sets supporting:
+                    </p>
+                    <ul>
+                        <li><strong>Make-Set(x):</strong> Create set containing only x</li>
+                        <li><strong>Find(x):</strong> Return representative of set containing x</li>
+                        <li><strong>Union(x, y):</strong> Merge sets containing x and y</li>
+                    </ul>
+                    <div class="success-box" style="margin-top: 20px;">
+                        <strong>Critical for Kruskal:</strong> Detect if adding an edge creates a cycle!
+                    </div>
+                </div>
+                <div class="content-box">
+                    <h3>Forest Representation</h3>
+                    <pre style="color: var(--accent-blue); font-family: monospace; font-size: 0.9em; text-align: center;">
+Initial:  [0] [1] [2] [3] [4]
+           │   │   │   │   │
+         ─┴───┴───┴───┴───┴─
+         (each element is own root)
+
+After Union(0,1), Union(2,3):
+
+           0       2
+          /       /
+         1       3      4
+         
+After Union(0,2):
+
+             0
+            /│
+           1 2
+             │
+             3       4
+                    </pre>
+                </div>
+            </div>
+        </div>
+        
+        <!-- ==================== SLIDE 7: UNION-FIND OPTIMISATIONS ==================== -->
+        <div class="slide" data-slide="7">
+            <h2 class="slide-title"><span class="emoji">⚡</span> Union-Find: Critical Optimisations</h2>
+            <div class="content-grid">
+                <div class="content-box">
+                    <h3>1. Path Compression (Find)</h3>
+                    <div class="code-block">
+                        <div class="code-header">
+                            <span>Path Compression</span>
+                            <span class="lang-badge">C</span>
+                        </div>
+                        <div class="code-content">
+                            <pre><code class="language-c">int find(int parent[], int x) {
+    if (parent[x] != x) {
+        // Recursively find root and 
+        // compress path
+        parent[x] = find(parent, parent[x]);
+    }
+    return parent[x];
+}</code></pre>
+                        </div>
+                    </div>
+                    <p style="color: var(--text-secondary); font-size: 0.9em;">
+                        Makes all nodes point directly to root during find!
+                    </p>
+                </div>
+                <div class="content-box">
+                    <h3>2. Union by Rank</h3>
+                    <div class="code-block">
+                        <div class="code-header">
+                            <span>Union by Rank</span>
+                            <span class="lang-badge">C</span>
+                        </div>
+                        <div class="code-content">
+                            <pre><code class="language-c">void unite(int parent[], int rank[], 
+           int x, int y) {
+    int px = find(parent, x);
+    int py = find(parent, y);
+    if (px == py) return;
+    
+    // Attach smaller tree under larger
+    if (rank[px] < rank[py])
+        parent[px] = py;
+    else if (rank[px] > rank[py])
+        parent[py] = px;
+    else {
+        parent[py] = px;
+        rank[px]++;
+    }
+}</code></pre>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="highlight-box">
+                <strong>Combined Complexity:</strong> O(α(n)) per operation, where α is the inverse Ackermann function (effectively constant!)
+            </div>
+        </div>
+        
+        <!-- ==================== SLIDE 8: KRUSKAL'S ALGORITHM ==================== -->
+        <div class="slide" data-slide="8">
+            <h2 class="slide-title"><span class="emoji">🔧</span> Kruskal's Algorithm</h2>
+            <div class="content-grid">
+                <div class="content-box">
+                    <h3>Algorithm Steps</h3>
+                    <div class="algorithm-step">
+                        <div class="step-number">1</div>
+                        <div>Sort all edges by weight (ascending)</div>
+                    </div>
+                    <div class="algorithm-step">
+                        <div class="step-number">2</div>
+                        <div>Initialise Union-Find for all vertices</div>
+                    </div>
+                    <div class="algorithm-step">
+                        <div class="step-number">3</div>
+                        <div>For each edge (u, v) in sorted order:</div>
+                    </div>
+                    <div class="algorithm-step" style="margin-left: 30px;">
+                        <div class="step-number">3a</div>
+                        <div>If Find(u) ≠ Find(v): add edge, Union(u, v)</div>
+                    </div>
+                    <div class="algorithm-step">
+                        <div class="step-number">4</div>
+                        <div>Stop when MST has |V| - 1 edges</div>
+                    </div>
+                </div>
+                <div class="content-box">
+                    <h3>Complexity Analysis</h3>
+                    <table class="comparison-table">
+                        <tr>
+                            <th>Operation</th>
+                            <th>Complexity</th>
+                        </tr>
+                        <tr>
+                            <td>Sort edges</td>
+                            <td><span class="formula">O(E log E)</span></td>
+                        </tr>
+                        <tr>
+                            <td>Union-Find operations</td>
+                            <td><span class="formula">O(E · α(V))</span></td>
+                        </tr>
+                        <tr>
+                            <td><strong>Total</strong></td>
+                            <td><span class="formula" style="color: var(--accent-green);">O(E log E)</span></td>
+                        </tr>
+                    </table>
+                    <div class="success-box">
+                        <strong>Best for:</strong> Sparse graphs (E ≈ V)
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- ==================== SLIDE 9: KRUSKAL EXAMPLE ==================== -->
+        <div class="slide" data-slide="9">
+            <h2 class="slide-title"><span class="emoji">📊</span> Kruskal's Algorithm: Step-by-Step</h2>
+            <div class="content-box full-width">
+                <h3>Trace Example</h3>
+                <pre style="color: var(--text-secondary); font-family: monospace; font-size: 0.85em;">
+Graph: 6 vertices, edges sorted by weight
+
+┌────────────────────────────────────────────────────────────────────────────────┐
+│ Step │ Edge    │ Weight │ Action                    │ MST Edges  │ Components  │
+├──────┼─────────┼────────┼───────────────────────────┼────────────┼─────────────┤
+│  0   │   —     │   —    │ Init: {A},{B},{C},{D},{E},{F} │    —       │     6       │
+│  1   │ (C,D)   │   1    │ Union(C,D) ✓              │ (C,D)      │     5       │
+│  2   │ (A,C)   │   2    │ Union(A,C) ✓              │ +(A,C)     │     4       │
+│  3   │ (B,D)   │   3    │ Union(B,D) ✓              │ +(B,D)     │     3       │
+│  4   │ (A,B)   │   4    │ Find(A)=Find(B) ✗ SKIP   │    —       │     3       │
+│  5   │ (D,E)   │   4    │ Union(D,E) ✓              │ +(D,E)     │     2       │
+│  6   │ (E,F)   │   5    │ Union(E,F) ✓              │ +(E,F)     │     1       │
+└────────────────────────────────────────────────────────────────────────────────┘
+
+MST complete: 5 edges, total weight = 1+2+3+4+5 = 15
+                </pre>
+            </div>
+        </div>
+        
+        <!-- ==================== SLIDE 10: PRIM'S ALGORITHM ==================== -->
+        <div class="slide" data-slide="10">
+            <h2 class="slide-title"><span class="emoji">🌱</span> Prim's Algorithm</h2>
+            <div class="content-grid">
+                <div class="content-box">
+                    <h3>Algorithm Steps</h3>
+                    <div class="algorithm-step">
+                        <div class="step-number">1</div>
+                        <div>Start with arbitrary vertex in MST set</div>
+                    </div>
+                    <div class="algorithm-step">
+                        <div class="step-number">2</div>
+                        <div>Maintain key[] = minimum edge to each vertex</div>
+                    </div>
+                    <div class="algorithm-step">
+                        <div class="step-number">3</div>
+                        <div>While MST set incomplete:</div>
+                    </div>
+                    <div class="algorithm-step" style="margin-left: 30px;">
+                        <div class="step-number">3a</div>
+                        <div>Pick vertex u with minimum key[u] not in MST</div>
+                    </div>
+                    <div class="algorithm-step" style="margin-left: 30px;">
+                        <div class="step-number">3b</div>
+                        <div>Add u to MST, update keys of neighbours</div>
+                    </div>
+                </div>
+                <div class="content-box">
+                    <h3>Complexity Analysis</h3>
+                    <table class="comparison-table">
+                        <tr>
+                            <th>Implementation</th>
+                            <th>Complexity</th>
+                        </tr>
+                        <tr>
+                            <td>Array (simple)</td>
+                            <td><span class="formula">O(V²)</span></td>
+                        </tr>
+                        <tr>
+                            <td>Binary Heap</td>
+                            <td><span class="formula">O(E log V)</span></td>
+                        </tr>
+                        <tr>
+                            <td>Fibonacci Heap</td>
+                            <td><span class="formula">O(E + V log V)</span></td>
+                        </tr>
+                    </table>
+                    <div class="success-box">
+                        <strong>Best for:</strong> Dense graphs (E ≈ V²) with array implementation
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- ==================== SLIDE 11: KRUSKAL VS PRIM ==================== -->
+        <div class="slide" data-slide="11">
+            <h2 class="slide-title"><span class="emoji">⚖️</span> Kruskal vs Prim: When to Use Which?</h2>
+            <div class="content-box full-width">
+                <table class="comparison-table">
+                    <tr>
+                        <th>Criterion</th>
+                        <th style="color: var(--accent-green);">Kruskal</th>
+                        <th style="color: var(--accent-blue);">Prim</th>
+                    </tr>
+                    <tr>
+                        <td>Approach</td>
+                        <td>Edge-based (global)</td>
+                        <td>Vertex-based (grow from source)</td>
+                    </tr>
+                    <tr>
+                        <td>Data Structure</td>
+                        <td>Union-Find</td>
+                        <td>Priority Queue / Array</td>
+                    </tr>
+                    <tr>
+                        <td>Best for Sparse Graphs</td>
+                        <td style="color: var(--accent-green);">✓ O(E log E)</td>
+                        <td>O(E log V) with heap</td>
+                    </tr>
+                    <tr>
+                        <td>Best for Dense Graphs</td>
+                        <td>O(E log E) ≈ O(V² log V)</td>
+                        <td style="color: var(--accent-green);">✓ O(V²) with array</td>
+                    </tr>
+                    <tr>
+                        <td>Parallelisable?</td>
+                        <td style="color: var(--accent-green);">✓ Sort can be parallel</td>
+                        <td>Sequential by nature</td>
+                    </tr>
+                    <tr>
+                        <td>Space Complexity</td>
+                        <td>O(E) for edge list</td>
+                        <td>O(V) for key/parent arrays</td>
+                    </tr>
+                </table>
+            </div>
+            <div class="highlight-box">
+                <strong>Rule of Thumb:</strong> Use Kruskal for sparse graphs (E ≈ O(V)), Prim for dense graphs (E ≈ O(V²))
+            </div>
+        </div>
+        
+        <!-- ==================== SLIDE 12: TOPOLOGICAL SORT INTRO ==================== -->
+        <div class="slide" data-slide="12">
+            <h2 class="slide-title"><span class="emoji">📐</span> Topological Sort: Ordering Dependencies</h2>
+            <div class="content-grid">
+                <div class="content-box">
+                    <h3>Definition</h3>
+                    <p style="color: var(--text-secondary); margin-bottom: 15px;">
+                        A <strong style="color: var(--accent-blue);">topological ordering</strong> of a DAG is a linear ordering of vertices such that for every directed edge (u, v), vertex u comes before v.
+                    </p>
+                    <div class="warning-box">
+                        <strong>Requirement:</strong> Graph must be a DAG (Directed Acyclic Graph). If there's a cycle, no topological order exists!
+                    </div>
+                    <h3 style="margin-top: 20px;">Applications</h3>
+                    <ul>
+                        <li>Build systems (Makefile dependencies)</li>
+                        <li>Course prerequisites</li>
+                        <li>Package managers (apt, npm)</li>
+                        <li>Spreadsheet cell evaluation</li>
+                    </ul>
+                </div>
+                <div class="content-box">
+                    <h3>Example: Course Prerequisites</h3>
+                    <pre style="color: var(--text-secondary); font-family: monospace; font-size: 0.9em;">
+Courses and prerequisites:
+    CS101 → CS201 → CS301
+              ↓
+           CS250 → CS350
+             ↑
+    MATH101 ─┘
+
+DAG representation:
+    CS101 ──→ CS201 ──→ CS301
+               │
+               ↓
+              CS250 ──→ CS350
+               ↑
+    MATH101 ───┘
+
+Valid topological orders:
+• CS101, MATH101, CS201, CS250, CS301, CS350
+• MATH101, CS101, CS201, CS250, CS350, CS301
+                    </pre>
+                </div>
+            </div>
+        </div>
+        
+        <!-- ==================== SLIDE 13: TOPOLOGICAL SORT - DFS ==================== -->
+        <div class="slide" data-slide="13">
+            <h2 class="slide-title"><span class="emoji">🔄</span> Topological Sort: DFS Method</h2>
+            <div class="content-grid">
+                <div class="content-box">
+                    <h3>Algorithm: Reverse Postorder</h3>
+                    <div class="algorithm-step">
+                        <div class="step-number">1</div>
+                        <div>Run DFS from each unvisited vertex</div>
+                    </div>
+                    <div class="algorithm-step">
+                        <div class="step-number">2</div>
+                        <div>When DFS finishes a vertex, push to stack</div>
+                    </div>
+                    <div class="algorithm-step">
+                        <div class="step-number">3</div>
+                        <div>Stack order = topological order</div>
+                    </div>
+                    <div class="success-box" style="margin-top: 20px;">
+                        <strong>Complexity:</strong> O(V + E) — single DFS traversal
+                    </div>
+                </div>
+                <div class="content-box">
+                    <h3>Implementation</h3>
+                    <div class="code-block">
+                        <div class="code-header">
+                            <span>DFS Topological Sort</span>
+                            <span class="lang-badge">C</span>
+                        </div>
+                        <div class="code-content">
+                            <pre><code class="language-c">void dfs_topo(int v, bool visited[], 
+              int stack[], int *top) {
+    visited[v] = true;
+    
+    // Visit all neighbours first
+    for (each neighbour u of v) {
+        if (!visited[u])
+            dfs_topo(u, visited, stack, top);
+    }
+    
+    // After all descendants processed
+    stack[(*top)++] = v;  // Push to stack
+}
+
+// Result: stack in reverse = topo order</code></pre>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- ==================== SLIDE 14: TOPOLOGICAL SORT - KAHN ==================== -->
+        <div class="slide" data-slide="14">
+            <h2 class="slide-title"><span class="emoji">📊</span> Topological Sort: Kahn's Algorithm (BFS)</h2>
+            <div class="content-grid">
+                <div class="content-box">
+                    <h3>Algorithm Steps</h3>
+                    <div class="algorithm-step">
+                        <div class="step-number">1</div>
+                        <div>Calculate in-degree for all vertices</div>
+                    </div>
+                    <div class="algorithm-step">
+                        <div class="step-number">2</div>
+                        <div>Enqueue all vertices with in-degree 0</div>
+                    </div>
+                    <div class="algorithm-step">
+                        <div class="step-number">3</div>
+                        <div>While queue not empty:</div>
+                    </div>
+                    <div class="algorithm-step" style="margin-left: 30px;">
+                        <div class="step-number">a</div>
+                        <div>Dequeue vertex u, add to result</div>
+                    </div>
+                    <div class="algorithm-step" style="margin-left: 30px;">
+                        <div class="step-number">b</div>
+                        <div>Decrease in-degree of all neighbours</div>
+                    </div>
+                    <div class="algorithm-step" style="margin-left: 30px;">
+                        <div class="step-number">c</div>
+                        <div>Enqueue neighbours with in-degree 0</div>
+                    </div>
+                    <div class="warning-box" style="margin-top: 15px;">
+                        <strong>Cycle Detection:</strong> If result size ≠ V, graph has a cycle!
+                    </div>
+                </div>
+                <div class="content-box">
+                    <h3>Trace Example</h3>
+                    <pre style="color: var(--text-secondary); font-family: monospace; font-size: 0.85em;">
+In-degrees: A:0, B:1, C:1, D:2, E:1
+
+Queue: [A]
+Process A → decrement B,C
+  B:0, C:0 → enqueue
+Queue: [B, C], Result: [A]
+
+Process B → decrement D
+  D:1
+Queue: [C], Result: [A, B]
+
+Process C → decrement D
+  D:0 → enqueue
+Queue: [D], Result: [A, B, C]
+
+Process D → decrement E
+  E:0 → enqueue
+Queue: [E], Result: [A, B, C, D]
+
+Process E
+Queue: [], Result: [A, B, C, D, E] ✓
+                    </pre>
+                </div>
+            </div>
+        </div>
+        
+        <!-- ==================== SLIDE 15: SCC INTRODUCTION ==================== -->
+        <div class="slide" data-slide="15">
+            <h2 class="slide-title"><span class="emoji">🔄</span> Strongly Connected Components (SCC)</h2>
+            <div class="content-grid">
+                <div class="content-box">
+                    <h3>Definition</h3>
+                    <p style="color: var(--text-secondary); margin-bottom: 15px;">
+                        A <strong style="color: var(--accent-blue);">strongly connected component</strong> of a directed graph is a maximal set of vertices such that there is a path from every vertex to every other vertex.
+                    </p>
+                    <div class="highlight-box">
+                        <strong>Key Property:</strong> Within an SCC, you can reach any vertex from any other vertex!
+                    </div>
+                    <h3 style="margin-top: 20px;">Applications</h3>
+                    <ul>
+                        <li>Social network analysis (friend groups)</li>
+                        <li>Web page ranking (link structure)</li>
+                        <li>Compiler optimisation (call graphs)</li>
+                        <li>2-SAT satisfiability checking</li>
+                    </ul>
+                </div>
+                <div class="content-box">
+                    <h3>Example: SCC Decomposition</h3>
+                    <pre style="color: var(--text-secondary); font-family: monospace; font-size: 0.9em;">
+Directed Graph:
+    A → B → C
+    ↑   ↓   ↓
+    D ← E → F → G
+            ↑   ↓
+            └───┘
+
+SCCs identified:
+┌─────────────┐  ┌─────┐
+│ SCC 1: A,B,D,E │  │ SCC 2: C │
+└─────────────┘  └─────┘
+
+┌─────────────┐
+│ SCC 3: F,G  │
+└─────────────┘
+
+Component Graph (DAG):
+SCC1 → SCC2 → SCC3
+                    </pre>
+                </div>
+            </div>
+        </div>
+        
+        <!-- ==================== SLIDE 16: KOSARAJU'S ALGORITHM ==================== -->
+        <div class="slide" data-slide="16">
+            <h2 class="slide-title"><span class="emoji">🔃</span> Kosaraju's Algorithm for SCC</h2>
+            <div class="content-grid">
+                <div class="content-box">
+                    <h3>Two-Pass DFS Algorithm</h3>
+                    <div class="algorithm-step">
+                        <div class="step-number">1</div>
+                        <div><strong>First DFS:</strong> Record finish times (push to stack when done)</div>
+                    </div>
+                    <div class="algorithm-step">
+                        <div class="step-number">2</div>
+                        <div><strong>Transpose:</strong> Reverse all edges (G → Gᵀ)</div>
+                    </div>
+                    <div class="algorithm-step">
+                        <div class="step-number">3</div>
+                        <div><strong>Second DFS:</strong> Process vertices in decreasing finish time on Gᵀ</div>
+                    </div>
+                    <div class="algorithm-step">
+                        <div class="step-number">4</div>
+                        <div>Each DFS tree in step 3 is an SCC</div>
+                    </div>
+                    <div class="success-box" style="margin-top: 20px;">
+                        <strong>Complexity:</strong> O(V + E) — two DFS traversals
+                    </div>
+                </div>
+                <div class="content-box">
+                    <h3>Why It Works</h3>
+                    <div class="highlight-box">
+                        <strong>Key Insight:</strong> In the transpose graph, vertices that could reach each other in the original can still reach each other — but ONLY within the same SCC!
+                    </div>
+                    <p style="color: var(--text-secondary); margin-top: 15px;">
+                        Processing by decreasing finish time ensures we start from "sink" SCCs in the component graph, preventing us from crossing SCC boundaries.
+                    </p>
+                    <pre style="color: var(--accent-blue); font-family: monospace; font-size: 0.85em; margin-top: 15px;">
+Original: SCC1 → SCC2 → SCC3
+
+Transpose: SCC1 ← SCC2 ← SCC3
+
+Process SCC3 first (highest finish)
+→ Can't reach SCC2 in Gᵀ
+→ Clean SCC extraction!
+                    </pre>
+                </div>
+            </div>
+        </div>
+        
+        <!-- ==================== SLIDE 17: BACKTRACKING INTRO ==================== -->
+        <div class="slide" data-slide="17">
+            <h2 class="slide-title"><span class="emoji">🔙</span> Backtracking: Systematic Search</h2>
+            <div class="content-grid">
+                <div class="content-box">
+                    <h3>What is Backtracking?</h3>
+                    <p style="color: var(--text-secondary); margin-bottom: 15px;">
+                        A general algorithmic technique that incrementally builds candidates and abandons ("backtracks") as soon as it determines the candidate cannot lead to a valid solution.
+                    </p>
+                    <div class="highlight-box">
+                        <strong>Key Principle:</strong> "Fail early, fail often" — prune impossible branches ASAP!
+                    </div>
+                    <h3 style="margin-top: 20px;">When to Use</h3>
+                    <ul>
+                        <li>Constraint satisfaction problems</li>
+                        <li>Combinatorial optimisation</li>
+                        <li>Puzzle solving (Sudoku, N-Queens)</li>
+                        <li>Game trees (chess, tic-tac-toe)</li>
+                    </ul>
+                </div>
+                <div class="content-box">
+                    <h3>State-Space Tree Concept</h3>
+                    <pre style="color: var(--text-secondary); font-family: monospace; font-size: 0.85em;">
+                    [ ]  ← Root (empty solution)
+                   / | \
+                  /  |  \
+               [1]  [2]  [3]  ← First choice
+              / | \
+             /  |  \
+          [1,2][1,3][1,4] ← Second choice
+           │    ✗
+           │   (pruned: violates constraint)
+          / \
+      [1,2,3][1,2,4] ← Continue building
+         ↓
+       SOLUTION!
+
+Legend:
+• Each path = partial solution
+• ✗ = pruned (backtrack here)
+• Leaf = complete solution OR dead end
+                    </pre>
+                </div>
+            </div>
+        </div>
+        
+        <!-- ==================== SLIDE 18: BACKTRACKING TEMPLATE ==================== -->
+        <div class="slide" data-slide="18">
+            <h2 class="slide-title"><span class="emoji">📝</span> Backtracking: General Template</h2>
+            <div class="content-grid">
+                <div class="content-box">
+                    <h3>Generic Algorithm Structure</h3>
+                    <div class="code-block">
+                        <div class="code-header">
+                            <span>Backtracking Template</span>
+                            <span class="lang-badge">Pseudocode</span>
+                        </div>
+                        <div class="code-content">
+                            <pre><code class="language-c">void backtrack(state, solution) {
+    if (is_solution(state)) {
+        process_solution(solution);
+        return;
+    }
+    
+    candidates = construct_candidates(state);
+    
+    for (each candidate c in candidates) {
+        if (is_valid(state, c)) {
+            // Make choice
+            solution.add(c);
+            update_state(state, c);
+            
+            // Recurse
+            backtrack(state, solution);
+            
+            // Undo choice (BACKTRACK)
+            solution.remove(c);
+            restore_state(state, c);
+        }
+    }
+}</code></pre>
+                        </div>
+                    </div>
+                </div>
+                <div class="content-box">
+                    <h3>Key Components</h3>
+                    <table class="comparison-table">
+                        <tr>
+                            <th>Function</th>
+                            <th>Purpose</th>
+                        </tr>
+                        <tr>
+                            <td><code>is_solution()</code></td>
+                            <td>Check if current state is complete solution</td>
+                        </tr>
+                        <tr>
+                            <td><code>process_solution()</code></td>
+                            <td>Handle found solution (print, count, store)</td>
+                        </tr>
+                        <tr>
+                            <td><code>construct_candidates()</code></td>
+                            <td>Generate possible next choices</td>
+                        </tr>
+                        <tr>
+                            <td><code>is_valid()</code></td>
+                            <td>Pruning function — reject invalid choices early</td>
+                        </tr>
+                    </table>
+                    <div class="warning-box" style="margin-top: 15px;">
+                        <strong>Critical:</strong> Always undo changes after recursive call!
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- ==================== SLIDE 19: N-QUEENS PROBLEM ==================== -->
+        <div class="slide" data-slide="19">
+            <h2 class="slide-title"><span class="emoji">♛</span> N-Queens Problem</h2>
+            <div class="content-grid">
+                <div class="content-box">
+                    <h3>Problem Statement</h3>
+                    <p style="color: var(--text-secondary); margin-bottom: 15px;">
+                        Place N queens on an N×N chessboard such that no two queens threaten each other (no two queens share row, column, or diagonal).
+                    </p>
+                    <div class="highlight-box">
+                        <strong>Classic Example:</strong> 8-Queens has <strong>92</strong> distinct solutions!
+                    </div>
+                    <h3 style="margin-top: 20px;">Constraint Checking</h3>
+                    <p style="color: var(--text-secondary);">
+                        For queen at position (row, col):
+                    </p>
+                    <ul>
+                        <li><strong>Same column:</strong> col == other_col</li>
+                        <li><strong>Same diagonal ↘:</strong> row - col == other_row - other_col</li>
+                        <li><strong>Same diagonal ↙:</strong> row + col == other_row + other_col</li>
+                    </ul>
+                </div>
+                <div class="content-box">
+                    <h3>4-Queens Solution Example</h3>
+                    <div style="display: flex; justify-content: center; margin: 20px 0;">
+                        <table style="border-collapse: collapse;">
+                            <tr>
+                                <td style="width: 50px; height: 50px; background: #f0d9b5; text-align: center; font-size: 1.5em;">·</td>
+                                <td style="width: 50px; height: 50px; background: #b58863; text-align: center; font-size: 1.5em; color: var(--accent-green);">♛</td>
+                                <td style="width: 50px; height: 50px; background: #f0d9b5; text-align: center; font-size: 1.5em;">·</td>
+                                <td style="width: 50px; height: 50px; background: #b58863; text-align: center; font-size: 1.5em;">·</td>
+                            </tr>
+                            <tr>
+                                <td style="width: 50px; height: 50px; background: #b58863; text-align: center; font-size: 1.5em;">·</td>
+                                <td style="width: 50px; height: 50px; background: #f0d9b5; text-align: center; font-size: 1.5em;">·</td>
+                                <td style="width: 50px; height: 50px; background: #b58863; text-align: center; font-size: 1.5em;">·</td>
+                                <td style="width: 50px; height: 50px; background: #f0d9b5; text-align: center; font-size: 1.5em; color: var(--accent-green);">♛</td>
+                            </tr>
+                            <tr>
+                                <td style="width: 50px; height: 50px; background: #f0d9b5; text-align: center; font-size: 1.5em; color: var(--accent-green);">♛</td>
+                                <td style="width: 50px; height: 50px; background: #b58863; text-align: center; font-size: 1.5em;">·</td>
+                                <td style="width: 50px; height: 50px; background: #f0d9b5; text-align: center; font-size: 1.5em;">·</td>
+                                <td style="width: 50px; height: 50px; background: #b58863; text-align: center; font-size: 1.5em;">·</td>
+                            </tr>
+                            <tr>
+                                <td style="width: 50px; height: 50px; background: #b58863; text-align: center; font-size: 1.5em;">·</td>
+                                <td style="width: 50px; height: 50px; background: #f0d9b5; text-align: center; font-size: 1.5em;">·</td>
+                                <td style="width: 50px; height: 50px; background: #b58863; text-align: center; font-size: 1.5em; color: var(--accent-green);">♛</td>
+                                <td style="width: 50px; height: 50px; background: #f0d9b5; text-align: center; font-size: 1.5em;">·</td>
+                            </tr>
+                        </table>
+                    </div>
+                    <div style="text-align: center; color: var(--text-secondary);">
+                        Solution: columns [1, 3, 0, 2] (0-indexed)
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- ==================== SLIDE 20: N-QUEENS CODE ==================== -->
+        <div class="slide" data-slide="20">
+            <h2 class="slide-title"><span class="emoji">💻</span> N-Queens: Implementation</h2>
+            <div class="content-grid">
+                <div class="content-box">
+                    <h3>Safety Check</h3>
+                    <div class="code-block">
+                        <div class="code-header">
+                            <span>is_safe function</span>
+                            <span class="lang-badge">C</span>
+                        </div>
+                        <div class="code-content">
+                            <pre><code class="language-c">bool is_safe(int board[], int row, int col) {
+    for (int i = 0; i < row; i++) {
+        // Same column?
+        if (board[i] == col)
+            return false;
+        
+        // Same diagonal?
+        if (abs(board[i] - col) == abs(i - row))
+            return false;
+    }
+    return true;
+}</code></pre>
+                        </div>
+                    </div>
+                </div>
+                <div class="content-box">
+                    <h3>Backtracking Solver</h3>
+                    <div class="code-block">
+                        <div class="code-header">
+                            <span>solve_nqueens</span>
+                            <span class="lang-badge">C</span>
+                        </div>
+                        <div class="code-content">
+                            <pre><code class="language-c">void solve(int board[], int row, int n, 
+           int *count) {
+    if (row == n) {
+        (*count)++;
+        print_board(board, n);
+        return;
+    }
+    
+    for (int col = 0; col < n; col++) {
+        if (is_safe(board, row, col)) {
+            board[row] = col;  // Place queen
+            solve(board, row + 1, n, count);
+            // Backtrack (implicit: next col)
+        }
+    }
+}</code></pre>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="success-box">
+                <strong>Complexity:</strong> O(N!) worst case, but pruning dramatically reduces actual nodes explored
+            </div>
+        </div>
+        
+        <!-- ==================== SLIDE 21: SUDOKU PROBLEM ==================== -->
+        <div class="slide" data-slide="21">
+            <h2 class="slide-title"><span class="emoji">🔢</span> Sudoku Solver</h2>
+            <div class="content-grid">
+                <div class="content-box">
+                    <h3>Constraints</h3>
+                    <p style="color: var(--text-secondary); margin-bottom: 15px;">
+                        Fill 9×9 grid with digits 1-9 such that:
+                    </p>
+                    <ul>
+                        <li>Each <strong>row</strong> contains 1-9 exactly once</li>
+                        <li>Each <strong>column</strong> contains 1-9 exactly once</li>
+                        <li>Each <strong>3×3 sub-box</strong> contains 1-9 exactly once</li>
+                    </ul>
+                    <div class="highlight-box" style="margin-top: 20px;">
+                        <strong>Search Space:</strong> 9⁸¹ naively, but constraints reduce dramatically
+                    </div>
+                    <h3 style="margin-top: 20px;">Backtracking Strategy</h3>
+                    <ol style="color: var(--text-secondary); margin-left: 20px;">
+                        <li>Find next empty cell</li>
+                        <li>Try digits 1-9</li>
+                        <li>If valid, recurse; else backtrack</li>
+                    </ol>
+                </div>
+                <div class="content-box">
+                    <h3>Example Puzzle</h3>
+                    <div style="display: flex; justify-content: center; margin: 10px 0;">
+                        <table style="border-collapse: collapse; font-family: monospace;">
+                            <tr>
+                                <td style="width: 30px; height: 30px; border: 1px solid var(--border-color); text-align: center; background: var(--bg-secondary); color: var(--accent-blue);">5</td>
+                                <td style="width: 30px; height: 30px; border: 1px solid var(--border-color); text-align: center; background: var(--bg-secondary); color: var(--accent-blue);">3</td>
+                                <td style="width: 30px; height: 30px; border: 1px solid var(--border-color); text-align: center; background: var(--bg-secondary);">·</td>
+                                <td style="width: 30px; height: 30px; border: 2px solid var(--border-color); text-align: center; background: var(--bg-secondary);">·</td>
+                                <td style="width: 30px; height: 30px; border: 1px solid var(--border-color); text-align: center; background: var(--bg-secondary); color: var(--accent-blue);">7</td>
+                                <td style="width: 30px; height: 30px; border: 1px solid var(--border-color); text-align: center; background: var(--bg-secondary);">·</td>
+                                <td style="width: 30px; height: 30px; border: 2px solid var(--border-color); text-align: center; background: var(--bg-secondary);">·</td>
+                                <td style="width: 30px; height: 30px; border: 1px solid var(--border-color); text-align: center; background: var(--bg-secondary);">·</td>
+                                <td style="width: 30px; height: 30px; border: 1px solid var(--border-color); text-align: center; background: var(--bg-secondary);">·</td>
+                            </tr>
+                            <tr>
+                                <td style="width: 30px; height: 30px; border: 1px solid var(--border-color); text-align: center; background: var(--bg-secondary); color: var(--accent-blue);">6</td>
+                                <td style="width: 30px; height: 30px; border: 1px solid var(--border-color); text-align: center; background: var(--bg-secondary);">·</td>
+                                <td style="width: 30px; height: 30px; border: 1px solid var(--border-color); text-align: center; background: var(--bg-secondary);">·</td>
+                                <td style="width: 30px; height: 30px; border: 2px solid var(--border-color); text-align: center; background: var(--bg-secondary); color: var(--accent-blue);">1</td>
+                                <td style="width: 30px; height: 30px; border: 1px solid var(--border-color); text-align: center; background: var(--bg-secondary); color: var(--accent-blue);">9</td>
+                                <td style="width: 30px; height: 30px; border: 1px solid var(--border-color); text-align: center; background: var(--bg-secondary); color: var(--accent-blue);">5</td>
+                                <td style="width: 30px; height: 30px; border: 2px solid var(--border-color); text-align: center; background: var(--bg-secondary);">·</td>
+                                <td style="width: 30px; height: 30px; border: 1px solid var(--border-color); text-align: center; background: var(--bg-secondary);">·</td>
+                                <td style="width: 30px; height: 30px; border: 1px solid var(--border-color); text-align: center; background: var(--bg-secondary);">·</td>
+                            </tr>
+                            <tr>
+                                <td style="width: 30px; height: 30px; border: 1px solid var(--border-color); text-align: center; background: var(--bg-secondary);">·</td>
+                                <td style="width: 30px; height: 30px; border: 1px solid var(--border-color); text-align: center; background: var(--bg-secondary); color: var(--accent-blue);">9</td>
+                                <td style="width: 30px; height: 30px; border: 1px solid var(--border-color); text-align: center; background: var(--bg-secondary); color: var(--accent-blue);">8</td>
+                                <td style="width: 30px; height: 30px; border: 2px solid var(--border-color); text-align: center; background: var(--bg-secondary);">·</td>
+                                <td style="width: 30px; height: 30px; border: 1px solid var(--border-color); text-align: center; background: var(--bg-secondary);">·</td>
+                                <td style="width: 30px; height: 30px; border: 1px solid var(--border-color); text-align: center; background: var(--bg-secondary);">·</td>
+                                <td style="width: 30px; height: 30px; border: 2px solid var(--border-color); text-align: center; background: var(--bg-secondary);">·</td>
+                                <td style="width: 30px; height: 30px; border: 1px solid var(--border-color); text-align: center; background: var(--bg-secondary); color: var(--accent-blue);">6</td>
+                                <td style="width: 30px; height: 30px; border: 1px solid var(--border-color); text-align: center; background: var(--bg-secondary);">·</td>
+                            </tr>
+                        </table>
+                    </div>
+                    <p style="text-align: center; color: var(--text-secondary); font-size: 0.85em; margin-top: 10px;">
+                        (Showing first 3 rows of classic puzzle)
+                    </p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- ==================== SLIDE 22: SUDOKU CODE ==================== -->
+        <div class="slide" data-slide="22">
+            <h2 class="slide-title"><span class="emoji">💻</span> Sudoku: Implementation</h2>
+            <div class="content-grid">
+                <div class="content-box">
+                    <h3>Validity Check</h3>
+                    <div class="code-block">
+                        <div class="code-header">
+                            <span>is_valid_sudoku</span>
+                            <span class="lang-badge">C</span>
+                        </div>
+                        <div class="code-content">
+                            <pre><code class="language-c">bool is_valid(int grid[9][9], int row, 
+              int col, int num) {
+    // Check row
+    for (int c = 0; c < 9; c++)
+        if (grid[row][c] == num) return false;
+    
+    // Check column
+    for (int r = 0; r < 9; r++)
+        if (grid[r][col] == num) return false;
+    
+    // Check 3x3 box
+    int box_r = (row / 3) * 3;
+    int box_c = (col / 3) * 3;
+    for (int r = 0; r < 3; r++)
+        for (int c = 0; c < 3; c++)
+            if (grid[box_r+r][box_c+c] == num)
+                return false;
+    
+    return true;
+}</code></pre>
+                        </div>
+                    </div>
+                </div>
+                <div class="content-box">
+                    <h3>Backtracking Solver</h3>
+                    <div class="code-block">
+                        <div class="code-header">
+                            <span>solve_sudoku</span>
+                            <span class="lang-badge">C</span>
+                        </div>
+                        <div class="code-content">
+                            <pre><code class="language-c">bool solve(int grid[9][9]) {
+    int row, col;
+    if (!find_empty(grid, &row, &col))
+        return true;  // Solved!
+    
+    for (int num = 1; num <= 9; num++) {
+        if (is_valid(grid, row, col, num)) {
+            grid[row][col] = num;
+            
+            if (solve(grid))
+                return true;
+            
+            grid[row][col] = 0;  // Backtrack
+        }
+    }
+    return false;  // Trigger backtrack
+}</code></pre>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- ==================== SLIDE 23: GRAPH COLORING ==================== -->
+        <div class="slide" data-slide="23">
+            <h2 class="slide-title"><span class="emoji">🎨</span> Graph Coloring Problem</h2>
+            <div class="content-grid">
+                <div class="content-box">
+                    <h3>Problem Definition</h3>
+                    <p style="color: var(--text-secondary); margin-bottom: 15px;">
+                        Assign colors to vertices such that no two adjacent vertices share the same color.
+                    </p>
+                    <div class="highlight-box">
+                        <strong>Chromatic Number χ(G):</strong> Minimum colors needed to color graph G
+                    </div>
+                    <h3 style="margin-top: 20px;">Applications</h3>
+                    <ul>
+                        <li>Register allocation in compilers</li>
+                        <li>Scheduling problems</li>
+                        <li>Map colouring (Four Color Theorem)</li>
+                        <li>Frequency assignment in wireless</li>
+                    </ul>
+                </div>
+                <div class="content-box">
+                    <h3>m-Coloring with Backtracking</h3>
+                    <div class="code-block">
+                        <div class="code-header">
+                            <span>graph_coloring</span>
+                            <span class="lang-badge">C</span>
+                        </div>
+                        <div class="code-content">
+                            <pre><code class="language-c">bool color_graph(int v, int colors[], 
+                 int m, int adj[][MAX]) {
+    if (v == V)
+        return true;  // All colored
+    
+    for (int c = 1; c <= m; c++) {
+        if (is_safe_color(v, c, colors, adj)) {
+            colors[v] = c;
+            
+            if (color_graph(v+1, colors, m, adj))
+                return true;
+            
+            colors[v] = 0;  // Backtrack
+        }
+    }
+    return false;
+}</code></pre>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- ==================== SLIDE 24: HAMILTONIAN PATH ==================== -->
+        <div class="slide" data-slide="24">
+            <h2 class="slide-title"><span class="emoji">🛤️</span> Hamiltonian Path Problem</h2>
+            <div class="content-grid">
+                <div class="content-box">
+                    <h3>Definition</h3>
+                    <p style="color: var(--text-secondary); margin-bottom: 15px;">
+                        Find a path that visits each vertex exactly once.
+                    </p>
+                    <div class="warning-box">
+                        <strong>NP-Complete!</strong> No known polynomial algorithm exists.
+                    </div>
+                    <h3 style="margin-top: 20px;">Variants</h3>
+                    <ul>
+                        <li><strong>Hamiltonian Path:</strong> Any start/end vertices</li>
+                        <li><strong>Hamiltonian Cycle:</strong> Start = End (closed path)</li>
+                        <li><strong>TSP:</strong> Hamiltonian cycle with minimum weight</li>
+                    </ul>
+                </div>
+                <div class="content-box">
+                    <h3>Backtracking Approach</h3>
+                    <div class="code-block">
+                        <div class="code-header">
+                            <span>hamiltonian_path</span>
+                            <span class="lang-badge">C</span>
+                        </div>
+                        <div class="code-content">
+                            <pre><code class="language-c">bool ham_path(int pos, int path[], 
+              bool visited[]) {
+    if (pos == V)
+        return true;  // All vertices visited
+    
+    for (int v = 0; v < V; v++) {
+        if (!visited[v] && 
+            adj[path[pos-1]][v]) {
+            path[pos] = v;
+            visited[v] = true;
+            
+            if (ham_path(pos+1, path, visited))
+                return true;
+            
+            visited[v] = false;  // Backtrack
+        }
+    }
+    return false;
+}</code></pre>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- ==================== SLIDE 25: PRUNING STRATEGIES ==================== -->
+        <div class="slide" data-slide="25">
+            <h2 class="slide-title"><span class="emoji">✂️</span> Backtracking: Pruning Strategies</h2>
+            <div class="content-grid">
+                <div class="content-box">
+                    <h3>Why Pruning Matters</h3>
+                    <p style="color: var(--text-secondary); margin-bottom: 15px;">
+                        Without pruning, backtracking degenerates to brute-force enumeration.
+                    </p>
+                    <div class="success-box">
+                        <strong>Goal:</strong> Cut branches that cannot lead to valid solutions as early as possible!
+                    </div>
+                    <h3 style="margin-top: 20px;">Types of Pruning</h3>
+                    <ul>
+                        <li><strong>Feasibility:</strong> Violates constraints → immediate prune</li>
+                        <li><strong>Bound:</strong> Can't improve best solution found</li>
+                        <li><strong>Symmetry:</strong> Skip equivalent search paths</li>
+                        <li><strong>Dominance:</strong> One choice always better</li>
+                    </ul>
+                </div>
+                <div class="content-box">
+                    <h3>Pruning Impact Example</h3>
+                    <table class="comparison-table">
+                        <tr>
+                            <th>Problem</th>
+                            <th>Without Pruning</th>
+                            <th>With Pruning</th>
+                        </tr>
+                        <tr>
+                            <td>8-Queens</td>
+                            <td>8⁸ = 16.7M nodes</td>
+                            <td>~15,000 nodes</td>
+                        </tr>
+                        <tr>
+                            <td>Sudoku (easy)</td>
+                            <td>9⁵⁰ attempts</td>
+                            <td>~100 attempts</td>
+                        </tr>
+                        <tr>
+                            <td>Graph 3-coloring</td>
+                            <td>3ⁿ</td>
+                            <td>Depends on structure</td>
+                        </tr>
+                    </table>
+                    <div class="highlight-box" style="margin-top: 15px;">
+                        <strong>Heuristics help too!</strong> Order variables/values smartly (MRV, LCV)
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- ==================== SLIDE 26: COMPLEXITY SUMMARY ==================== -->
+        <div class="slide" data-slide="26">
+            <h2 class="slide-title"><span class="emoji">📈</span> Complexity Summary</h2>
+            <div class="content-box full-width">
+                <table class="comparison-table">
+                    <tr>
+                        <th>Algorithm</th>
+                        <th>Time Complexity</th>
+                        <th>Space Complexity</th>
+                        <th>Notes</th>
+                    </tr>
+                    <tr>
+                        <td>Kruskal's MST</td>
+                        <td><span class="formula">O(E log E)</span></td>
+                        <td>O(V + E)</td>
+                        <td>Edge sorting dominates</td>
+                    </tr>
+                    <tr>
+                        <td>Prim's MST (array)</td>
+                        <td><span class="formula">O(V²)</span></td>
+                        <td>O(V)</td>
+                        <td>Best for dense graphs</td>
+                    </tr>
+                    <tr>
+                        <td>Prim's MST (heap)</td>
+                        <td><span class="formula">O(E log V)</span></td>
+                        <td>O(V)</td>
+                        <td>Better for sparse graphs</td>
+                    </tr>
+                    <tr>
+                        <td>Union-Find</td>
+                        <td><span class="formula">O(α(n))</span> amortised</td>
+                        <td>O(n)</td>
+                        <td>Nearly constant!</td>
+                    </tr>
+                    <tr>
+                        <td>Topological Sort</td>
+                        <td><span class="formula">O(V + E)</span></td>
+                        <td>O(V)</td>
+                        <td>Single traversal</td>
+                    </tr>
+                    <tr>
+                        <td>Kosaraju's SCC</td>
+                        <td><span class="formula">O(V + E)</span></td>
+                        <td>O(V + E)</td>
+                        <td>Two DFS passes</td>
+                    </tr>
+                    <tr>
+                        <td>N-Queens</td>
+                        <td><span class="formula">O(N!)</span> worst</td>
+                        <td>O(N)</td>
+                        <td>Pruning helps significantly</td>
+                    </tr>
+                    <tr>
+                        <td>Sudoku</td>
+                        <td><span class="formula">O(9^(n²))</span> worst</td>
+                        <td>O(n²)</td>
+                        <td>Constraints reduce drastically</td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+        
+        <!-- ==================== SLIDE 27: INDUSTRIAL APPLICATIONS ==================== -->
+        <div class="slide" data-slide="27">
+            <h2 class="slide-title"><span class="emoji">🏭</span> Industrial Applications</h2>
+            <div class="content-grid">
+                <div class="content-box">
+                    <h3>MST Applications</h3>
+                    <ul>
+                        <li><strong>Network Design:</strong> Minimum cost to connect all nodes (telecom, power grids)</li>
+                        <li><strong>Clustering:</strong> Single-link hierarchical clustering</li>
+                        <li><strong>Image Segmentation:</strong> Pixel connectivity graphs</li>
+                        <li><strong>Approximation Algorithms:</strong> 2-approximation for TSP</li>
+                    </ul>
+                </div>
+                <div class="content-box">
+                    <h3>Topological Sort Applications</h3>
+                    <ul>
+                        <li><strong>Build Systems:</strong> Makefile, Gradle, Maven</li>
+                        <li><strong>Package Managers:</strong> apt, npm dependency resolution</li>
+                        <li><strong>Spreadsheets:</strong> Cell recalculation order</li>
+                        <li><strong>Course Scheduling:</strong> Prerequisite ordering</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="content-grid" style="margin-top: 20px;">
+                <div class="content-box">
+                    <h3>SCC Applications</h3>
+                    <ul>
+                        <li><strong>Web Crawling:</strong> Identify link communities</li>
+                        <li><strong>2-SAT Solving:</strong> Satisfiability via implication graphs</li>
+                        <li><strong>Dead Code Detection:</strong> Unreachable code analysis</li>
+                    </ul>
+                </div>
+                <div class="content-box">
+                    <h3>Backtracking Applications</h3>
+                    <ul>
+                        <li><strong>SAT Solvers:</strong> Boolean satisfiability</li>
+                        <li><strong>Constraint Programming:</strong> Scheduling, resource allocation</li>
+                        <li><strong>Game AI:</strong> Game tree search (minimax)</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        
+        <!-- ==================== SLIDE 28: RELATED ALGORITHMS ==================== -->
+        <div class="slide" data-slide="28">
+            <h2 class="slide-title"><span class="emoji">🔗</span> Related Algorithms</h2>
+            <div class="content-grid">
+                <div class="content-box">
+                    <h3>Beyond This Lecture</h3>
+                    <table class="comparison-table">
+                        <tr>
+                            <th>Algorithm</th>
+                            <th>Related To</th>
+                            <th>Complexity</th>
+                        </tr>
+                        <tr>
+                            <td>Borůvka's MST</td>
+                            <td>Kruskal/Prim</td>
+                            <td>O(E log V)</td>
+                        </tr>
+                        <tr>
+                            <td>Tarjan's SCC</td>
+                            <td>Kosaraju</td>
+                            <td>O(V + E), single pass</td>
+                        </tr>
+                        <tr>
+                            <td>Articulation Points</td>
+                            <td>SCC concepts</td>
+                            <td>O(V + E)</td>
+                        </tr>
+                        <tr>
+                            <td>Branch & Bound</td>
+                            <td>Backtracking</td>
+                            <td>Problem-dependent</td>
+                        </tr>
+                        <tr>
+                            <td>Dancing Links</td>
+                            <td>Exact cover</td>
+                            <td>Efficient backtracking</td>
+                        </tr>
+                    </table>
+                </div>
+                <div class="content-box">
+                    <h3>Extensions to Explore</h3>
+                    <ul>
+                        <li><strong>Minimum Spanning Arborescence:</strong> Directed MST (Edmonds' algorithm)</li>
+                        <li><strong>All-Pairs Shortest Path:</strong> Floyd-Warshall O(V³)</li>
+                        <li><strong>A* Search:</strong> Informed backtracking with heuristics</li>
+                        <li><strong>Constraint Propagation:</strong> Arc consistency, forward checking</li>
+                        <li><strong>IDA*:</strong> Iterative deepening A*</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        
+        <!-- ==================== SLIDE 29: COMMON MISTAKES ==================== -->
+        <div class="slide" data-slide="29">
+            <h2 class="slide-title"><span class="emoji">⚠️</span> Common Mistakes to Avoid</h2>
+            <div class="content-grid">
+                <div class="content-box">
+                    <h3>MST & Graph Algorithms</h3>
+                    <ul>
+                        <li><span style="color: var(--accent-red);">✗</span> Forgetting Union-Find path compression → O(n) per operation instead of O(α(n))</li>
+                        <li><span style="color: var(--accent-red);">✗</span> Using Kruskal for very dense graphs → O(V² log V²) wasteful</li>
+                        <li><span style="color: var(--accent-red);">✗</span> Not checking for graph connectivity before MST</li>
+                        <li><span style="color: var(--accent-red);">✗</span> Confusing SCC with connected components (undirected)</li>
+                    </ul>
+                </div>
+                <div class="content-box">
+                    <h3>Backtracking</h3>
+                    <ul>
+                        <li><span style="color: var(--accent-red);">✗</span> Forgetting to undo state changes (incomplete backtrack)</li>
+                        <li><span style="color: var(--accent-red);">✗</span> Checking constraints too late → wasted exploration</li>
+                        <li><span style="color: var(--accent-red);">✗</span> Not using pruning → exponential blowup</li>
+                        <li><span style="color: var(--accent-red);">✗</span> Modifying iteration variable during loop</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="warning-box">
+                <strong>Debugging Tip:</strong> Add counters for nodes explored, backtracks triggered — helps verify pruning effectiveness!
+            </div>
+        </div>
+        
+        <!-- ==================== SLIDE 30: INTERVIEW QUESTIONS ==================== -->
+        <div class="slide" data-slide="30">
+            <h2 class="slide-title"><span class="emoji">💼</span> Interview Preparation</h2>
+            <div class="content-grid">
+                <div class="content-box">
+                    <h3>Common Interview Questions</h3>
+                    <ol style="color: var(--text-secondary);">
+                        <li style="margin-bottom: 15px;">
+                            <strong style="color: var(--accent-blue);">Explain when you'd use Kruskal vs Prim</strong>
+                            <br><em>Hint: Graph density, available data structures</em>
+                        </li>
+                        <li style="margin-bottom: 15px;">
+                            <strong style="color: var(--accent-blue);">Why does path compression in Union-Find help?</strong>
+                            <br><em>Hint: Tree height, amortised analysis</em>
+                        </li>
+                        <li style="margin-bottom: 15px;">
+                            <strong style="color: var(--accent-blue);">Solve N-Queens for N=8. How many solutions?</strong>
+                            <br><em>Answer: 92 distinct solutions</em>
+                        </li>
+                        <li style="margin-bottom: 15px;">
+                            <strong style="color: var(--accent-blue);">Detect if a directed graph has a cycle</strong>
+                            <br><em>Hint: DFS colors (white/gray/black) or Kahn's algorithm</em>
+                        </li>
+                        <li>
+                            <strong style="color: var(--accent-blue);">Design a constraint solver for Sudoku</strong>
+                            <br><em>Hint: Backtracking + constraint propagation</em>
+                        </li>
+                    </ol>
+                </div>
+                <div class="content-box">
+                    <h3>LeetCode Practice Problems</h3>
+                    <table class="comparison-table">
+                        <tr>
+                            <th>Problem</th>
+                            <th>Difficulty</th>
+                            <th>Topic</th>
+                        </tr>
+                        <tr>
+                            <td>#1584 Min Cost to Connect All Points</td>
+                            <td><span class="tag tag-orange">Medium</span></td>
+                            <td>MST</td>
+                        </tr>
+                        <tr>
+                            <td>#207 Course Schedule</td>
+                            <td><span class="tag tag-orange">Medium</span></td>
+                            <td>Topological Sort</td>
+                        </tr>
+                        <tr>
+                            <td>#51 N-Queens</td>
+                            <td><span class="tag tag-red">Hard</span></td>
+                            <td>Backtracking</td>
+                        </tr>
+                        <tr>
+                            <td>#37 Sudoku Solver</td>
+                            <td><span class="tag tag-red">Hard</span></td>
+                            <td>Backtracking</td>
+                        </tr>
+                        <tr>
+                            <td>#980 Unique Paths III</td>
+                            <td><span class="tag tag-red">Hard</span></td>
+                            <td>Hamiltonian</td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+        </div>
+        
+        <!-- ==================== SLIDE 31: SELF-ASSESSMENT ==================== -->
+        <div class="slide" data-slide="31">
+            <h2 class="slide-title"><span class="emoji">✅</span> Self-Assessment Checklist</h2>
+            <div class="content-grid">
+                <div class="content-box">
+                    <h3>I can...</h3>
+                    <ul>
+                        <li>☐ Explain the cut property for MST</li>
+                        <li>☐ Implement Union-Find with path compression and union by rank</li>
+                        <li>☐ Trace through Kruskal's algorithm step-by-step</li>
+                        <li>☐ Implement Prim's algorithm with array or heap</li>
+                        <li>☐ Choose appropriate MST algorithm for graph density</li>
+                        <li>☐ Implement topological sort using DFS and Kahn's</li>
+                        <li>☐ Detect cycles in directed graphs</li>
+                    </ul>
+                </div>
+                <div class="content-box">
+                    <h3>I can...</h3>
+                    <ul>
+                        <li>☐ Explain Kosaraju's two-pass SCC algorithm</li>
+                        <li>☐ Identify SCCs in a directed graph</li>
+                        <li>☐ Write the general backtracking template</li>
+                        <li>☐ Solve N-Queens using backtracking</li>
+                        <li>☐ Implement a Sudoku solver</li>
+                        <li>☐ Apply pruning strategies effectively</li>
+                        <li>☐ Analyse backtracking complexity with and without pruning</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        
+        <!-- ==================== SLIDE 32: RECOMMENDED READING ==================== -->
+        <div class="slide" data-slide="32">
+            <h2 class="slide-title"><span class="emoji">📚</span> Recommended Reading</h2>
+            <div class="content-grid">
+                <div class="content-box">
+                    <h3>Essential Textbooks</h3>
+                    <ul>
+                        <li><strong>CLRS:</strong> Chapters 21 (Union-Find), 23 (MST), 22 (Graph Algorithms)</li>
+                        <li><strong>Sedgewick:</strong> Algorithms, 4th Ed. — Graph Algorithms</li>
+                        <li><strong>Skiena:</strong> Algorithm Design Manual — Chapter 7 (Backtracking)</li>
+                    </ul>
+                    <h3 style="margin-top: 20px;">Original Papers</h3>
+                    <ul>
+                        <li>Kruskal (1956): "On the shortest spanning subtree of a graph"</li>
+                        <li>Prim (1957): "Shortest connection networks"</li>
+                        <li>Tarjan (1975): "Efficiency of a Good But Not Linear Set Union Algorithm"</li>
+                    </ul>
+                </div>
+                <div class="content-box">
+                    <h3>Online Resources</h3>
+                    <ul>
+                        <li><strong>VisuAlgo:</strong> <a href="https://visualgo.net/en/mst" style="color: var(--accent-blue);">visualgo.net/en/mst</a></li>
+                        <li><strong>MIT OCW 6.006:</strong> Lecture on Graph Algorithms</li>
+                        <li><strong>CP-Algorithms:</strong> <a href="https://cp-algorithms.com" style="color: var(--accent-blue);">cp-algorithms.com</a></li>
+                    </ul>
+                    <h3 style="margin-top: 20px;">Practice Platforms</h3>
+                    <ul>
+                        <li><strong>LeetCode:</strong> Graph and Backtracking problems</li>
+                        <li><strong>Codeforces:</strong> Graph theory contest problems</li>
+                        <li><strong>HackerRank:</strong> Graph algorithms track</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        
+        <!-- ==================== SLIDE 33: COURSE SUMMARY ==================== -->
+        <div class="slide" data-slide="33">
+            <h2 class="slide-title"><span class="emoji">🎓</span> ATP Course Summary</h2>
+            <div class="content-box full-width">
+                <h3>Journey Through 16 Weeks</h3>
+                <div class="timeline" style="margin-top: 20px;">
+                    <div class="timeline-item">
+                        <div class="timeline-year">Weeks 1-5: Foundations</div>
+                        <div style="color: var(--text-secondary);">Pointers, Files (Text, Binary, Relative), Recursion</div>
+                    </div>
+                    <div class="timeline-item">
+                        <div class="timeline-year">Weeks 6-7: Analysis</div>
+                        <div style="color: var(--text-secondary);">Divide & Conquer, Complexity Analysis</div>
+                    </div>
+                    <div class="timeline-item">
+                        <div class="timeline-year">Weeks 8-10: Trees</div>
+                        <div style="color: var(--text-secondary);">BST, AVL Trees, Heaps & Priority Queues</div>
+                    </div>
+                    <div class="timeline-item">
+                        <div class="timeline-year">Weeks 11-14: Graphs</div>
+                        <div style="color: var(--text-secondary);">Traversals, Connectivity, Dijkstra, MST, Review</div>
+                    </div>
+                    <div class="timeline-item">
+                        <div class="timeline-year">Week 15: Paradigms</div>
+                        <div style="color: var(--text-secondary);">Divide & Conquer, Greedy, Dynamic Programming</div>
+                    </div>
+                    <div class="timeline-item">
+                        <div class="timeline-year">Week 16: Advanced (This Week)</div>
+                        <div style="color: var(--text-secondary);">Advanced MST, Topological Sort, SCC, Backtracking</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- ==================== SLIDE 34: KEY TAKEAWAYS ==================== -->
+        <div class="slide" data-slide="34">
+            <h2 class="slide-title"><span class="emoji">💡</span> Key Takeaways from Week 16</h2>
+            <div class="content-grid">
+                <div class="content-box">
+                    <h3>Graph Algorithms</h3>
+                    <ul>
+                        <li><strong>MST:</strong> Cut property is fundamental; Kruskal for sparse, Prim for dense</li>
+                        <li><strong>Union-Find:</strong> Path compression + union by rank → nearly O(1)</li>
+                        <li><strong>Topological Sort:</strong> DAG ordering; detect cycles as bonus</li>
+                        <li><strong>SCC:</strong> Two-pass DFS reveals strongly connected structure</li>
+                    </ul>
+                </div>
+                <div class="content-box">
+                    <h3>Backtracking</h3>
+                    <ul>
+                        <li><strong>Paradigm:</strong> Incremental construction with systematic exploration</li>
+                        <li><strong>Pruning:</strong> The difference between feasible and infeasible</li>
+                        <li><strong>Template:</strong> Choose → Explore → Unchoose</li>
+                        <li><strong>Applications:</strong> Constraint satisfaction, puzzles, combinatorics</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="success-box">
+                <strong>Master These Concepts:</strong> They form the foundation for advanced algorithmic problem-solving in interviews and real-world applications!
+            </div>
+        </div>
+        
+        <!-- ==================== SLIDE 35: NEXT STEPS ==================== -->
+        <div class="slide" data-slide="35">
+            <h2 class="slide-title"><span class="emoji">🚀</span> What's Next?</h2>
+            <div class="content-grid">
+                <div class="content-box">
+                    <h3>Continue Learning</h3>
+                    <ul>
+                        <li><strong>Advanced Graph Algorithms:</strong> Max Flow, Matching, Network Flows</li>
+                        <li><strong>String Algorithms:</strong> KMP, Rabin-Karp, Suffix Arrays</li>
+                        <li><strong>Computational Geometry:</strong> Convex Hull, Line Sweep</li>
+                        <li><strong>Advanced DP:</strong> Bitmask DP, Digit DP, Tree DP</li>
+                    </ul>
+                </div>
+                <div class="content-box">
+                    <h3>Practice Recommendations</h3>
+                    <ul>
+                        <li><strong>Competitive Programming:</strong> Codeforces, AtCoder, USACO</li>
+                        <li><strong>Interview Prep:</strong> LeetCode premium, Blind 75</li>
+                        <li><strong>Real Projects:</strong> Implement from scratch in C/C++</li>
+                        <li><strong>Read Code:</strong> Open source implementations (Linux kernel, databases)</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="highlight-box">
+                <strong>Remember:</strong> The best way to learn algorithms is to implement them, debug them, and apply them to real problems!
+            </div>
+        </div>
+        
+        <!-- ==================== SLIDE 36: LABORATORY EXERCISES ==================== -->
+        <div class="slide" data-slide="36">
+            <h2 class="slide-title"><span class="emoji">💻</span> Laboratory Exercises</h2>
+            <div class="content-grid">
+                <div class="content-box">
+                    <h3>Exercise 1: MST & Topological Sort</h3>
+                    <p style="color: var(--text-secondary); margin-bottom: 15px;">
+                        <strong>File:</strong> <code>src/exercise1.c</code>
+                    </p>
+                    <ul>
+                        <li>TODO 1: Implement Union-Find with path compression</li>
+                        <li>TODO 2: Implement union by rank</li>
+                        <li>TODO 3: Implement Kruskal's algorithm</li>
+                        <li>TODO 4: Implement Prim's algorithm</li>
+                        <li>TODO 5: Implement DFS topological sort</li>
+                        <li>TODO 6: Implement Kahn's algorithm</li>
+                    </ul>
+                </div>
+                <div class="content-box">
+                    <h3>Exercise 2: Backtracking</h3>
+                    <p style="color: var(--text-secondary); margin-bottom: 15px;">
+                        <strong>File:</strong> <code>src/exercise2.c</code>
+                    </p>
+                    <ul>
+                        <li>TODO 1: Implement N-Queens safety check</li>
+                        <li>TODO 2: Implement N-Queens solver</li>
+                        <li>TODO 3: Implement Sudoku validity check</li>
+                        <li>TODO 4: Implement Sudoku solver</li>
+                        <li>TODO 5: Implement Hamiltonian path finder</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="warning-box">
+                <strong>Compilation:</strong> <code>make all</code> | <strong>Testing:</strong> <code>make test</code> | <strong>Memory:</strong> <code>make valgrind</code>
+            </div>
+        </div>
+        
+        <!-- ==================== SLIDE 37: HOMEWORK PREVIEW ==================== -->
+        <div class="slide" data-slide="37">
+            <h2 class="slide-title"><span class="emoji">📝</span> Homework Assignments</h2>
+            <div class="content-grid">
+                <div class="content-box">
+                    <h3>Homework 1: Graph Algorithms Suite (50 pts)</h3>
+                    <ul>
+                        <li><strong>Part A (15 pts):</strong> Minimum Cost Network Design</li>
+                        <li><strong>Part B (15 pts):</strong> Course Prerequisite Scheduler</li>
+                        <li><strong>Part C (20 pts):</strong> Network Reliability Analysis (articulation points, bridges)</li>
+                    </ul>
+                    <div style="margin-top: 15px; padding: 10px; background: var(--bg-tertiary); border-radius: 6px; font-family: monospace; font-size: 0.9em;">
+                        ./homework1 &lt;mode&gt; &lt;input_file&gt;
+                    </div>
+                </div>
+                <div class="content-box">
+                    <h3>Homework 2: Backtracking Apps (50 pts)</h3>
+                    <ul>
+                        <li><strong>Part A (15 pts):</strong> Knight's Tour with Warnsdorff's heuristic</li>
+                        <li><strong>Part B (15 pts):</strong> Cryptarithmetic Solver (SEND+MORE=MONEY)</li>
+                        <li><strong>Part C (20 pts):</strong> Optimal Job Scheduling with pruning</li>
+                    </ul>
+                    <div style="margin-top: 15px; padding: 10px; background: var(--bg-tertiary); border-radius: 6px; font-family: monospace; font-size: 0.9em;">
+                        ./homework2 &lt;problem&gt; [options]
+                    </div>
+                </div>
+            </div>
+            <div class="highlight-box">
+                <strong>Extended Challenges:</strong> Check <code>teme/homework-extended.md</code> for 50 bonus points!
+            </div>
+        </div>
+        
+        <!-- ==================== SLIDE 38: DEMO ==================== -->
+        <div class="slide" data-slide="38">
+            <h2 class="slide-title"><span class="emoji">🎬</span> Live Demo</h2>
+            <div class="content-box full-width" style="text-align: center;">
+                <h3>Let's See the Algorithms in Action!</h3>
+                <div style="margin: 40px 0;">
+                    <pre style="color: var(--accent-green); font-family: monospace; font-size: 1.1em;">
+$ cd 16-advanced-graphs-backtracking
+$ make
+$ ./example1
+
+╔═══════════════════════════════════════════════════════════════╗
+║                                                               ║
+║     WEEK 16: ADVANCED GRAPH ALGORITHMS & BACKTRACKING         ║
+║                    Complete Example                           ║
+║                                                               ║
+╚═══════════════════════════════════════════════════════════════╝
+
+    PART 1: UNION-FIND DATA STRUCTURE
+    PART 2: MINIMUM SPANNING TREES
+    PART 3: TOPOLOGICAL SORT
+    PART 4: STRONGLY CONNECTED COMPONENTS
+    PART 5: N-QUEENS BACKTRACKING
+    PART 6: SUDOKU SOLVER
+    PART 7: GRAPH COLORING
+                    </pre>
+                </div>
+                <div style="display: flex; justify-content: center; gap: 30px; margin-top: 30px;">
+                    <div class="complexity-card" style="width: 150px;">
+                        <div class="big-o">make run</div>
+                        <div class="label">Run example</div>
+                    </div>
+                    <div class="complexity-card" style="width: 150px;">
+                        <div class="big-o">make test</div>
+                        <div class="label">Run tests</div>
+                    </div>
+                    <div class="complexity-card" style="width: 150px;">
+                        <div class="big-o">make valgrind</div>
+                        <div class="label">Check memory</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- ==================== SLIDE 39: THANK YOU ==================== -->
+        <div class="slide" data-slide="39">
+            <h2 class="slide-title"><span class="emoji">🙏</span> Thank You!</h2>
+            <div class="content-box full-width" style="text-align: center;">
+                <h3 style="font-size: 1.8em; margin-bottom: 30px;">Congratulations on Completing ATP!</h3>
+                <p style="color: var(--text-secondary); font-size: 1.2em; margin-bottom: 30px;">
+                    You've built a strong foundation in algorithms and data structures.
+                </p>
+                <div style="display: flex; justify-content: center; gap: 40px; margin: 40px 0;">
+                    <div class="profile-card" style="width: 200px;">
+                        <div style="font-size: 3em; margin-bottom: 10px;">16</div>
+                        <div class="name">Weeks</div>
+                        <div class="years">of intensive study</div>
+                    </div>
+                    <div class="profile-card" style="width: 200px;">
+                        <div style="font-size: 3em; margin-bottom: 10px;">30+</div>
+                        <div class="name">Algorithms</div>
+                        <div class="years">implemented & analysed</div>
+                    </div>
+                    <div class="profile-card" style="width: 200px;">
+                        <div style="font-size: 3em; margin-bottom: 10px;">∞</div>
+                        <div class="name">Possibilities</div>
+                        <div class="years">ahead of you!</div>
+                    </div>
+                </div>
+                <div class="quote-box" style="margin-top: 30px;">
+                    "Computer science is no more about computers than astronomy is about telescopes."
+                    <div class="quote-author">— Edsger W. Dijkstra</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- ==================== SLIDE 40: QUESTIONS ==================== -->
+        <div class="slide title-slide" data-slide="40">
+            <h1>🎉 Questions?</h1>
+            <p class="subtitle">Week 16: Advanced Graph Algorithms & Backtracking</p>
+            <div style="margin-top: 30px;">
+                <p style="color: var(--text-secondary);">Course Complete — Good Luck on Exams!</p>
+            </div>
+            <div style="margin-top: 40px; display: flex; justify-content: center; gap: 30px;">
+                <div class="complexity-card" style="width: 150px;">
+                    <div class="big-o">📧</div>
+                    <div class="label">Contact instructor</div>
+                </div>
+                <div class="complexity-card" style="width: 150px;">
+                    <div class="big-o">💻</div>
+                    <div class="label">Practice exercises</div>
+                </div>
+                <div class="complexity-card" style="width: 150px;">
+                    <div class="big-o">📖</div>
+                    <div class="label">Read CLRS Ch. 21-23</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Navigation Controls -->
+        <div class="nav-controls">
+            <button class="nav-btn" onclick="prevSlide()">← Previous</button>
+            <button class="nav-btn" onclick="nextSlide()">Next →</button>
+        </div>
+        
+        <div class="slide-counter">
+            Slide <span id="currentSlide">1</span> / <span id="totalSlides">40</span>
+        </div>
+    </div>
+    
+    <script>
+        // Initialize highlight.js
+        hljs.highlightAll();
+        
+        let currentSlide = 1;
+        const totalSlides = document.querySelectorAll('.slide').length;
+        
+        document.getElementById('totalSlides').textContent = totalSlides;
+        
+        function showSlide(n) {
+            const slides = document.querySelectorAll('.slide');
+            
+            if (n > totalSlides) currentSlide = 1;
+            if (n < 1) currentSlide = totalSlides;
+            
+            slides.forEach(slide => slide.classList.remove('active'));
+            slides[currentSlide - 1].classList.add('active');
+            
+            document.getElementById('currentSlide').textContent = currentSlide;
+            document.getElementById('progressFill').style.width = 
+                ((currentSlide / totalSlides) * 100) + '%';
+        }
+        
+        function nextSlide() {
+            currentSlide++;
+            showSlide(currentSlide);
+        }
+        
+        function prevSlide() {
+            currentSlide--;
+            showSlide(currentSlide);
+        }
+        
+        // Keyboard navigation
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowRight' || e.key === ' ') {
+                nextSlide();
+            } else if (e.key === 'ArrowLeft') {
+                prevSlide();
+            } else if (e.key === 'Home') {
+                currentSlide = 1;
+                showSlide(currentSlide);
+            } else if (e.key === 'End') {
+                currentSlide = totalSlides;
+                showSlide(currentSlide);
+            }
+        });
+        
+        // Initialize first slide
+        showSlide(1);
+    </script>
+</body>
+</html>

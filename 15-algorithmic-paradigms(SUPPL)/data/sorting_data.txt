@@ -1,0 +1,30 @@
+# Sample data for sorting algorithm comparison
+# Format: n followed by n integers
+
+# Small random array
+10
+64 34 25 12 22 11 90 45 78 33
+
+# Already sorted array (worst case for naive QuickSort)
+10
+1 2 3 4 5 6 7 8 9 10
+
+# Reverse sorted array
+10
+10 9 8 7 6 5 4 3 2 1
+
+# Nearly sorted array (one swap needed)
+10
+1 2 3 4 6 5 7 8 9 10
+
+# All equal elements
+10
+5 5 5 5 5 5 5 5 5 5
+
+# Medium random array for timing
+20
+73 21 95 14 62 88 37 46 52 81 29 70 18 95 61 84 43 92 16 39
+
+# Large random array for performance testing
+50
+847 921 342 756 128 639 485 912 273 568 711 234 897 156 489 632 841 274 568 921 347 612 489 756 321 895 423 178 645 912 357 821 564 293 758 412 869 534 781 296 653 817 294 568 734 182 596 847 321 765

@@ -1,0 +1,1666 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Week 15: Algorithmic Paradigms | ATP Course</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/c.min.js"></script>
+    <style>
+        :root {
+            --bg-primary: #0d1117;
+            --bg-secondary: #161b22;
+            --bg-tertiary: #21262d;
+            --accent-blue: #58a6ff;
+            --accent-green: #3fb950;
+            --accent-orange: #d29922;
+            --accent-red: #f85149;
+            --accent-purple: #a371f7;
+            --text-primary: #e6edf3;
+            --text-secondary: #8b949e;
+            --border-color: #30363d;
+        }
+        
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            overflow: hidden;
+            height: 100vh;
+        }
+        
+        .presentation-container {
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .progress-bar {
+            height: 4px;
+            background: var(--bg-tertiary);
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--accent-blue), var(--accent-purple));
+            transition: width 0.3s ease;
+        }
+        
+        .slide {
+            display: none;
+            flex: 1;
+            padding: 40px 60px;
+            overflow-y: auto;
+            animation: fadeIn 0.4s ease;
+        }
+        
+        .slide.active {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .slide-title {
+            font-size: 2.2em;
+            margin-bottom: 30px;
+            color: var(--accent-blue);
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .slide-subtitle {
+            font-size: 1.3em;
+            color: var(--accent-orange);
+            margin-bottom: 20px;
+        }
+        
+        .content-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            flex: 1;
+        }
+        
+        .content-grid-3 {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 20px;
+            flex: 1;
+        }
+        
+        .content-box {
+            background: var(--bg-secondary);
+            border-radius: 12px;
+            padding: 25px;
+            border: 1px solid var(--border-color);
+        }
+        
+        .content-box h3 {
+            color: var(--accent-green);
+            margin-bottom: 15px;
+            font-size: 1.2em;
+        }
+        
+        .content-box ul { list-style: none; }
+        
+        .content-box li {
+            padding: 8px 0;
+            padding-left: 25px;
+            position: relative;
+            color: var(--text-secondary);
+        }
+        
+        .content-box li::before {
+            content: "→";
+            position: absolute;
+            left: 0;
+            color: var(--accent-blue);
+        }
+        
+        .code-block {
+            background: #1e1e1e;
+            border-radius: 10px;
+            overflow: hidden;
+            margin: 15px 0;
+        }
+        
+        .code-header {
+            background: var(--bg-tertiary);
+            padding: 10px 15px;
+            font-size: 0.85em;
+            color: var(--text-secondary);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .code-header .lang-badge {
+            background: var(--accent-blue);
+            color: var(--bg-primary);
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-weight: 600;
+        }
+        
+        .code-block pre {
+            padding: 20px;
+            overflow-x: auto;
+            font-size: 0.9em;
+            line-height: 1.5;
+        }
+        
+        .code-block code {
+            font-family: 'Fira Code', 'Consolas', monospace;
+        }
+        
+        .highlight-box {
+            background: linear-gradient(135deg, rgba(88, 166, 255, 0.1), rgba(163, 113, 247, 0.1));
+            border-left: 4px solid var(--accent-blue);
+            padding: 20px;
+            border-radius: 0 10px 10px 0;
+            margin: 15px 0;
+        }
+        
+        .warning-box {
+            background: rgba(248, 81, 73, 0.1);
+            border-left: 4px solid var(--accent-red);
+            padding: 20px;
+            border-radius: 0 10px 10px 0;
+            margin: 15px 0;
+        }
+        
+        .success-box {
+            background: rgba(63, 185, 80, 0.1);
+            border-left: 4px solid var(--accent-green);
+            padding: 20px;
+            border-radius: 0 10px 10px 0;
+            margin: 15px 0;
+        }
+        
+        .quote-box {
+            background: var(--bg-secondary);
+            border-left: 4px solid var(--accent-orange);
+            padding: 25px;
+            border-radius: 0 10px 10px 0;
+            margin: 15px 0;
+            font-style: italic;
+        }
+        
+        .quote-author {
+            text-align: right;
+            color: var(--accent-orange);
+            margin-top: 10px;
+            font-style: normal;
+        }
+        
+        .complexity-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+        }
+        
+        .complexity-table th, .complexity-table td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        .complexity-table th {
+            background: var(--bg-tertiary);
+            color: var(--accent-blue);
+        }
+        
+        .complexity-table tr:hover {
+            background: var(--bg-secondary);
+        }
+        
+        .title-slide {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            height: 100%;
+        }
+        
+        .title-slide h1 {
+            font-size: 3.5em;
+            margin-bottom: 20px;
+            background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .title-slide .subtitle {
+            font-size: 1.5em;
+            color: var(--text-secondary);
+            margin-bottom: 40px;
+        }
+        
+        .title-slide .meta {
+            color: var(--text-secondary);
+            font-size: 1.1em;
+        }
+        
+        .diagram-box {
+            background: var(--bg-secondary);
+            border-radius: 12px;
+            padding: 20px;
+            font-family: 'Fira Code', monospace;
+            font-size: 0.85em;
+            line-height: 1.6;
+            overflow-x: auto;
+            white-space: pre;
+        }
+        
+        .nav-controls {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            display: flex;
+            gap: 10px;
+        }
+        
+        .nav-btn {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .nav-btn:hover {
+            background: var(--bg-tertiary);
+            border-color: var(--accent-blue);
+        }
+        
+        .slide-counter {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            color: var(--text-secondary);
+            font-size: 0.9em;
+        }
+        
+        .paradigm-card {
+            background: var(--bg-secondary);
+            border-radius: 12px;
+            padding: 25px;
+            border: 2px solid var(--border-color);
+            transition: all 0.3s;
+        }
+        
+        .paradigm-card:hover {
+            border-color: var(--accent-blue);
+            transform: translateY(-5px);
+        }
+        
+        .paradigm-card h4 {
+            color: var(--accent-purple);
+            font-size: 1.3em;
+            margin-bottom: 15px;
+        }
+        
+        .step-indicator {
+            display: flex;
+            justify-content: space-around;
+            margin: 20px 0;
+        }
+        
+        .step {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .step-number {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: var(--accent-blue);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
+        
+        .formula-box {
+            background: var(--bg-tertiary);
+            border-radius: 8px;
+            padding: 15px 25px;
+            font-family: 'Fira Code', monospace;
+            font-size: 1.1em;
+            text-align: center;
+            margin: 15px 0;
+        }
+        
+        .animation-box {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 20px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+            justify-content: center;
+        }
+        
+        .array-cell {
+            width: 45px;
+            height: 45px;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
+        
+        .array-cell.highlight {
+            background: var(--accent-blue);
+            color: var(--bg-primary);
+        }
+        
+        .array-cell.sorted {
+            background: var(--accent-green);
+            color: var(--bg-primary);
+        }
+        
+        .array-cell.pivot {
+            background: var(--accent-orange);
+            color: var(--bg-primary);
+        }
+    </style>
+</head>
+<body>
+    <div class="presentation-container">
+        <div class="progress-bar">
+            <div class="progress-fill" id="progressFill"></div>
+        </div>
+        
+        <!-- Slide 1: Title -->
+        <div class="slide active">
+            <div class="title-slide">
+                <h1>🧠 Algorithmic Paradigms</h1>
+                <p class="subtitle">Divide & Conquer, Greedy, Dynamic Programming</p>
+                <p class="meta">Week 15 | ATP Course | ASE-CSIE Bucharest</p>
+                <div style="margin-top: 40px; display: flex; gap: 30px;">
+                    <div class="paradigm-card" style="text-align: center; min-width: 150px;">
+                        <h4>⚔️ Divide</h4>
+                        <p style="color: var(--text-secondary);">Break apart</p>
+                    </div>
+                    <div class="paradigm-card" style="text-align: center; min-width: 150px;">
+                        <h4>🎯 Greedy</h4>
+                        <p style="color: var(--text-secondary);">Local optimal</p>
+                    </div>
+                    <div class="paradigm-card" style="text-align: center; min-width: 150px;">
+                        <h4>📊 Dynamic</h4>
+                        <p style="color: var(--text-secondary);">Memoisation</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Slide 2: Learning Objectives -->
+        <div class="slide">
+            <h2 class="slide-title">🎯 Learning Objectives</h2>
+            <div class="content-grid">
+                <div class="content-box">
+                    <h3>Knowledge & Comprehension</h3>
+                    <ul>
+                        <li><strong>Remember</strong> the Master Theorem formula and its three cases</li>
+                        <li><strong>Understand</strong> when greedy algorithms yield optimal solutions</li>
+                        <li><strong>Explain</strong> the difference between memoisation and tabulation</li>
+                    </ul>
+                </div>
+                <div class="content-box">
+                    <h3>Application & Analysis</h3>
+                    <ul>
+                        <li><strong>Apply</strong> MergeSort and QuickSort to real datasets</li>
+                        <li><strong>Analyse</strong> time complexity using recurrence relations</li>
+                        <li><strong>Evaluate</strong> greedy vs DP approaches for optimisation problems</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="highlight-box" style="margin-top: 20px;">
+                <strong>Today's Goal:</strong> Master the three fundamental algorithmic paradigms that form the foundation of algorithm design.
+            </div>
+        </div>
+        
+        <!-- Slide 3: Historical Context - von Neumann -->
+        <div class="slide">
+            <h2 class="slide-title">📜 Historical Context: John von Neumann</h2>
+            <div class="content-grid">
+                <div class="content-box">
+                    <h3>Biography (1903-1957)</h3>
+                    <ul>
+                        <li>Hungarian-American mathematician and polymath</li>
+                        <li>Pioneered game theory, cellular automata, nuclear physics</li>
+                        <li>Designed the von Neumann architecture (1945)</li>
+                        <li>Invented MergeSort while working on EDVAC</li>
+                    </ul>
+                    <div class="quote-box" style="margin-top: 20px;">
+                        "If people do not believe that mathematics is simple, it is only because they do not realise how complicated life is."
+                        <div class="quote-author">— John von Neumann</div>
+                    </div>
+                </div>
+                <div class="content-box">
+                    <h3>MergeSort Origins (1945)</h3>
+                    <p style="color: var(--text-secondary); margin-bottom: 15px;">
+                        Von Neumann developed MergeSort as one of the first algorithms designed specifically for electronic computers. The algorithm's elegance lies in its:
+                    </p>
+                    <ul>
+                        <li><strong>Divide:</strong> Split array into halves</li>
+                        <li><strong>Conquer:</strong> Recursively sort each half</li>
+                        <li><strong>Combine:</strong> Merge sorted halves</li>
+                    </ul>
+                    <div class="success-box" style="margin-top: 15px;">
+                        <strong>Complexity:</strong> O(n log n) — optimal for comparison-based sorting!
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Slide 4: Historical Context - C.A.R. Hoare -->
+        <div class="slide">
+            <h2 class="slide-title">📜 Historical Context: C.A.R. Hoare</h2>
+            <div class="content-grid">
+                <div class="content-box">
+                    <h3>Biography (1934-present)</h3>
+                    <ul>
+                        <li>British computer scientist, Turing Award (1980)</li>
+                        <li>Invented QuickSort (1959) while learning Russian in Moscow</li>
+                        <li>Developed Hoare logic for program correctness</li>
+                        <li>Created the CSP (Communicating Sequential Processes) model</li>
+                    </ul>
+                    <div class="quote-box" style="margin-top: 20px;">
+                        "There are two ways of constructing a software design: One way is to make it so simple that there are obviously no deficiencies, and the other way is to make it so complicated that there are no obvious deficiencies."
+                        <div class="quote-author">— Tony Hoare</div>
+                    </div>
+                </div>
+                <div class="content-box">
+                    <h3>QuickSort Innovation</h3>
+                    <p style="color: var(--text-secondary); margin-bottom: 15px;">
+                        Hoare invented QuickSort at age 25 while translating a Russian-English dictionary. The key insight: <em>partitioning</em>.
+                    </p>
+                    <div class="diagram-box">
+[  38  27  43  3  9  82  10  ]
+        ↓ pivot = 43
+[ <43 | 43 | ≥43 ]
+[38 27 3 9 10 | 43 | 82]
+        ↓ recurse
+[3 9 10 27 38 | 43 | 82]</div>
+                    <div class="highlight-box" style="margin-top: 15px;">
+                        Average: O(n log n) | Worst: O(n²) | In-place: O(log n) space
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Slide 5: Historical Context - Richard Bellman -->
+        <div class="slide">
+            <h2 class="slide-title">📜 Historical Context: Richard Bellman</h2>
+            <div class="content-grid">
+                <div class="content-box">
+                    <h3>Biography (1920-1984)</h3>
+                    <ul>
+                        <li>American mathematician at RAND Corporation</li>
+                        <li>Coined "Dynamic Programming" in the 1950s</li>
+                        <li>Developed Bellman equation for optimal control</li>
+                        <li>IEEE Medal of Honor recipient (1979)</li>
+                    </ul>
+                    <div class="quote-box" style="margin-top: 20px;">
+                        "An optimal policy has the property that whatever the initial state and initial decision are, the remaining decisions must constitute an optimal policy."
+                        <div class="quote-author">— Richard Bellman (Principle of Optimality)</div>
+                    </div>
+                </div>
+                <div class="content-box">
+                    <h3>Why "Dynamic Programming"?</h3>
+                    <p style="color: var(--text-secondary); margin-bottom: 15px;">
+                        Bellman chose the name to sound impressive and hide the mathematical nature from his employer (who disliked research):
+                    </p>
+                    <div class="warning-box">
+                        "I wanted to get across the idea that this was dynamic, this was multistage, this was time-varying... 'Programming' was a good word... So I thought dynamic programming was a good name."
+                    </div>
+                    <div class="success-box" style="margin-top: 15px;">
+                        <strong>Key Properties:</strong>
+                        <br>• Overlapping subproblems
+                        <br>• Optimal substructure
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Slide 6: Divide and Conquer Overview -->
+        <div class="slide">
+            <h2 class="slide-title">⚔️ Divide and Conquer Paradigm</h2>
+            <div class="step-indicator">
+                <div class="step">
+                    <div class="step-number">1</div>
+                    <strong>DIVIDE</strong>
+                    <span style="color: var(--text-secondary);">Break into subproblems</span>
+                </div>
+                <div class="step">
+                    <div class="step-number">2</div>
+                    <strong>CONQUER</strong>
+                    <span style="color: var(--text-secondary);">Solve recursively</span>
+                </div>
+                <div class="step">
+                    <div class="step-number">3</div>
+                    <strong>COMBINE</strong>
+                    <span style="color: var(--text-secondary);">Merge solutions</span>
+                </div>
+            </div>
+            <div class="content-grid" style="margin-top: 20px;">
+                <div class="content-box">
+                    <h3>General Recurrence</h3>
+                    <div class="formula-box">
+                        T(n) = a·T(n/b) + f(n)
+                    </div>
+                    <ul>
+                        <li><strong>a</strong> = number of subproblems</li>
+                        <li><strong>b</strong> = factor by which problem size shrinks</li>
+                        <li><strong>f(n)</strong> = cost of divide + combine</li>
+                    </ul>
+                </div>
+                <div class="content-box">
+                    <h3>Classic Examples</h3>
+                    <table class="complexity-table">
+                        <tr><th>Algorithm</th><th>Recurrence</th><th>Complexity</th></tr>
+                        <tr><td>Binary Search</td><td>T(n) = T(n/2) + O(1)</td><td>O(log n)</td></tr>
+                        <tr><td>MergeSort</td><td>T(n) = 2T(n/2) + O(n)</td><td>O(n log n)</td></tr>
+                        <tr><td>Strassen</td><td>T(n) = 7T(n/2) + O(n²)</td><td>O(n^2.81)</td></tr>
+                    </table>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Slide 7: Master Theorem -->
+        <div class="slide">
+            <h2 class="slide-title">📐 The Master Theorem</h2>
+            <p class="slide-subtitle">Solving Recurrences: T(n) = aT(n/b) + f(n)</p>
+            <div class="content-grid-3">
+                <div class="paradigm-card">
+                    <h4>Case 1: Work at Leaves</h4>
+                    <div class="formula-box" style="font-size: 0.9em;">
+                        f(n) = O(n^(log_b(a) - ε))
+                    </div>
+                    <p style="color: var(--text-secondary); margin: 15px 0;">
+                        When f(n) grows polynomially slower than n^log_b(a)
+                    </p>
+                    <div class="success-box">
+                        T(n) = Θ(n^log_b(a))
+                    </div>
+                </div>
+                <div class="paradigm-card">
+                    <h4>Case 2: Work Distributed</h4>
+                    <div class="formula-box" style="font-size: 0.9em;">
+                        f(n) = Θ(n^log_b(a))
+                    </div>
+                    <p style="color: var(--text-secondary); margin: 15px 0;">
+                        When f(n) grows at same rate as n^log_b(a)
+                    </p>
+                    <div class="success-box">
+                        T(n) = Θ(n^log_b(a) · log n)
+                    </div>
+                </div>
+                <div class="paradigm-card">
+                    <h4>Case 3: Work at Root</h4>
+                    <div class="formula-box" style="font-size: 0.9em;">
+                        f(n) = Ω(n^(log_b(a) + ε))
+                    </div>
+                    <p style="color: var(--text-secondary); margin: 15px 0;">
+                        When f(n) grows polynomially faster than n^log_b(a)
+                    </p>
+                    <div class="success-box">
+                        T(n) = Θ(f(n))
+                    </div>
+                </div>
+            </div>
+            <div class="highlight-box" style="margin-top: 20px;">
+                <strong>Example:</strong> MergeSort has a=2, b=2, f(n)=n → log_2(2)=1 → n^1 = Θ(n) = f(n) → <strong>Case 2</strong> → T(n) = Θ(n log n)
+            </div>
+        </div>
+        
+        <!-- Slide 8: MergeSort Algorithm -->
+        <div class="slide">
+            <h2 class="slide-title">🔀 MergeSort Implementation</h2>
+            <div class="content-grid">
+                <div class="code-block">
+                    <div class="code-header">
+                        <span>MergeSort in C</span>
+                        <span class="lang-badge">C</span>
+                    </div>
+                    <pre><code class="language-c">void merge(int arr[], int l, int m, int r) {
+    int n1 = m - l + 1, n2 = r - m;
+    int L[n1], R[n2];
+    
+    for (int i = 0; i < n1; i++) L[i] = arr[l + i];
+    for (int j = 0; j < n2; j++) R[j] = arr[m + 1 + j];
+    
+    int i = 0, j = 0, k = l;
+    while (i < n1 && j < n2) {
+        if (L[i] <= R[j]) arr[k++] = L[i++];
+        else arr[k++] = R[j++];
+    }
+    while (i < n1) arr[k++] = L[i++];
+    while (j < n2) arr[k++] = R[j++];
+}
+
+void mergeSort(int arr[], int l, int r) {
+    if (l < r) {
+        int m = l + (r - l) / 2;
+        mergeSort(arr, l, m);      // Left half
+        mergeSort(arr, m + 1, r);  // Right half
+        merge(arr, l, m, r);       // Combine
+    }
+}</code></pre>
+                </div>
+                <div class="content-box">
+                    <h3>Properties</h3>
+                    <ul>
+                        <li><strong>Time:</strong> O(n log n) always</li>
+                        <li><strong>Space:</strong> O(n) auxiliary</li>
+                        <li><strong>Stable:</strong> Yes (equal elements preserve order)</li>
+                        <li><strong>Adaptive:</strong> No (same time for all inputs)</li>
+                    </ul>
+                    <h3 style="margin-top: 20px;">Recursion Tree</h3>
+                    <div class="diagram-box">
+       [38,27,43,3,9,82,10]
+          /            \
+   [38,27,43,3]    [9,82,10]
+     /    \          /    \
+ [38,27] [43,3]  [9,82] [10]
+   / \     / \     / \
+[38][27][43][3] [9][82]
+    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Slide 9: QuickSort Algorithm -->
+        <div class="slide">
+            <h2 class="slide-title">⚡ QuickSort Implementation</h2>
+            <div class="content-grid">
+                <div class="code-block">
+                    <div class="code-header">
+                        <span>QuickSort with Lomuto Partition</span>
+                        <span class="lang-badge">C</span>
+                    </div>
+                    <pre><code class="language-c">int partition(int arr[], int low, int high) {
+    int pivot = arr[high];  // Last element
+    int i = low - 1;
+    
+    for (int j = low; j < high; j++) {
+        if (arr[j] < pivot) {
+            i++;
+            swap(&arr[i], &arr[j]);
+        }
+    }
+    swap(&arr[i + 1], &arr[high]);
+    return i + 1;
+}
+
+void quickSort(int arr[], int low, int high) {
+    if (low < high) {
+        int pi = partition(arr, low, high);
+        quickSort(arr, low, pi - 1);
+        quickSort(arr, pi + 1, high);
+    }
+}</code></pre>
+                </div>
+                <div class="content-box">
+                    <h3>Pivot Strategies</h3>
+                    <table class="complexity-table">
+                        <tr><th>Strategy</th><th>Worst Case</th></tr>
+                        <tr><td>First/Last element</td><td>O(n²) on sorted</td></tr>
+                        <tr><td>Median-of-three</td><td>Rare O(n²)</td></tr>
+                        <tr><td>Random pivot</td><td>Expected O(n log n)</td></tr>
+                    </table>
+                    <h3 style="margin-top: 20px;">Partition Visualisation</h3>
+                    <div class="animation-box">
+                        <div class="array-cell">38</div>
+                        <div class="array-cell">27</div>
+                        <div class="array-cell highlight">9</div>
+                        <div class="array-cell">3</div>
+                        <div class="array-cell pivot">43</div>
+                    </div>
+                    <p style="text-align: center; color: var(--text-secondary); margin-top: 10px;">
+                        Elements &lt; pivot move left | pivot | Elements ≥ pivot move right
+                    </p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Slide 10: QuickSort vs MergeSort -->
+        <div class="slide">
+            <h2 class="slide-title">⚖️ QuickSort vs MergeSort</h2>
+            <table class="complexity-table">
+                <tr>
+                    <th>Criterion</th>
+                    <th>QuickSort</th>
+                    <th>MergeSort</th>
+                </tr>
+                <tr>
+                    <td>Best Case</td>
+                    <td>O(n log n)</td>
+                    <td>O(n log n)</td>
+                </tr>
+                <tr>
+                    <td>Average Case</td>
+                    <td>O(n log n)</td>
+                    <td>O(n log n)</td>
+                </tr>
+                <tr>
+                    <td>Worst Case</td>
+                    <td style="color: var(--accent-red);">O(n²)</td>
+                    <td style="color: var(--accent-green);">O(n log n)</td>
+                </tr>
+                <tr>
+                    <td>Space</td>
+                    <td style="color: var(--accent-green);">O(log n)</td>
+                    <td style="color: var(--accent-red);">O(n)</td>
+                </tr>
+                <tr>
+                    <td>Stable</td>
+                    <td style="color: var(--accent-red);">No</td>
+                    <td style="color: var(--accent-green);">Yes</td>
+                </tr>
+                <tr>
+                    <td>Cache Performance</td>
+                    <td style="color: var(--accent-green);">Excellent</td>
+                    <td>Good</td>
+                </tr>
+            </table>
+            <div class="content-grid" style="margin-top: 20px;">
+                <div class="success-box">
+                    <strong>Use QuickSort when:</strong>
+                    <br>• Memory is limited
+                    <br>• Cache performance matters
+                    <br>• Average case is acceptable
+                </div>
+                <div class="highlight-box">
+                    <strong>Use MergeSort when:</strong>
+                    <br>• Stability is required
+                    <br>• Guaranteed O(n log n) needed
+                    <br>• External sorting (disk/tape)
+                </div>
+            </div>
+        </div>
+        
+        <!-- Slide 11: Greedy Paradigm Overview -->
+        <div class="slide">
+            <h2 class="slide-title">🎯 Greedy Algorithms</h2>
+            <p class="slide-subtitle">Making locally optimal choices at each step</p>
+            <div class="content-grid">
+                <div class="content-box">
+                    <h3>Key Properties</h3>
+                    <ul>
+                        <li><strong>Greedy Choice Property:</strong> A globally optimal solution can be reached by making locally optimal choices</li>
+                        <li><strong>Optimal Substructure:</strong> An optimal solution contains optimal solutions to subproblems</li>
+                    </ul>
+                    <div class="warning-box" style="margin-top: 20px;">
+                        <strong>⚠️ Warning:</strong> Greedy doesn't always work! Must prove optimality for each problem.
+                    </div>
+                </div>
+                <div class="content-box">
+                    <h3>When Greedy Works</h3>
+                    <ul>
+                        <li>✅ Activity Selection (earliest finish)</li>
+                        <li>✅ Huffman Coding</li>
+                        <li>✅ Fractional Knapsack</li>
+                        <li>✅ Minimum Spanning Trees</li>
+                    </ul>
+                    <h3 style="margin-top: 15px;">When Greedy Fails</h3>
+                    <ul>
+                        <li>❌ 0/1 Knapsack</li>
+                        <li>❌ Coin Change (non-canonical)</li>
+                        <li>❌ Travelling Salesman</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Slide 12: Activity Selection -->
+        <div class="slide">
+            <h2 class="slide-title">📅 Activity Selection Problem</h2>
+            <div class="content-grid">
+                <div class="content-box">
+                    <h3>Problem Statement</h3>
+                    <p style="color: var(--text-secondary); margin-bottom: 15px;">
+                        Given n activities with start and finish times, select maximum number of non-overlapping activities.
+                    </p>
+                    <h3>Greedy Strategy</h3>
+                    <ol style="color: var(--text-secondary); padding-left: 20px;">
+                        <li>Sort by finish time (ascending)</li>
+                        <li>Select first activity</li>
+                        <li>For each remaining activity:<br>
+                            If start ≥ last selected finish → select it</li>
+                    </ol>
+                    <div class="success-box" style="margin-top: 15px;">
+                        <strong>Time:</strong> O(n log n) for sorting, O(n) for selection
+                    </div>
+                </div>
+                <div class="code-block">
+                    <div class="code-header">
+                        <span>Activity Selection</span>
+                        <span class="lang-badge">C</span>
+                    </div>
+                    <pre><code class="language-c">typedef struct {
+    int start, finish;
+} Activity;
+
+int cmp(const void *a, const void *b) {
+    return ((Activity*)a)->finish - 
+           ((Activity*)b)->finish;
+}
+
+int activitySelection(Activity acts[], int n) {
+    qsort(acts, n, sizeof(Activity), cmp);
+    
+    int count = 1;
+    int last_finish = acts[0].finish;
+    
+    for (int i = 1; i < n; i++) {
+        if (acts[i].start >= last_finish) {
+            count++;
+            last_finish = acts[i].finish;
+        }
+    }
+    return count;
+}</code></pre>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Slide 13: Huffman Coding -->
+        <div class="slide">
+            <h2 class="slide-title">🗜️ Huffman Coding</h2>
+            <p class="slide-subtitle">Optimal prefix-free compression</p>
+            <div class="content-grid">
+                <div class="content-box">
+                    <h3>Algorithm</h3>
+                    <ol style="color: var(--text-secondary); padding-left: 20px;">
+                        <li>Count character frequencies</li>
+                        <li>Create leaf node for each character</li>
+                        <li>Build min-heap based on frequency</li>
+                        <li>While heap has &gt; 1 node:<br>
+                            • Extract two minimum<br>
+                            • Create parent with sum of frequencies<br>
+                            • Insert parent back to heap</li>
+                        <li>Assign codes: left=0, right=1</li>
+                    </ol>
+                </div>
+                <div class="content-box">
+                    <h3>Example: "abracadabra"</h3>
+                    <table class="complexity-table">
+                        <tr><th>Char</th><th>Freq</th><th>Code</th><th>Bits</th></tr>
+                        <tr><td>a</td><td>5</td><td>0</td><td>5</td></tr>
+                        <tr><td>b</td><td>2</td><td>10</td><td>4</td></tr>
+                        <tr><td>r</td><td>2</td><td>110</td><td>6</td></tr>
+                        <tr><td>c</td><td>1</td><td>1110</td><td>4</td></tr>
+                        <tr><td>d</td><td>1</td><td>1111</td><td>4</td></tr>
+                    </table>
+                    <div class="success-box" style="margin-top: 10px;">
+                        Original: 88 bits → Compressed: 23 bits<br>
+                        <strong>Ratio: 74% compression!</strong>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Slide 14: Fractional Knapsack -->
+        <div class="slide">
+            <h2 class="slide-title">🎒 Fractional Knapsack</h2>
+            <div class="content-grid">
+                <div class="content-box">
+                    <h3>Problem</h3>
+                    <p style="color: var(--text-secondary); margin-bottom: 15px;">
+                        Given items with weights and values, maximise value within capacity W. <strong>Fractions allowed.</strong>
+                    </p>
+                    <h3>Greedy Strategy</h3>
+                    <ol style="color: var(--text-secondary); padding-left: 20px;">
+                        <li>Calculate value/weight ratio for each item</li>
+                        <li>Sort by ratio (descending)</li>
+                        <li>Take items in order until capacity full</li>
+                        <li>Take fraction of last item if needed</li>
+                    </ol>
+                    <div class="highlight-box" style="margin-top: 15px;">
+                        <strong>Why greedy works:</strong> Taking the highest ratio gives maximum value per unit weight. Fractions allow optimal packing.
+                    </div>
+                </div>
+                <div class="content-box">
+                    <h3>Example</h3>
+                    <table class="complexity-table">
+                        <tr><th>Item</th><th>Weight</th><th>Value</th><th>Ratio</th></tr>
+                        <tr><td>A</td><td>10</td><td>60</td><td style="color: var(--accent-green);">6.0</td></tr>
+                        <tr><td>B</td><td>20</td><td>100</td><td>5.0</td></tr>
+                        <tr><td>C</td><td>30</td><td>120</td><td>4.0</td></tr>
+                    </table>
+                    <p style="color: var(--text-secondary); margin: 15px 0;">Capacity W = 50</p>
+                    <div class="success-box">
+                        <strong>Solution:</strong><br>
+                        Take all of A (10kg, $60)<br>
+                        Take all of B (20kg, $100)<br>
+                        Take 2/3 of C (20kg, $80)<br>
+                        <strong>Total: 50kg, $240</strong>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Slide 15: Greedy Failure Example -->
+        <div class="slide">
+            <h2 class="slide-title">⚠️ When Greedy Fails: Coin Change</h2>
+            <div class="content-grid">
+                <div class="content-box" style="border-color: var(--accent-red);">
+                    <h3 style="color: var(--accent-red);">Greedy Approach</h3>
+                    <p style="color: var(--text-secondary); margin-bottom: 15px;">
+                        Coins: {1, 3, 4}, Amount: 6
+                    </p>
+                    <div class="diagram-box">
+Amount = 6
+Step 1: 6 - 4 = 2 (use 4)
+Step 2: 2 - 1 = 1 (use 1)
+Step 3: 1 - 1 = 0 (use 1)
+
+Result: 4 + 1 + 1 = 3 coins ❌</div>
+                    <div class="warning-box" style="margin-top: 15px;">
+                        Greedy gives 3 coins — <strong>not optimal!</strong>
+                    </div>
+                </div>
+                <div class="content-box" style="border-color: var(--accent-green);">
+                    <h3 style="color: var(--accent-green);">Dynamic Programming</h3>
+                    <p style="color: var(--text-secondary); margin-bottom: 15px;">
+                        Coins: {1, 3, 4}, Amount: 6
+                    </p>
+                    <div class="diagram-box">
+dp[0] = 0  (base case)
+dp[1] = 1  (1)
+dp[2] = 2  (1+1)
+dp[3] = 1  (3)
+dp[4] = 1  (4)
+dp[5] = 2  (4+1 or 3+1+1)
+dp[6] = 2  (3+3) ✓</div>
+                    <div class="success-box" style="margin-top: 15px;">
+                        DP gives 2 coins: 3 + 3 = 6 ✓
+                    </div>
+                </div>
+            </div>
+            <div class="highlight-box" style="margin-top: 20px;">
+                <strong>Lesson:</strong> Greedy works for canonical coin systems (US: 25,10,5,1) but fails for arbitrary denominations. Always verify greedy choice property!
+            </div>
+        </div>
+        
+        <!-- Slide 16: Dynamic Programming Introduction -->
+        <div class="slide">
+            <h2 class="slide-title">📊 Dynamic Programming Paradigm</h2>
+            <div class="step-indicator">
+                <div class="step">
+                    <div class="step-number" style="background: var(--accent-purple);">1</div>
+                    <strong>OVERLAPPING</strong>
+                    <span style="color: var(--text-secondary);">Subproblems repeat</span>
+                </div>
+                <div class="step">
+                    <div class="step-number" style="background: var(--accent-purple);">2</div>
+                    <strong>OPTIMAL</strong>
+                    <span style="color: var(--text-secondary);">Substructure exists</span>
+                </div>
+                <div class="step">
+                    <div class="step-number" style="background: var(--accent-purple);">3</div>
+                    <strong>STORE</strong>
+                    <span style="color: var(--text-secondary);">Memoize results</span>
+                </div>
+            </div>
+            <div class="content-grid" style="margin-top: 20px;">
+                <div class="content-box">
+                    <h3>Two Approaches</h3>
+                    <div class="paradigm-card" style="margin-bottom: 15px;">
+                        <h4>Top-Down (Memoisation)</h4>
+                        <ul>
+                            <li>Start from original problem</li>
+                            <li>Recurse and cache results</li>
+                            <li>Natural but may have stack overhead</li>
+                        </ul>
+                    </div>
+                    <div class="paradigm-card">
+                        <h4>Bottom-Up (Tabulation)</h4>
+                        <ul>
+                            <li>Start from smallest subproblems</li>
+                            <li>Build up to original problem</li>
+                            <li>Usually more space-efficient</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="content-box">
+                    <h3>DP Recipe</h3>
+                    <ol style="color: var(--text-secondary); padding-left: 20px;">
+                        <li><strong>Define state:</strong> What does dp[i] represent?</li>
+                        <li><strong>Base cases:</strong> dp[0], dp[1], etc.</li>
+                        <li><strong>Recurrence:</strong> dp[i] = f(dp[j], ...)</li>
+                        <li><strong>Order:</strong> Which states depend on which?</li>
+                        <li><strong>Answer:</strong> Which dp value is the answer?</li>
+                    </ol>
+                    <div class="success-box" style="margin-top: 15px;">
+                        <strong>Key insight:</strong> Trade space for time by storing solutions to subproblems.
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Slide 17: Fibonacci - Three Implementations -->
+        <div class="slide">
+            <h2 class="slide-title">🔢 Fibonacci: Three Approaches</h2>
+            <div class="content-grid-3">
+                <div class="code-block">
+                    <div class="code-header">
+                        <span>Naive Recursive</span>
+                        <span class="lang-badge" style="background: var(--accent-red);">O(2ⁿ)</span>
+                    </div>
+                    <pre><code class="language-c">int fib_naive(int n) {
+    if (n <= 1) return n;
+    return fib_naive(n-1) 
+         + fib_naive(n-2);
+}
+// fib(40) ≈ 1 second
+// fib(50) ≈ 2 minutes!</code></pre>
+                </div>
+                <div class="code-block">
+                    <div class="code-header">
+                        <span>Memoized</span>
+                        <span class="lang-badge" style="background: var(--accent-orange);">O(n)</span>
+                    </div>
+                    <pre><code class="language-c">int memo[100] = {0};
+int fib_memo(int n) {
+    if (n <= 1) return n;
+    if (memo[n]) return memo[n];
+    return memo[n] = 
+        fib_memo(n-1) + fib_memo(n-2);
+}
+// fib(50) instant!</code></pre>
+                </div>
+                <div class="code-block">
+                    <div class="code-header">
+                        <span>Tabulated</span>
+                        <span class="lang-badge" style="background: var(--accent-green);">O(1) space</span>
+                    </div>
+                    <pre><code class="language-c">int fib_tab(int n) {
+    if (n <= 1) return n;
+    int a = 0, b = 1;
+    for (int i = 2; i <= n; i++) {
+        int c = a + b;
+        a = b; b = c;
+    }
+    return b;
+}
+// Optimal!</code></pre>
+                </div>
+            </div>
+            <div class="diagram-box" style="margin-top: 20px; text-align: center;">
+                    fib(5)
+                   /      \
+              fib(4)      fib(3)
+              /    \      /    \
+          fib(3) fib(2) fib(2) fib(1)
+          /   \
+       fib(2) fib(1)
+       
+Naive: Same subproblems computed multiple times!
+Memoized: Each subproblem computed once, stored for reuse.</div>
+        </div>
+        
+        <!-- Slide 18: 0/1 Knapsack Problem -->
+        <div class="slide">
+            <h2 class="slide-title">🎒 0/1 Knapsack Problem</h2>
+            <div class="content-grid">
+                <div class="content-box">
+                    <h3>Problem Definition</h3>
+                    <p style="color: var(--text-secondary); margin-bottom: 15px;">
+                        Given n items with weights w[i] and values v[i], and capacity W, find maximum value subset with total weight ≤ W.
+                    </p>
+                    <h3>DP Formulation</h3>
+                    <div class="formula-box">
+                        dp[i][w] = max value using items 1..i with capacity w
+                    </div>
+                    <h3 style="margin-top: 15px;">Recurrence</h3>
+                    <div class="diagram-box">
+dp[i][w] = max(
+    dp[i-1][w],           // Don't take item i
+    dp[i-1][w-w[i]] + v[i] // Take item i (if w[i] ≤ w)
+)</div>
+                </div>
+                <div class="content-box">
+                    <h3>Example: W=7</h3>
+                    <table class="complexity-table">
+                        <tr><th>Item</th><th>Weight</th><th>Value</th></tr>
+                        <tr><td>1</td><td>1</td><td>1</td></tr>
+                        <tr><td>2</td><td>3</td><td>4</td></tr>
+                        <tr><td>3</td><td>4</td><td>5</td></tr>
+                        <tr><td>4</td><td>5</td><td>7</td></tr>
+                    </table>
+                    <h3 style="margin-top: 15px;">DP Table</h3>
+                    <div class="diagram-box" style="font-size: 0.85em;">
+    w:  0  1  2  3  4  5  6  7
+i=0:    0  0  0  0  0  0  0  0
+i=1:    0  1  1  1  1  1  1  1
+i=2:    0  1  1  4  5  5  5  5
+i=3:    0  1  1  4  5  6  6  9
+i=4:    0  1  1  4  5  7  8  9</div>
+                    <div class="success-box" style="margin-top: 10px;">
+                        <strong>Answer: dp[4][7] = 9</strong><br>
+                        Items 2 and 3: weight=7, value=9
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Slide 19: Knapsack Implementation -->
+        <div class="slide">
+            <h2 class="slide-title">💻 Knapsack Implementation</h2>
+            <div class="content-grid">
+                <div class="code-block">
+                    <div class="code-header">
+                        <span>0/1 Knapsack with Reconstruction</span>
+                        <span class="lang-badge">C</span>
+                    </div>
+                    <pre><code class="language-c">int knapsack(int W, int wt[], int val[], int n) {
+    int dp[n+1][W+1];
+    
+    // Build table bottom-up
+    for (int i = 0; i <= n; i++) {
+        for (int w = 0; w <= W; w++) {
+            if (i == 0 || w == 0)
+                dp[i][w] = 0;
+            else if (wt[i-1] <= w)
+                dp[i][w] = max(
+                    val[i-1] + dp[i-1][w-wt[i-1]],
+                    dp[i-1][w]
+                );
+            else
+                dp[i][w] = dp[i-1][w];
+        }
+    }
+    
+    // Reconstruct solution
+    int w = W;
+    printf("Selected items: ");
+    for (int i = n; i > 0 && w > 0; i--) {
+        if (dp[i][w] != dp[i-1][w]) {
+            printf("%d ", i);
+            w -= wt[i-1];
+        }
+    }
+    
+    return dp[n][W];
+}</code></pre>
+                </div>
+                <div class="content-box">
+                    <h3>Complexity Analysis</h3>
+                    <ul>
+                        <li><strong>Time:</strong> O(n × W)</li>
+                        <li><strong>Space:</strong> O(n × W)</li>
+                        <li>Can optimise space to O(W) if reconstruction not needed</li>
+                    </ul>
+                    <div class="warning-box" style="margin-top: 15px;">
+                        <strong>Note:</strong> This is pseudo-polynomial — exponential in input size if W is encoded in binary.
+                    </div>
+                    <h3 style="margin-top: 15px;">Space-Optimised Version</h3>
+                    <p style="color: var(--text-secondary);">
+                        Since dp[i] only depends on dp[i-1], use single array and iterate backwards:
+                    </p>
+                    <div class="diagram-box" style="margin-top: 10px;">
+for (int i = 1; i <= n; i++)
+  for (int w = W; w >= wt[i-1]; w--)
+    dp[w] = max(dp[w], 
+                dp[w-wt[i-1]] + val[i-1]);</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Slide 20: Longest Common Subsequence -->
+        <div class="slide">
+            <h2 class="slide-title">📝 Longest Common Subsequence (LCS)</h2>
+            <div class="content-grid">
+                <div class="content-box">
+                    <h3>Problem</h3>
+                    <p style="color: var(--text-secondary); margin-bottom: 15px;">
+                        Find longest subsequence common to two sequences.
+                    </p>
+                    <p><strong>X = "ABCDGH"</strong></p>
+                    <p><strong>Y = "AEDFHR"</strong></p>
+                    <p style="margin-top: 10px;">LCS = "ADH" (length 3)</p>
+                    
+                    <h3 style="margin-top: 20px;">Recurrence</h3>
+                    <div class="diagram-box">
+if X[i] == Y[j]:
+    dp[i][j] = dp[i-1][j-1] + 1
+else:
+    dp[i][j] = max(dp[i-1][j], dp[i][j-1])</div>
+                </div>
+                <div class="content-box">
+                    <h3>DP Table: X="ABCD", Y="AEBD"</h3>
+                    <div class="diagram-box" style="font-size: 0.9em;">
+      ""  A  E  B  D
+""     0  0  0  0  0
+A      0  1  1  1  1
+B      0  1  1  2  2
+C      0  1  1  2  2
+D      0  1  1  2  3</div>
+                    <h3 style="margin-top: 15px;">Backtracking</h3>
+                    <p style="color: var(--text-secondary);">
+                        Follow diagonal when chars match, otherwise follow max of up/left.
+                    </p>
+                    <div class="success-box" style="margin-top: 10px;">
+                        <strong>Applications:</strong><br>
+                        • DNA sequence alignment<br>
+                        • Diff algorithms (git diff)<br>
+                        • Spell checkers
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Slide 21: Paradigm Comparison -->
+        <div class="slide">
+            <h2 class="slide-title">🔄 Choosing the Right Paradigm</h2>
+            <table class="complexity-table">
+                <tr>
+                    <th>Criterion</th>
+                    <th>Divide & Conquer</th>
+                    <th>Greedy</th>
+                    <th>Dynamic Programming</th>
+                </tr>
+                <tr>
+                    <td>Subproblem overlap</td>
+                    <td>None (independent)</td>
+                    <td>None</td>
+                    <td style="color: var(--accent-green);">Significant</td>
+                </tr>
+                <tr>
+                    <td>Optimal substructure</td>
+                    <td style="color: var(--accent-green);">Yes</td>
+                    <td style="color: var(--accent-green);">Yes</td>
+                    <td style="color: var(--accent-green);">Yes</td>
+                </tr>
+                <tr>
+                    <td>Choices</td>
+                    <td>Problem decomposition</td>
+                    <td>One best at each step</td>
+                    <td>Consider all options</td>
+                </tr>
+                <tr>
+                    <td>Correctness proof</td>
+                    <td>By induction</td>
+                    <td>Greedy stays ahead</td>
+                    <td>By induction on table</td>
+                </tr>
+                <tr>
+                    <td>Space efficiency</td>
+                    <td style="color: var(--accent-green);">O(log n) stack</td>
+                    <td style="color: var(--accent-green);">O(1) typical</td>
+                    <td style="color: var(--accent-red);">Table size</td>
+                </tr>
+            </table>
+            <div class="content-grid" style="margin-top: 20px;">
+                <div class="highlight-box">
+                    <strong>Decision Tree:</strong><br>
+                    1. Does greedy choice property hold? → Greedy<br>
+                    2. Are subproblems independent? → D&C<br>
+                    3. Overlapping subproblems? → DP
+                </div>
+                <div class="success-box">
+                    <strong>Hybrid approaches:</strong><br>
+                    • QuickSort + Insertion Sort (small n)<br>
+                    • Greedy + DP refinement<br>
+                    • D&C with memoisation
+                </div>
+            </div>
+        </div>
+        
+        <!-- Slide 22: Industrial Applications -->
+        <div class="slide">
+            <h2 class="slide-title">🏭 Industrial Applications</h2>
+            <div class="content-grid">
+                <div class="content-box">
+                    <h3>Database Systems</h3>
+                    <ul>
+                        <li><strong>Query Optimisation:</strong> DP for join ordering</li>
+                        <li><strong>Index Selection:</strong> Greedy heuristics</li>
+                        <li><strong>External Sorting:</strong> MergeSort variants</li>
+                    </ul>
+                    <h3 style="margin-top: 20px;">Compression</h3>
+                    <ul>
+                        <li><strong>Huffman:</strong> ZIP, gzip, JPEG</li>
+                        <li><strong>LZW:</strong> GIF, PDF compression</li>
+                        <li><strong>Delta encoding:</strong> Git storage</li>
+                    </ul>
+                </div>
+                <div class="content-box">
+                    <h3>Bioinformatics</h3>
+                    <ul>
+                        <li><strong>Sequence Alignment:</strong> LCS variants</li>
+                        <li><strong>BLAST:</strong> Greedy seed-extend</li>
+                        <li><strong>Genome Assembly:</strong> D&C approaches</li>
+                    </ul>
+                    <h3 style="margin-top: 20px;">Networking</h3>
+                    <ul>
+                        <li><strong>Routing:</strong> Dijkstra (greedy)</li>
+                        <li><strong>Packet scheduling:</strong> Activity selection</li>
+                        <li><strong>Flow control:</strong> DP optimisation</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="highlight-box" style="margin-top: 20px;">
+                <strong>Real-world insight:</strong> Most production systems use hybrid approaches. Understanding paradigms helps choose and combine them effectively.
+            </div>
+        </div>
+        
+        <!-- Slide 23: Common Mistakes -->
+        <div class="slide">
+            <h2 class="slide-title">⚠️ Common Mistakes & Pitfalls</h2>
+            <div class="content-grid">
+                <div class="content-box" style="border-color: var(--accent-red);">
+                    <h3 style="color: var(--accent-red);">❌ Mistakes to Avoid</h3>
+                    <ul>
+                        <li><strong>Assuming greedy works:</strong> Always prove optimality!</li>
+                        <li><strong>Wrong state definition:</strong> dp[i] must be clearly defined</li>
+                        <li><strong>Missing base cases:</strong> Causes infinite recursion</li>
+                        <li><strong>Off-by-one errors:</strong> Array indices in DP tables</li>
+                        <li><strong>Stack overflow:</strong> Deep recursion without memoisation</li>
+                    </ul>
+                </div>
+                <div class="content-box" style="border-color: var(--accent-green);">
+                    <h3 style="color: var(--accent-green);">✓ Best Practices</h3>
+                    <ul>
+                        <li><strong>Start with brute force:</strong> Understand the problem first</li>
+                        <li><strong>Identify overlapping subproblems:</strong> Draw recursion tree</li>
+                        <li><strong>Write recurrence first:</strong> Code follows formula</li>
+                        <li><strong>Test small examples:</strong> Verify by hand</li>
+                        <li><strong>Consider space optimisation:</strong> After correctness</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="warning-box" style="margin-top: 20px;">
+                <strong>QuickSort Pitfall:</strong> Using first/last pivot on sorted arrays gives O(n²). Always use randomisation or median-of-three in production!
+            </div>
+        </div>
+        
+        <!-- Slide 24: Lab Exercise Preview -->
+        <div class="slide">
+            <h2 class="slide-title">💻 Laboratory Exercises</h2>
+            <div class="content-grid">
+                <div class="content-box">
+                    <h3>Exercise 1: Sorting Comparison</h3>
+                    <ul>
+                        <li>Implement MergeSort</li>
+                        <li>Implement QuickSort with multiple pivot strategies</li>
+                        <li>Implement ShellSort with Hibbard gaps</li>
+                        <li>Compare performance on various input types</li>
+                        <li>Count comparisons and swaps</li>
+                    </ul>
+                    <div class="highlight-box" style="margin-top: 15px;">
+                        <strong>File:</strong> src/exercise1.c
+                    </div>
+                </div>
+                <div class="content-box">
+                    <h3>Exercise 2: Greedy vs DP</h3>
+                    <ul>
+                        <li>Implement coin change (greedy)</li>
+                        <li>Implement coin change (DP)</li>
+                        <li>Job sequencing with deadlines</li>
+                        <li>Longest increasing subsequence</li>
+                        <li>Find cases where greedy fails</li>
+                    </ul>
+                    <div class="highlight-box" style="margin-top: 15px;">
+                        <strong>File:</strong> src/exercise2.c
+                    </div>
+                </div>
+            </div>
+            <div class="success-box" style="margin-top: 20px;">
+                <strong>Compilation:</strong> <code>make && make run</code><br>
+                <strong>Testing:</strong> <code>make test</code><br>
+                <strong>Memory check:</strong> <code>make valgrind</code>
+            </div>
+        </div>
+        
+        <!-- Slide 25: Self-Assessment -->
+        <div class="slide">
+            <h2 class="slide-title">✅ Self-Assessment Checklist</h2>
+            <div class="content-grid">
+                <div class="content-box">
+                    <h3>Divide & Conquer</h3>
+                    <ul>
+                        <li>☐ State Master Theorem's three cases</li>
+                        <li>☐ Analyse MergeSort recurrence</li>
+                        <li>☐ Implement QuickSort with random pivot</li>
+                        <li>☐ Explain when QuickSort degrades to O(n²)</li>
+                    </ul>
+                    <h3 style="margin-top: 20px;">Greedy</h3>
+                    <ul>
+                        <li>☐ Define greedy choice property</li>
+                        <li>☐ Solve activity selection</li>
+                        <li>☐ Explain Huffman coding</li>
+                        <li>☐ Give example where greedy fails</li>
+                    </ul>
+                </div>
+                <div class="content-box">
+                    <h3>Dynamic Programming</h3>
+                    <ul>
+                        <li>☐ Distinguish memoisation vs tabulation</li>
+                        <li>☐ Write Fibonacci all three ways</li>
+                        <li>☐ Solve 0/1 knapsack with reconstruction</li>
+                        <li>☐ Implement LCS with backtracking</li>
+                    </ul>
+                    <h3 style="margin-top: 20px;">Integration</h3>
+                    <ul>
+                        <li>☐ Choose appropriate paradigm for problem</li>
+                        <li>☐ Identify overlapping subproblems</li>
+                        <li>☐ Convert recursive to iterative DP</li>
+                        <li>☐ Pass all automated tests</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Slide 26: Interview Questions -->
+        <div class="slide">
+            <h2 class="slide-title">💼 Interview Preparation</h2>
+            <div class="content-box" style="max-width: 900px; margin: 0 auto;">
+                <h3>Common Technical Interview Questions</h3>
+                <ol style="color: var(--text-secondary); padding-left: 20px; line-height: 2;">
+                    <li><strong>Implement QuickSort.</strong> What's the worst case and how do you avoid it?<br>
+                    <em>Hint: Discuss pivot selection, randomisation.</em></li>
+                    
+                    <li><strong>When would you use MergeSort over QuickSort?</strong><br>
+                    <em>Hint: Stability, guaranteed O(n log n), external sorting.</em></li>
+                    
+                    <li><strong>Explain the coin change problem.</strong> When does greedy work vs DP?<br>
+                    <em>Hint: Canonical vs non-canonical coin systems.</em></li>
+                    
+                    <li><strong>Solve 0/1 Knapsack.</strong> Can you reconstruct which items were selected?<br>
+                    <em>Hint: Backtrack through DP table.</em></li>
+                    
+                    <li><strong>What's the difference between memoisation and tabulation?</strong><br>
+                    <em>Hint: Top-down vs bottom-up, stack space, lazy vs eager.</em></li>
+                </ol>
+            </div>
+            <div class="highlight-box" style="margin-top: 20px; max-width: 900px; margin-left: auto; margin-right: auto;">
+                <strong>Pro tip:</strong> Always discuss trade-offs! Interviewers want to see you can analyse, not just implement.
+            </div>
+        </div>
+        
+        <!-- Slide 27: Recommended Reading -->
+        <div class="slide">
+            <h2 class="slide-title">📚 Recommended Reading</h2>
+            <div class="content-grid">
+                <div class="content-box">
+                    <h3>Essential Textbooks</h3>
+                    <ul>
+                        <li><strong>CLRS:</strong> Chapters 2, 4, 15, 16<br>
+                        <em>Introduction to Algorithms</em></li>
+                        <li><strong>Sedgewick:</strong> Chapters 2.2-2.3, 5<br>
+                        <em>Algorithms (4th edition)</em></li>
+                        <li><strong>Kleinberg & Tardos:</strong> Chapters 4-6<br>
+                        <em>Algorithm Design</em></li>
+                    </ul>
+                </div>
+                <div class="content-box">
+                    <h3>Online Resources</h3>
+                    <ul>
+                        <li><strong>VisuAlgo:</strong> visualgo.net<br>
+                        <em>Algorithm visualisations</em></li>
+                        <li><strong>MIT OCW 6.006:</strong><br>
+                        <em>Introduction to Algorithms (video)</em></li>
+                        <li><strong>GeeksforGeeks:</strong><br>
+                        <em>Practice problems with solutions</em></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="highlight-box" style="margin-top: 20px;">
+                <strong>Original Papers:</strong><br>
+                • Hoare, C.A.R. "Quicksort" (1962) - Computer Journal<br>
+                • Bellman, R. "Dynamic Programming" (1957) - Princeton University Press<br>
+                • Huffman, D.A. "A Method for Construction of Minimum-Redundancy Codes" (1952)
+            </div>
+        </div>
+        
+        <!-- Slide 28: Next Week Preview -->
+        <div class="slide">
+            <h2 class="slide-title">🔗 Next Week Preview</h2>
+            <div class="content-box" style="max-width: 800px; margin: 0 auto;">
+                <h3 style="color: var(--accent-purple); font-size: 1.5em; margin-bottom: 20px;">
+                    Week 16: Advanced Graph Algorithms & Backtracking
+                </h3>
+                <div class="content-grid">
+                    <div>
+                        <h3>Graph Algorithms</h3>
+                        <ul>
+                            <li>Minimum Spanning Trees (Kruskal, Prim)</li>
+                            <li>Topological Sort</li>
+                            <li>Strongly Connected Components</li>
+                            <li>Articulation Points & Bridges</li>
+                            <li>Floyd-Warshall (All-pairs shortest path)</li>
+                        </ul>
+                    </div>
+                    <div>
+                        <h3>Backtracking</h3>
+                        <ul>
+                            <li>N-Queens Problem</li>
+                            <li>Sudoku Solver</li>
+                            <li>Graph Colouring</li>
+                            <li>Subset Sum</li>
+                            <li>Hamiltonian Paths</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            <div class="success-box" style="margin-top: 30px; max-width: 800px; margin-left: auto; margin-right: auto;">
+                <strong>Preparation:</strong> Review graph representations (adjacency list/matrix), Union-Find data structure, and recursive thinking from Week 6.
+            </div>
+        </div>
+        
+        <!-- Slide 29: Questions -->
+        <div class="slide">
+            <div class="title-slide">
+                <h1>🎉 Questions?</h1>
+                <p class="subtitle">Week 15: Algorithmic Paradigms</p>
+                <div style="margin-top: 30px;">
+                    <p style="color: var(--text-secondary);">Next week: Advanced Graph Algorithms & Backtracking</p>
+                </div>
+                <div style="margin-top: 40px; display: flex; justify-content: center; gap: 30px;">
+                    <div class="paradigm-card" style="text-align: center; min-width: 150px;">
+                        <h4>📧</h4>
+                        <p style="color: var(--text-secondary);">Contact instructor</p>
+                    </div>
+                    <div class="paradigm-card" style="text-align: center; min-width: 150px;">
+                        <h4>💻</h4>
+                        <p style="color: var(--text-secondary);">Practice exercises</p>
+                    </div>
+                    <div class="paradigm-card" style="text-align: center; min-width: 150px;">
+                        <h4>📖</h4>
+                        <p style="color: var(--text-secondary);">Read CLRS Ch. 4, 15, 16</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Navigation Controls -->
+        <div class="nav-controls">
+            <button class="nav-btn" onclick="prevSlide()">← Previous</button>
+            <button class="nav-btn" onclick="nextSlide()">Next →</button>
+        </div>
+        
+        <div class="slide-counter">
+            Slide <span id="currentSlide">1</span> / <span id="totalSlides">29</span>
+        </div>
+    </div>
+    
+    <script>
+        hljs.highlightAll();
+        
+        let currentSlide = 1;
+        const totalSlides = document.querySelectorAll('.slide').length;
+        
+        document.getElementById('totalSlides').textContent = totalSlides;
+        
+        function showSlide(n) {
+            const slides = document.querySelectorAll('.slide');
+            
+            if (n > totalSlides) currentSlide = 1;
+            if (n < 1) currentSlide = totalSlides;
+            
+            slides.forEach(slide => slide.classList.remove('active'));
+            slides[currentSlide - 1].classList.add('active');
+            
+            document.getElementById('currentSlide').textContent = currentSlide;
+            document.getElementById('progressFill').style.width = 
+                ((currentSlide / totalSlides) * 100) + '%';
+        }
+        
+        function nextSlide() {
+            currentSlide++;
+            showSlide(currentSlide);
+        }
+        
+        function prevSlide() {
+            currentSlide--;
+            showSlide(currentSlide);
+        }
+        
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowRight' || e.key === ' ') {
+                e.preventDefault();
+                nextSlide();
+            } else if (e.key === 'ArrowLeft') {
+                prevSlide();
+            } else if (e.key === 'Home') {
+                currentSlide = 1;
+                showSlide(currentSlide);
+            } else if (e.key === 'End') {
+                currentSlide = totalSlides;
+                showSlide(currentSlide);
+            }
+        });
+        
+        showSlide(1);
+    </script>
+</body>
+</html>

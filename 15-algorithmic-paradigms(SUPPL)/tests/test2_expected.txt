@@ -1,0 +1,25 @@
+╔═══════════════════════════════════════════════════════════════╗
+║     EXERCISE 2: Greedy vs Dynamic Programming                ║
+╚═══════════════════════════════════════════════════════════════╝
+
+Select problem:
+  1. Coin Change (compare greedy vs DP)
+  2. Job Sequencing (greedy)
+  3. Longest Increasing Subsequence (DP)
+  4. Demonstrate Greedy Failure
+
+Choice: ╔═══════════════════════════════════════════════════════════════╗
+║      DEMONSTRATING GREEDY FAILURE                            ║
+╚═══════════════════════════════════════════════════════════════╝
+
+Test case 1: Coins = {1, 3, 4}, Amount = 6
+Coin Change Problem:
+  Denominations: 1 3 4 
+  Amount: 6
+
+  Greedy: 3 coins (4 + 1 + 1)
+  DP:     2 coins (3 + 3)
+  ✗ GREEDY FAILS! DP is better by 1 coins
+
+
+═════════════════════════════════════════════════════════════

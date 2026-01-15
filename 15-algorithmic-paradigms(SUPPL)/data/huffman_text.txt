@@ -1,0 +1,26 @@
+This is a sample text file for Huffman encoding demonstration.
+
+Huffman coding is an optimal prefix-free encoding algorithm that was
+developed by David Huffman in 1952 while he was a student at MIT.
+
+The algorithm builds a binary tree where more frequent characters are
+assigned shorter codes, and less frequent characters get longer codes.
+
+Character frequency analysis:
+- In English text, the letter 'e' is most common
+- Spaces are also very frequent
+- Letters like 'z' and 'q' are rare
+
+This file contains enough text to demonstrate meaningful compression
+ratios when using Huffman encoding versus fixed-length codes.
+
+The quick brown fox jumps over the lazy dog.
+Pack my box with five dozen liquor jugs.
+How vexingly quick daft zebras jump!
+
+These sentences (pangrams) contain all letters of the alphabet and
+are useful for testing encoding algorithms.
+
+AAAAAAAABBBBBBBCCCCCCDDDDDDEEEEEEEEEEEEEEEEEEEEFFFFGGGGGG
+HHHHHHHHIIIIIIIIIIIJJKKLLLLLLLLMMMMMNNNNNNNNNNOOOOOOOOOOO
+PPPPPQRRRRRRRRRRSSSSSSSSSTTTTTTTTTTTTTUUUUUUVVWWWXYZZZZZZ

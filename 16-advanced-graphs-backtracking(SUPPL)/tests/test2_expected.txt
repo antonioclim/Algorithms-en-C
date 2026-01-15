@@ -1,0 +1,2 @@
+8-Queens Solutions: 92
+4-Queens Solutions: 2

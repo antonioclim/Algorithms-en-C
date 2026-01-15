@@ -1,0 +1,1474 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Week 16: C vs Python Comparison | Advanced Graphs & Backtracking</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/c.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/python.min.js"></script>
+    <style>
+        :root {
+            --bg-primary: #1a1b26;
+            --bg-secondary: #24283b;
+            --bg-tertiary: #414868;
+            --accent-blue: #7aa2f7;
+            --accent-green: #9ece6a;
+            --accent-orange: #ff9e64;
+            --accent-red: #f7768e;
+            --accent-purple: #bb9af7;
+            --accent-cyan: #7dcfff;
+            --text-primary: #c0caf5;
+            --text-secondary: #565f89;
+            --border-color: #3b4261;
+            
+            --c-color: #00599C;
+            --python-color: #3776AB;
+            --pseudo-color: #6B7280;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            overflow: hidden;
+            height: 100vh;
+        }
+        
+        .presentation-container {
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .header-bar {
+            background: var(--bg-secondary);
+            padding: 15px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        .header-title {
+            font-size: 1.2em;
+            color: var(--accent-cyan);
+        }
+        
+        .lang-indicator {
+            display: flex;
+            gap: 15px;
+        }
+        
+        .lang-badge {
+            padding: 5px 12px;
+            border-radius: 6px;
+            font-size: 0.85em;
+            font-weight: 600;
+        }
+        
+        .lang-badge.pseudo { background: rgba(107, 114, 128, 0.3); color: #9CA3AF; }
+        .lang-badge.c { background: rgba(0, 89, 156, 0.3); color: #58a6ff; }
+        .lang-badge.python { background: rgba(55, 118, 171, 0.3); color: #9ece6a; }
+        
+        .progress-bar {
+            height: 3px;
+            background: var(--bg-tertiary);
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--accent-blue), var(--accent-purple));
+            transition: width 0.3s ease;
+        }
+        
+        .slide {
+            display: none;
+            flex: 1;
+            padding: 30px;
+            overflow-y: auto;
+            animation: fadeIn 0.3s ease;
+        }
+        
+        .slide.active {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        .slide-title {
+            font-size: 1.8em;
+            margin-bottom: 25px;
+            color: var(--accent-blue);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        .comparison-container {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            flex: 1;
+        }
+        
+        .code-panel {
+            background: var(--bg-secondary);
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .panel-header {
+            padding: 12px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        .panel-header.pseudocode { background: linear-gradient(135deg, #4B5563, #374151); }
+        .panel-header.c-lang { background: linear-gradient(135deg, #1E40AF, #1D4ED8); }
+        .panel-header.python { background: linear-gradient(135deg, #065F46, #047857); }
+        
+        .panel-title {
+            font-weight: 600;
+            font-size: 1em;
+        }
+        
+        .panel-badge {
+            font-size: 0.75em;
+            padding: 3px 8px;
+            border-radius: 4px;
+            background: rgba(255, 255, 255, 0.2);
+        }
+        
+        .panel-content {
+            padding: 20px;
+            overflow-y: auto;
+            flex: 1;
+        }
+        
+        .panel-content pre {
+            margin: 0;
+            font-family: 'Fira Code', 'Consolas', monospace;
+            font-size: 0.85em;
+            line-height: 1.6;
+        }
+        
+        .panel-content code {
+            background: transparent !important;
+        }
+        
+        .highlight-note {
+            background: rgba(122, 162, 247, 0.1);
+            border-left: 3px solid var(--accent-blue);
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 0 8px 8px 0;
+        }
+        
+        .concept-box {
+            background: var(--bg-secondary);
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .concept-title {
+            color: var(--accent-green);
+            font-size: 1.1em;
+            margin-bottom: 10px;
+        }
+        
+        .key-differences {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        .diff-card {
+            background: var(--bg-tertiary);
+            border-radius: 8px;
+            padding: 15px;
+            text-align: center;
+        }
+        
+        .diff-card .label {
+            color: var(--text-secondary);
+            font-size: 0.85em;
+            margin-bottom: 5px;
+        }
+        
+        .diff-card .value {
+            color: var(--accent-cyan);
+            font-family: 'Fira Code', monospace;
+            font-size: 0.95em;
+        }
+        
+        .nav-controls {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            display: flex;
+            gap: 10px;
+            z-index: 100;
+        }
+        
+        .nav-btn {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+            padding: 12px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1em;
+            transition: all 0.2s ease;
+        }
+        
+        .nav-btn:hover {
+            background: var(--accent-blue);
+            color: var(--bg-primary);
+        }
+        
+        .slide-counter {
+            position: fixed;
+            bottom: 30px;
+            left: 30px;
+            background: var(--bg-tertiary);
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-size: 0.9em;
+            color: var(--text-secondary);
+        }
+        
+        .title-slide {
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+        }
+        
+        .title-slide h1 {
+            font-size: 2.5em;
+            margin-bottom: 20px;
+            background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .title-slide .subtitle {
+            font-size: 1.3em;
+            color: var(--text-secondary);
+            margin-bottom: 20px;
+        }
+        
+        .complexity-badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 4px;
+            font-size: 0.8em;
+            font-family: 'Fira Code', monospace;
+            margin-left: 10px;
+        }
+        
+        .complexity-badge.good { background: rgba(158, 206, 106, 0.2); color: var(--accent-green); }
+        .complexity-badge.warn { background: rgba(255, 158, 100, 0.2); color: var(--accent-orange); }
+        
+        .kbd {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            padding: 3px 8px;
+            font-family: 'Fira Code', monospace;
+            font-size: 0.9em;
+        }
+        
+        @media (max-width: 1200px) {
+            .comparison-container {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="presentation-container">
+        <div class="header-bar">
+            <div class="header-title">Week 16: Advanced Graphs & Backtracking — Language Comparison</div>
+            <div class="lang-indicator">
+                <span class="lang-badge pseudo">Pseudocode</span>
+                <span class="lang-badge c">C</span>
+                <span class="lang-badge python">Python</span>
+            </div>
+        </div>
+        
+        <div class="progress-bar">
+            <div class="progress-fill" id="progressFill"></div>
+        </div>
+        
+        <!-- ==================== SLIDE 1: TITLE ==================== -->
+        <div class="slide active title-slide" data-slide="1">
+            <h1>🔄 Pseudocode → C → Python</h1>
+            <p class="subtitle">Week 16: Advanced Graph Algorithms & Backtracking</p>
+            <p style="color: var(--text-secondary); margin-top: 20px;">
+                Comparing implementations across languages
+            </p>
+            <div style="margin-top: 40px;">
+                <span class="kbd">←</span> <span class="kbd">→</span> to navigate
+            </div>
+            <div style="margin-top: 30px; display: flex; justify-content: center; gap: 20px;">
+                <div class="diff-card">
+                    <div class="label">Algorithms</div>
+                    <div class="value">5 Core Topics</div>
+                </div>
+                <div class="diff-card">
+                    <div class="label">Languages</div>
+                    <div class="value">3 Implementations</div>
+                </div>
+                <div class="diff-card">
+                    <div class="label">Focus</div>
+                    <div class="value">Clarity & Efficiency</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- ==================== SLIDE 2: UNION-FIND - FIND ==================== -->
+        <div class="slide" data-slide="2">
+            <h2 class="slide-title">🔗 Union-Find: Find with Path Compression <span class="complexity-badge good">O(α(n))</span></h2>
+            <div class="comparison-container">
+                <div class="code-panel">
+                    <div class="panel-header pseudocode">
+                        <span class="panel-title">Pseudocode</span>
+                        <span class="panel-badge">Algorithm</span>
+                    </div>
+                    <div class="panel-content">
+                        <pre><code class="language-plaintext">FIND(parent, x):
+    // Find root with path compression
+    
+    if parent[x] ≠ x then
+        // Recursively find root
+        parent[x] ← FIND(parent, parent[x])
+    end if
+    
+    return parent[x]
+
+// After find, all nodes on path
+// point directly to root</code></pre>
+                    </div>
+                </div>
+                
+                <div class="code-panel">
+                    <div class="panel-header c-lang">
+                        <span class="panel-title">C Implementation</span>
+                        <span class="panel-badge">Low-level</span>
+                    </div>
+                    <div class="panel-content">
+                        <pre><code class="language-c">int find(int parent[], int x) {
+    if (parent[x] != x) {
+        // Path compression:
+        // Make all nodes point to root
+        parent[x] = find(parent, parent[x]);
+    }
+    return parent[x];
+}
+
+// Usage:
+// int parent[N];
+// for (int i = 0; i < N; i++)
+//     parent[i] = i;  // Init
+// int root = find(parent, x);</code></pre>
+                    </div>
+                </div>
+                
+                <div class="code-panel">
+                    <div class="panel-header python">
+                        <span class="panel-title">Python Implementation</span>
+                        <span class="panel-badge">High-level</span>
+                    </div>
+                    <div class="panel-content">
+                        <pre><code class="language-python">def find(parent, x):
+    """Find with path compression."""
+    if parent[x] != x:
+        # Path compression
+        parent[x] = find(parent, parent[x])
+    return parent[x]
+
+# Usage:
+# parent = list(range(n))  # Init
+# root = find(parent, x)
+
+# Alternative (iterative):
+def find_iter(parent, x):
+    root = x
+    while parent[root] != root:
+        root = parent[root]
+    # Compress path
+    while parent[x] != root:
+        parent[x], x = root, parent[x]
+    return root</code></pre>
+                    </div>
+                </div>
+            </div>
+            <div class="highlight-note">
+                <strong>Key Insight:</strong> Path compression makes all nodes on the find path point directly to the root, flattening the tree structure for future operations.
+            </div>
+        </div>
+        
+        <!-- ==================== SLIDE 3: UNION-FIND - UNION ==================== -->
+        <div class="slide" data-slide="3">
+            <h2 class="slide-title">🔗 Union-Find: Union by Rank <span class="complexity-badge good">O(α(n))</span></h2>
+            <div class="comparison-container">
+                <div class="code-panel">
+                    <div class="panel-header pseudocode">
+                        <span class="panel-title">Pseudocode</span>
+                        <span class="panel-badge">Algorithm</span>
+                    </div>
+                    <div class="panel-content">
+                        <pre><code class="language-plaintext">UNION(parent, rank, x, y):
+    // Unite sets containing x and y
+    
+    px ← FIND(parent, x)
+    py ← FIND(parent, y)
+    
+    if px = py then
+        return  // Already same set
+    
+    // Attach smaller tree under larger
+    if rank[px] < rank[py] then
+        parent[px] ← py
+    else if rank[px] > rank[py] then
+        parent[py] ← px
+    else
+        parent[py] ← px
+        rank[px] ← rank[px] + 1
+    end if</code></pre>
+                    </div>
+                </div>
+                
+                <div class="code-panel">
+                    <div class="panel-header c-lang">
+                        <span class="panel-title">C Implementation</span>
+                        <span class="panel-badge">Low-level</span>
+                    </div>
+                    <div class="panel-content">
+                        <pre><code class="language-c">void unite(int parent[], int rank[], 
+           int x, int y) {
+    int px = find(parent, x);
+    int py = find(parent, y);
+    
+    if (px == py) return;
+    
+    // Union by rank
+    if (rank[px] < rank[py]) {
+        parent[px] = py;
+    } else if (rank[px] > rank[py]) {
+        parent[py] = px;
+    } else {
+        parent[py] = px;
+        rank[px]++;
+    }
+}
+
+// Init: memset(rank, 0, sizeof(rank));</code></pre>
+                    </div>
+                </div>
+                
+                <div class="code-panel">
+                    <div class="panel-header python">
+                        <span class="panel-title">Python Implementation</span>
+                        <span class="panel-badge">High-level</span>
+                    </div>
+                    <div class="panel-content">
+                        <pre><code class="language-python">def union(parent, rank, x, y):
+    """Union by rank."""
+    px, py = find(parent, x), find(parent, y)
+    
+    if px == py:
+        return False  # Already united
+    
+    # Attach smaller tree under larger
+    if rank[px] < rank[py]:
+        parent[px] = py
+    elif rank[px] > rank[py]:
+        parent[py] = px
+    else:
+        parent[py] = px
+        rank[px] += 1
+    
+    return True
+
+# Init: rank = [0] * n</code></pre>
+                    </div>
+                </div>
+            </div>
+            <div class="key-differences">
+                <div class="diff-card">
+                    <div class="label">C Feature</div>
+                    <div class="value">Arrays passed by pointer</div>
+                </div>
+                <div class="diff-card">
+                    <div class="label">Python Feature</div>
+                    <div class="value">Lists mutable in-place</div>
+                </div>
+                <div class="diff-card">
+                    <div class="label">Combined Complexity</div>
+                    <div class="value">O(α(n)) ≈ O(1)</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- ==================== SLIDE 4: KRUSKAL'S ALGORITHM ==================== -->
+        <div class="slide" data-slide="4">
+            <h2 class="slide-title">🌲 Kruskal's MST Algorithm <span class="complexity-badge good">O(E log E)</span></h2>
+            <div class="comparison-container">
+                <div class="code-panel">
+                    <div class="panel-header pseudocode">
+                        <span class="panel-title">Pseudocode</span>
+                        <span class="panel-badge">Algorithm</span>
+                    </div>
+                    <div class="panel-content">
+                        <pre><code class="language-plaintext">KRUSKAL(V, E):
+    // Input: V vertices, E edges
+    
+    MST ← empty set
+    SORT(E) by weight ascending
+    
+    // Initialize Union-Find
+    for each v in V do
+        MAKE-SET(v)
+    
+    for each edge (u,v,w) in E do
+        if FIND(u) ≠ FIND(v) then
+            MST ← MST ∪ {(u,v,w)}
+            UNION(u, v)
+            if |MST| = |V| - 1 then
+                break
+    
+    return MST</code></pre>
+                    </div>
+                </div>
+                
+                <div class="code-panel">
+                    <div class="panel-header c-lang">
+                        <span class="panel-title">C Implementation</span>
+                        <span class="panel-badge">Low-level</span>
+                    </div>
+                    <div class="panel-content">
+                        <pre><code class="language-c">typedef struct {
+    int u, v, w;
+} Edge;
+
+int cmp(const void *a, const void *b) {
+    return ((Edge*)a)->w - ((Edge*)b)->w;
+}
+
+int kruskal(Edge edges[], int E, int V,
+            Edge mst[]) {
+    qsort(edges, E, sizeof(Edge), cmp);
+    
+    int parent[V], rank[V];
+    for (int i = 0; i < V; i++) {
+        parent[i] = i; rank[i] = 0;
+    }
+    
+    int mst_size = 0, total = 0;
+    for (int i = 0; i < E && mst_size < V-1; i++) {
+        int u = edges[i].u, v = edges[i].v;
+        if (find(parent,u) != find(parent,v)) {
+            unite(parent, rank, u, v);
+            mst[mst_size++] = edges[i];
+            total += edges[i].w;
+        }
+    }
+    return total;
+}</code></pre>
+                    </div>
+                </div>
+                
+                <div class="code-panel">
+                    <div class="panel-header python">
+                        <span class="panel-title">Python Implementation</span>
+                        <span class="panel-badge">High-level</span>
+                    </div>
+                    <div class="panel-content">
+                        <pre><code class="language-python">def kruskal(n, edges):
+    """
+    edges: list of (u, v, weight)
+    Returns: (total_weight, mst_edges)
+    """
+    # Sort by weight
+    edges = sorted(edges, key=lambda x: x[2])
+    
+    parent = list(range(n))
+    rank = [0] * n
+    
+    mst = []
+    total = 0
+    
+    for u, v, w in edges:
+        if find(parent, u) != find(parent, v):
+            union(parent, rank, u, v)
+            mst.append((u, v, w))
+            total += w
+            if len(mst) == n - 1:
+                break
+    
+    return total, mst</code></pre>
+                    </div>
+                </div>
+            </div>
+            <div class="highlight-note">
+                <strong>Note:</strong> Python's <code>sorted()</code> uses Timsort (O(n log n)), C's <code>qsort()</code> varies by implementation. Both achieve O(E log E) overall.
+            </div>
+        </div>
+        
+        <!-- ==================== SLIDE 5: TOPOLOGICAL SORT - DFS ==================== -->
+        <div class="slide" data-slide="5">
+            <h2 class="slide-title">📐 Topological Sort (DFS) <span class="complexity-badge good">O(V + E)</span></h2>
+            <div class="comparison-container">
+                <div class="code-panel">
+                    <div class="panel-header pseudocode">
+                        <span class="panel-title">Pseudocode</span>
+                        <span class="panel-badge">Algorithm</span>
+                    </div>
+                    <div class="panel-content">
+                        <pre><code class="language-plaintext">TOPO-SORT-DFS(G):
+    // G = (V, E) directed acyclic graph
+    
+    visited ← array[|V|] of false
+    stack ← empty stack
+    
+    for each vertex v in V do
+        if not visited[v] then
+            DFS-VISIT(v, visited, stack)
+    
+    return REVERSE(stack)
+
+DFS-VISIT(v, visited, stack):
+    visited[v] ← true
+    
+    for each neighbour u of v do
+        if not visited[u] then
+            DFS-VISIT(u, visited, stack)
+    
+    PUSH(stack, v)  // Post-order</code></pre>
+                    </div>
+                </div>
+                
+                <div class="code-panel">
+                    <div class="panel-header c-lang">
+                        <span class="panel-title">C Implementation</span>
+                        <span class="panel-badge">Low-level</span>
+                    </div>
+                    <div class="panel-content">
+                        <pre><code class="language-c">void dfs_visit(int v, int adj[][MAX], int V,
+               bool visited[], int stack[], 
+               int *top) {
+    visited[v] = true;
+    
+    for (int u = 0; u < V; u++) {
+        if (adj[v][u] && !visited[u]) {
+            dfs_visit(u, adj, V, visited, 
+                      stack, top);
+        }
+    }
+    stack[(*top)++] = v;  // Post-order
+}
+
+void topo_sort(int adj[][MAX], int V, 
+               int result[]) {
+    bool visited[MAX] = {false};
+    int stack[MAX], top = 0;
+    
+    for (int v = 0; v < V; v++) {
+        if (!visited[v])
+            dfs_visit(v, adj, V, visited, 
+                      stack, &top);
+    }
+    // Reverse stack into result
+    for (int i = 0; i < V; i++)
+        result[i] = stack[V - 1 - i];
+}</code></pre>
+                    </div>
+                </div>
+                
+                <div class="code-panel">
+                    <div class="panel-header python">
+                        <span class="panel-title">Python Implementation</span>
+                        <span class="panel-badge">High-level</span>
+                    </div>
+                    <div class="panel-content">
+                        <pre><code class="language-python">def topo_sort_dfs(graph):
+    """
+    graph: dict {v: [neighbours]}
+    Returns: topological order list
+    """
+    visited = set()
+    stack = []
+    
+    def dfs(v):
+        visited.add(v)
+        for u in graph.get(v, []):
+            if u not in visited:
+                dfs(u)
+        stack.append(v)  # Post-order
+    
+    for v in graph:
+        if v not in visited:
+            dfs(v)
+    
+    return stack[::-1]  # Reverse
+
+# Usage:
+# graph = {0: [1, 2], 1: [3], 2: [3], 3: []}
+# order = topo_sort_dfs(graph)</code></pre>
+                    </div>
+                </div>
+            </div>
+            <div class="key-differences">
+                <div class="diff-card">
+                    <div class="label">C Style</div>
+                    <div class="value">Manual stack management</div>
+                </div>
+                <div class="diff-card">
+                    <div class="label">Python Style</div>
+                    <div class="value">List slicing [::-1]</div>
+                </div>
+                <div class="diff-card">
+                    <div class="label">Both</div>
+                    <div class="value">Post-order + reverse</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- ==================== SLIDE 6: TOPOLOGICAL SORT - KAHN ==================== -->
+        <div class="slide" data-slide="6">
+            <h2 class="slide-title">📊 Kahn's Algorithm (BFS Topological Sort) <span class="complexity-badge good">O(V + E)</span></h2>
+            <div class="comparison-container">
+                <div class="code-panel">
+                    <div class="panel-header pseudocode">
+                        <span class="panel-title">Pseudocode</span>
+                        <span class="panel-badge">Algorithm</span>
+                    </div>
+                    <div class="panel-content">
+                        <pre><code class="language-plaintext">KAHN(G):
+    // G = (V, E) directed graph
+    
+    in_degree ← array[|V|] of 0
+    
+    // Calculate in-degrees
+    for each edge (u,v) in E do
+        in_degree[v] ← in_degree[v] + 1
+    
+    queue ← vertices with in_degree = 0
+    result ← empty list
+    
+    while queue not empty do
+        u ← DEQUEUE(queue)
+        APPEND(result, u)
+        
+        for each neighbour v of u do
+            in_degree[v] ← in_degree[v] - 1
+            if in_degree[v] = 0 then
+                ENQUEUE(queue, v)
+    
+    if |result| ≠ |V| then
+        return "CYCLE DETECTED"
+    return result</code></pre>
+                    </div>
+                </div>
+                
+                <div class="code-panel">
+                    <div class="panel-header c-lang">
+                        <span class="panel-title">C Implementation</span>
+                        <span class="panel-badge">Low-level</span>
+                    </div>
+                    <div class="panel-content">
+                        <pre><code class="language-c">bool kahn(int adj[][MAX], int V, int result[]) {
+    int in_degree[MAX] = {0};
+    int queue[MAX], front = 0, rear = 0;
+    
+    // Calculate in-degrees
+    for (int u = 0; u < V; u++)
+        for (int v = 0; v < V; v++)
+            if (adj[u][v]) in_degree[v]++;
+    
+    // Enqueue vertices with 0 in-degree
+    for (int v = 0; v < V; v++)
+        if (in_degree[v] == 0)
+            queue[rear++] = v;
+    
+    int count = 0;
+    while (front < rear) {
+        int u = queue[front++];
+        result[count++] = u;
+        
+        for (int v = 0; v < V; v++) {
+            if (adj[u][v]) {
+                in_degree[v]--;
+                if (in_degree[v] == 0)
+                    queue[rear++] = v;
+            }
+        }
+    }
+    return count == V;  // false = cycle
+}</code></pre>
+                    </div>
+                </div>
+                
+                <div class="code-panel">
+                    <div class="panel-header python">
+                        <span class="panel-title">Python Implementation</span>
+                        <span class="panel-badge">High-level</span>
+                    </div>
+                    <div class="panel-content">
+                        <pre><code class="language-python">from collections import deque
+
+def kahn(graph, n):
+    """
+    graph: dict {v: [neighbours]}
+    n: number of vertices
+    Returns: (success, order) or (False, [])
+    """
+    in_degree = [0] * n
+    
+    for u in graph:
+        for v in graph[u]:
+            in_degree[v] += 1
+    
+    queue = deque([v for v in range(n) 
+                   if in_degree[v] == 0])
+    result = []
+    
+    while queue:
+        u = queue.popleft()
+        result.append(u)
+        
+        for v in graph.get(u, []):
+            in_degree[v] -= 1
+            if in_degree[v] == 0:
+                queue.append(v)
+    
+    if len(result) != n:
+        return False, []  # Cycle!
+    return True, result</code></pre>
+                    </div>
+                </div>
+            </div>
+            <div class="highlight-note">
+                <strong>Cycle Detection Bonus:</strong> If result length ≠ V, the graph contains a cycle and no topological ordering exists!
+            </div>
+        </div>
+        
+        <!-- ==================== SLIDE 7: N-QUEENS SAFETY CHECK ==================== -->
+        <div class="slide" data-slide="7">
+            <h2 class="slide-title">♛ N-Queens: Safety Check <span class="complexity-badge good">O(n)</span></h2>
+            <div class="comparison-container">
+                <div class="code-panel">
+                    <div class="panel-header pseudocode">
+                        <span class="panel-title">Pseudocode</span>
+                        <span class="panel-badge">Algorithm</span>
+                    </div>
+                    <div class="panel-content">
+                        <pre><code class="language-plaintext">IS-SAFE(board, row, col):
+    // board[i] = column of queen in row i
+    // Check if placing queen at (row, col) is safe
+    
+    for i ← 0 to row - 1 do
+        // Same column?
+        if board[i] = col then
+            return false
+        
+        // Same diagonal?
+        // |row_diff| = |col_diff| means diagonal
+        if |board[i] - col| = |i - row| then
+            return false
+    
+    return true
+
+// Diagonal insight:
+// ↘ diagonal: row - col is constant
+// ↙ diagonal: row + col is constant</code></pre>
+                    </div>
+                </div>
+                
+                <div class="code-panel">
+                    <div class="panel-header c-lang">
+                        <span class="panel-title">C Implementation</span>
+                        <span class="panel-badge">Low-level</span>
+                    </div>
+                    <div class="panel-content">
+                        <pre><code class="language-c">#include &lt;stdlib.h&gt;  // for abs()
+
+bool is_safe(int board[], int row, int col) {
+    for (int i = 0; i < row; i++) {
+        // Same column check
+        if (board[i] == col)
+            return false;
+        
+        // Diagonal check:
+        // If |row_diff| == |col_diff|,
+        // queens are on same diagonal
+        if (abs(board[i] - col) == abs(i - row))
+            return false;
+    }
+    return true;
+}
+
+// Optimized: Use boolean arrays
+// col_used[c], diag1[r-c+n-1], diag2[r+c]
+// for O(1) checks instead of O(n)</code></pre>
+                    </div>
+                </div>
+                
+                <div class="code-panel">
+                    <div class="panel-header python">
+                        <span class="panel-title">Python Implementation</span>
+                        <span class="panel-badge">High-level</span>
+                    </div>
+                    <div class="panel-content">
+                        <pre><code class="language-python">def is_safe(board, row, col):
+    """
+    board: list where board[i] = col of queen in row i
+    Check if (row, col) is safe for new queen.
+    """
+    for i in range(row):
+        # Same column?
+        if board[i] == col:
+            return False
+        
+        # Same diagonal?
+        if abs(board[i] - col) == abs(i - row):
+            return False
+    
+    return True
+
+# Optimized with sets:
+# cols = set()      # columns used
+# diag1 = set()     # r - c values
+# diag2 = set()     # r + c values
+# Check: col in cols or 
+#        r-c in diag1 or r+c in diag2</code></pre>
+                    </div>
+                </div>
+            </div>
+            <div class="key-differences">
+                <div class="diff-card">
+                    <div class="label">Column Check</div>
+                    <div class="value">board[i] == col</div>
+                </div>
+                <div class="diff-card">
+                    <div class="label">↘ Diagonal</div>
+                    <div class="value">row - col constant</div>
+                </div>
+                <div class="diff-card">
+                    <div class="label">↙ Diagonal</div>
+                    <div class="value">row + col constant</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- ==================== SLIDE 8: N-QUEENS SOLVER ==================== -->
+        <div class="slide" data-slide="8">
+            <h2 class="slide-title">♛ N-Queens: Backtracking Solver <span class="complexity-badge warn">O(n!)</span></h2>
+            <div class="comparison-container">
+                <div class="code-panel">
+                    <div class="panel-header pseudocode">
+                        <span class="panel-title">Pseudocode</span>
+                        <span class="panel-badge">Algorithm</span>
+                    </div>
+                    <div class="panel-content">
+                        <pre><code class="language-plaintext">SOLVE-NQUEENS(board, row, n):
+    // Place queens row by row
+    
+    if row = n then
+        // All queens placed!
+        PRINT-SOLUTION(board, n)
+        count ← count + 1
+        return
+    
+    for col ← 0 to n - 1 do
+        if IS-SAFE(board, row, col) then
+            board[row] ← col      // Place
+            SOLVE-NQUEENS(board, row + 1, n)
+            // Backtrack is implicit:
+            // next iteration overwrites board[row]
+
+NQUEENS(n):
+    board ← array[n]
+    count ← 0
+    SOLVE-NQUEENS(board, 0, n)
+    return count</code></pre>
+                    </div>
+                </div>
+                
+                <div class="code-panel">
+                    <div class="panel-header c-lang">
+                        <span class="panel-title">C Implementation</span>
+                        <span class="panel-badge">Low-level</span>
+                    </div>
+                    <div class="panel-content">
+                        <pre><code class="language-c">int g_count = 0;
+
+void solve(int board[], int row, int n) {
+    if (row == n) {
+        g_count++;
+        print_board(board, n);
+        return;
+    }
+    
+    for (int col = 0; col < n; col++) {
+        if (is_safe(board, row, col)) {
+            board[row] = col;
+            solve(board, row + 1, n);
+            // Implicit backtrack
+        }
+    }
+}
+
+int nqueens(int n) {
+    int board[n];
+    g_count = 0;
+    solve(board, 0, n);
+    return g_count;
+}
+// n=8: returns 92 solutions</code></pre>
+                    </div>
+                </div>
+                
+                <div class="code-panel">
+                    <div class="panel-header python">
+                        <span class="panel-title">Python Implementation</span>
+                        <span class="panel-badge">High-level</span>
+                    </div>
+                    <div class="panel-content">
+                        <pre><code class="language-python">def solve_nqueens(n):
+    """Find all N-Queens solutions."""
+    solutions = []
+    
+    def solve(board, row):
+        if row == n:
+            solutions.append(board[:])
+            return
+        
+        for col in range(n):
+            if is_safe(board, row, col):
+                board[row] = col
+                solve(board, row + 1)
+                # Implicit backtrack
+    
+    solve([0] * n, 0)
+    return solutions
+
+# Usage:
+# sols = solve_nqueens(8)
+# print(f"Found {len(sols)} solutions")
+# Output: Found 92 solutions</code></pre>
+                    </div>
+                </div>
+            </div>
+            <div class="highlight-note">
+                <strong>Solution Counts:</strong> n=4 → 2 solutions, n=8 → 92 solutions, n=12 → 14,200 solutions
+            </div>
+        </div>
+        
+        <!-- ==================== SLIDE 9: SUDOKU VALIDITY ==================== -->
+        <div class="slide" data-slide="9">
+            <h2 class="slide-title">🔢 Sudoku: Validity Check <span class="complexity-badge good">O(1)</span></h2>
+            <div class="comparison-container">
+                <div class="code-panel">
+                    <div class="panel-header pseudocode">
+                        <span class="panel-title">Pseudocode</span>
+                        <span class="panel-badge">Algorithm</span>
+                    </div>
+                    <div class="panel-content">
+                        <pre><code class="language-plaintext">IS-VALID(grid, row, col, num):
+    // Check if placing num at (row,col) is valid
+    
+    // Check row
+    for c ← 0 to 8 do
+        if grid[row][c] = num then
+            return false
+    
+    // Check column
+    for r ← 0 to 8 do
+        if grid[r][col] = num then
+            return false
+    
+    // Check 3×3 box
+    box_r ← (row ÷ 3) × 3
+    box_c ← (col ÷ 3) × 3
+    for r ← 0 to 2 do
+        for c ← 0 to 2 do
+            if grid[box_r+r][box_c+c] = num then
+                return false
+    
+    return true</code></pre>
+                    </div>
+                </div>
+                
+                <div class="code-panel">
+                    <div class="panel-header c-lang">
+                        <span class="panel-title">C Implementation</span>
+                        <span class="panel-badge">Low-level</span>
+                    </div>
+                    <div class="panel-content">
+                        <pre><code class="language-c">bool is_valid(int grid[9][9], int row, 
+              int col, int num) {
+    // Check row
+    for (int c = 0; c < 9; c++)
+        if (grid[row][c] == num)
+            return false;
+    
+    // Check column
+    for (int r = 0; r < 9; r++)
+        if (grid[r][col] == num)
+            return false;
+    
+    // Check 3x3 box
+    int box_r = (row / 3) * 3;
+    int box_c = (col / 3) * 3;
+    for (int r = 0; r < 3; r++)
+        for (int c = 0; c < 3; c++)
+            if (grid[box_r+r][box_c+c] == num)
+                return false;
+    
+    return true;
+}</code></pre>
+                    </div>
+                </div>
+                
+                <div class="code-panel">
+                    <div class="panel-header python">
+                        <span class="panel-title">Python Implementation</span>
+                        <span class="panel-badge">High-level</span>
+                    </div>
+                    <div class="panel-content">
+                        <pre><code class="language-python">def is_valid(grid, row, col, num):
+    """Check if num can be placed at (row, col)."""
+    # Check row
+    if num in grid[row]:
+        return False
+    
+    # Check column
+    if num in [grid[r][col] for r in range(9)]:
+        return False
+    
+    # Check 3x3 box
+    box_r, box_c = 3 * (row // 3), 3 * (col // 3)
+    for r in range(box_r, box_r + 3):
+        for c in range(box_c, box_c + 3):
+            if grid[r][c] == num:
+                return False
+    
+    return True
+
+# Python trick: use sets for O(1) lookup
+# rows[r], cols[c], boxes[r//3*3 + c//3]</code></pre>
+                    </div>
+                </div>
+            </div>
+            <div class="key-differences">
+                <div class="diff-card">
+                    <div class="label">Row Check</div>
+                    <div class="value">Linear scan or set</div>
+                </div>
+                <div class="diff-card">
+                    <div class="label">Box Index</div>
+                    <div class="value">(row/3)*3, (col/3)*3</div>
+                </div>
+                <div class="diff-card">
+                    <div class="label">Optimization</div>
+                    <div class="value">Precompute sets</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- ==================== SLIDE 10: SUDOKU SOLVER ==================== -->
+        <div class="slide" data-slide="10">
+            <h2 class="slide-title">🔢 Sudoku: Backtracking Solver <span class="complexity-badge warn">O(9^n)</span></h2>
+            <div class="comparison-container">
+                <div class="code-panel">
+                    <div class="panel-header pseudocode">
+                        <span class="panel-title">Pseudocode</span>
+                        <span class="panel-badge">Algorithm</span>
+                    </div>
+                    <div class="panel-content">
+                        <pre><code class="language-plaintext">SOLVE-SUDOKU(grid):
+    // Find empty cell
+    (row, col) ← FIND-EMPTY(grid)
+    if no empty cell then
+        return true  // Solved!
+    
+    for num ← 1 to 9 do
+        if IS-VALID(grid, row, col, num) then
+            grid[row][col] ← num
+            
+            if SOLVE-SUDOKU(grid) then
+                return true
+            
+            grid[row][col] ← 0  // Backtrack
+    
+    return false  // Trigger backtrack
+
+FIND-EMPTY(grid):
+    for r ← 0 to 8 do
+        for c ← 0 to 8 do
+            if grid[r][c] = 0 then
+                return (r, c)
+    return null</code></pre>
+                    </div>
+                </div>
+                
+                <div class="code-panel">
+                    <div class="panel-header c-lang">
+                        <span class="panel-title">C Implementation</span>
+                        <span class="panel-badge">Low-level</span>
+                    </div>
+                    <div class="panel-content">
+                        <pre><code class="language-c">bool find_empty(int grid[9][9], 
+                int *row, int *col) {
+    for (int r = 0; r < 9; r++) {
+        for (int c = 0; c < 9; c++) {
+            if (grid[r][c] == 0) {
+                *row = r; *col = c;
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
+bool solve_sudoku(int grid[9][9]) {
+    int row, col;
+    if (!find_empty(grid, &row, &col))
+        return true;  // Solved!
+    
+    for (int num = 1; num <= 9; num++) {
+        if (is_valid(grid, row, col, num)) {
+            grid[row][col] = num;
+            if (solve_sudoku(grid))
+                return true;
+            grid[row][col] = 0;  // Backtrack
+        }
+    }
+    return false;
+}</code></pre>
+                    </div>
+                </div>
+                
+                <div class="code-panel">
+                    <div class="panel-header python">
+                        <span class="panel-title">Python Implementation</span>
+                        <span class="panel-badge">High-level</span>
+                    </div>
+                    <div class="panel-content">
+                        <pre><code class="language-python">def solve_sudoku(grid):
+    """Solve Sudoku using backtracking."""
+    # Find empty cell
+    empty = find_empty(grid)
+    if not empty:
+        return True  # Solved!
+    
+    row, col = empty
+    
+    for num in range(1, 10):
+        if is_valid(grid, row, col, num):
+            grid[row][col] = num
+            
+            if solve_sudoku(grid):
+                return True
+            
+            grid[row][col] = 0  # Backtrack
+    
+    return False
+
+def find_empty(grid):
+    for r in range(9):
+        for c in range(9):
+            if grid[r][c] == 0:
+                return (r, c)
+    return None</code></pre>
+                    </div>
+                </div>
+            </div>
+            <div class="highlight-note">
+                <strong>Performance:</strong> Easy puzzles: ~100 backtracks. Hard "evil" puzzles: ~10,000+ backtracks. MRV heuristic dramatically improves!
+            </div>
+        </div>
+        
+        <!-- ==================== SLIDE 11: COMPLEXITY COMPARISON ==================== -->
+        <div class="slide" data-slide="11">
+            <h2 class="slide-title">📊 Language Comparison Summary</h2>
+            <div class="concept-box" style="flex: 1;">
+                <table style="width: 100%; border-collapse: collapse;">
+                    <tr style="background: var(--bg-tertiary);">
+                        <th style="padding: 15px; text-align: left; color: var(--accent-cyan);">Algorithm</th>
+                        <th style="padding: 15px; text-align: center; color: var(--accent-cyan);">C Strengths</th>
+                        <th style="padding: 15px; text-align: center; color: var(--accent-cyan);">Python Strengths</th>
+                        <th style="padding: 15px; text-align: center; color: var(--accent-cyan);">Time Complexity</th>
+                    </tr>
+                    <tr style="border-bottom: 1px solid var(--border-color);">
+                        <td style="padding: 15px;">Union-Find</td>
+                        <td style="padding: 15px; text-align: center;">Manual memory, fast execution</td>
+                        <td style="padding: 15px; text-align: center;">Clean syntax, easy debugging</td>
+                        <td style="padding: 15px; text-align: center; color: var(--accent-green);">O(α(n))</td>
+                    </tr>
+                    <tr style="border-bottom: 1px solid var(--border-color);">
+                        <td style="padding: 15px;">Kruskal's MST</td>
+                        <td style="padding: 15px; text-align: center;">qsort(), struct arrays</td>
+                        <td style="padding: 15px; text-align: center;">sorted(), tuple unpacking</td>
+                        <td style="padding: 15px; text-align: center; color: var(--accent-green);">O(E log E)</td>
+                    </tr>
+                    <tr style="border-bottom: 1px solid var(--border-color);">
+                        <td style="padding: 15px;">Topological Sort</td>
+                        <td style="padding: 15px; text-align: center;">Adjacency matrix, pointers</td>
+                        <td style="padding: 15px; text-align: center;">Dict graphs, collections.deque</td>
+                        <td style="padding: 15px; text-align: center; color: var(--accent-green);">O(V + E)</td>
+                    </tr>
+                    <tr style="border-bottom: 1px solid var(--border-color);">
+                        <td style="padding: 15px;">N-Queens</td>
+                        <td style="padding: 15px; text-align: center;">Low overhead recursion</td>
+                        <td style="padding: 15px; text-align: center;">List comprehensions, slicing</td>
+                        <td style="padding: 15px; text-align: center; color: var(--accent-orange);">O(n!)</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 15px;">Sudoku</td>
+                        <td style="padding: 15px; text-align: center;">Fast constraint checking</td>
+                        <td style="padding: 15px; text-align: center;">`in` operator, tuple returns</td>
+                        <td style="padding: 15px; text-align: center; color: var(--accent-orange);">O(9^n)</td>
+                    </tr>
+                </table>
+            </div>
+            <div class="key-differences" style="margin-top: 20px;">
+                <div class="diff-card">
+                    <div class="label">C Best For</div>
+                    <div class="value">Performance-critical code</div>
+                </div>
+                <div class="diff-card">
+                    <div class="label">Python Best For</div>
+                    <div class="value">Rapid prototyping</div>
+                </div>
+                <div class="diff-card">
+                    <div class="label">Both Excel At</div>
+                    <div class="value">Algorithm clarity</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- ==================== SLIDE 12: CONCLUSION ==================== -->
+        <div class="slide title-slide" data-slide="12">
+            <h1>🎯 Key Takeaways</h1>
+            <p class="subtitle">Week 16: Language Comparison Complete</p>
+            <div style="display: flex; justify-content: center; gap: 30px; margin-top: 40px;">
+                <div class="concept-box" style="width: 250px; text-align: left;">
+                    <div class="concept-title">✓ Same Algorithms</div>
+                    <p style="color: var(--text-secondary); font-size: 0.9em;">
+                        Core logic identical across languages. Complexity unchanged.
+                    </p>
+                </div>
+                <div class="concept-box" style="width: 250px; text-align: left;">
+                    <div class="concept-title">✓ Different Idioms</div>
+                    <p style="color: var(--text-secondary); font-size: 0.9em;">
+                        C: manual memory, pointers. Python: built-in structures, slicing.
+                    </p>
+                </div>
+                <div class="concept-box" style="width: 250px; text-align: left;">
+                    <div class="concept-title">✓ Choose Wisely</div>
+                    <p style="color: var(--text-secondary); font-size: 0.9em;">
+                        C for systems/performance. Python for prototyping/scripting.
+                    </p>
+                </div>
+            </div>
+            <div style="margin-top: 40px; color: var(--text-secondary);">
+                <p>Master the algorithm first, then adapt to any language!</p>
+            </div>
+            <div style="margin-top: 30px;">
+                <span class="lang-badge pseudo">Pseudocode</span>
+                <span style="margin: 0 10px;">→</span>
+                <span class="lang-badge c">C</span>
+                <span style="margin: 0 10px;">→</span>
+                <span class="lang-badge python">Python</span>
+                <span style="margin: 0 10px;">→</span>
+                <span style="color: var(--accent-green);">✓ Any Language!</span>
+            </div>
+        </div>
+        
+        <!-- Navigation Controls -->
+        <div class="nav-controls">
+            <button class="nav-btn" onclick="prevSlide()">← Previous</button>
+            <button class="nav-btn" onclick="nextSlide()">Next →</button>
+        </div>
+        
+        <div class="slide-counter">
+            Slide <span id="currentSlide">1</span> / <span id="totalSlides">12</span>
+        </div>
+    </div>
+    
+    <script>
+        // Initialize highlight.js
+        hljs.highlightAll();
+        
+        let currentSlide = 1;
+        const totalSlides = document.querySelectorAll('.slide').length;
+        
+        document.getElementById('totalSlides').textContent = totalSlides;
+        
+        function showSlide(n) {
+            const slides = document.querySelectorAll('.slide');
+            
+            if (n > totalSlides) currentSlide = 1;
+            if (n < 1) currentSlide = totalSlides;
+            
+            slides.forEach(slide => slide.classList.remove('active'));
+            slides[currentSlide - 1].classList.add('active');
+            
+            document.getElementById('currentSlide').textContent = currentSlide;
+            document.getElementById('progressFill').style.width = 
+                ((currentSlide / totalSlides) * 100) + '%';
+        }
+        
+        function nextSlide() {
+            currentSlide++;
+            showSlide(currentSlide);
+        }
+        
+        function prevSlide() {
+            currentSlide--;
+            showSlide(currentSlide);
+        }
+        
+        // Keyboard navigation
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowRight' || e.key === ' ') {
+                nextSlide();
+            } else if (e.key === 'ArrowLeft') {
+                prevSlide();
+            } else if (e.key === 'Home') {
+                currentSlide = 1;
+                showSlide(currentSlide);
+            } else if (e.key === 'End') {
+                currentSlide = totalSlides;
+                showSlide(currentSlide);
+            }
+        });
+        
+        // Initialize first slide
+        showSlide(1);
+    </script>
+</body>
+</html>
