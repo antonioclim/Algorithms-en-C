@@ -1,0 +1,44 @@
+# Polynomial Calculator Data File
+# Format for polynomial: coefficient exponent pairs
+# Example: 3x^4 + 2x^2 - 5x + 7 = 3 4 2 2 -5 1 7 0
+
+# Polynomial A: 3x^4 + 2x^2 - 5x + 7
+POLY A: 3 4 2 2 -5 1 7 0
+
+# Polynomial B: x^3 - 2x^2 + 4
+POLY B: 1 3 -2 2 4 0
+
+# Polynomial C: 2x^2 + 3x - 1
+POLY C: 2 2 3 1 -1 0
+
+# Polynomial D: x - 1 (useful for factorisation tests)
+POLY D: 1 1 -1 0
+
+# Polynomial E: x + 1
+POLY E: 1 1 1 0
+
+# Operations to perform
+ADD A B
+ADD A C
+MULTIPLY D E
+
+# Evaluations
+EVAL A 0
+EVAL A 1
+EVAL A 2
+EVAL A -1
+
+EVAL B 0
+EVAL B 1
+EVAL B 2
+
+# Derivative
+DERIV A
+DERIV B
+
+# More complex polynomial F: x^5 - 3x^4 + 2x^3 - x^2 + 5x - 8
+POLY F: 1 5 -3 4 2 3 -1 2 5 1 -8 0
+
+EVAL F 1
+EVAL F 2
+DERIV F

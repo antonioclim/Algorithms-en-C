@@ -1,0 +1,42 @@
+# Student Records Command File
+# Commands: ADD <id> <name> <gpa>, FIND <id>, DELETE <id>, DISPLAY, COUNT
+# Lines starting with # are comments
+
+# Add initial students
+ADD 1005 Eleanor 3.92
+ADD 1001 Alice 3.75
+ADD 1008 Henry 3.45
+ADD 1003 Charlie 3.50
+ADD 1002 Bob 3.85
+ADD 1006 Frank 2.95
+ADD 1004 Diana 3.90
+ADD 1007 Grace 3.78
+
+# Display all students (should be sorted by ID)
+DISPLAY
+
+# Count total students
+COUNT
+
+# Search for specific students
+FIND 1003
+FIND 1006
+FIND 9999
+
+# Delete some students
+DELETE 1001
+DELETE 1008
+
+# Display updated list
+DISPLAY
+
+# Add more students
+ADD 1009 Ivy 3.60
+ADD 1010 Jack 3.33
+
+# Try to add duplicate ID (should fail)
+ADD 1003 Charles 3.55
+
+# Final display
+DISPLAY
+COUNT

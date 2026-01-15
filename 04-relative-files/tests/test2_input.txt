@@ -1,0 +1,19 @@
+# Test input for Exercise 2 - Polynomial Calculator
+# Tests basic polynomial operations
+
+# Create P(x) = 2x^2 + 3x - 1
+POLY P: 2 2 3 1 -1 0
+DISPLAY P
+
+# Create Q(x) = x + 2
+POLY Q: 1 1 2 0
+DISPLAY Q
+
+# Add polynomials
+ADD P Q
+
+# Evaluate P at x = 1
+EVAL P 1
+
+# Evaluate P at x = 2
+EVAL P 2

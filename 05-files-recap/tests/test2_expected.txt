@@ -1,0 +1,34 @@
+
+╔═══════════════════════════════════════════════════════════════╗
+║     EXERCISE 2: Balanced Brackets Validator                   ║
+╚═══════════════════════════════════════════════════════════════╝
+
+Enter expressions to validate (one per line).
+Type 'END' or press Ctrl+D to finish.
+
+───────────────────────────────────────────────────────────────
+
+Expression: {[()]}
+Result: VALID
+
+Expression: {[(])}
+Result: INVALID - Mismatched bracket at position 3: expected ']', found ')'
+
+Expression: ((())
+Result: INVALID - Unclosed bracket '(' at position 0
+
+Expression: int main() { return 0; }
+Result: VALID
+
+Expression: [](){}
+Result: VALID
+
+Expression: (
+Result: INVALID - Unclosed bracket '(' at position 0
+
+Expression: {[
+Result: INVALID - Unclosed bracket '[' at position 1
+
+───────────────────────────────────────────────────────────────
+Validation complete. Verify memory with: make valgrind
+

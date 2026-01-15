@@ -1,0 +1,4 @@
+ID,Name,Category,Price,Stock
+T01,Test Product A,TestCat,99.99,10
+T02,Test Product B,TestCat,49.99,20
+T03,Test Product C,OtherCat,149.99,5

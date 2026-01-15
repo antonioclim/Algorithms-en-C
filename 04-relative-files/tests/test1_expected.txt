@@ -1,0 +1,32 @@
+
+╔═══════════════════════════════════════════════════════════════╗
+║     Student Records Management System                         ║
+║     Exercise 1 - Linked Lists                                 ║
+╚═══════════════════════════════════════════════════════════════╝
+
+=== Processing commands from 'tests/test1_input.txt' ===
+
+Added: Charlie (ID: 1003, GPA: 3.50)
+Added: Alice (ID: 1001, GPA: 3.75)
+Added: Bob (ID: 1002, GPA: 3.85)
++------+------------------+------+
+|  ID  |       Name       | GPA  |
++------+------------------+------+
+| 1001 | Alice            | 3.75 |
+| 1002 | Bob              | 3.85 |
+| 1003 | Charlie          | 3.50 |
++------+------------------+------+
+Found: Bob (ID: 1002, GPA: 3.85)
+Deleted: Alice (ID: 1001)
++------+------------------+------+
+|  ID  |       Name       | GPA  |
++------+------------------+------+
+| 1002 | Bob              | 3.85 |
+| 1003 | Charlie          | 3.50 |
++------+------------------+------+
+Total students: 2
+
+=== Command processing complete ===
+
+--- Program finished ---
+

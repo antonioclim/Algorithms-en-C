@@ -1,0 +1,16 @@
+id,name,grade
+101,Ionescu Maria,9.25
+102,Popescu Alexandru,8.50
+103,Georgescu Ana,7.80
+104,Vasilescu Dan,9.50
+105,Marinescu Elena,8.90
+106,Dumitrescu Mihai,6.75
+107,Constantinescu Andrei,9.00
+108,Stanescu Ioana,7.25
+109,Florescu Cristian,8.30
+110,Radulescu Diana,9.75
+111,Stoica Bogdan,5.50
+112,Munteanu Alina,8.00
+113,Dragomir Victor,7.90
+114,Popa Teodora,8.65
+115,Dobre Razvan,6.20

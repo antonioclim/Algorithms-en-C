@@ -1,0 +1,1777 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Week 04: Linked Lists | ATP Course</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+    <style>
+        :root {
+            --bg-primary: #0d1117;
+            --bg-secondary: #161b22;
+            --bg-tertiary: #21262d;
+            --text-primary: #e6edf3;
+            --text-secondary: #8b949e;
+            --accent-blue: #58a6ff;
+            --accent-green: #3fb950;
+            --accent-yellow: #d29922;
+            --accent-red: #f85149;
+            --accent-purple: #a371f7;
+            --border-color: #30363d;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans', Helvetica, Arial, sans-serif;
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.6;
+            overflow: hidden;
+        }
+
+        /* Progress bar */
+        .progress-bar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 4px;
+            background: linear-gradient(90deg, var(--accent-blue), var(--accent-purple));
+            transition: width 0.3s ease;
+            z-index: 1000;
+        }
+
+        /* Slide container */
+        .slides-container {
+            width: 100vw;
+            height: 100vh;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .slide {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            padding: 60px 80px;
+            display: none;
+            opacity: 0;
+            transition: opacity 0.4s ease;
+            overflow-y: auto;
+        }
+
+        .slide.active {
+            display: flex;
+            flex-direction: column;
+            opacity: 1;
+        }
+
+        /* Typography */
+        h1 {
+            font-size: 2.8em;
+            color: var(--accent-blue);
+            margin-bottom: 20px;
+            font-weight: 600;
+        }
+
+        h2 {
+            font-size: 2.2em;
+            color: var(--accent-blue);
+            margin-bottom: 25px;
+            border-bottom: 2px solid var(--border-color);
+            padding-bottom: 15px;
+        }
+
+        h3 {
+            font-size: 1.5em;
+            color: var(--accent-green);
+            margin: 20px 0 15px 0;
+        }
+
+        p {
+            font-size: 1.2em;
+            color: var(--text-primary);
+            margin-bottom: 15px;
+        }
+
+        ul, ol {
+            font-size: 1.15em;
+            margin-left: 30px;
+            margin-bottom: 20px;
+        }
+
+        li {
+            margin-bottom: 12px;
+            color: var(--text-primary);
+        }
+
+        li::marker {
+            color: var(--accent-blue);
+        }
+
+        /* Title slide */
+        .title-slide {
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            background: linear-gradient(135deg, var(--bg-primary) 0%, var(--bg-secondary) 100%);
+        }
+
+        .title-slide h1 {
+            font-size: 3.5em;
+            margin-bottom: 30px;
+            background: linear-gradient(90deg, var(--accent-blue), var(--accent-purple));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .title-slide .subtitle {
+            font-size: 1.8em;
+            color: var(--text-secondary);
+            margin-bottom: 40px;
+        }
+
+        .title-slide .meta {
+            font-size: 1.2em;
+            color: var(--text-secondary);
+        }
+
+        /* Code blocks */
+        .code-block {
+            background: var(--bg-secondary);
+            border-radius: 8px;
+            margin: 20px 0;
+            border: 1px solid var(--border-color);
+            overflow: hidden;
+        }
+
+        .code-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 15px;
+            background: var(--bg-tertiary);
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .code-header span {
+            color: var(--text-secondary);
+            font-size: 0.9em;
+        }
+
+        .lang-badge {
+            background: var(--accent-blue);
+            color: var(--bg-primary);
+            padding: 2px 10px;
+            border-radius: 4px;
+            font-weight: 600;
+            font-size: 0.85em;
+        }
+
+        .code-block pre {
+            margin: 0;
+            padding: 20px;
+            overflow-x: auto;
+        }
+
+        .code-block code {
+            font-family: 'JetBrains Mono', 'Fira Code', 'Consolas', monospace;
+            font-size: 0.95em;
+            line-height: 1.5;
+        }
+
+        /* Info boxes */
+        .info-box {
+            padding: 20px 25px;
+            border-radius: 8px;
+            margin: 20px 0;
+            border-left: 4px solid;
+        }
+
+        .info-box.note {
+            background: rgba(88, 166, 255, 0.1);
+            border-color: var(--accent-blue);
+        }
+
+        .info-box.warning {
+            background: rgba(210, 153, 34, 0.1);
+            border-color: var(--accent-yellow);
+        }
+
+        .info-box.danger {
+            background: rgba(248, 81, 73, 0.1);
+            border-color: var(--accent-red);
+        }
+
+        .info-box.success {
+            background: rgba(63, 185, 80, 0.1);
+            border-color: var(--accent-green);
+        }
+
+        .info-box-title {
+            font-weight: 600;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        /* ASCII diagrams */
+        .ascii-diagram {
+            background: var(--bg-secondary);
+            padding: 25px;
+            border-radius: 8px;
+            font-family: 'JetBrains Mono', 'Consolas', monospace;
+            font-size: 0.9em;
+            line-height: 1.4;
+            white-space: pre;
+            overflow-x: auto;
+            border: 1px solid var(--border-color);
+            color: var(--accent-green);
+        }
+
+        /* Two column layout */
+        .two-columns {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 40px;
+            margin-top: 20px;
+        }
+
+        .column {
+            background: var(--bg-secondary);
+            padding: 25px;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+        }
+
+        /* Table styling */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            font-size: 1em;
+        }
+
+        th, td {
+            padding: 15px;
+            text-align: left;
+            border: 1px solid var(--border-color);
+        }
+
+        th {
+            background: var(--bg-tertiary);
+            color: var(--accent-blue);
+            font-weight: 600;
+        }
+
+        tr:nth-child(even) {
+            background: var(--bg-secondary);
+        }
+
+        /* Key figure section */
+        .key-figure {
+            display: flex;
+            gap: 40px;
+            align-items: flex-start;
+            margin-top: 20px;
+        }
+
+        .key-figure-image {
+            width: 200px;
+            height: 250px;
+            background: var(--bg-tertiary);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-secondary);
+            font-size: 0.9em;
+            flex-shrink: 0;
+            border: 1px solid var(--border-color);
+        }
+
+        .key-figure-content {
+            flex: 1;
+        }
+
+        .quote {
+            font-style: italic;
+            color: var(--accent-purple);
+            border-left: 3px solid var(--accent-purple);
+            padding-left: 20px;
+            margin: 20px 0;
+            font-size: 1.1em;
+        }
+
+        /* Summary boxes */
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .summary-box {
+            background: var(--bg-secondary);
+            padding: 20px;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            text-align: center;
+        }
+
+        .summary-box h4 {
+            color: var(--accent-blue);
+            margin-bottom: 10px;
+        }
+
+        /* Navigation */
+        .navigation {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            display: flex;
+            gap: 10px;
+            z-index: 100;
+        }
+
+        .nav-btn {
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+            border: 1px solid var(--border-color);
+            padding: 12px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 1em;
+            transition: all 0.2s ease;
+        }
+
+        .nav-btn:hover {
+            background: var(--accent-blue);
+            color: var(--bg-primary);
+        }
+
+        /* Slide counter */
+        .slide-counter {
+            position: fixed;
+            bottom: 30px;
+            left: 30px;
+            color: var(--text-secondary);
+            font-size: 1em;
+            z-index: 100;
+        }
+
+        /* Keyboard hints */
+        .keyboard-hints {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: var(--text-secondary);
+            font-size: 0.85em;
+            z-index: 100;
+        }
+
+        kbd {
+            background: var(--bg-tertiary);
+            padding: 3px 8px;
+            border-radius: 4px;
+            border: 1px solid var(--border-color);
+            font-family: inherit;
+        }
+
+        /* Highlight */
+        .highlight {
+            color: var(--accent-yellow);
+            font-weight: 600;
+        }
+
+        .highlight-blue {
+            color: var(--accent-blue);
+        }
+
+        .highlight-green {
+            color: var(--accent-green);
+        }
+
+        .highlight-red {
+            color: var(--accent-red);
+        }
+
+        /* Memory diagram specific */
+        .memory-row {
+            display: flex;
+            align-items: center;
+            margin: 10px 0;
+        }
+
+        .memory-address {
+            width: 120px;
+            color: var(--text-secondary);
+            font-family: monospace;
+        }
+
+        .memory-cell {
+            background: var(--bg-tertiary);
+            padding: 15px 25px;
+            border: 1px solid var(--border-color);
+            margin-right: 5px;
+            text-align: center;
+            min-width: 80px;
+        }
+
+        .memory-label {
+            font-size: 0.8em;
+            color: var(--text-secondary);
+            margin-left: 15px;
+        }
+
+        /* Animation for arrows */
+        .animated-arrow {
+            animation: pulse 1.5s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+    </style>
+</head>
+<body>
+    <div class="progress-bar" id="progressBar"></div>
+    
+    <div class="slides-container">
+        <!-- Slide 1: Title -->
+        <div class="slide title-slide active" data-slide="1">
+            <h1>Linked Lists</h1>
+            <p class="subtitle">Week 04 | Algorithms and Programming Techniques</p>
+            <p class="meta">Academy of Economic Studies • Computer Science</p>
+            <p class="meta" style="margin-top: 30px; color: var(--accent-purple);">Dynamic Data Structures and Pointer-Based Memory Management</p>
+        </div>
+
+        <!-- Slide 2: Learning Objectives -->
+        <div class="slide" data-slide="2">
+            <h2>🎯 Learning Objectives</h2>
+            <ul>
+                <li><strong>Remember</strong> the fundamental structure of singly and doubly linked list nodes</li>
+                <li><strong>Understand</strong> the differences between contiguous and non-contiguous memory allocation</li>
+                <li><strong>Apply</strong> dynamic memory functions (<code>malloc</code>, <code>free</code>) to construct linked lists</li>
+                <li><strong>Analyse</strong> time and space complexity of linked list operations</li>
+                <li><strong>Evaluate</strong> when linked lists offer advantages over arrays</li>
+                <li><strong>Create</strong> robust, memory-safe linked list implementations</li>
+            </ul>
+            <div class="info-box note">
+                <div class="info-box-title">📚 Prerequisites</div>
+                <p>Solid understanding of pointers, structures and dynamic memory allocation from previous weeks.</p>
+            </div>
+        </div>
+
+        <!-- Slide 3: Historical Timeline -->
+        <div class="slide" data-slide="3">
+            <h2>📜 Historical Context</h2>
+            <div class="ascii-diagram">
+1956-58   IPL (Information Processing Language)
+    │     ├─ Newell, Shaw, Simon @ RAND/Carnegie Mellon
+    │     └─ First language with list processing
+    │
+1958      LISP (List Processing)
+    │     ├─ John McCarthy @ MIT
+    │     └─ "Cons cells" as fundamental data structure
+    │
+1960s     Evolution in systems programming
+    │     ├─ Operating system kernels
+    │     └─ Memory management systems
+    │
+1970s     C Language integration
+    │     ├─ Kernighan & Ritchie
+    │     └─ Structures with self-referential pointers
+    │
+Present   Universal application
+          ├─ Database systems, compilers, operating systems
+          └─ Foundation for complex data structures
+            </div>
+        </div>
+
+        <!-- Slide 4: Key Figure -->
+        <div class="slide" data-slide="4">
+            <h2>👤 Key Figure: John McCarthy (1927–2011)</h2>
+            <div class="key-figure">
+                <div class="key-figure-image">[Photo: John McCarthy]<br>Stanford Professor<br>Turing Award 1971</div>
+                <div class="key-figure-content">
+                    <h3>Contributions</h3>
+                    <ul>
+                        <li>Inventor of <span class="highlight">LISP</span> programming language (1958)</li>
+                        <li>Coined the term <span class="highlight">"Artificial Intelligence"</span> (1955)</li>
+                        <li>Developed concept of <span class="highlight">garbage collection</span></li>
+                        <li>Pioneered <span class="highlight">time-sharing</span> computer systems</li>
+                    </ul>
+                    <div class="quote">
+                        "Programs must be written for people to read, and only incidentally for machines to execute."
+                        <br>— Often attributed to McCarthy's philosophy of programming
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 5: Why Linked Lists? -->
+        <div class="slide" data-slide="5">
+            <h2>❓ Why Linked Lists?</h2>
+            <div class="two-columns">
+                <div class="column">
+                    <h3 style="color: var(--accent-red);">Array Limitations</h3>
+                    <ul>
+                        <li>Fixed size at declaration</li>
+                        <li>Expensive insertions/deletions</li>
+                        <li>Contiguous memory required</li>
+                        <li>Memory fragmentation issues</li>
+                        <li>Potential memory waste</li>
+                    </ul>
+                </div>
+                <div class="column">
+                    <h3 style="color: var(--accent-green);">Linked List Advantages</h3>
+                    <ul>
+                        <li>Dynamic size adjustment</li>
+                        <li>O(1) insertion/deletion*</li>
+                        <li>Non-contiguous allocation</li>
+                        <li>Efficient memory utilisation</li>
+                        <li>Natural recursive structure</li>
+                    </ul>
+                </div>
+            </div>
+            <p style="margin-top: 30px; color: var(--text-secondary);">*When position is known</p>
+        </div>
+
+        <!-- Slide 6: Node Structure -->
+        <div class="slide" data-slide="6">
+            <h2>🔧 Node Structure: The Building Block</h2>
+            <div class="ascii-diagram">
+┌─────────────────────────────────────────────────────────────────┐
+│                    SINGLY LINKED LIST NODE                      │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                 │
+│    ┌────────────────────┬─────────────────────┐                │
+│    │     DATA FIELD     │    NEXT POINTER     │                │
+│    │                    │                     │                │
+│    │   Stores value     │   Points to next    │                │
+│    │   (int, struct,    │   node or NULL      │                │
+│    │    pointer, etc.)  │                     │                │
+│    └────────────────────┴─────────────────────┘                │
+│                                                                 │
+│    Total size: sizeof(data) + sizeof(Node*)                    │
+│    Example: 4 bytes + 8 bytes = 12 bytes (64-bit)              │
+│                                                                 │
+└─────────────────────────────────────────────────────────────────┘
+            </div>
+            <div class="code-block">
+                <div class="code-header">
+                    <span>Singly Linked List Node Definition</span>
+                    <span class="lang-badge">C</span>
+                </div>
+                <pre><code class="language-c">typedef struct Node {
+    int data;               /* Data payload */
+    struct Node *next;      /* Pointer to next node */
+} Node;</code></pre>
+            </div>
+        </div>
+
+        <!-- Slide 7: Self-Referential Structures -->
+        <div class="slide" data-slide="7">
+            <h2>🔄 Self-Referential Structures</h2>
+            <p>A structure that contains a pointer to another instance of itself:</p>
+            <div class="code-block">
+                <div class="code-header">
+                    <span>Why struct Node *next and NOT struct Node next?</span>
+                    <span class="lang-badge">C</span>
+                </div>
+                <pre><code class="language-c">/* INVALID - Would cause infinite recursion in size calculation */
+struct BadNode {
+    int data;
+    struct BadNode next;    /* ERROR: Incomplete type */
+};
+
+/* VALID - Pointer has fixed size regardless of what it points to */
+struct GoodNode {
+    int data;
+    struct GoodNode *next;  /* OK: Pointer size is known */
+};</code></pre>
+            </div>
+            <div class="info-box warning">
+                <div class="info-box-title">⚠️ Critical Understanding</div>
+                <p>A pointer has a fixed size (8 bytes on 64-bit systems) regardless of the size of what it points to. This allows the compiler to determine the structure's size.</p>
+            </div>
+        </div>
+
+        <!-- Slide 8: Memory Layout Visualisation -->
+        <div class="slide" data-slide="8">
+            <h2>🧠 Memory Layout Visualisation</h2>
+            <div class="ascii-diagram">
+Stack Memory                    Heap Memory
+┌──────────┐                   ┌─────────────────────────────────────┐
+│  head    │──────────────────►│  Node @ 0x1000                     │
+│  (ptr)   │                   │  ┌──────┬──────┐                   │
+│ 0x1000   │                   │  │ data │ next │─────────┐         │
+└──────────┘                   │  │  10  │0x2000│         │         │
+                               │  └──────┴──────┘         │         │
+                               │                          │         │
+                               │  Node @ 0x2000    ◄──────┘         │
+                               │  ┌──────┬──────┐                   │
+                               │  │ data │ next │─────────┐         │
+                               │  │  20  │0x3000│         │         │
+                               │  └──────┴──────┘         │         │
+                               │                          │         │
+                               │  Node @ 0x3000    ◄──────┘         │
+                               │  ┌──────┬──────┐                   │
+                               │  │ data │ next │                   │
+                               │  │  30  │ NULL │                   │
+                               │  └──────┴──────┘                   │
+                               └─────────────────────────────────────┘
+            </div>
+        </div>
+
+        <!-- Slide 9: Node Creation -->
+        <div class="slide" data-slide="9">
+            <h2>➕ Creating a New Node</h2>
+            <div class="code-block">
+                <div class="code-header">
+                    <span>Node Creation with Proper Error Handling</span>
+                    <span class="lang-badge">C</span>
+                </div>
+                <pre><code class="language-c">Node* create_node(int value) {
+    /* Step 1: Allocate memory for new node */
+    Node *new_node = (Node*)malloc(sizeof(Node));
+    
+    /* Step 2: Check if allocation succeeded */
+    if (new_node == NULL) {
+        fprintf(stderr, "Error: Memory allocation failed\n");
+        return NULL;
+    }
+    
+    /* Step 3: Initialise the node's fields */
+    new_node->data = value;
+    new_node->next = NULL;
+    
+    /* Step 4: Return pointer to the new node */
+    return new_node;
+}</code></pre>
+            </div>
+            <div class="info-box success">
+                <div class="info-box-title">✓ Best Practice</div>
+                <p>Always check the return value of <code>malloc</code>. Memory allocation can fail, especially in constrained environments.</p>
+            </div>
+        </div>
+
+        <!-- Slide 10: Traversal -->
+        <div class="slide" data-slide="10">
+            <h2>🚶 List Traversal</h2>
+            <div class="code-block">
+                <div class="code-header">
+                    <span>Canonical Traversal Pattern</span>
+                    <span class="lang-badge">C</span>
+                </div>
+                <pre><code class="language-c">void print_list(Node *head) {
+    Node *current = head;       /* Start at the head */
+    
+    printf("List: ");
+    while (current != NULL) {   /* Continue until end */
+        printf("%d", current->data);
+        
+        if (current->next != NULL) {
+            printf(" -> ");
+        }
+        
+        current = current->next; /* Move to next node */
+    }
+    printf(" -> NULL\n");
+}
+
+/* Alternative: Using for loop */
+void print_list_v2(Node *head) {
+    for (Node *p = head; p != NULL; p = p->next) {
+        printf("%d ", p->data);
+    }
+}</code></pre>
+            </div>
+        </div>
+
+        <!-- Slide 11: Insert at Beginning -->
+        <div class="slide" data-slide="11">
+            <h2>⬆️ Insertion at Beginning (Prepend)</h2>
+            <div class="ascii-diagram">
+Before:  HEAD ──► [10] ──► [20] ──► [30] ──► NULL
+
+Insert 5:
+         ┌──────────────────────────────────────┐
+         │                                      │
+         ▼                                      │
+        [5] ──► HEAD ──► [10] ──► [20] ──► [30] ──► NULL
+
+After:   HEAD ──► [5] ──► [10] ──► [20] ──► [30] ──► NULL
+            </div>
+            <div class="code-block">
+                <div class="code-header">
+                    <span>Insert at Beginning - O(1) Operation</span>
+                    <span class="lang-badge">C</span>
+                </div>
+                <pre><code class="language-c">void insert_at_beginning(Node **head_ref, int value) {
+    /* Create the new node */
+    Node *new_node = create_node(value);
+    if (new_node == NULL) return;
+    
+    /* Point new node to current head */
+    new_node->next = *head_ref;
+    
+    /* Update head to point to new node */
+    *head_ref = new_node;
+}</code></pre>
+            </div>
+        </div>
+
+        <!-- Slide 12: Why Double Pointer? -->
+        <div class="slide" data-slide="12">
+            <h2>🔍 Understanding Double Pointers</h2>
+            <div class="two-columns">
+                <div class="column">
+                    <h3 style="color: var(--accent-red);">❌ Single Pointer (Won't Work)</h3>
+                    <div class="code-block">
+                        <pre><code class="language-c">void insert_bad(Node *head, int val) {
+    Node *new_node = create_node(val);
+    new_node->next = head;
+    head = new_node;  /* Local change! */
+}
+/* head in main() unchanged */</code></pre>
+                    </div>
+                </div>
+                <div class="column">
+                    <h3 style="color: var(--accent-green);">✓ Double Pointer (Correct)</h3>
+                    <div class="code-block">
+                        <pre><code class="language-c">void insert_good(Node **head_ref, int val) {
+    Node *new_node = create_node(val);
+    new_node->next = *head_ref;
+    *head_ref = new_node; /* Modifies original */
+}
+/* Call: insert_good(&head, 5); */</code></pre>
+                    </div>
+                </div>
+            </div>
+            <div class="info-box note">
+                <div class="info-box-title">💡 Key Insight</div>
+                <p>To modify a pointer passed to a function, you need to pass a pointer to that pointer (double pointer). C passes arguments by value—passing <code>head</code> creates a copy.</p>
+            </div>
+        </div>
+
+        <!-- Slide 13: Insert at End -->
+        <div class="slide" data-slide="13">
+            <h2>⬇️ Insertion at End (Append)</h2>
+            <div class="code-block">
+                <div class="code-header">
+                    <span>Insert at End - O(n) Operation</span>
+                    <span class="lang-badge">C</span>
+                </div>
+                <pre><code class="language-c">void insert_at_end(Node **head_ref, int value) {
+    Node *new_node = create_node(value);
+    if (new_node == NULL) return;
+    
+    /* Special case: empty list */
+    if (*head_ref == NULL) {
+        *head_ref = new_node;
+        return;
+    }
+    
+    /* Traverse to find last node */
+    Node *last = *head_ref;
+    while (last->next != NULL) {
+        last = last->next;
+    }
+    
+    /* Link new node after the last node */
+    last->next = new_node;
+}</code></pre>
+            </div>
+            <div class="info-box warning">
+                <div class="info-box-title">⚠️ Performance Note</div>
+                <p>Without a tail pointer, append is O(n). Maintaining a tail pointer makes it O(1).</p>
+            </div>
+        </div>
+
+        <!-- Slide 14: Insert at Position -->
+        <div class="slide" data-slide="14">
+            <h2>📍 Insertion at Specific Position</h2>
+            <div class="code-block">
+                <div class="code-header">
+                    <span>Insert at Position - O(n) Operation</span>
+                    <span class="lang-badge">C</span>
+                </div>
+                <pre><code class="language-c">void insert_at_position(Node **head_ref, int value, int position) {
+    /* Position 0 means insert at beginning */
+    if (position == 0) {
+        insert_at_beginning(head_ref, value);
+        return;
+    }
+    
+    Node *new_node = create_node(value);
+    if (new_node == NULL) return;
+    
+    /* Traverse to node before insertion point */
+    Node *current = *head_ref;
+    for (int i = 0; i < position - 1 && current != NULL; i++) {
+        current = current->next;
+    }
+    
+    if (current == NULL) {
+        fprintf(stderr, "Error: Position out of bounds\n");
+        free(new_node);
+        return;
+    }
+    
+    /* Insert new node */
+    new_node->next = current->next;
+    current->next = new_node;
+}</code></pre>
+            </div>
+        </div>
+
+        <!-- Slide 15: Deletion Operations -->
+        <div class="slide" data-slide="15">
+            <h2>🗑️ Deletion: Removing the First Node</h2>
+            <div class="ascii-diagram">
+Before:  HEAD ──► [10] ──► [20] ──► [30] ──► NULL
+                   │
+                   └── To be deleted
+
+Step 1:  temp = HEAD
+Step 2:  HEAD = HEAD->next
+Step 3:  free(temp)
+
+After:   HEAD ──► [20] ──► [30] ──► NULL
+            </div>
+            <div class="code-block">
+                <div class="code-header">
+                    <span>Delete First Node - O(1) Operation</span>
+                    <span class="lang-badge">C</span>
+                </div>
+                <pre><code class="language-c">void delete_first(Node **head_ref) {
+    if (*head_ref == NULL) {
+        printf("List is empty\n");
+        return;
+    }
+    
+    Node *temp = *head_ref;      /* Store current head */
+    *head_ref = (*head_ref)->next; /* Move head forward */
+    free(temp);                   /* Free old head */
+}</code></pre>
+            </div>
+        </div>
+
+        <!-- Slide 16: Delete by Value -->
+        <div class="slide" data-slide="16">
+            <h2>🔎 Deletion by Value</h2>
+            <div class="code-block">
+                <div class="code-header">
+                    <span>Delete Node Containing Specific Value - O(n)</span>
+                    <span class="lang-badge">C</span>
+                </div>
+                <pre><code class="language-c">void delete_by_value(Node **head_ref, int target) {
+    if (*head_ref == NULL) return;
+    
+    /* Special case: target is in head */
+    if ((*head_ref)->data == target) {
+        Node *temp = *head_ref;
+        *head_ref = (*head_ref)->next;
+        free(temp);
+        return;
+    }
+    
+    /* Search for node preceding the target */
+    Node *current = *head_ref;
+    while (current->next != NULL && current->next->data != target) {
+        current = current->next;
+    }
+    
+    /* If target found, delete it */
+    if (current->next != NULL) {
+        Node *temp = current->next;
+        current->next = current->next->next;
+        free(temp);
+    }
+}</code></pre>
+            </div>
+        </div>
+
+        <!-- Slide 17: Search Operation -->
+        <div class="slide" data-slide="17">
+            <h2>🔍 Searching in a Linked List</h2>
+            <div class="code-block">
+                <div class="code-header">
+                    <span>Linear Search - O(n) Operation</span>
+                    <span class="lang-badge">C</span>
+                </div>
+                <pre><code class="language-c">/* Return pointer to node containing value, or NULL if not found */
+Node* search(Node *head, int target) {
+    Node *current = head;
+    
+    while (current != NULL) {
+        if (current->data == target) {
+            return current;  /* Found! */
+        }
+        current = current->next;
+    }
+    
+    return NULL;  /* Not found */
+}
+
+/* Alternative: Return position (0-indexed) or -1 if not found */
+int search_position(Node *head, int target) {
+    int position = 0;
+    
+    for (Node *p = head; p != NULL; p = p->next, position++) {
+        if (p->data == target) {
+            return position;
+        }
+    }
+    
+    return -1;
+}</code></pre>
+            </div>
+        </div>
+
+        <!-- Slide 18: Counting and Length -->
+        <div class="slide" data-slide="18">
+            <h2>📊 Counting Nodes</h2>
+            <div class="two-columns">
+                <div class="column">
+                    <h3>Iterative Approach</h3>
+                    <div class="code-block">
+                        <pre><code class="language-c">int count_nodes(Node *head) {
+    int count = 0;
+    Node *current = head;
+    
+    while (current != NULL) {
+        count++;
+        current = current->next;
+    }
+    
+    return count;
+}</code></pre>
+                    </div>
+                </div>
+                <div class="column">
+                    <h3>Recursive Approach</h3>
+                    <div class="code-block">
+                        <pre><code class="language-c">int count_recursive(Node *head) {
+    /* Base case: empty list */
+    if (head == NULL) {
+        return 0;
+    }
+    
+    /* Recursive case */
+    return 1 + count_recursive(head->next);
+}</code></pre>
+                    </div>
+                </div>
+            </div>
+            <div class="info-box note">
+                <div class="info-box-title">💡 Trade-off</div>
+                <p>The iterative version uses O(1) space; the recursive version uses O(n) stack space due to recursive calls.</p>
+            </div>
+        </div>
+
+        <!-- Slide 19: Reversing a List -->
+        <div class="slide" data-slide="19">
+            <h2>🔄 Reversing a Linked List</h2>
+            <div class="ascii-diagram">
+Original:    HEAD ──► [10] ──► [20] ──► [30] ──► NULL
+
+Process:     prev=NULL, curr=[10], next=[20]
+             [10]->next = NULL
+             prev=[10], curr=[20], next=[30]
+             [20]->next = [10]
+             prev=[20], curr=[30], next=NULL
+             [30]->next = [20]
+             HEAD = [30]
+
+Reversed:    HEAD ──► [30] ──► [20] ──► [10] ──► NULL
+            </div>
+            <div class="code-block">
+                <div class="code-header">
+                    <span>In-Place Reversal - O(n) Time, O(1) Space</span>
+                    <span class="lang-badge">C</span>
+                </div>
+                <pre><code class="language-c">void reverse_list(Node **head_ref) {
+    Node *prev = NULL;
+    Node *current = *head_ref;
+    Node *next = NULL;
+    
+    while (current != NULL) {
+        next = current->next;    /* Save next */
+        current->next = prev;    /* Reverse link */
+        prev = current;          /* Advance prev */
+        current = next;          /* Advance current */
+    }
+    
+    *head_ref = prev;           /* Update head */
+}</code></pre>
+            </div>
+        </div>
+
+        <!-- Slide 20: Freeing Memory -->
+        <div class="slide" data-slide="20">
+            <h2>🧹 Memory Deallocation</h2>
+            <div class="code-block">
+                <div class="code-header">
+                    <span>Properly Freeing an Entire List</span>
+                    <span class="lang-badge">C</span>
+                </div>
+                <pre><code class="language-c">void free_list(Node **head_ref) {
+    Node *current = *head_ref;
+    Node *next;
+    
+    while (current != NULL) {
+        next = current->next;  /* Save next before freeing */
+        free(current);         /* Free current node */
+        current = next;        /* Move to next */
+    }
+    
+    *head_ref = NULL;         /* Prevent dangling pointer */
+}</code></pre>
+            </div>
+            <div class="info-box danger">
+                <div class="info-box-title">🚫 Common Mistake</div>
+                <p>Never do <code>free(current); current = current->next;</code> — accessing <code>current->next</code> after <code>free(current)</code> is undefined behaviour!</p>
+            </div>
+        </div>
+
+        <!-- Slide 21: Doubly Linked Lists -->
+        <div class="slide" data-slide="21">
+            <h2>↔️ Doubly Linked Lists</h2>
+            <div class="ascii-diagram">
+NULL ◄── [prev|10|next] ◄──► [prev|20|next] ◄──► [prev|30|next] ──► NULL
+              │                    │                    │
+              └────── HEAD         │                    │
+                                   └─── Bidirectional navigation enabled
+            </div>
+            <div class="code-block">
+                <div class="code-header">
+                    <span>Doubly Linked List Node Structure</span>
+                    <span class="lang-badge">C</span>
+                </div>
+                <pre><code class="language-c">typedef struct DNode {
+    int data;
+    struct DNode *prev;    /* Pointer to predecessor */
+    struct DNode *next;    /* Pointer to successor */
+} DNode;
+
+DNode* create_dnode(int value) {
+    DNode *new_node = (DNode*)malloc(sizeof(DNode));
+    if (new_node == NULL) return NULL;
+    
+    new_node->data = value;
+    new_node->prev = NULL;
+    new_node->next = NULL;
+    return new_node;
+}</code></pre>
+            </div>
+        </div>
+
+        <!-- Slide 22: DLL Operations -->
+        <div class="slide" data-slide="22">
+            <h2>↔️ Doubly Linked List Operations</h2>
+            <div class="code-block">
+                <div class="code-header">
+                    <span>Insertion and Deletion in DLL</span>
+                    <span class="lang-badge">C</span>
+                </div>
+                <pre><code class="language-c">void dll_insert_after(DNode *node, int value) {
+    if (node == NULL) return;
+    
+    DNode *new_node = create_dnode(value);
+    if (new_node == NULL) return;
+    
+    new_node->next = node->next;
+    new_node->prev = node;
+    
+    if (node->next != NULL) {
+        node->next->prev = new_node;
+    }
+    node->next = new_node;
+}
+
+void dll_delete(DNode **head_ref, DNode *target) {
+    if (*head_ref == NULL || target == NULL) return;
+    
+    if (*head_ref == target) {
+        *head_ref = target->next;
+    }
+    if (target->next != NULL) {
+        target->next->prev = target->prev;
+    }
+    if (target->prev != NULL) {
+        target->prev->next = target->next;
+    }
+    free(target);
+}</code></pre>
+            </div>
+        </div>
+
+        <!-- Slide 23: Circular Linked Lists -->
+        <div class="slide" data-slide="23">
+            <h2>🔁 Circular Linked Lists</h2>
+            <div class="ascii-diagram">
+         ┌─────────────────────────────────────────┐
+         │                                         │
+         ▼                                         │
+        [10] ──► [20] ──► [30] ──► [40] ───────────┘
+         ▲
+         │
+       HEAD
+
+No NULL terminator - last node points back to first
+            </div>
+            <div class="code-block">
+                <div class="code-header">
+                    <span>Circular List Traversal</span>
+                    <span class="lang-badge">C</span>
+                </div>
+                <pre><code class="language-c">void print_circular(Node *head) {
+    if (head == NULL) return;
+    
+    Node *current = head;
+    do {
+        printf("%d -> ", current->data);
+        current = current->next;
+    } while (current != head);  /* Stop when back at head */
+    
+    printf("(back to head)\n");
+}</code></pre>
+            </div>
+        </div>
+
+        <!-- Slide 24: Complexity Comparison -->
+        <div class="slide" data-slide="24">
+            <h2>📈 Complexity Comparison</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Operation</th>
+                        <th>Array</th>
+                        <th>Singly Linked</th>
+                        <th>Doubly Linked</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Access by index</td>
+                        <td style="color: var(--accent-green);">O(1)</td>
+                        <td style="color: var(--accent-red);">O(n)</td>
+                        <td style="color: var(--accent-red);">O(n)</td>
+                    </tr>
+                    <tr>
+                        <td>Insert at beginning</td>
+                        <td style="color: var(--accent-red);">O(n)</td>
+                        <td style="color: var(--accent-green);">O(1)</td>
+                        <td style="color: var(--accent-green);">O(1)</td>
+                    </tr>
+                    <tr>
+                        <td>Insert at end</td>
+                        <td style="color: var(--accent-green);">O(1)*</td>
+                        <td style="color: var(--accent-yellow);">O(n)**</td>
+                        <td style="color: var(--accent-green);">O(1)***</td>
+                    </tr>
+                    <tr>
+                        <td>Delete at beginning</td>
+                        <td style="color: var(--accent-red);">O(n)</td>
+                        <td style="color: var(--accent-green);">O(1)</td>
+                        <td style="color: var(--accent-green);">O(1)</td>
+                    </tr>
+                    <tr>
+                        <td>Search</td>
+                        <td style="color: var(--accent-red);">O(n)</td>
+                        <td style="color: var(--accent-red);">O(n)</td>
+                        <td style="color: var(--accent-red);">O(n)</td>
+                    </tr>
+                    <tr>
+                        <td>Space overhead</td>
+                        <td>None</td>
+                        <td>1 ptr/node</td>
+                        <td>2 ptrs/node</td>
+                    </tr>
+                </tbody>
+            </table>
+            <p style="font-size: 0.9em; color: var(--text-secondary);">
+                *Amortised with dynamic resizing &nbsp;|&nbsp; **O(1) with tail pointer &nbsp;|&nbsp; ***With tail pointer
+            </p>
+        </div>
+
+        <!-- Slide 25: Common Mistakes -->
+        <div class="slide" data-slide="25">
+            <h2>⚠️ Common Mistakes</h2>
+            <div class="info-box danger">
+                <div class="info-box-title">🚫 Mistake 1: Memory Leak</div>
+                <pre><code class="language-c">/* WRONG: Lost reference, memory leaked */
+head = head->next;  /* Previous head node never freed */</code></pre>
+            </div>
+            <div class="info-box danger">
+                <div class="info-box-title">🚫 Mistake 2: Use After Free</div>
+                <pre><code class="language-c">/* WRONG: Accessing freed memory */
+free(current);
+current = current->next;  /* Undefined behaviour! */</code></pre>
+            </div>
+            <div class="info-box danger">
+                <div class="info-box-title">🚫 Mistake 3: Null Pointer Dereference</div>
+                <pre><code class="language-c">/* WRONG: Not checking for NULL */
+while (current->next != NULL)  /* Crashes if current is NULL */</code></pre>
+            </div>
+        </div>
+
+        <!-- Slide 26: More Common Mistakes -->
+        <div class="slide" data-slide="26">
+            <h2>⚠️ More Common Mistakes</h2>
+            <div class="info-box danger">
+                <div class="info-box-title">🚫 Mistake 4: Losing List Reference</div>
+                <pre><code class="language-c">/* WRONG: Modifying head directly during traversal */
+while (head != NULL) {
+    printf("%d ", head->data);
+    head = head->next;  /* Now we've lost the list! */
+}</code></pre>
+            </div>
+            <div class="info-box danger">
+                <div class="info-box-title">🚫 Mistake 5: Off-by-One Errors</div>
+                <pre><code class="language-c">/* WRONG: Stopping one node too early */
+while (current->next != NULL) {  /* Misses last node */
+    /* process current */
+    current = current->next;
+}</code></pre>
+            </div>
+            <div class="info-box success">
+                <div class="info-box-title">✓ Correct Pattern</div>
+                <pre><code class="language-c">Node *current = head;  /* Use a temporary pointer */
+while (current != NULL) {
+    /* process current */
+    current = current->next;
+}</code></pre>
+            </div>
+        </div>
+
+        <!-- Slide 27: Valgrind for Memory Checking -->
+        <div class="slide" data-slide="27">
+            <h2>🔬 Memory Debugging with Valgrind</h2>
+            <div class="code-block">
+                <div class="code-header">
+                    <span>Using Valgrind to Detect Memory Issues</span>
+                    <span class="lang-badge">Bash</span>
+                </div>
+                <pre><code class="language-bash"># Compile with debug symbols
+gcc -g -Wall -Wextra -o program program.c
+
+# Run with Valgrind
+valgrind --leak-check=full --show-leak-kinds=all ./program
+
+# Example output for a memory leak:
+# ==12345== 16 bytes in 1 blocks are definitely lost
+# ==12345==    at 0x4C2FB0F: malloc
+# ==12345==    by 0x108712: create_node (program.c:15)
+# ==12345==    by 0x108789: main (program.c:42)</code></pre>
+            </div>
+            <div class="info-box note">
+                <div class="info-box-title">💡 Interpretation</div>
+                <p>Valgrind shows exactly where leaked memory was allocated. Always aim for "All heap blocks were freed -- no leaks are possible".</p>
+            </div>
+        </div>
+
+        <!-- Slide 28: GDB Debugging -->
+        <div class="slide" data-slide="28">
+            <h2>🐛 Debugging with GDB</h2>
+            <div class="code-block">
+                <div class="code-header">
+                    <span>Essential GDB Commands for Linked Lists</span>
+                    <span class="lang-badge">GDB</span>
+                </div>
+                <pre><code class="language-bash"># Start GDB
+gdb ./program
+
+# Set breakpoint at function
+(gdb) break insert_at_end
+
+# Run program
+(gdb) run
+
+# Print pointer value
+(gdb) print head
+$1 = (Node *) 0x5555555596b0
+
+# Print node contents
+(gdb) print *head
+$2 = {data = 10, next = 0x5555555596d0}
+
+# Follow the chain
+(gdb) print *head->next
+$3 = {data = 20, next = 0x0}
+
+# Watch a variable
+(gdb) watch current</code></pre>
+            </div>
+        </div>
+
+        <!-- Slide 29: Best Practices -->
+        <div class="slide" data-slide="29">
+            <h2>✅ Best Practices</h2>
+            <div class="two-columns">
+                <div class="column">
+                    <h3 style="color: var(--accent-green);">✓ Do</h3>
+                    <ul>
+                        <li>Always check <code>malloc</code> return value</li>
+                        <li>Set pointers to <code>NULL</code> after <code>free</code></li>
+                        <li>Use <code>const</code> for read-only traversals</li>
+                        <li>Document memory ownership</li>
+                        <li>Test edge cases: empty list, single node</li>
+                        <li>Use Valgrind regularly</li>
+                    </ul>
+                </div>
+                <div class="column">
+                    <h3 style="color: var(--accent-red);">✗ Don't</h3>
+                    <ul>
+                        <li>Modify <code>head</code> directly in loops</li>
+                        <li>Forget to update all affected pointers</li>
+                        <li>Access memory after freeing it</li>
+                        <li>Assume malloc always succeeds</li>
+                        <li>Mix array indexing with linked lists</li>
+                        <li>Ignore compiler warnings</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 30: Sentinel Nodes -->
+        <div class="slide" data-slide="30">
+            <h2>🛡️ Sentinel Nodes (Dummy Head)</h2>
+            <p>A sentinel node simplifies edge case handling by ensuring the list is never truly empty:</p>
+            <div class="code-block">
+                <div class="code-header">
+                    <span>Using a Sentinel Node</span>
+                    <span class="lang-badge">C</span>
+                </div>
+                <pre><code class="language-c">typedef struct LinkedList {
+    Node sentinel;  /* Not a pointer - actual node */
+    int size;
+} LinkedList;
+
+void init_list(LinkedList *list) {
+    list->sentinel.data = 0;     /* Unused */
+    list->sentinel.next = NULL;  /* Points to first real node */
+    list->size = 0;
+}
+
+/* Insert no longer needs special case for empty list */
+void insert_sorted(LinkedList *list, int value) {
+    Node *prev = &list->sentinel;
+    while (prev->next != NULL && prev->next->data < value) {
+        prev = prev->next;
+    }
+    /* Insert after prev - works even when list is empty! */
+    Node *new_node = create_node(value);
+    new_node->next = prev->next;
+    prev->next = new_node;
+    list->size++;
+}</code></pre>
+            </div>
+        </div>
+
+        <!-- Slide 31: Applications Overview -->
+        <div class="slide" data-slide="31">
+            <h2>🏭 Real-World Applications</h2>
+            <div class="summary-grid">
+                <div class="summary-box">
+                    <h4>🖥️ Operating Systems</h4>
+                    <p>Process scheduling, memory allocation free lists</p>
+                </div>
+                <div class="summary-box">
+                    <h4>🌐 Web Browsers</h4>
+                    <p>Navigation history (back/forward)</p>
+                </div>
+                <div class="summary-box">
+                    <h4>📝 Text Editors</h4>
+                    <p>Undo/redo operations</p>
+                </div>
+                <div class="summary-box">
+                    <h4>🎵 Media Players</h4>
+                    <p>Playlists with shuffle/repeat</p>
+                </div>
+                <div class="summary-box">
+                    <h4>🧮 Computer Algebra</h4>
+                    <p>Polynomial representation</p>
+                </div>
+                <div class="summary-box">
+                    <h4>📊 Hash Tables</h4>
+                    <p>Collision chains</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 32: Linux Kernel Example -->
+        <div class="slide" data-slide="32">
+            <h2>🐧 Linux Kernel: Generic List Implementation</h2>
+            <div class="code-block">
+                <div class="code-header">
+                    <span>Linux Kernel list.h Pattern</span>
+                    <span class="lang-badge">C</span>
+                </div>
+                <pre><code class="language-c">/* Linux embeds list_head inside structures */
+struct list_head {
+    struct list_head *next, *prev;
+};
+
+struct my_data {
+    int value;
+    char name[32];
+    struct list_head list;  /* Embedded list node */
+};
+
+/* Get pointer to containing structure */
+#define container_of(ptr, type, member) \
+    ((type *)((char *)(ptr) - offsetof(type, member)))
+
+#define list_entry(ptr, type, member) \
+    container_of(ptr, type, member)
+
+/* Usage */
+struct list_head *pos;
+list_for_each(pos, &head) {
+    struct my_data *entry = list_entry(pos, struct my_data, list);
+    printf("%s: %d\n", entry->name, entry->value);
+}</code></pre>
+            </div>
+        </div>
+
+        <!-- Slide 33: Interview Question - Cycle Detection -->
+        <div class="slide" data-slide="33">
+            <h2>💼 Interview Classic: Cycle Detection</h2>
+            <p><strong>Floyd's Tortoise and Hare Algorithm</strong></p>
+            <div class="ascii-diagram">
+[1] ──► [2] ──► [3] ──► [4] ──► [5]
+                 ▲               │
+                 │               │
+                 └───────────────┘  (cycle)
+
+Slow moves 1 step, Fast moves 2 steps
+If cycle exists, they will meet!
+            </div>
+            <div class="code-block">
+                <div class="code-header">
+                    <span>Cycle Detection - O(n) Time, O(1) Space</span>
+                    <span class="lang-badge">C</span>
+                </div>
+                <pre><code class="language-c">bool has_cycle(Node *head) {
+    Node *slow = head;
+    Node *fast = head;
+    
+    while (fast != NULL && fast->next != NULL) {
+        slow = slow->next;           /* Move 1 step */
+        fast = fast->next->next;     /* Move 2 steps */
+        
+        if (slow == fast) {
+            return true;  /* Cycle detected */
+        }
+    }
+    return false;  /* No cycle */
+}</code></pre>
+            </div>
+        </div>
+
+        <!-- Slide 34: Interview Question - Middle Element -->
+        <div class="slide" data-slide="34">
+            <h2>💼 Interview Classic: Find Middle Element</h2>
+            <div class="code-block">
+                <div class="code-header">
+                    <span>Two-Pointer Technique - Single Pass</span>
+                    <span class="lang-badge">C</span>
+                </div>
+                <pre><code class="language-c">Node* find_middle(Node *head) {
+    if (head == NULL) return NULL;
+    
+    Node *slow = head;
+    Node *fast = head;
+    
+    /* When fast reaches end, slow is at middle */
+    while (fast != NULL && fast->next != NULL) {
+        slow = slow->next;
+        fast = fast->next->next;
+    }
+    
+    return slow;
+}
+
+/* Example: 1 -> 2 -> 3 -> 4 -> 5
+ * 
+ * Step 0: slow=1, fast=1
+ * Step 1: slow=2, fast=3
+ * Step 2: slow=3, fast=5
+ * Step 3: fast->next is NULL, stop
+ * Return: slow = 3 (middle element)
+ */</code></pre>
+            </div>
+        </div>
+
+        <!-- Slide 35: Interview Question - Merge Sorted Lists -->
+        <div class="slide" data-slide="35">
+            <h2>💼 Interview Classic: Merge Sorted Lists</h2>
+            <div class="code-block">
+                <div class="code-header">
+                    <span>Merge Two Sorted Lists - O(n+m)</span>
+                    <span class="lang-badge">C</span>
+                </div>
+                <pre><code class="language-c">Node* merge_sorted(Node *a, Node *b) {
+    Node dummy;           /* Sentinel simplifies logic */
+    Node *tail = &dummy;
+    dummy.next = NULL;
+    
+    while (a != NULL && b != NULL) {
+        if (a->data <= b->data) {
+            tail->next = a;
+            a = a->next;
+        } else {
+            tail->next = b;
+            b = b->next;
+        }
+        tail = tail->next;
+    }
+    
+    /* Attach remaining nodes */
+    tail->next = (a != NULL) ? a : b;
+    
+    return dummy.next;  /* Return actual head */
+}</code></pre>
+            </div>
+        </div>
+
+        <!-- Slide 36: Laboratory Preview -->
+        <div class="slide" data-slide="36">
+            <h2>🔬 Laboratory Exercises Preview</h2>
+            <div class="two-columns">
+                <div class="column">
+                    <h3>Exercise 1: Student Records</h3>
+                    <ul>
+                        <li>Create student structure with ID, name, GPA</li>
+                        <li>Insert maintaining sorted order by ID</li>
+                        <li>Search and delete by ID</li>
+                        <li>Display all records formatted</li>
+                        <li>Proper memory management</li>
+                    </ul>
+                    <p style="color: var(--accent-blue); margin-top: 15px;"><strong>12 TODO markers</strong></p>
+                </div>
+                <div class="column">
+                    <h3>Exercise 2: Polynomial Calculator</h3>
+                    <ul>
+                        <li>Represent polynomials as linked lists</li>
+                        <li>Add and multiply polynomials</li>
+                        <li>Evaluate at given x value</li>
+                        <li>Display in mathematical notation</li>
+                        <li>Combine like terms automatically</li>
+                    </ul>
+                    <p style="color: var(--accent-blue); margin-top: 15px;"><strong>15 TODO markers</strong></p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 37: Key Takeaways -->
+        <div class="slide" data-slide="37">
+            <h2>🎯 Key Takeaways</h2>
+            <div class="summary-grid">
+                <div class="summary-box">
+                    <h4>📦 Node Structure</h4>
+                    <p>Data + pointer to next (+ prev for DLL)</p>
+                </div>
+                <div class="summary-box">
+                    <h4>🔗 Self-Reference</h4>
+                    <p>Use pointers, not embedded structs</p>
+                </div>
+                <div class="summary-box">
+                    <h4>⚡ O(1) Operations</h4>
+                    <p>Insert/delete at known position</p>
+                </div>
+                <div class="summary-box">
+                    <h4>🧠 Memory</h4>
+                    <p>malloc, free, check for NULL</p>
+                </div>
+                <div class="summary-box">
+                    <h4>🔍 Double Pointers</h4>
+                    <p>Required to modify head in functions</p>
+                </div>
+                <div class="summary-box">
+                    <h4>🛡️ Sentinels</h4>
+                    <p>Simplify edge case handling</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 38: Resources -->
+        <div class="slide" data-slide="38">
+            <h2>📖 Resources</h2>
+            <h3>Essential Reading</h3>
+            <ul>
+                <li><strong>K&R</strong> - The C Programming Language, Chapter 6</li>
+                <li><strong>Sedgewick</strong> - Algorithms in C, Chapters 3-4</li>
+                <li><strong>CLRS</strong> - Introduction to Algorithms, Chapter 10</li>
+            </ul>
+            <h3>Online Resources</h3>
+            <ul>
+                <li>GeeksforGeeks: Linked List Data Structure</li>
+                <li>Visualgo: List Visualisation Tool</li>
+                <li>Linux Kernel: include/linux/list.h (source code)</li>
+            </ul>
+            <h3>Practice</h3>
+            <ul>
+                <li>LeetCode: Linked List problem set</li>
+                <li>HackerRank: Data Structures track</li>
+            </ul>
+        </div>
+
+        <!-- Slide 39: Questions -->
+        <div class="slide" data-slide="39">
+            <h2>❓ Questions?</h2>
+            <div style="text-align: center; margin-top: 80px;">
+                <p style="font-size: 1.5em; color: var(--text-secondary);">Time for discussion and clarification</p>
+                <div class="ascii-diagram" style="display: inline-block; margin-top: 40px;">
+    ╔═══════════════════════════════════════════════════╗
+    ║                                                   ║
+    ║   "The only way to learn is to understand."       ║
+    ║                                                   ║
+    ║                    — Richard Feynman              ║
+    ║                                                   ║
+    ╚═══════════════════════════════════════════════════╝
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 40: Next Week -->
+        <div class="slide" data-slide="40">
+            <h2>🔮 Next Week: Stacks</h2>
+            <div class="two-columns">
+                <div class="column">
+                    <h3>Topics</h3>
+                    <ul>
+                        <li>Stack ADT (LIFO principle)</li>
+                        <li>Array-based implementation</li>
+                        <li>Linked list-based implementation</li>
+                        <li>The system call stack</li>
+                        <li>Stack frames and recursion</li>
+                    </ul>
+                </div>
+                <div class="column">
+                    <h3>Applications</h3>
+                    <ul>
+                        <li>Balanced parentheses checking</li>
+                        <li>Postfix expression evaluation</li>
+                        <li>Function call management</li>
+                        <li>Undo mechanisms</li>
+                        <li>Backtracking algorithms</li>
+                    </ul>
+                </div>
+            </div>
+            <div style="text-align: center; margin-top: 40px;">
+                <p style="font-size: 1.3em; color: var(--accent-purple);">Thank you for your attention!</p>
+                <p style="color: var(--text-secondary);">See you next week 👋</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Navigation -->
+    <div class="slide-counter">
+        <span id="currentSlide">1</span> / <span id="totalSlides">40</span>
+    </div>
+    
+    <div class="keyboard-hints">
+        <kbd>←</kbd> Previous &nbsp;|&nbsp; <kbd>→</kbd> <kbd>Space</kbd> Next &nbsp;|&nbsp; <kbd>Home</kbd> First &nbsp;|&nbsp; <kbd>End</kbd> Last
+    </div>
+    
+    <div class="navigation">
+        <button class="nav-btn" onclick="prevSlide()">← Previous</button>
+        <button class="nav-btn" onclick="nextSlide()">Next →</button>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script>
+        // Initialise highlight.js
+        hljs.highlightAll();
+
+        // Slide management
+        let currentSlide = 1;
+        const totalSlides = document.querySelectorAll('.slide').length;
+        
+        document.getElementById('totalSlides').textContent = totalSlides;
+
+        function showSlide(n) {
+            const slides = document.querySelectorAll('.slide');
+            
+            if (n > totalSlides) currentSlide = 1;
+            if (n < 1) currentSlide = totalSlides;
+            
+            slides.forEach(slide => {
+                slide.classList.remove('active');
+            });
+            
+            slides[currentSlide - 1].classList.add('active');
+            document.getElementById('currentSlide').textContent = currentSlide;
+            
+            // Update progress bar
+            const progress = (currentSlide / totalSlides) * 100;
+            document.getElementById('progressBar').style.width = progress + '%';
+        }
+
+        function nextSlide() {
+            currentSlide++;
+            showSlide(currentSlide);
+        }
+
+        function prevSlide() {
+            currentSlide--;
+            showSlide(currentSlide);
+        }
+
+        // Keyboard navigation
+        document.addEventListener('keydown', function(e) {
+            switch(e.key) {
+                case 'ArrowRight':
+                case ' ':
+                    e.preventDefault();
+                    nextSlide();
+                    break;
+                case 'ArrowLeft':
+                    prevSlide();
+                    break;
+                case 'Home':
+                    currentSlide = 1;
+                    showSlide(currentSlide);
+                    break;
+                case 'End':
+                    currentSlide = totalSlides;
+                    showSlide(currentSlide);
+                    break;
+            }
+        });
+
+        // Touch support for mobile
+        let touchStartX = 0;
+        let touchEndX = 0;
+
+        document.addEventListener('touchstart', e => {
+            touchStartX = e.changedTouches[0].screenX;
+        });
+
+        document.addEventListener('touchend', e => {
+            touchEndX = e.changedTouches[0].screenX;
+            if (touchStartX - touchEndX > 50) {
+                nextSlide();
+            } else if (touchEndX - touchStartX > 50) {
+                prevSlide();
+            }
+        });
+
+        // Initial slide display
+        showSlide(currentSlide);
+    </script>
+</body>
+</html>

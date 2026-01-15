@@ -1,0 +1,2012 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Week 05: Stacks — The LIFO Data Structure</title>
+    
+    <!-- highlight.js for syntax highlighting -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/c.min.js"></script>
+    
+    <style>
+        /* =================================================================
+           CSS VARIABLES - GitHub Dark Theme Colours
+           ================================================================= */
+        :root {
+            --bg-primary: #0d1117;
+            --bg-secondary: #161b22;
+            --bg-tertiary: #21262d;
+            --text-primary: #c9d1d9;
+            --text-secondary: #8b949e;
+            --text-muted: #6e7681;
+            --accent-blue: #58a6ff;
+            --accent-green: #3fb950;
+            --accent-yellow: #d29922;
+            --accent-red: #f85149;
+            --accent-purple: #a371f7;
+            --accent-orange: #db6d28;
+            --border-color: #30363d;
+            --code-bg: #161b22;
+        }
+
+        /* =================================================================
+           RESET AND BASE STYLES
+           ================================================================= */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html, body {
+            height: 100%;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans', Helvetica, Arial, sans-serif;
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            overflow: hidden;
+        }
+
+        /* =================================================================
+           PROGRESS BAR
+           ================================================================= */
+        #progress-bar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 4px;
+            background: linear-gradient(90deg, var(--accent-blue), var(--accent-purple));
+            transition: width 0.3s ease;
+            z-index: 1000;
+        }
+
+        /* =================================================================
+           SLIDE CONTAINER
+           ================================================================= */
+        #presentation {
+            width: 100%;
+            height: 100%;
+            position: relative;
+        }
+
+        .slide {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            padding: 60px 80px;
+            display: none;
+            opacity: 0;
+            transition: opacity 0.4s ease;
+            overflow-y: auto;
+        }
+
+        .slide.active {
+            display: flex;
+            flex-direction: column;
+            opacity: 1;
+        }
+
+        /* =================================================================
+           TYPOGRAPHY
+           ================================================================= */
+        h1 {
+            font-size: 2.8em;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 20px;
+            line-height: 1.2;
+        }
+
+        h2 {
+            font-size: 2.2em;
+            font-weight: 600;
+            color: var(--accent-blue);
+            margin-bottom: 30px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid var(--border-color);
+        }
+
+        h3 {
+            font-size: 1.5em;
+            font-weight: 600;
+            color: var(--accent-green);
+            margin: 25px 0 15px 0;
+        }
+
+        p {
+            font-size: 1.3em;
+            line-height: 1.7;
+            color: var(--text-primary);
+            margin-bottom: 20px;
+        }
+
+        ul, ol {
+            font-size: 1.25em;
+            line-height: 1.8;
+            margin-left: 40px;
+            margin-bottom: 20px;
+        }
+
+        li {
+            margin-bottom: 12px;
+            color: var(--text-primary);
+        }
+
+        li::marker {
+            color: var(--accent-blue);
+        }
+
+        /* =================================================================
+           TITLE SLIDE STYLES
+           ================================================================= */
+        .title-slide {
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            background: linear-gradient(135deg, var(--bg-primary) 0%, var(--bg-secondary) 100%);
+        }
+
+        .title-slide h1 {
+            font-size: 3.5em;
+            margin-bottom: 30px;
+            background: linear-gradient(90deg, var(--accent-blue), var(--accent-purple));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .title-slide .subtitle {
+            font-size: 1.8em;
+            color: var(--text-secondary);
+            margin-bottom: 40px;
+        }
+
+        .title-slide .meta {
+            font-size: 1.2em;
+            color: var(--text-muted);
+        }
+
+        .week-badge {
+            display: inline-block;
+            background: var(--accent-blue);
+            color: var(--bg-primary);
+            padding: 10px 30px;
+            border-radius: 30px;
+            font-size: 1.3em;
+            font-weight: 600;
+            margin-bottom: 30px;
+        }
+
+        /* =================================================================
+           CODE BLOCKS
+           ================================================================= */
+        .code-block {
+            background: var(--code-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            margin: 20px 0;
+            overflow: hidden;
+        }
+
+        .code-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 15px;
+            background: var(--bg-tertiary);
+            border-bottom: 1px solid var(--border-color);
+            font-size: 0.9em;
+            color: var(--text-secondary);
+        }
+
+        .lang-badge {
+            background: var(--accent-blue);
+            color: var(--bg-primary);
+            padding: 3px 10px;
+            border-radius: 4px;
+            font-weight: 600;
+            font-size: 0.85em;
+        }
+
+        .code-block pre {
+            margin: 0;
+            padding: 20px;
+            overflow-x: auto;
+        }
+
+        .code-block code {
+            font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+            font-size: 1em;
+            line-height: 1.6;
+        }
+
+        /* Inline code */
+        code:not([class*="language-"]) {
+            background: var(--bg-tertiary);
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+            font-size: 0.9em;
+            color: var(--accent-orange);
+        }
+
+        /* =================================================================
+           BOXES AND CALLOUTS
+           ================================================================= */
+        .info-box {
+            background: rgba(88, 166, 255, 0.1);
+            border-left: 4px solid var(--accent-blue);
+            padding: 20px 25px;
+            border-radius: 0 8px 8px 0;
+            margin: 20px 0;
+        }
+
+        .warning-box {
+            background: rgba(210, 153, 34, 0.1);
+            border-left: 4px solid var(--accent-yellow);
+            padding: 20px 25px;
+            border-radius: 0 8px 8px 0;
+            margin: 20px 0;
+        }
+
+        .danger-box {
+            background: rgba(248, 81, 73, 0.1);
+            border-left: 4px solid var(--accent-red);
+            padding: 20px 25px;
+            border-radius: 0 8px 8px 0;
+            margin: 20px 0;
+        }
+
+        .success-box {
+            background: rgba(63, 185, 80, 0.1);
+            border-left: 4px solid var(--accent-green);
+            padding: 20px 25px;
+            border-radius: 0 8px 8px 0;
+            margin: 20px 0;
+        }
+
+        .box-title {
+            font-weight: 600;
+            font-size: 1.1em;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        /* =================================================================
+           ASCII DIAGRAMS
+           ================================================================= */
+        .ascii-diagram {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 25px;
+            font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+            font-size: 1.1em;
+            line-height: 1.4;
+            white-space: pre;
+            overflow-x: auto;
+            color: var(--accent-green);
+            margin: 20px 0;
+        }
+
+        /* =================================================================
+           TABLES
+           ================================================================= */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            font-size: 1.1em;
+        }
+
+        th, td {
+            padding: 15px 20px;
+            text-align: left;
+            border: 1px solid var(--border-color);
+        }
+
+        th {
+            background: var(--bg-tertiary);
+            color: var(--accent-blue);
+            font-weight: 600;
+        }
+
+        tr:nth-child(even) {
+            background: var(--bg-secondary);
+        }
+
+        /* =================================================================
+           TWO COLUMN LAYOUT
+           ================================================================= */
+        .two-columns {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 40px;
+            margin: 20px 0;
+        }
+
+        .column {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 25px;
+        }
+
+        .column h3 {
+            margin-top: 0;
+        }
+
+        /* =================================================================
+           QUOTE BLOCK
+           ================================================================= */
+        blockquote {
+            background: var(--bg-secondary);
+            border-left: 4px solid var(--accent-purple);
+            padding: 25px 30px;
+            margin: 25px 0;
+            border-radius: 0 8px 8px 0;
+            font-style: italic;
+            font-size: 1.3em;
+            color: var(--text-secondary);
+        }
+
+        blockquote cite {
+            display: block;
+            margin-top: 15px;
+            font-style: normal;
+            font-size: 0.85em;
+            color: var(--accent-purple);
+        }
+
+        /* =================================================================
+           FIGURE/IMAGE PLACEHOLDER
+           ================================================================= */
+        .figure {
+            text-align: center;
+            margin: 30px 0;
+        }
+
+        .figure-placeholder {
+            display: inline-flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: var(--bg-secondary);
+            border: 2px dashed var(--border-color);
+            border-radius: 12px;
+            padding: 40px 60px;
+            color: var(--text-muted);
+        }
+
+        .figure-placeholder .icon {
+            font-size: 3em;
+            margin-bottom: 15px;
+        }
+
+        .figure-caption {
+            font-size: 1em;
+            color: var(--text-secondary);
+            margin-top: 15px;
+        }
+
+        /* =================================================================
+           SUMMARY BOXES GRID
+           ================================================================= */
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            margin: 25px 0;
+        }
+
+        .summary-box {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .summary-box .icon {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .summary-box h4 {
+            color: var(--accent-blue);
+            font-size: 1.1em;
+            margin-bottom: 10px;
+        }
+
+        .summary-box p {
+            font-size: 1em;
+            color: var(--text-secondary);
+            margin: 0;
+        }
+
+        /* =================================================================
+           NAVIGATION
+           ================================================================= */
+        #nav-container {
+            position: fixed;
+            bottom: 30px;
+            right: 40px;
+            display: flex;
+            gap: 15px;
+            z-index: 100;
+        }
+
+        .nav-btn {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+            padding: 12px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1em;
+            transition: all 0.2s ease;
+        }
+
+        .nav-btn:hover {
+            background: var(--accent-blue);
+            color: var(--bg-primary);
+            border-color: var(--accent-blue);
+        }
+
+        .nav-btn:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+
+        /* =================================================================
+           SLIDE COUNTER
+           ================================================================= */
+        #slide-counter {
+            position: fixed;
+            bottom: 35px;
+            left: 40px;
+            font-size: 1em;
+            color: var(--text-muted);
+            z-index: 100;
+        }
+
+        /* =================================================================
+           KEYBOARD HINTS
+           ================================================================= */
+        .kbd {
+            display: inline-block;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            padding: 3px 8px;
+            font-family: 'SF Mono', monospace;
+            font-size: 0.85em;
+            color: var(--text-secondary);
+            box-shadow: 0 2px 0 var(--border-color);
+        }
+
+        /* =================================================================
+           TIMELINE
+           ================================================================= */
+        .timeline {
+            position: relative;
+            padding-left: 30px;
+            margin: 20px 0;
+        }
+
+        .timeline::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 3px;
+            background: var(--accent-blue);
+            border-radius: 2px;
+        }
+
+        .timeline-item {
+            position: relative;
+            padding: 15px 0 15px 25px;
+        }
+
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            left: -35px;
+            top: 20px;
+            width: 12px;
+            height: 12px;
+            background: var(--accent-blue);
+            border-radius: 50%;
+            border: 3px solid var(--bg-primary);
+        }
+
+        .timeline-year {
+            color: var(--accent-yellow);
+            font-weight: 600;
+            font-size: 1.1em;
+        }
+
+        /* =================================================================
+           ANIMATIONS
+           ================================================================= */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .slide.active > * {
+            animation: fadeIn 0.5s ease forwards;
+        }
+
+        .slide.active > *:nth-child(1) { animation-delay: 0.1s; }
+        .slide.active > *:nth-child(2) { animation-delay: 0.2s; }
+        .slide.active > *:nth-child(3) { animation-delay: 0.3s; }
+        .slide.active > *:nth-child(4) { animation-delay: 0.4s; }
+        .slide.active > *:nth-child(5) { animation-delay: 0.5s; }
+
+        /* =================================================================
+           RESPONSIVE
+           ================================================================= */
+        @media (max-width: 1200px) {
+            .slide { padding: 40px 50px; }
+            h1 { font-size: 2.2em; }
+            h2 { font-size: 1.8em; }
+            .two-columns { grid-template-columns: 1fr; }
+            .summary-grid { grid-template-columns: repeat(2, 1fr); }
+        }
+    </style>
+</head>
+<body>
+    <!-- Progress Bar -->
+    <div id="progress-bar"></div>
+
+    <!-- Slide Counter -->
+    <div id="slide-counter">1 / 38</div>
+
+    <!-- Navigation -->
+    <div id="nav-container">
+        <button class="nav-btn" id="btn-prev" onclick="prevSlide()">← Previous</button>
+        <button class="nav-btn" id="btn-next" onclick="nextSlide()">Next →</button>
+    </div>
+
+    <!-- Presentation Container -->
+    <div id="presentation">
+
+        <!-- ============================================================
+             SLIDE 1: Title
+             ============================================================ -->
+        <div class="slide title-slide active">
+            <div class="week-badge">Week 05</div>
+            <h1>Stacks — The LIFO Data Structure</h1>
+            <p class="subtitle">Algorithms and Programming Techniques</p>
+            <p class="meta">
+                Faculty of Cybernetics, Statistics and Economic Informatics<br>
+                Academy of Economic Studies, Bucharest<br>
+                Academic Year 2024–2025
+            </p>
+        </div>
+
+        <!-- ============================================================
+             SLIDE 2: Learning Objectives
+             ============================================================ -->
+        <div class="slide">
+            <h2>🎯 Learning Objectives</h2>
+            <p>By the end of this lecture, you will be able to:</p>
+            <ol>
+                <li><strong>Remember</strong> the LIFO principle and core stack operations</li>
+                <li><strong>Understand</strong> the difference between array-based and linked-list implementations</li>
+                <li><strong>Apply</strong> stacks to solve expression evaluation and bracket matching problems</li>
+                <li><strong>Analyse</strong> time and space complexity of stack operations</li>
+                <li><strong>Evaluate</strong> when to use a stack versus other data structures</li>
+                <li><strong>Create</strong> custom stack implementations with dynamic resizing</li>
+            </ol>
+        </div>
+
+        <!-- ============================================================
+             SLIDE 3: Historical Context - Timeline
+             ============================================================ -->
+        <div class="slide">
+            <h2>📜 Historical Context</h2>
+            <div class="timeline">
+                <div class="timeline-item">
+                    <span class="timeline-year">1945</span>
+                    <p>Alan Turing describes subroutine return addresses stored in a "burial ground"</p>
+                </div>
+                <div class="timeline-item">
+                    <span class="timeline-year">1955</span>
+                    <p>Bauer and Samelson formalise the stack concept at TU Munich</p>
+                </div>
+                <div class="timeline-item">
+                    <span class="timeline-year">1957</span>
+                    <p>Patent filed for "Cellar principle" (Kellerprinzip) — the stack mechanism</p>
+                </div>
+                <div class="timeline-item">
+                    <span class="timeline-year">1961</span>
+                    <p>Dijkstra publishes the Shunting-Yard algorithm using two stacks</p>
+                </div>
+                <div class="timeline-item">
+                    <span class="timeline-year">1960s</span>
+                    <p>Stack-based architectures emerge (Burroughs B5000, HP 3000)</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- ============================================================
+             SLIDE 4: Key Figure - Friedrich Bauer
+             ============================================================ -->
+        <div class="slide">
+            <h2>👤 Key Figure: Friedrich Ludwig Bauer</h2>
+            <div class="two-columns">
+                <div class="column">
+                    <div class="figure">
+                        <div class="figure-placeholder">
+                            <span class="icon">👨‍🔬</span>
+                            <span>Friedrich L. Bauer<br>(1924–2015)</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="column">
+                    <h3>Contributions</h3>
+                    <ul>
+                        <li>Co-inventor of the stack data structure</li>
+                        <li>Developer of ALGOL programming language</li>
+                        <li>Coined the term "Software Engineering"</li>
+                        <li>IEEE Computer Pioneer Award (1988)</li>
+                    </ul>
+                    <blockquote>
+                        "Software engineering is the part of computer science which is too difficult for the computer scientist."
+                        <cite>— Friedrich Ludwig Bauer</cite>
+                    </blockquote>
+                </div>
+            </div>
+        </div>
+
+        <!-- ============================================================
+             SLIDE 5: What is a Stack?
+             ============================================================ -->
+        <div class="slide">
+            <h2>📚 What is a Stack?</h2>
+            <p>A <strong>stack</strong> is a linear data structure that follows the <strong>Last-In-First-Out (LIFO)</strong> principle.</p>
+            <div class="info-box">
+                <div class="box-title">💡 The Plate Analogy</div>
+                <p>Imagine a stack of plates in a cafeteria. You can only add a plate to the top (push) or remove a plate from the top (pop). You cannot access plates in the middle without first removing those above.</p>
+            </div>
+            <div class="ascii-diagram">
+        ┌─────────────┐
+        │    TOP →    │ ← Push here / Pop from here
+        ├─────────────┤
+        │   Element   │
+        ├─────────────┤
+        │   Element   │
+        ├─────────────┤
+        │   Element   │
+        ├─────────────┤
+        │   BOTTOM    │
+        └─────────────┘</div>
+        </div>
+
+        <!-- ============================================================
+             SLIDE 6: The LIFO Principle
+             ============================================================ -->
+        <div class="slide">
+            <h2>🔄 The LIFO Principle</h2>
+            <p><strong>Last-In-First-Out:</strong> The most recently added element is the first to be removed.</p>
+            <div class="ascii-diagram">
+    Operation     Stack State          Description
+    ─────────     ───────────          ───────────────────
+    Initial       │         │          Empty stack
+                  └─────────┘
+
+    push(10)      │   10    │ ←        10 enters first
+                  └─────────┘
+
+    push(20)      │   20    │ ←        20 enters second
+                  │   10    │
+                  └─────────┘
+
+    push(30)      │   30    │ ←        30 enters third (last in)
+                  │   20    │
+                  │   10    │
+                  └─────────┘
+
+    pop()         │   20    │ ←        30 exits first (first out)
+                  │   10    │          Returns: 30
+                  └─────────┘</div>
+        </div>
+
+        <!-- ============================================================
+             SLIDE 7: Core Stack Operations
+             ============================================================ -->
+        <div class="slide">
+            <h2>⚙️ Core Stack Operations</h2>
+            <table>
+                <tr>
+                    <th>Operation</th>
+                    <th>Description</th>
+                    <th>Time</th>
+                    <th>Precondition</th>
+                </tr>
+                <tr>
+                    <td><code>push(x)</code></td>
+                    <td>Add element x to the top</td>
+                    <td>O(1)*</td>
+                    <td>Stack not full</td>
+                </tr>
+                <tr>
+                    <td><code>pop()</code></td>
+                    <td>Remove and return top element</td>
+                    <td>O(1)</td>
+                    <td>Stack not empty</td>
+                </tr>
+                <tr>
+                    <td><code>peek()</code></td>
+                    <td>Return top without removal</td>
+                    <td>O(1)</td>
+                    <td>Stack not empty</td>
+                </tr>
+                <tr>
+                    <td><code>isEmpty()</code></td>
+                    <td>Check if stack is empty</td>
+                    <td>O(1)</td>
+                    <td>None</td>
+                </tr>
+                <tr>
+                    <td><code>size()</code></td>
+                    <td>Return number of elements</td>
+                    <td>O(1)</td>
+                    <td>None</td>
+                </tr>
+            </table>
+            <p class="note">* Amortised O(1) for dynamic arrays; worst-case O(n) during resize.</p>
+        </div>
+
+        <!-- ============================================================
+             SLIDE 8: Stack ADT Definition
+             ============================================================ -->
+        <div class="slide">
+            <h2>📋 Stack Abstract Data Type (ADT)</h2>
+            <p>The <strong>Abstract Data Type</strong> defines <em>what</em> operations are available, not <em>how</em> they are implemented.</p>
+            <div class="code-block">
+                <div class="code-header">
+                    <span>Stack ADT Interface (Conceptual)</span>
+                    <span class="lang-badge">C</span>
+                </div>
+                <pre><code class="language-c">/* Stack ADT Operations */
+typedef struct Stack Stack;
+
+Stack*  stack_create(void);           /* Constructor */
+void    stack_destroy(Stack *s);      /* Destructor */
+
+void    stack_push(Stack *s, int x);  /* Add element */
+int     stack_pop(Stack *s);          /* Remove and return */
+int     stack_peek(Stack *s);         /* View top element */
+
+int     stack_is_empty(Stack *s);     /* Check empty */
+int     stack_size(Stack *s);         /* Get count */</code></pre>
+            </div>
+            <div class="info-box">
+                <div class="box-title">📌 Key Insight</div>
+                <p>The ADT hides implementation details. Users interact only through the defined interface, enabling interchangeable implementations.</p>
+            </div>
+        </div>
+
+        <!-- ============================================================
+             SLIDE 9: Array-Based Implementation - Structure
+             ============================================================ -->
+        <div class="slide">
+            <h2>📦 Array-Based Stack: Structure</h2>
+            <div class="code-block">
+                <div class="code-header">
+                    <span>Array Stack Structure Definition</span>
+                    <span class="lang-badge">C</span>
+                </div>
+                <pre><code class="language-c">#define INITIAL_CAPACITY 16
+
+typedef struct {
+    int *data;       /* Pointer to dynamic array */
+    int top;         /* Index of top element (-1 if empty) */
+    int capacity;    /* Current maximum capacity */
+} ArrayStack;</code></pre>
+            </div>
+            <div class="ascii-diagram">
+    Memory Layout:
+    ┌───────────────────────────────────────────────────┐
+    │ data    │ top │ capacity │                        │
+    │ (ptr)   │  2  │    8     │                        │
+    └────┬────┴─────┴──────────┴────────────────────────┘
+         │
+         ▼
+    ┌────┬────┬────┬────┬────┬────┬────┬────┐
+    │ 10 │ 20 │ 30 │  ? │  ? │  ? │  ? │  ? │
+    └────┴────┴────┴────┴────┴────┴────┴────┘
+      [0]  [1]  [2]  [3]  [4]  [5]  [6]  [7]
+                 ↑
+               top = 2</div>
+        </div>
+
+        <!-- ============================================================
+             SLIDE 10: Array-Based Implementation - Create/Destroy
+             ============================================================ -->
+        <div class="slide">
+            <h2>📦 Array Stack: Creation and Destruction</h2>
+            <div class="code-block">
+                <div class="code-header">
+                    <span>Constructor and Destructor Functions</span>
+                    <span class="lang-badge">C</span>
+                </div>
+                <pre><code class="language-c">ArrayStack* array_stack_create(int initial_capacity) {
+    ArrayStack *stack = malloc(sizeof(ArrayStack));
+    if (!stack) return NULL;
+    
+    stack->data = malloc(initial_capacity * sizeof(int));
+    if (!stack->data) {
+        free(stack);
+        return NULL;
+    }
+    
+    stack->top = -1;  /* Empty stack indicator */
+    stack->capacity = initial_capacity;
+    return stack;
+}
+
+void array_stack_destroy(ArrayStack *stack) {
+    if (stack) {
+        free(stack->data);  /* Free the array first */
+        free(stack);        /* Then free the structure */
+    }
+}</code></pre>
+            </div>
+            <div class="warning-box">
+                <div class="box-title">⚠️ Memory Management</div>
+                <p>Always check malloc return values. Free resources in reverse order of allocation.</p>
+            </div>
+        </div>
+
+        <!-- ============================================================
+             SLIDE 11: Array-Based Implementation - Push
+             ============================================================ -->
+        <div class="slide">
+            <h2>📦 Array Stack: Push Operation</h2>
+            <div class="code-block">
+                <div class="code-header">
+                    <span>Push with Dynamic Resizing</span>
+                    <span class="lang-badge">C</span>
+                </div>
+                <pre><code class="language-c">int array_stack_push(ArrayStack *stack, int value) {
+    /* Check if resize is needed */
+    if (stack->top == stack->capacity - 1) {
+        int new_capacity = stack->capacity * 2;
+        int *new_data = realloc(stack->data, 
+                                new_capacity * sizeof(int));
+        if (!new_data) return -1;  /* Resize failed */
+        
+        stack->data = new_data;
+        stack->capacity = new_capacity;
+    }
+    
+    /* Push the value */
+    stack->top++;
+    stack->data[stack->top] = value;
+    return 0;  /* Success */
+}</code></pre>
+            </div>
+            <div class="info-box">
+                <div class="box-title">📊 Amortised Analysis</div>
+                <p>Doubling strategy: n pushes require at most 2n copies. Thus, amortised cost per push is O(1).</p>
+            </div>
+        </div>
+
+        <!-- ============================================================
+             SLIDE 12: Array-Based Implementation - Pop/Peek
+             ============================================================ -->
+        <div class="slide">
+            <h2>📦 Array Stack: Pop and Peek</h2>
+            <div class="two-columns">
+                <div class="column">
+                    <h3>Pop Operation</h3>
+                    <div class="code-block">
+                        <div class="code-header">
+                            <span>Remove and return top</span>
+                            <span class="lang-badge">C</span>
+                        </div>
+                        <pre><code class="language-c">int array_stack_pop(ArrayStack *s) {
+    if (s->top == -1) {
+        fprintf(stderr, 
+            "Error: Stack underflow\n");
+        exit(EXIT_FAILURE);
+    }
+    return s->data[s->top--];
+}</code></pre>
+                    </div>
+                </div>
+                <div class="column">
+                    <h3>Peek Operation</h3>
+                    <div class="code-block">
+                        <div class="code-header">
+                            <span>View top without removal</span>
+                            <span class="lang-badge">C</span>
+                        </div>
+                        <pre><code class="language-c">int array_stack_peek(ArrayStack *s) {
+    if (s->top == -1) {
+        fprintf(stderr, 
+            "Error: Stack is empty\n");
+        exit(EXIT_FAILURE);
+    }
+    return s->data[s->top];
+}</code></pre>
+                    </div>
+                </div>
+            </div>
+            <div class="danger-box">
+                <div class="box-title">🚨 Stack Underflow</div>
+                <p>Attempting to pop from an empty stack is a critical error. Always check <code>isEmpty()</code> first or handle the error gracefully.</p>
+            </div>
+        </div>
+
+        <!-- ============================================================
+             SLIDE 13: Linked-List Implementation - Structure
+             ============================================================ -->
+        <div class="slide">
+            <h2>🔗 Linked Stack: Structure</h2>
+            <div class="code-block">
+                <div class="code-header">
+                    <span>Linked Stack Structure Definition</span>
+                    <span class="lang-badge">C</span>
+                </div>
+                <pre><code class="language-c">typedef struct Node {
+    int data;
+    struct Node *next;
+} Node;
+
+typedef struct {
+    Node *top;   /* Pointer to top node (NULL if empty) */
+    int size;    /* Current number of elements */
+} LinkedStack;</code></pre>
+            </div>
+            <div class="ascii-diagram">
+    LinkedStack                    Heap Memory
+    ┌─────────────────┐
+    │ top    │  size  │
+    │  ─┬─   │   3    │
+    └───┼────┴────────┘
+        │
+        ▼
+    ┌───────────┐     ┌───────────┐     ┌───────────┐
+    │ data: 30  │     │ data: 20  │     │ data: 10  │
+    │ next: ────┼────►│ next: ────┼────►│ next: NULL│
+    └───────────┘     └───────────┘     └───────────┘
+         TOP                                 BOTTOM</div>
+        </div>
+
+        <!-- ============================================================
+             SLIDE 14: Linked Stack - Push
+             ============================================================ -->
+        <div class="slide">
+            <h2>🔗 Linked Stack: Push Operation</h2>
+            <div class="code-block">
+                <div class="code-header">
+                    <span>Insert at Head (O(1))</span>
+                    <span class="lang-badge">C</span>
+                </div>
+                <pre><code class="language-c">int linked_stack_push(LinkedStack *stack, int value) {
+    /* Allocate new node */
+    Node *new_node = malloc(sizeof(Node));
+    if (!new_node) return -1;  /* Allocation failed */
+    
+    /* Initialise node */
+    new_node->data = value;
+    new_node->next = stack->top;  /* Link to current top */
+    
+    /* Update stack */
+    stack->top = new_node;  /* New node becomes top */
+    stack->size++;
+    
+    return 0;  /* Success */
+}</code></pre>
+            </div>
+            <div class="ascii-diagram">
+    Before push(40):                After push(40):
+    
+    top ──► [30]──►[20]──►[10]      top ──► [40]──►[30]──►[20]──►[10]
+                                             ↑
+                                         new node</div>
+        </div>
+
+        <!-- ============================================================
+             SLIDE 15: Linked Stack - Pop
+             ============================================================ -->
+        <div class="slide">
+            <h2>🔗 Linked Stack: Pop Operation</h2>
+            <div class="code-block">
+                <div class="code-header">
+                    <span>Remove from Head (O(1))</span>
+                    <span class="lang-badge">C</span>
+                </div>
+                <pre><code class="language-c">int linked_stack_pop(LinkedStack *stack) {
+    if (!stack->top) {
+        fprintf(stderr, "Error: Stack underflow\n");
+        exit(EXIT_FAILURE);
+    }
+    
+    /* Save the top node and its data */
+    Node *old_top = stack->top;
+    int value = old_top->data;
+    
+    /* Update stack */
+    stack->top = old_top->next;  /* Move top to next node */
+    stack->size--;
+    
+    /* Free the old top node */
+    free(old_top);
+    
+    return value;
+}</code></pre>
+            </div>
+            <div class="warning-box">
+                <div class="box-title">⚠️ Critical</div>
+                <p>Save the return value <em>before</em> freeing the node, otherwise you lose the data!</p>
+            </div>
+        </div>
+
+        <!-- ============================================================
+             SLIDE 16: Implementation Comparison
+             ============================================================ -->
+        <div class="slide">
+            <h2>⚖️ Array vs Linked Implementation</h2>
+            <table>
+                <tr>
+                    <th>Aspect</th>
+                    <th>Array Stack</th>
+                    <th>Linked Stack</th>
+                </tr>
+                <tr>
+                    <td>Push Complexity</td>
+                    <td>O(1) amortised</td>
+                    <td>O(1) always</td>
+                </tr>
+                <tr>
+                    <td>Pop Complexity</td>
+                    <td>O(1)</td>
+                    <td>O(1)</td>
+                </tr>
+                <tr>
+                    <td>Memory Overhead</td>
+                    <td>Minimal (just array)</td>
+                    <td>Pointer per element</td>
+                </tr>
+                <tr>
+                    <td>Cache Performance</td>
+                    <td>Excellent (contiguous)</td>
+                    <td>Poor (scattered)</td>
+                </tr>
+                <tr>
+                    <td>Resize Overhead</td>
+                    <td>Occasional O(n)</td>
+                    <td>None</td>
+                </tr>
+                <tr>
+                    <td>Memory Usage</td>
+                    <td>May waste capacity</td>
+                    <td>Exact (n elements)</td>
+                </tr>
+            </table>
+            <div class="info-box">
+                <div class="box-title">📌 Recommendation</div>
+                <p>Use array-based for most cases (better cache locality). Use linked for truly unbounded or frequent size changes.</p>
+            </div>
+        </div>
+
+        <!-- ============================================================
+             SLIDE 17: Application - Expression Evaluation
+             ============================================================ -->
+        <div class="slide">
+            <h2>🧮 Application: Expression Evaluation</h2>
+            <p>Stacks are essential for evaluating mathematical expressions. The classic approach uses <strong>postfix notation</strong> (Reverse Polish Notation).</p>
+            <div class="two-columns">
+                <div class="column">
+                    <h3>Infix → Postfix</h3>
+                    <p><code>3 + 4 * 2</code></p>
+                    <p>becomes</p>
+                    <p><code>3 4 2 * +</code></p>
+                </div>
+                <div class="column">
+                    <h3>Why Postfix?</h3>
+                    <ul>
+                        <li>No parentheses needed</li>
+                        <li>No operator precedence rules</li>
+                        <li>Simple left-to-right evaluation</li>
+                        <li>Natural for stack-based machines</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="ascii-diagram">
+    Evaluating: 3 4 2 * +
+    
+    Token   Action              Stack
+    ─────   ──────              ─────
+    3       push(3)             [3]
+    4       push(4)             [3, 4]
+    2       push(2)             [3, 4, 2]
+    *       pop 2, pop 4        [3, 8]      (4 * 2 = 8)
+            push(8)
+    +       pop 8, pop 3        [11]        (3 + 8 = 11)
+            push(11)
+    
+    Result: 11</div>
+        </div>
+
+        <!-- ============================================================
+             SLIDE 18: Expression Evaluation Code
+             ============================================================ -->
+        <div class="slide">
+            <h2>🧮 Postfix Evaluation Code</h2>
+            <div class="code-block">
+                <div class="code-header">
+                    <span>Postfix Expression Evaluator</span>
+                    <span class="lang-badge">C</span>
+                </div>
+                <pre><code class="language-c">int evaluate_postfix(const char *expr) {
+    ArrayStack *stack = array_stack_create(32);
+    
+    for (int i = 0; expr[i]; i++) {
+        if (isdigit(expr[i])) {
+            /* Push operand */
+            array_stack_push(stack, expr[i] - '0');
+        }
+        else if (expr[i] == '+' || expr[i] == '-' ||
+                 expr[i] == '*' || expr[i] == '/') {
+            /* Pop two operands and apply operator */
+            int b = array_stack_pop(stack);
+            int a = array_stack_pop(stack);
+            int result;
+            
+            switch (expr[i]) {
+                case '+': result = a + b; break;
+                case '-': result = a - b; break;
+                case '*': result = a * b; break;
+                case '/': result = a / b; break;
+            }
+            array_stack_push(stack, result);
+        }
+    }
+    
+    int final = array_stack_pop(stack);
+    array_stack_destroy(stack);
+    return final;
+}</code></pre>
+            </div>
+        </div>
+
+        <!-- ============================================================
+             SLIDE 19: Application - Bracket Matching
+             ============================================================ -->
+        <div class="slide">
+            <h2>🔍 Application: Balanced Brackets</h2>
+            <p>Verifying that brackets are properly balanced is a classic stack application used in compilers and syntax checkers.</p>
+            <div class="ascii-diagram">
+    Input: { [ ( ) ] }
+    
+    Char    Action              Stack           Status
+    ────    ──────              ─────           ──────
+    {       push('{')           [{]             
+    [       push('[')           [{, []          
+    (       push('(')           [{, [, (]       
+    )       pop, match '('      [{, []          ✓ Match
+    ]       pop, match '['      [{]             ✓ Match
+    }       pop, match '{'      []              ✓ Match
+    END     stack empty                         ✓ VALID!
+    
+    ─────────────────────────────────────────────────────
+    
+    Input: { [ ( ] ) }
+    
+    Char    Action              Stack           Status
+    ────    ──────              ─────           ──────
+    {       push('{')           [{]             
+    [       push('[')           [{, []          
+    (       push('(')           [{, [, (]       
+    ]       pop, check '('      —               ✗ Mismatch!
+                                                Expected ')' got ']'</div>
+        </div>
+
+        <!-- ============================================================
+             SLIDE 20: Bracket Matching Code
+             ============================================================ -->
+        <div class="slide">
+            <h2>🔍 Bracket Matching Code</h2>
+            <div class="code-block">
+                <div class="code-header">
+                    <span>Balanced Brackets Validator</span>
+                    <span class="lang-badge">C</span>
+                </div>
+                <pre><code class="language-c">int is_matching(char open, char close) {
+    return (open == '(' && close == ')') ||
+           (open == '[' && close == ']') ||
+           (open == '{' && close == '}');
+}
+
+int check_brackets(const char *expr) {
+    LinkedStack *stack = linked_stack_create();
+    
+    for (int i = 0; expr[i]; i++) {
+        char c = expr[i];
+        
+        if (c == '(' || c == '[' || c == '{') {
+            linked_stack_push(stack, c);
+        }
+        else if (c == ')' || c == ']' || c == '}') {
+            if (linked_stack_is_empty(stack)) {
+                linked_stack_destroy(stack);
+                return 0;  /* Unmatched closing bracket */
+            }
+            char top = linked_stack_pop(stack);
+            if (!is_matching(top, c)) {
+                linked_stack_destroy(stack);
+                return 0;  /* Mismatched pair */
+            }
+        }
+    }
+    
+    int valid = linked_stack_is_empty(stack);
+    linked_stack_destroy(stack);
+    return valid;  /* Valid only if stack is empty */
+}</code></pre>
+            </div>
+        </div>
+
+        <!-- ============================================================
+             SLIDE 21: The Call Stack
+             ============================================================ -->
+        <div class="slide">
+            <h2>📞 The Call Stack</h2>
+            <p>Every function call creates a <strong>stack frame</strong> containing local variables, parameters and the return address.</p>
+            <div class="two-columns">
+                <div class="column">
+                    <h3>Recursive Code</h3>
+                    <div class="code-block">
+                        <div class="code-header">
+                            <span>Factorial Function</span>
+                            <span class="lang-badge">C</span>
+                        </div>
+                        <pre><code class="language-c">int factorial(int n) {
+    if (n <= 1) 
+        return 1;
+    return n * factorial(n-1);
+}
+
+int main(void) {
+    int result = factorial(4);
+    return 0;
+}</code></pre>
+                    </div>
+                </div>
+                <div class="column">
+                    <h3>Call Stack State</h3>
+                    <div class="ascii-diagram">
+At deepest recursion:
+
+┌─────────────────────┐
+│ factorial(1)        │ ← TOP
+│   n = 1             │
+│   return addr       │
+├─────────────────────┤
+│ factorial(2)        │
+│   n = 2             │
+├─────────────────────┤
+│ factorial(3)        │
+│   n = 3             │
+├─────────────────────┤
+│ factorial(4)        │
+│   n = 4             │
+├─────────────────────┤
+│ main()              │ ← BOTTOM
+│   result = ?        │
+└─────────────────────┘</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ============================================================
+             SLIDE 22: Stack Overflow
+             ============================================================ -->
+        <div class="slide">
+            <h2>💥 Stack Overflow</h2>
+            <p>When recursion is too deep or local arrays too large, the call stack exceeds its allocated memory.</p>
+            <div class="danger-box">
+                <div class="box-title">🚨 Segmentation Fault</div>
+                <p>Stack overflow causes the infamous "Segmentation fault" or "Stack smashing detected" errors.</p>
+            </div>
+            <div class="two-columns">
+                <div class="column">
+                    <h3>Cause: Infinite Recursion</h3>
+                    <div class="code-block">
+                        <div class="code-header">
+                            <span>Missing Base Case</span>
+                            <span class="lang-badge">C</span>
+                        </div>
+                        <pre><code class="language-c">/* BUG: No base case! */
+int bad_factorial(int n) {
+    return n * bad_factorial(n-1);
+}
+/* Crashes with stack overflow */</code></pre>
+                    </div>
+                </div>
+                <div class="column">
+                    <h3>Prevention</h3>
+                    <ul>
+                        <li>Always define base cases</li>
+                        <li>Ensure recursion terminates</li>
+                        <li>Consider iteration for deep recursion</li>
+                        <li>Use <code>ulimit -s</code> to check stack size</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- ============================================================
+             SLIDE 23: Common Mistakes
+             ============================================================ -->
+        <div class="slide">
+            <h2>⚠️ Common Mistakes</h2>
+            <div class="danger-box">
+                <div class="box-title">🚫 Mistake 1: Forgetting to Check Empty</div>
+                <div class="code-block">
+                    <div class="code-header">
+                        <span>Wrong vs Correct</span>
+                        <span class="lang-badge">C</span>
+                    </div>
+                    <pre><code class="language-c">/* WRONG: No check before pop */
+int value = stack_pop(stack);  /* Crash if empty! */
+
+/* CORRECT: Always check first */
+if (!stack_is_empty(stack)) {
+    int value = stack_pop(stack);
+}</code></pre>
+                </div>
+            </div>
+            <div class="danger-box">
+                <div class="box-title">🚫 Mistake 2: Memory Leak in Linked Stack</div>
+                <div class="code-block">
+                    <div class="code-header">
+                        <span>Wrong vs Correct</span>
+                        <span class="lang-badge">C</span>
+                    </div>
+                    <pre><code class="language-c">/* WRONG: Only free the structure */
+free(stack);  /* Nodes are leaked! */
+
+/* CORRECT: Free all nodes first */
+while (!stack_is_empty(stack)) {
+    stack_pop(stack);  /* Frees each node */
+}
+free(stack);</code></pre>
+                </div>
+            </div>
+        </div>
+
+        <!-- ============================================================
+             SLIDE 24: More Common Mistakes
+             ============================================================ -->
+        <div class="slide">
+            <h2>⚠️ More Common Mistakes</h2>
+            <div class="danger-box">
+                <div class="box-title">🚫 Mistake 3: Off-by-One in Array Stack</div>
+                <div class="code-block">
+                    <div class="code-header">
+                        <span>Understanding the Index</span>
+                        <span class="lang-badge">C</span>
+                    </div>
+                    <pre><code class="language-c">/* If top = -1 means empty, then: */
+stack->top++;                    /* Increment FIRST */
+stack->data[stack->top] = val;   /* Then assign */
+
+/* OR equivalently: */
+stack->data[++stack->top] = val; /* Pre-increment */
+
+/* NOT this (skips index 0): */
+stack->data[stack->top++] = val; /* Post-increment - WRONG! */</code></pre>
+                </div>
+            </div>
+            <div class="warning-box">
+                <div class="box-title">⚠️ Mistake 4: Using Freed Memory</div>
+                <div class="code-block">
+                    <div class="code-header">
+                        <span>Dangling Pointer</span>
+                        <span class="lang-badge">C</span>
+                    </div>
+                    <pre><code class="language-c">/* WRONG: Using stack after destroy */
+stack_destroy(stack);
+stack_push(stack, 10);  /* Undefined behaviour! */
+
+/* CORRECT: Set pointer to NULL after free */
+stack_destroy(stack);
+stack = NULL;</code></pre>
+                </div>
+            </div>
+        </div>
+
+        <!-- ============================================================
+             SLIDE 25: Debugging with GDB
+             ============================================================ -->
+        <div class="slide">
+            <h2>🔧 Debugging with GDB</h2>
+            <p>GDB is essential for debugging stack-related issues, especially stack overflow and memory corruption.</p>
+            <div class="code-block">
+                <div class="code-header">
+                    <span>Useful GDB Commands</span>
+                    <span class="lang-badge">Bash</span>
+                </div>
+                <pre><code class="language-bash"># Compile with debug symbols
+$ gcc -g -Wall -o program program.c
+
+# Start GDB
+$ gdb ./program
+
+# Set breakpoint at function
+(gdb) break stack_push
+
+# Run the program
+(gdb) run
+
+# Step through code
+(gdb) next      # Execute next line
+(gdb) step      # Step into function
+
+# Examine stack
+(gdb) backtrace    # Show call stack
+(gdb) frame 2      # Switch to frame 2
+(gdb) info locals  # Show local variables
+
+# Print stack contents
+(gdb) print *stack
+(gdb) print stack->data[0]@10  # First 10 elements</code></pre>
+            </div>
+        </div>
+
+        <!-- ============================================================
+             SLIDE 26: Memory Checking with Valgrind
+             ============================================================ -->
+        <div class="slide">
+            <h2>🔬 Memory Checking with Valgrind</h2>
+            <p>Valgrind detects memory leaks, use-after-free and buffer overflows in stack implementations.</p>
+            <div class="code-block">
+                <div class="code-header">
+                    <span>Running Valgrind</span>
+                    <span class="lang-badge">Bash</span>
+                </div>
+                <pre><code class="language-bash">$ valgrind --leak-check=full ./program
+
+==12345== HEAP SUMMARY:
+==12345==   in use at exit: 0 bytes in 0 blocks
+==12345==   total heap usage: 15 allocs, 15 frees, 1,120 bytes allocated
+==12345== All heap blocks were freed -- no leaks are possible
+
+# If there ARE leaks:
+==12345== 64 bytes in 1 blocks are definitely lost
+==12345==    at 0x4C2FB0F: malloc (in /usr/lib/valgrind/...)
+==12345==    by 0x4005C2: array_stack_create (stack.c:12)
+==12345==    by 0x40067A: main (main.c:8)</code></pre>
+            </div>
+            <div class="success-box">
+                <div class="box-title">✅ Target</div>
+                <p>"All heap blocks were freed — no leaks are possible" is the goal for every programme.</p>
+            </div>
+        </div>
+
+        <!-- ============================================================
+             SLIDE 27: Complexity Analysis
+             ============================================================ -->
+        <div class="slide">
+            <h2>📊 Complexity Analysis</h2>
+            <h3>Time Complexity</h3>
+            <table>
+                <tr>
+                    <th>Operation</th>
+                    <th>Array (Fixed)</th>
+                    <th>Array (Dynamic)</th>
+                    <th>Linked List</th>
+                </tr>
+                <tr>
+                    <td>push</td>
+                    <td>O(1)</td>
+                    <td>O(1) amortised</td>
+                    <td>O(1)</td>
+                </tr>
+                <tr>
+                    <td>pop</td>
+                    <td>O(1)</td>
+                    <td>O(1)</td>
+                    <td>O(1)</td>
+                </tr>
+                <tr>
+                    <td>peek</td>
+                    <td>O(1)</td>
+                    <td>O(1)</td>
+                    <td>O(1)</td>
+                </tr>
+                <tr>
+                    <td>search</td>
+                    <td>O(n)</td>
+                    <td>O(n)</td>
+                    <td>O(n)</td>
+                </tr>
+            </table>
+            <h3>Space Complexity</h3>
+            <p><strong>Array:</strong> O(capacity) — may waste space if underutilised</p>
+            <p><strong>Linked:</strong> O(n) — exact, but with pointer overhead per element</p>
+        </div>
+
+        <!-- ============================================================
+             SLIDE 28: Amortised Analysis Deep Dive
+             ============================================================ -->
+        <div class="slide">
+            <h2>📈 Amortised Analysis: Dynamic Array</h2>
+            <p>Why is dynamic array push O(1) amortised despite occasional O(n) resizes?</p>
+            <div class="ascii-diagram">
+    Capacity doubling strategy: 1 → 2 → 4 → 8 → 16 → ...
+    
+    Push #    Capacity    Resize Cost    Cumulative Cost
+    ──────    ────────    ───────────    ───────────────
+    1         1           0              1
+    2         2           1 (copy 1)     3
+    3         4           2 (copy 2)     6
+    4         4           0              7
+    5         8           4 (copy 4)     12
+    6-8       8           0              15
+    9         16          8 (copy 8)     24
+    10-16     16          0              31
+    ...
+    
+    For n pushes: Total cost ≤ n + n/2 + n/4 + ... ≤ 2n
+    
+    Amortised cost per push = 2n / n = O(1)</div>
+            <div class="info-box">
+                <div class="box-title">💡 Key Insight</div>
+                <p>Each element is copied at most log₂(n) times, but the sum of all copies is bounded by 2n.</p>
+            </div>
+        </div>
+
+        <!-- ============================================================
+             SLIDE 29: Best Practices
+             ============================================================ -->
+        <div class="slide">
+            <h2>✅ Best Practices</h2>
+            <div class="two-columns">
+                <div class="column" style="border-left: 4px solid var(--accent-green);">
+                    <h3 style="color: var(--accent-green);">✓ Do</h3>
+                    <ul>
+                        <li>Always check for empty before pop/peek</li>
+                        <li>Free all nodes when destroying linked stack</li>
+                        <li>Use meaningful error messages</li>
+                        <li>Document capacity constraints</li>
+                        <li>Run Valgrind to verify no leaks</li>
+                        <li>Use const for read-only parameters</li>
+                        <li>Return error codes or use errno</li>
+                    </ul>
+                </div>
+                <div class="column" style="border-left: 4px solid var(--accent-red);">
+                    <h3 style="color: var(--accent-red);">✗ Don't</h3>
+                    <ul>
+                        <li>Access stack after destroy</li>
+                        <li>Assume unlimited stack size</li>
+                        <li>Mix array indices (0-based vs 1-based)</li>
+                        <li>Forget to update size/top on operations</li>
+                        <li>Use recursion without base cases</li>
+                        <li>Ignore malloc return values</li>
+                        <li>Cast malloc result in C</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- ============================================================
+             SLIDE 30: Generic Stack with void*
+             ============================================================ -->
+        <div class="slide">
+            <h2>🔮 Generic Stack with void*</h2>
+            <p>C lacks templates, but <code>void*</code> provides type-agnostic storage.</p>
+            <div class="code-block">
+                <div class="code-header">
+                    <span>Generic Stack Interface</span>
+                    <span class="lang-badge">C</span>
+                </div>
+                <pre><code class="language-c">typedef struct {
+    void **data;     /* Array of void pointers */
+    int top;
+    int capacity;
+    size_t elem_size; /* Size of each element */
+} GenericStack;
+
+void generic_push(GenericStack *s, const void *elem) {
+    /* Resize if needed... */
+    s->data[++s->top] = malloc(s->elem_size);
+    memcpy(s->data[s->top], elem, s->elem_size);
+}
+
+void* generic_pop(GenericStack *s) {
+    if (s->top < 0) return NULL;
+    return s->data[s->top--];  /* Caller must free */
+}
+
+/* Usage */
+int x = 42;
+generic_push(stack, &x);  /* Works with any type */</code></pre>
+            </div>
+            <div class="warning-box">
+                <div class="box-title">⚠️ Type Safety</div>
+                <p>Caller is responsible for correct type casting. Consider macros or code generation for type-safe alternatives.</p>
+            </div>
+        </div>
+
+        <!-- ============================================================
+             SLIDE 31: Real-World Example - Undo/Redo
+             ============================================================ -->
+        <div class="slide">
+            <h2>🔄 Real-World: Undo/Redo System</h2>
+            <div class="code-block">
+                <div class="code-header">
+                    <span>Command Pattern with Two Stacks</span>
+                    <span class="lang-badge">C</span>
+                </div>
+                <pre><code class="language-c">typedef struct {
+    void (*execute)(void *ctx);
+    void (*undo)(void *ctx);
+    void *context;
+} Command;
+
+typedef struct {
+    Stack *undo_stack;    /* Commands that can be undone */
+    Stack *redo_stack;    /* Commands that can be redone */
+} UndoManager;
+
+void execute_command(UndoManager *mgr, Command *cmd) {
+    cmd->execute(cmd->context);
+    stack_push(mgr->undo_stack, cmd);
+    /* Clear redo stack - new action invalidates redo history */
+    clear_stack(mgr->redo_stack);
+}
+
+void undo(UndoManager *mgr) {
+    Command *cmd = stack_pop(mgr->undo_stack);
+    cmd->undo(cmd->context);
+    stack_push(mgr->redo_stack, cmd);
+}
+
+void redo(UndoManager *mgr) {
+    Command *cmd = stack_pop(mgr->redo_stack);
+    cmd->execute(cmd->context);
+    stack_push(mgr->undo_stack, cmd);
+}</code></pre>
+            </div>
+        </div>
+
+        <!-- ============================================================
+             SLIDE 32: Real-World Example - Browser History
+             ============================================================ -->
+        <div class="slide">
+            <h2>🌐 Real-World: Browser Navigation</h2>
+            <div class="ascii-diagram">
+    Back/Forward navigation uses two stacks:
+    
+    Initial: Visit A → B → C
+    
+    Back Stack      Current      Forward Stack
+    ───────────     ───────      ─────────────
+    [A, B]            C          []
+    
+    ═══════════════════════════════════════════
+    
+    Press BACK:
+    
+    Back Stack      Current      Forward Stack
+    ───────────     ───────      ─────────────
+    [A]               B          [C]
+    
+    ═══════════════════════════════════════════
+    
+    Press BACK again:
+    
+    Back Stack      Current      Forward Stack
+    ───────────     ───────      ─────────────
+    []                A          [B, C]
+    
+    ═══════════════════════════════════════════
+    
+    Press FORWARD:
+    
+    Back Stack      Current      Forward Stack
+    ───────────     ───────      ─────────────
+    [A]               B          [C]</div>
+        </div>
+
+        <!-- ============================================================
+             SLIDE 33: Interview Question - Min Stack
+             ============================================================ -->
+        <div class="slide">
+            <h2>💼 Interview: Min Stack O(1)</h2>
+            <p><strong>Problem:</strong> Design a stack that supports push, pop, peek and getMin all in O(1).</p>
+            <div class="code-block">
+                <div class="code-header">
+                    <span>Solution: Auxiliary Min Stack</span>
+                    <span class="lang-badge">C</span>
+                </div>
+                <pre><code class="language-c">typedef struct {
+    Stack *main;      /* Main data stack */
+    Stack *min_stack; /* Stack tracking minimums */
+} MinStack;
+
+void min_stack_push(MinStack *s, int val) {
+    stack_push(s->main, val);
+    
+    /* Push to min_stack if val is new minimum */
+    if (stack_is_empty(s->min_stack) || 
+        val <= stack_peek(s->min_stack)) {
+        stack_push(s->min_stack, val);
+    }
+}
+
+int min_stack_pop(MinStack *s) {
+    int val = stack_pop(s->main);
+    
+    /* Pop from min_stack if we removed the minimum */
+    if (val == stack_peek(s->min_stack)) {
+        stack_pop(s->min_stack);
+    }
+    return val;
+}
+
+int min_stack_get_min(MinStack *s) {
+    return stack_peek(s->min_stack);  /* O(1)! */
+}</code></pre>
+            </div>
+        </div>
+
+        <!-- ============================================================
+             SLIDE 34: Interview Question - Queue from Stacks
+             ============================================================ -->
+        <div class="slide">
+            <h2>💼 Interview: Queue Using Two Stacks</h2>
+            <p><strong>Problem:</strong> Implement a queue using only stack operations.</p>
+            <div class="code-block">
+                <div class="code-header">
+                    <span>Two-Stack Queue Implementation</span>
+                    <span class="lang-badge">C</span>
+                </div>
+                <pre><code class="language-c">typedef struct {
+    Stack *inbox;   /* For enqueue operations */
+    Stack *outbox;  /* For dequeue operations */
+} QueueFromStacks;
+
+void queue_enqueue(QueueFromStacks *q, int val) {
+    stack_push(q->inbox, val);  /* Always push to inbox */
+}
+
+int queue_dequeue(QueueFromStacks *q) {
+    /* If outbox empty, transfer all from inbox */
+    if (stack_is_empty(q->outbox)) {
+        while (!stack_is_empty(q->inbox)) {
+            stack_push(q->outbox, stack_pop(q->inbox));
+        }
+    }
+    return stack_pop(q->outbox);
+}
+
+/* Amortised O(1) per operation!
+   Each element is moved at most twice:
+   inbox → outbox → return */</code></pre>
+            </div>
+            <div class="info-box">
+                <div class="box-title">📊 Analysis</div>
+                <p>Worst case O(n) for dequeue, but amortised O(1) since each element moves at most twice.</p>
+            </div>
+        </div>
+
+        <!-- ============================================================
+             SLIDE 35: Laboratory Preview
+             ============================================================ -->
+        <div class="slide">
+            <h2>🔬 Laboratory Exercises</h2>
+            <div class="two-columns">
+                <div class="column">
+                    <h3>Exercise 1: Array Stack</h3>
+                    <p>Implement a complete array-based stack with:</p>
+                    <ul>
+                        <li>Dynamic resizing (double on full)</li>
+                        <li>Create, destroy, push, pop, peek</li>
+                        <li>isEmpty, isFull, size functions</li>
+                        <li>Proper error handling</li>
+                    </ul>
+                    <p><strong>TODO markers:</strong> 10</p>
+                </div>
+                <div class="column">
+                    <h3>Exercise 2: Bracket Validator</h3>
+                    <p>Using a linked stack, validate bracket expressions:</p>
+                    <ul>
+                        <li>Support (), [], {} brackets</li>
+                        <li>Report position of errors</li>
+                        <li>Detect mismatches and unclosed brackets</li>
+                        <li>Free all memory properly</li>
+                    </ul>
+                    <p><strong>TODO markers:</strong> 12</p>
+                </div>
+            </div>
+            <div class="info-box">
+                <div class="box-title">🛠️ Build Commands</div>
+                <p><code>make exercise1</code> and <code>make exercise2</code> — then run with <code>make test</code></p>
+            </div>
+        </div>
+
+        <!-- ============================================================
+             SLIDE 36: Key Takeaways
+             ============================================================ -->
+        <div class="slide">
+            <h2>🎯 Key Takeaways</h2>
+            <div class="summary-grid">
+                <div class="summary-box">
+                    <div class="icon">📚</div>
+                    <h4>LIFO Principle</h4>
+                    <p>Last-In-First-Out governs all stack behaviour</p>
+                </div>
+                <div class="summary-box">
+                    <div class="icon">⚡</div>
+                    <h4>O(1) Operations</h4>
+                    <p>Push, pop and peek are constant time</p>
+                </div>
+                <div class="summary-box">
+                    <div class="icon">📦</div>
+                    <h4>Two Implementations</h4>
+                    <p>Array (cache-friendly) or Linked (exact memory)</p>
+                </div>
+                <div class="summary-box">
+                    <div class="icon">🧮</div>
+                    <h4>Expression Eval</h4>
+                    <p>Postfix notation eliminates precedence</p>
+                </div>
+                <div class="summary-box">
+                    <div class="icon">🔍</div>
+                    <h4>Bracket Matching</h4>
+                    <p>Classic application in compilers</p>
+                </div>
+                <div class="summary-box">
+                    <div class="icon">📞</div>
+                    <h4>Call Stack</h4>
+                    <p>Function calls managed via hardware stack</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- ============================================================
+             SLIDE 37: Resources
+             ============================================================ -->
+        <div class="slide">
+            <h2>📖 Resources</h2>
+            <h3>Essential Reading</h3>
+            <ul>
+                <li>Sedgewick & Wayne — <em>Algorithms</em>, Chapter 1.3</li>
+                <li>Cormen et al. — <em>Introduction to Algorithms</em>, Chapter 10.1</li>
+                <li>K&R — <em>The C Programming Language</em>, Chapter 5</li>
+            </ul>
+            <h3>Online Resources</h3>
+            <ul>
+                <li><a href="https://visualgo.net/en/stack" style="color: var(--accent-blue);">Visualgo Stack Visualisation</a></li>
+                <li><a href="https://www.geeksforgeeks.org/stack-data-structure/" style="color: var(--accent-blue);">GeeksforGeeks Stack Tutorial</a></li>
+                <li><a href="https://en.cppreference.com/w/c" style="color: var(--accent-blue);">C Standard Library Reference</a></li>
+            </ul>
+            <h3>Practice Problems</h3>
+            <ul>
+                <li>LeetCode: Valid Parentheses (#20)</li>
+                <li>LeetCode: Min Stack (#155)</li>
+                <li>LeetCode: Implement Queue using Stacks (#232)</li>
+            </ul>
+        </div>
+
+        <!-- ============================================================
+             SLIDE 38: Questions / Next Week
+             ============================================================ -->
+        <div class="slide title-slide">
+            <h1>Questions?</h1>
+            <p class="subtitle">Thank you for your attention!</p>
+            <div style="margin-top: 40px; padding: 30px; background: var(--bg-secondary); border-radius: 12px; display: inline-block;">
+                <h3 style="color: var(--accent-green); margin-bottom: 15px;">🔜 Next Week: Queues</h3>
+                <p style="color: var(--text-secondary); margin: 0;">
+                    FIFO principle • Circular buffers • Priority queues • BFS applications
+                </p>
+            </div>
+            <p class="meta" style="margin-top: 40px;">
+                Keyboard: <span class="kbd">←</span> <span class="kbd">→</span> to navigate &nbsp;|&nbsp;
+                <span class="kbd">Home</span> <span class="kbd">End</span> for first/last
+            </p>
+        </div>
+
+    </div><!-- End presentation -->
+
+    <script>
+        // =================================================================
+        // PRESENTATION LOGIC
+        // =================================================================
+        
+        const slides = document.querySelectorAll('.slide');
+        const totalSlides = slides.length;
+        let currentSlide = 0;
+        
+        const progressBar = document.getElementById('progress-bar');
+        const slideCounter = document.getElementById('slide-counter');
+        const btnPrev = document.getElementById('btn-prev');
+        const btnNext = document.getElementById('btn-next');
+        
+        function updateSlide() {
+            // Update active slide
+            slides.forEach((slide, index) => {
+                slide.classList.toggle('active', index === currentSlide);
+            });
+            
+            // Update progress bar
+            const progress = ((currentSlide + 1) / totalSlides) * 100;
+            progressBar.style.width = progress + '%';
+            
+            // Update counter
+            slideCounter.textContent = `${currentSlide + 1} / ${totalSlides}`;
+            
+            // Update button states
+            btnPrev.disabled = currentSlide === 0;
+            btnNext.disabled = currentSlide === totalSlides - 1;
+        }
+        
+        function nextSlide() {
+            if (currentSlide < totalSlides - 1) {
+                currentSlide++;
+                updateSlide();
+            }
+        }
+        
+        function prevSlide() {
+            if (currentSlide > 0) {
+                currentSlide--;
+                updateSlide();
+            }
+        }
+        
+        function goToSlide(n) {
+            if (n >= 0 && n < totalSlides) {
+                currentSlide = n;
+                updateSlide();
+            }
+        }
+        
+        // Keyboard navigation
+        document.addEventListener('keydown', (e) => {
+            switch(e.key) {
+                case 'ArrowRight':
+                case ' ':
+                    e.preventDefault();
+                    nextSlide();
+                    break;
+                case 'ArrowLeft':
+                    e.preventDefault();
+                    prevSlide();
+                    break;
+                case 'Home':
+                    e.preventDefault();
+                    goToSlide(0);
+                    break;
+                case 'End':
+                    e.preventDefault();
+                    goToSlide(totalSlides - 1);
+                    break;
+            }
+        });
+        
+        // Initialize syntax highlighting
+        document.addEventListener('DOMContentLoaded', () => {
+            hljs.highlightAll();
+            updateSlide();
+        });
+    </script>
+</body>
+</html>

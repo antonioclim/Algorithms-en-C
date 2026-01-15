@@ -1,0 +1,1191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Week 03: Binary Files - Language Comparison | ATP Course</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+    <style>
+        :root {
+            --bg-primary: #0d1117;
+            --bg-secondary: #161b22;
+            --bg-tertiary: #21262d;
+            --border-color: #30363d;
+            --text-primary: #e6edf3;
+            --text-secondary: #8b949e;
+            --accent-blue: #58a6ff;
+            --accent-green: #3fb950;
+            --accent-yellow: #d29922;
+            --accent-red: #f85149;
+            --accent-purple: #a371f7;
+            --accent-cyan: #39c5cf;
+            
+            --pseudo-color: #a371f7;
+            --c-color: #58a6ff;
+            --python-color: #d29922;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.6;
+            overflow: hidden;
+        }
+
+        #progress-bar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 4px;
+            background: linear-gradient(90deg, var(--pseudo-color), var(--c-color), var(--python-color));
+            transition: width 0.3s ease;
+            z-index: 1000;
+        }
+
+        #presentation {
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .slide {
+            display: none;
+            width: 1200px;
+            max-width: 95vw;
+            min-height: 700px;
+            max-height: 95vh;
+            padding: 40px 50px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+            overflow-y: auto;
+            animation: fadeIn 0.4s ease;
+        }
+
+        .slide.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        h1 {
+            font-size: 2.2rem;
+            color: var(--text-primary);
+            margin-bottom: 0.5rem;
+            border-bottom: 3px solid var(--accent-purple);
+            padding-bottom: 0.5rem;
+        }
+
+        h2 {
+            font-size: 1.8rem;
+            color: var(--accent-blue);
+            margin-bottom: 1.2rem;
+        }
+
+        h3 {
+            font-size: 1.3rem;
+            font-weight: 600;
+            margin-bottom: 0.75rem;
+        }
+
+        p {
+            font-size: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .subtitle {
+            font-size: 1.2rem;
+            color: var(--text-secondary);
+            margin-bottom: 1.5rem;
+        }
+
+        .title-slide {
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .title-slide h1 {
+            font-size: 2.5rem;
+            border-bottom: none;
+        }
+
+        /* Three Column Layout */
+        .three-columns {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 1rem;
+            margin: 1rem 0;
+        }
+
+        .column {
+            background: var(--bg-tertiary);
+            border-radius: 8px;
+            padding: 1rem;
+            border-top: 4px solid var(--border-color);
+        }
+
+        .column.pseudocod {
+            border-top-color: var(--pseudo-color);
+        }
+
+        .column.c-lang {
+            border-top-color: var(--c-color);
+        }
+
+        .column.python {
+            border-top-color: var(--python-color);
+        }
+
+        .column h3 {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .column.pseudocod h3 { color: var(--pseudo-color); }
+        .column.c-lang h3 { color: var(--c-color); }
+        .column.python h3 { color: var(--python-color); }
+
+        /* Code Blocks */
+        pre {
+            background: var(--bg-primary);
+            border-radius: 6px;
+            padding: 12px;
+            overflow-x: auto;
+            font-size: 0.8rem;
+            line-height: 1.5;
+            margin: 0.5rem 0;
+        }
+
+        code {
+            font-family: 'JetBrains Mono', 'Fira Code', monospace;
+        }
+
+        .inline-code {
+            background: var(--bg-tertiary);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 0.9em;
+            color: var(--accent-cyan);
+        }
+
+        /* Info Boxes */
+        .info-box {
+            background: rgba(88, 166, 255, 0.1);
+            border-left: 4px solid var(--accent-blue);
+            padding: 1rem;
+            margin: 1rem 0;
+            border-radius: 0 8px 8px 0;
+        }
+
+        .comparison-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+            font-size: 0.9rem;
+        }
+
+        .comparison-table th {
+            background: var(--bg-tertiary);
+            padding: 10px 12px;
+            text-align: left;
+            border-bottom: 2px solid var(--border-color);
+        }
+
+        .comparison-table td {
+            padding: 10px 12px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .comparison-table tr:hover {
+            background: rgba(88, 166, 255, 0.05);
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .badge-pseudo { background: var(--pseudo-color); color: var(--bg-primary); }
+        .badge-c { background: var(--c-color); color: var(--bg-primary); }
+        .badge-python { background: var(--python-color); color: var(--bg-primary); }
+
+        .card {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 1rem;
+            margin: 0.5rem 0;
+        }
+
+        ul {
+            padding-left: 1.5rem;
+            margin: 0.5rem 0;
+        }
+
+        li {
+            margin-bottom: 0.5rem;
+        }
+
+        li::marker {
+            color: var(--accent-blue);
+        }
+
+        /* Navigation */
+        #nav-container {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            display: flex;
+            gap: 10px;
+            z-index: 100;
+        }
+
+        .nav-btn {
+            width: 50px;
+            height: 50px;
+            border: none;
+            border-radius: 8px;
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+            cursor: pointer;
+            font-size: 1.2rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+            border: 1px solid var(--border-color);
+        }
+
+        .nav-btn:hover {
+            background: var(--accent-blue);
+            color: var(--bg-primary);
+        }
+
+        .nav-btn:disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+        }
+
+        #slide-counter {
+            position: fixed;
+            bottom: 25px;
+            left: 30px;
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            font-family: monospace;
+        }
+
+        .two-columns {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+        }
+
+        @media (max-width: 900px) {
+            .three-columns, .two-columns {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="progress-bar"></div>
+
+    <div id="presentation">
+
+        <!-- SLIDE 1: Title -->
+        <div class="slide title-slide active">
+            <span class="badge badge-pseudo">Pseudocode</span>
+            <span class="badge badge-c">C</span>
+            <span class="badge badge-python">Python</span>
+            <h1 style="margin-top: 1rem;">Binary Files</h1>
+            <p class="subtitle">A Three-Language Comparison</p>
+            <p style="color: var(--text-secondary); margin-top: 2rem;">
+                Week 03 • Algorithms and Programming Techniques<br>
+                <small>Academy of Economic Studies</small>
+            </p>
+        </div>
+
+        <!-- SLIDE 2: Why Compare? -->
+        <div class="slide">
+            <h2>🤔 Why Compare Languages?</h2>
+            
+            <div class="two-columns">
+                <div>
+                    <div class="card">
+                        <h3 style="color: var(--accent-green);">Learning Benefits</h3>
+                        <ul>
+                            <li>Understand concepts independent of syntax</li>
+                            <li>See trade-offs between abstraction levels</li>
+                            <li>Prepare for multi-language environments</li>
+                            <li>Appreciate language design decisions</li>
+                        </ul>
+                    </div>
+                </div>
+                <div>
+                    <div class="card">
+                        <h3 style="color: var(--accent-yellow);">Practical Benefits</h3>
+                        <ul>
+                            <li>C skills transfer to systems programming</li>
+                            <li>Python for rapid prototyping</li>
+                            <li>Pseudocode for algorithm documentation</li>
+                            <li>Interview preparation</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <div class="info-box">
+                <strong>📌 Today's Focus:</strong> Binary file I/O operations — opening, reading, writing, seeking, and closing files with structured data.
+            </div>
+        </div>
+
+        <!-- SLIDE 3: Opening Files -->
+        <div class="slide">
+            <h2>Opening a Binary File</h2>
+
+            <div class="three-columns">
+                <div class="column pseudocod">
+                    <h3>📝 Pseudocode</h3>
+                    <pre><code>FUNCTION open_file(path, mode):
+    file ← OPEN path IN mode
+    IF file IS NULL THEN
+        RETURN error
+    END IF
+    RETURN file
+END FUNCTION
+
+// Usage
+file ← open_file("data.bin", WRITE_BINARY)
+</code></pre>
+                </div>
+
+                <div class="column c-lang">
+                    <h3>⚙️ C</h3>
+                    <pre><code class="language-c">FILE* open_file(const char* path, 
+                const char* mode) {
+    FILE *fp = fopen(path, mode);
+    if (fp == NULL) {
+        perror("Error");
+        return NULL;
+    }
+    return fp;
+}
+
+// Usage
+FILE *fp = open_file("data.bin", "wb");</code></pre>
+                </div>
+
+                <div class="column python">
+                    <h3>🐍 Python</h3>
+                    <pre><code class="language-python">def open_file(path, mode):
+    try:
+        return open(path, mode)
+    except IOError as e:
+        print(f"Error: {e}")
+        return None
+
+# Usage (preferred: context manager)
+with open("data.bin", "wb") as f:
+    # file auto-closes
+    pass</code></pre>
+                </div>
+            </div>
+
+            <div class="info-box">
+                <strong>Key Difference:</strong> Python's <code class="inline-code">with</code> statement ensures automatic resource cleanup, eliminating a common source of bugs in C.
+            </div>
+        </div>
+
+        <!-- SLIDE 4: Structure Definition -->
+        <div class="slide">
+            <h2>Defining a Data Structure</h2>
+
+            <div class="three-columns">
+                <div class="column pseudocod">
+                    <h3>📝 Pseudocode</h3>
+                    <pre><code>STRUCTURE Student:
+    id      : INTEGER
+    name    : STRING[50]
+    gpa     : FLOAT
+    year    : INTEGER
+END STRUCTURE
+
+// Instance
+s ← NEW Student
+s.id ← 1001
+s.name ← "Alice"
+s.gpa ← 3.75
+s.year ← 2024</code></pre>
+                </div>
+
+                <div class="column c-lang">
+                    <h3>⚙️ C</h3>
+                    <pre><code class="language-c">typedef struct {
+    int   id;
+    char  name[50];
+    float gpa;
+    int   year;
+} Student;
+
+// Instance
+Student s;
+s.id = 1001;
+strcpy(s.name, "Alice");
+s.gpa = 3.75f;
+s.year = 2024;</code></pre>
+                </div>
+
+                <div class="column python">
+                    <h3>🐍 Python</h3>
+                    <pre><code class="language-python">import struct
+from dataclasses import dataclass
+
+@dataclass
+class Student:
+    id: int
+    name: str
+    gpa: float
+    year: int
+
+# Instance
+s = Student(1001, "Alice", 3.75, 2024)
+
+# Binary format string
+FMT = "i50sfi"  # int, 50-char, float, int</code></pre>
+                </div>
+            </div>
+
+            <div class="info-box">
+                <strong>Memory Layout:</strong> C stores structures as contiguous bytes; Python's <code class="inline-code">struct</code> module packs/unpacks data to match C's layout.
+            </div>
+        </div>
+
+        <!-- SLIDE 5: Writing Records -->
+        <div class="slide">
+            <h2>Writing a Record to Binary File</h2>
+
+            <div class="three-columns">
+                <div class="column pseudocod">
+                    <h3>📝 Pseudocode</h3>
+                    <pre><code>FUNCTION write_record(file, record):
+    bytes ← SERIALISE(record)
+    count ← WRITE bytes TO file
+    
+    IF count ≠ SIZE_OF(record) THEN
+        RETURN error
+    END IF
+    
+    RETURN success
+END FUNCTION</code></pre>
+                </div>
+
+                <div class="column c-lang">
+                    <h3>⚙️ C</h3>
+                    <pre><code class="language-c">int write_record(FILE *fp, 
+                 const Student *s) {
+    size_t written = fwrite(
+        s,              // data pointer
+        sizeof(Student),// element size
+        1,              // count
+        fp              // file
+    );
+    return (written == 1) ? 0 : -1;
+}
+
+// Usage
+write_record(fp, &student);</code></pre>
+                </div>
+
+                <div class="column python">
+                    <h3>🐍 Python</h3>
+                    <pre><code class="language-python">def write_record(f, student):
+    # Encode string to bytes
+    name_bytes = student.name.encode(
+        'utf-8')[:50].ljust(50, b'\x00')
+    
+    # Pack into binary format
+    data = struct.pack(
+        "i50sfi",
+        student.id,
+        name_bytes,
+        student.gpa,
+        student.year
+    )
+    f.write(data)</code></pre>
+                </div>
+            </div>
+        </div>
+
+        <!-- SLIDE 6: Reading Records -->
+        <div class="slide">
+            <h2>Reading Records from Binary File</h2>
+
+            <div class="three-columns">
+                <div class="column pseudocod">
+                    <h3>📝 Pseudocode</h3>
+                    <pre><code>FUNCTION read_all_records(file):
+    records ← EMPTY LIST
+    
+    WHILE NOT end_of_file(file):
+        bytes ← READ SIZE_OF(Record) 
+                FROM file
+        IF bytes IS EMPTY THEN
+            BREAK
+        END IF
+        record ← DESERIALISE(bytes)
+        APPEND record TO records
+    END WHILE
+    
+    RETURN records
+END FUNCTION</code></pre>
+                </div>
+
+                <div class="column c-lang">
+                    <h3>⚙️ C</h3>
+                    <pre><code class="language-c">int read_all(FILE *fp, Student **out,
+             size_t *count) {
+    // Get file size
+    fseek(fp, 0, SEEK_END);
+    long size = ftell(fp);
+    fseek(fp, 0, SEEK_SET);
+    
+    *count = size / sizeof(Student);
+    *out = malloc(*count * sizeof(Student));
+    
+    size_t read = fread(*out, 
+        sizeof(Student), *count, fp);
+    
+    return (read == *count) ? 0 : -1;
+}</code></pre>
+                </div>
+
+                <div class="column python">
+                    <h3>🐍 Python</h3>
+                    <pre><code class="language-python">def read_all_records(f):
+    records = []
+    record_size = struct.calcsize("i50sfi")
+    
+    while True:
+        data = f.read(record_size)
+        if len(data) < record_size:
+            break
+        
+        id, name, gpa, year = struct.unpack(
+            "i50sfi", data)
+        
+        name = name.rstrip(b'\x00').decode()
+        records.append(
+            Student(id, name, gpa, year))
+    
+    return records</code></pre>
+                </div>
+            </div>
+        </div>
+
+        <!-- SLIDE 7: Random Access -->
+        <div class="slide">
+            <h2>Random Access: Seeking to Record N</h2>
+
+            <div class="three-columns">
+                <div class="column pseudocod">
+                    <h3>📝 Pseudocode</h3>
+                    <pre><code>FUNCTION get_record(file, index):
+    offset ← index × SIZE_OF(Record)
+    
+    SEEK file TO offset FROM START
+    
+    bytes ← READ SIZE_OF(Record) 
+            FROM file
+    
+    IF bytes IS EMPTY THEN
+        RETURN NULL
+    END IF
+    
+    RETURN DESERIALISE(bytes)
+END FUNCTION</code></pre>
+                </div>
+
+                <div class="column c-lang">
+                    <h3>⚙️ C</h3>
+                    <pre><code class="language-c">Student* get_record(FILE *fp, 
+                    size_t index) {
+    static Student s;
+    
+    long offset = index * sizeof(Student);
+    
+    if (fseek(fp, offset, SEEK_SET) != 0)
+        return NULL;
+    
+    if (fread(&s, sizeof(Student), 1, fp) != 1)
+        return NULL;
+    
+    return &s;
+}
+
+// Access record at index 5
+Student *s = get_record(fp, 5);</code></pre>
+                </div>
+
+                <div class="column python">
+                    <h3>🐍 Python</h3>
+                    <pre><code class="language-python">def get_record(f, index):
+    record_size = struct.calcsize("i50sfi")
+    offset = index * record_size
+    
+    f.seek(offset)  # SEEK_SET is default
+    
+    data = f.read(record_size)
+    if len(data) < record_size:
+        return None
+    
+    id, name, gpa, year = struct.unpack(
+        "i50sfi", data)
+    
+    name = name.rstrip(b'\x00').decode()
+    return Student(id, name, gpa, year)
+
+# Access record at index 5
+s = get_record(f, 5)</code></pre>
+                </div>
+            </div>
+
+            <div class="info-box">
+                <strong>O(1) Access:</strong> All three approaches calculate the exact byte offset, enabling constant-time access regardless of file size.
+            </div>
+        </div>
+
+        <!-- SLIDE 8: Updating Records -->
+        <div class="slide">
+            <h2>Updating a Record In-Place</h2>
+
+            <div class="three-columns">
+                <div class="column pseudocod">
+                    <h3>📝 Pseudocode</h3>
+                    <pre><code>FUNCTION update_record(file, index, 
+                       new_data):
+    offset ← index × SIZE_OF(Record)
+    
+    // Seek to position
+    SEEK file TO offset FROM START
+    
+    // Read existing (optional)
+    old ← READ record FROM file
+    
+    // Return to same position
+    SEEK file TO offset FROM START
+    
+    // Write new data
+    WRITE new_data TO file
+    
+    FLUSH file
+END FUNCTION</code></pre>
+                </div>
+
+                <div class="column c-lang">
+                    <h3>⚙️ C</h3>
+                    <pre><code class="language-c">int update_record(FILE *fp, size_t index,
+                  const Student *new_s) {
+    long offset = index * sizeof(Student);
+    
+    // Open in read+write mode: "r+b"
+    if (fseek(fp, offset, SEEK_SET) != 0)
+        return -1;
+    
+    if (fwrite(new_s, sizeof(Student), 
+               1, fp) != 1)
+        return -1;
+    
+    fflush(fp);  // Ensure write completes
+    return 0;
+}</code></pre>
+                </div>
+
+                <div class="column python">
+                    <h3>🐍 Python</h3>
+                    <pre><code class="language-python">def update_record(f, index, new_student):
+    record_size = struct.calcsize("i50sfi")
+    offset = index * record_size
+    
+    f.seek(offset)
+    
+    name_bytes = new_student.name.encode(
+        'utf-8')[:50].ljust(50, b'\x00')
+    
+    data = struct.pack(
+        "i50sfi",
+        new_student.id,
+        name_bytes,
+        new_student.gpa,
+        new_student.year
+    )
+    
+    f.write(data)
+    f.flush()  # Force write to disk</code></pre>
+                </div>
+            </div>
+        </div>
+
+        <!-- SLIDE 9: File Size and Count -->
+        <div class="slide">
+            <h2>Calculating File Size and Record Count</h2>
+
+            <div class="three-columns">
+                <div class="column pseudocod">
+                    <h3>📝 Pseudocode</h3>
+                    <pre><code>FUNCTION count_records(file):
+    // Save current position
+    current ← GET_POSITION(file)
+    
+    // Seek to end
+    SEEK file TO 0 FROM END
+    file_size ← GET_POSITION(file)
+    
+    // Restore position
+    SEEK file TO current FROM START
+    
+    RETURN file_size ÷ SIZE_OF(Record)
+END FUNCTION</code></pre>
+                </div>
+
+                <div class="column c-lang">
+                    <h3>⚙️ C</h3>
+                    <pre><code class="language-c">size_t count_records(FILE *fp) {
+    // Save position
+    long current = ftell(fp);
+    
+    // Get file size
+    fseek(fp, 0, SEEK_END);
+    long file_size = ftell(fp);
+    
+    // Restore position
+    fseek(fp, current, SEEK_SET);
+    
+    return file_size / sizeof(Student);
+}
+
+// Alternative using stat()
+#include &lt;sys/stat.h&gt;
+struct stat st;
+stat("data.bin", &st);
+size_t count = st.st_size / sizeof(Student);</code></pre>
+                </div>
+
+                <div class="column python">
+                    <h3>🐍 Python</h3>
+                    <pre><code class="language-python">def count_records(f):
+    # Save position
+    current = f.tell()
+    
+    # Get file size
+    f.seek(0, 2)  # 2 = SEEK_END
+    file_size = f.tell()
+    
+    # Restore position
+    f.seek(current)
+    
+    record_size = struct.calcsize("i50sfi")
+    return file_size // record_size
+
+# Alternative using os.path
+import os
+size = os.path.getsize("data.bin")
+count = size // struct.calcsize("i50sfi")</code></pre>
+                </div>
+            </div>
+        </div>
+
+        <!-- SLIDE 10: Error Handling -->
+        <div class="slide">
+            <h2>Error Handling Patterns</h2>
+
+            <div class="three-columns">
+                <div class="column pseudocod">
+                    <h3>📝 Pseudocode</h3>
+                    <pre><code>FUNCTION safe_read(file):
+    TRY:
+        data ← READ FROM file
+        IF read_failed THEN
+            IF end_of_file(file) THEN
+                RETURN EOF_MARKER
+            ELSE
+                THROW ReadError
+            END IF
+        END IF
+        RETURN data
+    CATCH error:
+        LOG error
+        RETURN NULL
+    END TRY
+END FUNCTION</code></pre>
+                </div>
+
+                <div class="column c-lang">
+                    <h3>⚙️ C</h3>
+                    <pre><code class="language-c">int safe_read(FILE *fp, Student *s) {
+    size_t read = fread(s, sizeof(*s), 
+                        1, fp);
+    
+    if (read != 1) {
+        if (feof(fp)) {
+            return 1;  // EOF, not error
+        }
+        if (ferror(fp)) {
+            perror("Read error");
+            clearerr(fp);  // Reset
+            return -1;  // Error
+        }
+    }
+    return 0;  // Success
+}</code></pre>
+                </div>
+
+                <div class="column python">
+                    <h3>🐍 Python</h3>
+                    <pre><code class="language-python">def safe_read(f, record_size):
+    try:
+        data = f.read(record_size)
+        
+        if len(data) == 0:
+            return None  # EOF
+        
+        if len(data) < record_size:
+            raise IOError(
+                "Incomplete record")
+        
+        return data
+        
+    except IOError as e:
+        print(f"Read error: {e}")
+        return None</code></pre>
+                </div>
+            </div>
+
+            <div class="info-box">
+                <strong>Pattern:</strong> Always distinguish between EOF (normal termination) and actual errors (disk failure, permission issues).
+            </div>
+        </div>
+
+        <!-- SLIDE 11: Complete Example -->
+        <div class="slide">
+            <h2>Complete Mini-Database Example</h2>
+            <p class="subtitle">Putting it all together</p>
+
+            <div class="two-columns">
+                <div>
+                    <h3 style="color: var(--c-color);">⚙️ C Implementation</h3>
+                    <pre><code class="language-c">// Simple student database
+int main(void) {
+    FILE *fp = fopen("students.bin", "w+b");
+    
+    // Write some records
+    Student students[] = {
+        {1001, "Alice", 3.75f, 2024},
+        {1002, "Bob", 3.50f, 2023},
+        {1003, "Carol", 3.90f, 2024}
+    };
+    
+    fwrite(students, sizeof(Student), 3, fp);
+    
+    // Random access: read record 1
+    fseek(fp, sizeof(Student), SEEK_SET);
+    Student s;
+    fread(&s, sizeof(Student), 1, fp);
+    printf("Record 1: %s\n", s.name);
+    
+    // Update record 0
+    students[0].gpa = 3.80f;
+    fseek(fp, 0, SEEK_SET);
+    fwrite(&students[0], sizeof(Student), 1, fp);
+    
+    fclose(fp);
+    return 0;
+}</code></pre>
+                </div>
+                <div>
+                    <h3 style="color: var(--python-color);">🐍 Python Implementation</h3>
+                    <pre><code class="language-python">import struct
+
+FMT = "i50sfi"
+SIZE = struct.calcsize(FMT)
+
+def pack_student(s):
+    name = s.name.encode()[:50].ljust(50, b'\x00')
+    return struct.pack(FMT, s.id, name, s.gpa, s.year)
+
+def unpack_student(data):
+    id, name, gpa, year = struct.unpack(FMT, data)
+    return Student(id, name.rstrip(b'\x00').decode(), 
+                   gpa, year)
+
+# Usage
+with open("students.bin", "w+b") as f:
+    # Write records
+    for s in [Student(1001, "Alice", 3.75, 2024),
+              Student(1002, "Bob", 3.50, 2023)]:
+        f.write(pack_student(s))
+    
+    # Random access
+    f.seek(SIZE)
+    data = f.read(SIZE)
+    print(unpack_student(data))</code></pre>
+                </div>
+            </div>
+        </div>
+
+        <!-- SLIDE 12: Comparison Table -->
+        <div class="slide">
+            <h2>📊 Feature Comparison</h2>
+
+            <table class="comparison-table">
+                <thead>
+                    <tr>
+                        <th>Feature</th>
+                        <th><span class="badge badge-pseudo">Pseudocode</span></th>
+                        <th><span class="badge badge-c">C</span></th>
+                        <th><span class="badge badge-python">Python</span></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Memory control</td>
+                        <td>Abstract</td>
+                        <td>Manual (malloc/free)</td>
+                        <td>Automatic (GC)</td>
+                    </tr>
+                    <tr>
+                        <td>Type safety</td>
+                        <td>N/A</td>
+                        <td>Compile-time</td>
+                        <td>Run-time</td>
+                    </tr>
+                    <tr>
+                        <td>Binary packing</td>
+                        <td>SERIALISE()</td>
+                        <td>Direct memory copy</td>
+                        <td>struct.pack()</td>
+                    </tr>
+                    <tr>
+                        <td>File open</td>
+                        <td>OPEN</td>
+                        <td>fopen()</td>
+                        <td>open() / with</td>
+                    </tr>
+                    <tr>
+                        <td>Random access</td>
+                        <td>SEEK</td>
+                        <td>fseek()</td>
+                        <td>f.seek()</td>
+                    </tr>
+                    <tr>
+                        <td>Error handling</td>
+                        <td>TRY/CATCH</td>
+                        <td>Return codes + errno</td>
+                        <td>Exceptions</td>
+                    </tr>
+                    <tr>
+                        <td>Resource cleanup</td>
+                        <td>Explicit</td>
+                        <td>Explicit (fclose)</td>
+                        <td>with statement</td>
+                    </tr>
+                    <tr>
+                        <td>Performance</td>
+                        <td>N/A</td>
+                        <td>Fastest</td>
+                        <td>Slower (interpreted)</td>
+                    </tr>
+                    <tr>
+                        <td>Portability</td>
+                        <td>Universal</td>
+                        <td>Requires care</td>
+                        <td>High (with struct)</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- SLIDE 13: When to Use Which -->
+        <div class="slide">
+            <h2>🎯 When to Use Each Language</h2>
+
+            <div class="three-columns">
+                <div class="column pseudocod">
+                    <h3>📝 Pseudocode</h3>
+                    <ul>
+                        <li>Algorithm documentation</li>
+                        <li>Teaching concepts</li>
+                        <li>Design specifications</li>
+                        <li>Language-agnostic communication</li>
+                        <li>Interview whiteboard coding</li>
+                        <li>Academic papers</li>
+                    </ul>
+                    <div class="card" style="margin-top: 1rem;">
+                        <strong>Best for:</strong> Communication and planning
+                    </div>
+                </div>
+
+                <div class="column c-lang">
+                    <h3>⚙️ C</h3>
+                    <ul>
+                        <li>Systems programming</li>
+                        <li>Performance-critical code</li>
+                        <li>Embedded systems</li>
+                        <li>Operating systems</li>
+                        <li>Database engines</li>
+                        <li>Game engines</li>
+                    </ul>
+                    <div class="card" style="margin-top: 1rem;">
+                        <strong>Best for:</strong> Speed and control
+                    </div>
+                </div>
+
+                <div class="column python">
+                    <h3>🐍 Python</h3>
+                    <ul>
+                        <li>Rapid prototyping</li>
+                        <li>Data analysis scripts</li>
+                        <li>File format converters</li>
+                        <li>Testing and validation</li>
+                        <li>Automation tools</li>
+                        <li>Scientific computing</li>
+                    </ul>
+                    <div class="card" style="margin-top: 1rem;">
+                        <strong>Best for:</strong> Productivity
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SLIDE 14: Key Insights -->
+        <div class="slide">
+            <h2>💡 Key Insights</h2>
+
+            <div class="card" style="border-left: 4px solid var(--accent-green);">
+                <h3 style="color: var(--accent-green);">1. Concepts Transfer</h3>
+                <p>Binary file operations follow the same logic across languages: open, seek, read/write, close. Master the concept, and syntax becomes secondary.</p>
+            </div>
+
+            <div class="card" style="border-left: 4px solid var(--accent-blue);">
+                <h3 style="color: var(--accent-blue);">2. Abstraction Has Costs</h3>
+                <p>Python's convenience (automatic memory, exceptions, with statement) comes with performance overhead. C's verbosity gives maximum control.</p>
+            </div>
+
+            <div class="card" style="border-left: 4px solid var(--accent-yellow);">
+                <h3 style="color: var(--accent-yellow);">3. Binary Formats Require Care</h3>
+                <p>Cross-platform binary files need explicit handling of endianness, padding and type sizes. Python's struct module mirrors C's memory layout.</p>
+            </div>
+
+            <div class="card" style="border-left: 4px solid var(--accent-purple);">
+                <h3 style="color: var(--accent-purple);">4. Pseudocode First</h3>
+                <p>Design your algorithm in pseudocode before implementing. This clarifies logic and makes translation to any language straightforward.</p>
+            </div>
+        </div>
+
+        <!-- SLIDE 15: Conclusion -->
+        <div class="slide title-slide">
+            <h1>Summary</h1>
+            <p class="subtitle">Binary Files Across Languages</p>
+
+            <div class="info-box" style="max-width: 700px; margin: 2rem auto; text-align: left;">
+                <p><strong>Core Pattern:</strong></p>
+                <ol>
+                    <li>Define fixed-size record structure</li>
+                    <li>Open file in binary mode</li>
+                    <li>Serialise/deserialise records</li>
+                    <li>Use seek for random access</li>
+                    <li>Handle errors appropriately</li>
+                    <li>Close file (or use context manager)</li>
+                </ol>
+            </div>
+
+            <p style="color: var(--text-secondary); margin-top: 2rem;">
+                <span class="badge badge-pseudo">Pseudocode</span> for design •
+                <span class="badge badge-c">C</span> for performance •
+                <span class="badge badge-python">Python</span> for productivity
+            </p>
+        </div>
+
+    </div>
+
+    <!-- Navigation -->
+    <div id="slide-counter">1 / 15</div>
+    <div id="nav-container">
+        <button class="nav-btn" id="prev-btn">←</button>
+        <button class="nav-btn" id="next-btn">→</button>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/c.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/python.min.js"></script>
+    <script>
+        hljs.highlightAll();
+
+        const slides = document.querySelectorAll('.slide');
+        const progressBar = document.getElementById('progress-bar');
+        const slideCounter = document.getElementById('slide-counter');
+        const prevBtn = document.getElementById('prev-btn');
+        const nextBtn = document.getElementById('next-btn');
+        
+        let currentSlide = 0;
+        const totalSlides = slides.length;
+
+        function showSlide(index) {
+            if (index < 0) index = 0;
+            if (index >= totalSlides) index = totalSlides - 1;
+            
+            slides.forEach((slide, i) => {
+                slide.classList.toggle('active', i === index);
+            });
+            
+            currentSlide = index;
+            progressBar.style.width = ((currentSlide + 1) / totalSlides * 100) + '%';
+            slideCounter.textContent = `${currentSlide + 1} / ${totalSlides}`;
+            prevBtn.disabled = currentSlide === 0;
+            nextBtn.disabled = currentSlide === totalSlides - 1;
+        }
+
+        prevBtn.addEventListener('click', () => showSlide(currentSlide - 1));
+        nextBtn.addEventListener('click', () => showSlide(currentSlide + 1));
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowRight' || e.key === ' ') {
+                e.preventDefault();
+                showSlide(currentSlide + 1);
+            } else if (e.key === 'ArrowLeft') {
+                e.preventDefault();
+                showSlide(currentSlide - 1);
+            } else if (e.key === 'Home') {
+                e.preventDefault();
+                showSlide(0);
+            } else if (e.key === 'End') {
+                e.preventDefault();
+                showSlide(totalSlides - 1);
+            }
+        });
+
+        showSlide(0);
+    </script>
+</body>
+</html>

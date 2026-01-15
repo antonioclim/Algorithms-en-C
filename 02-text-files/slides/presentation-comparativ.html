@@ -1,0 +1,1118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Week 02: Language Comparison | Text File Processing</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/python.min.js"></script>
+    <style>
+        :root {
+            --bg-primary: #0d1117;
+            --bg-secondary: #161b22;
+            --bg-tertiary: #21262d;
+            --text-primary: #e6edf3;
+            --text-secondary: #8b949e;
+            --accent-blue: #58a6ff;
+            --accent-green: #3fb950;
+            --accent-yellow: #d29922;
+            --accent-red: #f85149;
+            --accent-purple: #a371f7;
+            --border-color: #30363d;
+            --pseudocode-bg: #1a1f2e;
+            --c-lang-bg: #1e2a1e;
+            --python-bg: #2a1e2a;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans', Helvetica, Arial, sans-serif;
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.6;
+            overflow: hidden;
+        }
+
+        #progress-bar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 4px;
+            background: linear-gradient(90deg, var(--accent-purple), var(--accent-blue), var(--accent-green));
+            transition: width 0.3s ease;
+            z-index: 1000;
+        }
+
+        .slides-container {
+            width: 100vw;
+            height: 100vh;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .slide {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            padding: 50px 60px;
+            display: none;
+            opacity: 0;
+            transition: opacity 0.4s ease;
+            overflow-y: auto;
+        }
+
+        .slide.active {
+            display: flex;
+            flex-direction: column;
+            opacity: 1;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            font-weight: 600;
+            margin-bottom: 1.5rem;
+            color: var(--text-primary);
+        }
+
+        h2 {
+            font-size: 2rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: var(--accent-blue);
+        }
+
+        h3 {
+            font-size: 1.3rem;
+            font-weight: 600;
+            margin-bottom: 0.6rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        p {
+            font-size: 1.15rem;
+            margin-bottom: 1rem;
+            color: var(--text-secondary);
+        }
+
+        /* Title Slide */
+        .title-slide {
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+        }
+
+        .title-slide h1 {
+            font-size: 3rem;
+        }
+
+        .subtitle {
+            font-size: 1.5rem;
+            color: var(--accent-blue);
+            margin-bottom: 2rem;
+        }
+
+        .badges {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            margin-top: 1.5rem;
+        }
+
+        .badge {
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-size: 1rem;
+            font-weight: 600;
+        }
+
+        .badge.pseudocode {
+            background: var(--pseudocode-bg);
+            border: 2px solid var(--accent-purple);
+            color: var(--accent-purple);
+        }
+
+        .badge.c-lang {
+            background: var(--c-lang-bg);
+            border: 2px solid var(--accent-green);
+            color: var(--accent-green);
+        }
+
+        .badge.python {
+            background: var(--python-bg);
+            border: 2px solid var(--accent-yellow);
+            color: var(--accent-yellow);
+        }
+
+        /* Three Column Layout */
+        .three-columns {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 1rem;
+            flex: 1;
+            min-height: 0;
+        }
+
+        .column {
+            background: var(--bg-secondary);
+            border-radius: 8px;
+            padding: 1rem;
+            border: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .column.pseudocode {
+            border-top: 3px solid var(--accent-purple);
+        }
+
+        .column.pseudocode h3 {
+            color: var(--accent-purple);
+        }
+
+        .column.c-lang {
+            border-top: 3px solid var(--accent-green);
+        }
+
+        .column.c-lang h3 {
+            color: var(--accent-green);
+        }
+
+        .column.python {
+            border-top: 3px solid var(--accent-yellow);
+        }
+
+        .column.python h3 {
+            color: var(--accent-yellow);
+        }
+
+        /* Code Blocks */
+        .code-content {
+            flex: 1;
+            overflow: auto;
+            background: var(--bg-tertiary);
+            border-radius: 6px;
+            margin-top: 0.5rem;
+        }
+
+        .code-content pre {
+            margin: 0;
+            padding: 0.8rem;
+        }
+
+        .code-content code {
+            font-family: 'Fira Code', 'Consolas', 'Monaco', monospace;
+            font-size: 0.85rem;
+            line-height: 1.4;
+        }
+
+        /* Pseudocode styling */
+        .pseudocode-text {
+            font-family: 'Georgia', serif;
+            font-size: 0.95rem;
+            line-height: 1.6;
+            padding: 0.8rem;
+            color: var(--text-primary);
+        }
+
+        .keyword {
+            color: var(--accent-purple);
+            font-weight: 600;
+        }
+
+        .comment {
+            color: var(--text-secondary);
+            font-style: italic;
+        }
+
+        /* Comparison Table */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+            font-size: 1rem;
+        }
+
+        th {
+            background: var(--bg-tertiary);
+            padding: 0.8rem;
+            text-align: left;
+            border: 1px solid var(--border-color);
+        }
+
+        th.pseudocode { color: var(--accent-purple); }
+        th.c-lang { color: var(--accent-green); }
+        th.python { color: var(--accent-yellow); }
+
+        td {
+            padding: 0.8rem;
+            border: 1px solid var(--border-color);
+            color: var(--text-secondary);
+            vertical-align: top;
+        }
+
+        /* Info Box */
+        .info-box {
+            padding: 1rem;
+            border-radius: 8px;
+            margin: 1rem 0;
+            border-left: 4px solid var(--accent-blue);
+            background: rgba(88, 166, 255, 0.1);
+        }
+
+        .info-box h4 {
+            color: var(--accent-blue);
+            margin-bottom: 0.5rem;
+        }
+
+        /* Navigation */
+        .navigation {
+            position: fixed;
+            bottom: 20px;
+            right: 30px;
+            display: flex;
+            gap: 10px;
+            z-index: 100;
+        }
+
+        .nav-btn {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: all 0.2s ease;
+        }
+
+        .nav-btn:hover {
+            background: var(--accent-blue);
+            border-color: var(--accent-blue);
+        }
+
+        .nav-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .slide-counter {
+            position: fixed;
+            bottom: 25px;
+            left: 30px;
+            font-size: 1rem;
+            color: var(--text-secondary);
+            z-index: 100;
+        }
+
+        /* End slide */
+        .end-slide {
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+        }
+
+        ul {
+            margin-left: 1.5rem;
+            margin-bottom: 1rem;
+        }
+
+        li {
+            margin-bottom: 0.4rem;
+            color: var(--text-secondary);
+        }
+
+        @media (max-width: 1200px) {
+            .three-columns {
+                grid-template-columns: 1fr;
+            }
+            
+            .slide {
+                padding: 30px 40px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div id="progress-bar"></div>
+
+<div class="slides-container">
+
+    <!-- Slide 1: Title -->
+    <div class="slide title-slide active" data-slide="1">
+        <h1>🔄 Language Comparison</h1>
+        <p class="subtitle">Text File Processing Across Languages</p>
+        <p>Week 02: Algorithms and Programming Techniques</p>
+        <div class="badges">
+            <span class="badge pseudocode">📝 Pseudocode</span>
+            <span class="badge c-lang">⚙️ C</span>
+            <span class="badge python">🐍 Python</span>
+        </div>
+    </div>
+
+    <!-- Slide 2: Why Compare? -->
+    <div class="slide" data-slide="2">
+        <h2>🤔 Why Compare Languages?</h2>
+        <p>Understanding the same concept in multiple languages deepens comprehension:</p>
+        <table>
+            <tr>
+                <th class="pseudocode">📝 Pseudocode</th>
+                <th class="c-lang">⚙️ C</th>
+                <th class="python">🐍 Python</th>
+            </tr>
+            <tr>
+                <td>
+                    <strong>Purpose:</strong> Express algorithms without syntax concerns
+                    <br><br>
+                    <strong>Focus:</strong> Logic and flow
+                </td>
+                <td>
+                    <strong>Purpose:</strong> Low-level control and performance
+                    <br><br>
+                    <strong>Focus:</strong> Memory management, explicit operations
+                </td>
+                <td>
+                    <strong>Purpose:</strong> Rapid development and readability
+                    <br><br>
+                    <strong>Focus:</strong> High-level abstractions
+                </td>
+            </tr>
+        </table>
+        <div class="info-box">
+            <h4>💡 Key Insight</h4>
+            <p>C makes explicit what Python hides. Understanding C helps you appreciate what's happening "under the hood" in higher-level languages.</p>
+        </div>
+    </div>
+
+    <!-- Slide 3: Opening a File -->
+    <div class="slide" data-slide="3">
+        <h2>📂 Opening a File</h2>
+        <div class="three-columns">
+            <div class="column pseudocode">
+                <h3>📝 Pseudocode</h3>
+                <div class="code-content">
+                    <div class="pseudocode-text">
+<span class="keyword">OPEN</span> file "data.txt" <span class="keyword">FOR</span> reading
+<span class="keyword">IF</span> file cannot be opened <span class="keyword">THEN</span>
+    <span class="keyword">PRINT</span> error message
+    <span class="keyword">EXIT</span> program
+<span class="keyword">END IF</span>
+
+<span class="comment">// Use the file...</span>
+
+<span class="keyword">CLOSE</span> file
+                    </div>
+                </div>
+            </div>
+            <div class="column c-lang">
+                <h3>⚙️ C</h3>
+                <div class="code-content">
+                    <pre><code class="language-c">FILE *fp = fopen("data.txt", "r");
+if (fp == NULL) {
+    perror("Error opening file");
+    return 1;
+}
+
+// Use the file...
+
+fclose(fp);</code></pre>
+                </div>
+            </div>
+            <div class="column python">
+                <h3>🐍 Python</h3>
+                <div class="code-content">
+                    <pre><code class="language-python"># Context manager (recommended)
+with open("data.txt", "r") as fp:
+    # Use the file...
+    pass
+# Automatically closed!
+
+# Or traditional way:
+fp = open("data.txt", "r")
+# Use the file...
+fp.close()</code></pre>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Slide 4: Reading Lines -->
+    <div class="slide" data-slide="4">
+        <h2>📖 Reading Lines from a File</h2>
+        <div class="three-columns">
+            <div class="column pseudocode">
+                <h3>📝 Pseudocode</h3>
+                <div class="code-content">
+                    <div class="pseudocode-text">
+<span class="keyword">OPEN</span> file "input.txt" <span class="keyword">FOR</span> reading
+
+<span class="keyword">WHILE</span> not end of file <span class="keyword">DO</span>
+    <span class="keyword">READ</span> line from file
+    <span class="keyword">PROCESS</span> line
+<span class="keyword">END WHILE</span>
+
+<span class="keyword">CLOSE</span> file
+                    </div>
+                </div>
+            </div>
+            <div class="column c-lang">
+                <h3>⚙️ C</h3>
+                <div class="code-content">
+                    <pre><code class="language-c">FILE *fp = fopen("input.txt", "r");
+if (!fp) return 1;
+
+char line[256];
+
+// fgets returns NULL at EOF
+while (fgets(line, sizeof(line), fp)) {
+    // Process line
+    // Note: line includes '\n'
+    printf("%s", line);
+}
+
+fclose(fp);</code></pre>
+                </div>
+            </div>
+            <div class="column python">
+                <h3>🐍 Python</h3>
+                <div class="code-content">
+                    <pre><code class="language-python">with open("input.txt", "r") as fp:
+    # Iterate directly over file
+    for line in fp:
+        # Process line
+        # Note: line includes '\n'
+        print(line, end="")
+
+# Or read all at once:
+with open("input.txt") as fp:
+    lines = fp.readlines()
+    # or: content = fp.read()</code></pre>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Slide 5: Writing to a File -->
+    <div class="slide" data-slide="5">
+        <h2>✏️ Writing to a File</h2>
+        <div class="three-columns">
+            <div class="column pseudocode">
+                <h3>📝 Pseudocode</h3>
+                <div class="code-content">
+                    <div class="pseudocode-text">
+<span class="keyword">OPEN</span> file "output.txt" <span class="keyword">FOR</span> writing
+
+<span class="keyword">FOR EACH</span> student <span class="keyword">IN</span> students <span class="keyword">DO</span>
+    <span class="keyword">WRITE</span> student.name, student.grade
+<span class="keyword">END FOR</span>
+
+<span class="keyword">CLOSE</span> file
+                    </div>
+                </div>
+            </div>
+            <div class="column c-lang">
+                <h3>⚙️ C</h3>
+                <div class="code-content">
+                    <pre><code class="language-c">FILE *fp = fopen("output.txt", "w");
+if (!fp) {
+    perror("Cannot create file");
+    return 1;
+}
+
+for (int i = 0; i < count; i++) {
+    fprintf(fp, "%s: %.2f\n",
+            students[i].name,
+            students[i].grade);
+}
+
+fclose(fp);</code></pre>
+                </div>
+            </div>
+            <div class="column python">
+                <h3>🐍 Python</h3>
+                <div class="code-content">
+                    <pre><code class="language-python">with open("output.txt", "w") as fp:
+    for student in students:
+        fp.write(f"{student.name}: "
+                 f"{student.grade:.2f}\n")
+
+# Or using print:
+with open("output.txt", "w") as fp:
+    for s in students:
+        print(f"{s.name}: {s.grade:.2f}",
+              file=fp)</code></pre>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Slide 6: Parsing Structured Data -->
+    <div class="slide" data-slide="6">
+        <h2>🔍 Parsing Structured Data</h2>
+        <div class="three-columns">
+            <div class="column pseudocode">
+                <h3>📝 Pseudocode</h3>
+                <div class="code-content">
+                    <div class="pseudocode-text">
+<span class="comment">// Input: "1001 Alice 9.5"</span>
+
+<span class="keyword">FOR EACH</span> line <span class="keyword">IN</span> file <span class="keyword">DO</span>
+    <span class="keyword">SPLIT</span> line into parts
+    id ← parts[0] <span class="keyword">AS</span> integer
+    name ← parts[1] <span class="keyword">AS</span> string
+    grade ← parts[2] <span class="keyword">AS</span> float
+    
+    <span class="keyword">CREATE</span> student(id, name, grade)
+    <span class="keyword">ADD</span> student to list
+<span class="keyword">END FOR</span>
+                    </div>
+                </div>
+            </div>
+            <div class="column c-lang">
+                <h3>⚙️ C</h3>
+                <div class="code-content">
+                    <pre><code class="language-c">// Input: "1001 Alice 9.5"
+char line[256];
+while (fgets(line, sizeof(line), fp)) {
+    int id;
+    char name[50];
+    float grade;
+    
+    // sscanf returns count matched
+    if (sscanf(line, "%d %49s %f",
+               &id, name, &grade) == 3) {
+        students[count].id = id;
+        strcpy(students[count].name, name);
+        students[count].grade = grade;
+        count++;
+    }
+}</code></pre>
+                </div>
+            </div>
+            <div class="column python">
+                <h3>🐍 Python</h3>
+                <div class="code-content">
+                    <pre><code class="language-python"># Input: "1001 Alice 9.5"
+students = []
+with open("data.txt") as fp:
+    for line in fp:
+        parts = line.split()
+        if len(parts) >= 3:
+            student = {
+                "id": int(parts[0]),
+                "name": parts[1],
+                "grade": float(parts[2])
+            }
+            students.append(student)
+
+# Or with unpacking:
+id, name, grade = line.split()
+grade = float(grade)</code></pre>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Slide 7: CSV Processing -->
+    <div class="slide" data-slide="7">
+        <h2>📊 CSV File Processing</h2>
+        <div class="three-columns">
+            <div class="column pseudocode">
+                <h3>📝 Pseudocode</h3>
+                <div class="code-content">
+                    <div class="pseudocode-text">
+<span class="comment">// Input: "Alice,25,London"</span>
+
+<span class="keyword">FOR EACH</span> line <span class="keyword">IN</span> csv_file <span class="keyword">DO</span>
+    fields ← <span class="keyword">SPLIT</span> line <span class="keyword">BY</span> ","
+    
+    name ← fields[0]
+    age ← fields[1] <span class="keyword">AS</span> integer
+    city ← fields[2]
+    
+    <span class="keyword">PROCESS</span> record(name, age, city)
+<span class="keyword">END FOR</span>
+                    </div>
+                </div>
+            </div>
+            <div class="column c-lang">
+                <h3>⚙️ C</h3>
+                <div class="code-content">
+                    <pre><code class="language-c">// Manual CSV parsing
+char line[256];
+while (fgets(line, sizeof(line), fp)) {
+    line[strcspn(line, "\n")] = '\0';
+    
+    char *name = strtok(line, ",");
+    char *age_str = strtok(NULL, ",");
+    char *city = strtok(NULL, ",");
+    
+    if (name && age_str && city) {
+        int age = atoi(age_str);
+        process_record(name, age, city);
+    }
+}
+// Warning: strtok modifies string!</code></pre>
+                </div>
+            </div>
+            <div class="column python">
+                <h3>🐍 Python</h3>
+                <div class="code-content">
+                    <pre><code class="language-python">import csv
+
+# Using csv module (handles quotes!)
+with open("data.csv") as fp:
+    reader = csv.reader(fp)
+    for row in reader:
+        name, age, city = row
+        process_record(name, int(age), city)
+
+# With DictReader (uses header row):
+with open("data.csv") as fp:
+    reader = csv.DictReader(fp)
+    for row in reader:
+        print(row["name"], row["age"])</code></pre>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Slide 8: Error Handling -->
+    <div class="slide" data-slide="8">
+        <h2>🛡️ Error Handling</h2>
+        <div class="three-columns">
+            <div class="column pseudocode">
+                <h3>📝 Pseudocode</h3>
+                <div class="code-content">
+                    <div class="pseudocode-text">
+<span class="keyword">TRY</span>
+    <span class="keyword">OPEN</span> file "data.txt"
+    <span class="keyword">PROCESS</span> file contents
+<span class="keyword">CATCH</span> FileNotFound
+    <span class="keyword">PRINT</span> "File does not exist"
+<span class="keyword">CATCH</span> PermissionDenied
+    <span class="keyword">PRINT</span> "Access denied"
+<span class="keyword">FINALLY</span>
+    <span class="keyword">CLOSE</span> file <span class="keyword">IF</span> open
+<span class="keyword">END TRY</span>
+                    </div>
+                </div>
+            </div>
+            <div class="column c-lang">
+                <h3>⚙️ C</h3>
+                <div class="code-content">
+                    <pre><code class="language-c">#include &lt;errno.h&gt;
+
+FILE *fp = fopen("data.txt", "r");
+if (fp == NULL) {
+    // errno contains error code
+    switch (errno) {
+        case ENOENT:
+            fprintf(stderr, "File not found\n");
+            break;
+        case EACCES:
+            fprintf(stderr, "Access denied\n");
+            break;
+        default:
+            perror("Error");  // Generic
+    }
+    return 1;
+}
+// ... use file ...
+fclose(fp);</code></pre>
+                </div>
+            </div>
+            <div class="column python">
+                <h3>🐍 Python</h3>
+                <div class="code-content">
+                    <pre><code class="language-python">try:
+    with open("data.txt") as fp:
+        process(fp.read())
+except FileNotFoundError:
+    print("File does not exist")
+except PermissionError:
+    print("Access denied")
+except IOError as e:
+    print(f"I/O error: {e}")
+finally:
+    # Cleanup (not needed with 'with')
+    pass</code></pre>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Slide 9: Complete Example - Grade Calculator -->
+    <div class="slide" data-slide="9">
+        <h2>🎓 Complete Example: Grade Calculator</h2>
+        <div class="three-columns">
+            <div class="column pseudocode">
+                <h3>📝 Pseudocode</h3>
+                <div class="code-content">
+                    <div class="pseudocode-text">
+<span class="keyword">FUNCTION</span> calculate_averages():
+    students ← empty list
+    
+    <span class="keyword">OPEN</span> "grades.txt" <span class="keyword">FOR</span> reading
+    <span class="keyword">FOR EACH</span> line <span class="keyword">IN</span> file <span class="keyword">DO</span>
+        <span class="keyword">PARSE</span> name, grades from line
+        avg ← <span class="keyword">SUM</span>(grades) / <span class="keyword">COUNT</span>(grades)
+        <span class="keyword">ADD</span> (name, avg) to students
+    <span class="keyword">END FOR</span>
+    <span class="keyword">CLOSE</span> file
+    
+    <span class="keyword">SORT</span> students <span class="keyword">BY</span> avg descending
+    <span class="keyword">RETURN</span> students
+                    </div>
+                </div>
+            </div>
+            <div class="column c-lang">
+                <h3>⚙️ C</h3>
+                <div class="code-content">
+                    <pre><code class="language-c">typedef struct {
+    char name[50];
+    float avg;
+} Student;
+
+int compare(const void *a, const void *b) {
+    float diff = ((Student*)b)->avg 
+               - ((Student*)a)->avg;
+    return (diff > 0) - (diff < 0);
+}
+
+int load_students(Student *arr, int max) {
+    FILE *fp = fopen("grades.txt", "r");
+    if (!fp) return -1;
+    
+    char line[256];
+    int n = 0;
+    while (fgets(line, sizeof(line), fp) 
+           && n < max) {
+        // Parse and calculate...
+        n++;
+    }
+    fclose(fp);
+    qsort(arr, n, sizeof(Student), compare);
+    return n;
+}</code></pre>
+                </div>
+            </div>
+            <div class="column python">
+                <h3>🐍 Python</h3>
+                <div class="code-content">
+                    <pre><code class="language-python">def calculate_averages():
+    students = []
+    
+    with open("grades.txt") as fp:
+        for line in fp:
+            parts = line.split()
+            name = parts[0]
+            grades = [float(g) 
+                      for g in parts[1:]]
+            avg = sum(grades) / len(grades)
+            students.append({
+                "name": name,
+                "avg": avg
+            })
+    
+    # Sort by average descending
+    students.sort(key=lambda s: s["avg"],
+                  reverse=True)
+    return students</code></pre>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Slide 10: File Iteration Patterns -->
+    <div class="slide" data-slide="10">
+        <h2>🔄 File Iteration Patterns</h2>
+        <div class="three-columns">
+            <div class="column pseudocode">
+                <h3>📝 Pseudocode</h3>
+                <div class="code-content">
+                    <div class="pseudocode-text">
+<span class="comment">// Character by character</span>
+<span class="keyword">WHILE</span> not EOF <span class="keyword">DO</span>
+    ch ← <span class="keyword">READ</span> character
+    <span class="keyword">PROCESS</span> ch
+<span class="keyword">END WHILE</span>
+
+<span class="comment">// Line by line</span>
+<span class="keyword">FOR EACH</span> line <span class="keyword">IN</span> file <span class="keyword">DO</span>
+    <span class="keyword">PROCESS</span> line
+<span class="keyword">END FOR</span>
+
+<span class="comment">// Read all at once</span>
+content ← <span class="keyword">READ ALL</span> from file
+<span class="keyword">PROCESS</span> content
+                    </div>
+                </div>
+            </div>
+            <div class="column c-lang">
+                <h3>⚙️ C</h3>
+                <div class="code-content">
+                    <pre><code class="language-c">// Character by character
+int ch;
+while ((ch = fgetc(fp)) != EOF) {
+    putchar(toupper(ch));
+}
+
+// Line by line
+char line[256];
+while (fgets(line, sizeof(line), fp)) {
+    process_line(line);
+}
+
+// Read all (need to know size)
+fseek(fp, 0, SEEK_END);
+long size = ftell(fp);
+rewind(fp);
+char *buf = malloc(size + 1);
+fread(buf, 1, size, fp);
+buf[size] = '\0';</code></pre>
+                </div>
+            </div>
+            <div class="column python">
+                <h3>🐍 Python</h3>
+                <div class="code-content">
+                    <pre><code class="language-python"># Character by character
+with open("file.txt") as fp:
+    while (ch := fp.read(1)):
+        print(ch.upper(), end="")
+
+# Line by line
+with open("file.txt") as fp:
+    for line in fp:
+        process_line(line)
+
+# Read all at once
+with open("file.txt") as fp:
+    content = fp.read()
+    # or: lines = fp.readlines()</code></pre>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Slide 11: Comparison Table -->
+    <div class="slide" data-slide="11">
+        <h2>📋 Feature Comparison</h2>
+        <table>
+            <tr>
+                <th>Feature</th>
+                <th class="c-lang">⚙️ C</th>
+                <th class="python">🐍 Python</th>
+            </tr>
+            <tr>
+                <td><strong>File handle</strong></td>
+                <td><code>FILE *</code> pointer</td>
+                <td>File object (context manager)</td>
+            </tr>
+            <tr>
+                <td><strong>Open/Close</strong></td>
+                <td><code>fopen()</code> / <code>fclose()</code></td>
+                <td><code>open()</code> / automatic with <code>with</code></td>
+            </tr>
+            <tr>
+                <td><strong>Read line</strong></td>
+                <td><code>fgets(buf, size, fp)</code></td>
+                <td><code>fp.readline()</code> or iterate</td>
+            </tr>
+            <tr>
+                <td><strong>Write formatted</strong></td>
+                <td><code>fprintf(fp, fmt, ...)</code></td>
+                <td><code>fp.write(f"...")</code> or <code>print(..., file=fp)</code></td>
+            </tr>
+            <tr>
+                <td><strong>Parse fields</strong></td>
+                <td><code>sscanf()</code>, <code>strtok()</code></td>
+                <td><code>split()</code>, regex, csv module</td>
+            </tr>
+            <tr>
+                <td><strong>Error handling</strong></td>
+                <td>Check return values, <code>errno</code></td>
+                <td>Exceptions (<code>try/except</code>)</td>
+            </tr>
+            <tr>
+                <td><strong>Buffer control</strong></td>
+                <td><code>setvbuf()</code>, <code>fflush()</code></td>
+                <td><code>buffering</code> param, <code>flush()</code></td>
+            </tr>
+        </table>
+    </div>
+
+    <!-- Slide 12: When to Use Which -->
+    <div class="slide" data-slide="12">
+        <h2>🎯 When to Use Which Language</h2>
+        <div class="three-columns">
+            <div class="column pseudocode">
+                <h3>📝 Pseudocode</h3>
+                <div class="code-content" style="padding: 1rem;">
+                    <p><strong>Use when:</strong></p>
+                    <ul>
+                        <li>Designing algorithms</li>
+                        <li>Communicating ideas</li>
+                        <li>Teaching concepts</li>
+                        <li>Documentation</li>
+                        <li>Planning before coding</li>
+                    </ul>
+                    <p style="margin-top: 1rem;"><strong>Avoid when:</strong></p>
+                    <ul>
+                        <li>Need actual execution</li>
+                        <li>Performance matters</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="column c-lang">
+                <h3>⚙️ C</h3>
+                <div class="code-content" style="padding: 1rem;">
+                    <p><strong>Use when:</strong></p>
+                    <ul>
+                        <li>Performance critical</li>
+                        <li>System programming</li>
+                        <li>Embedded systems</li>
+                        <li>Memory control needed</li>
+                        <li>Understanding low-level</li>
+                    </ul>
+                    <p style="margin-top: 1rem;"><strong>Avoid when:</strong></p>
+                    <ul>
+                        <li>Rapid prototyping</li>
+                        <li>String manipulation heavy</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="column python">
+                <h3>🐍 Python</h3>
+                <div class="code-content" style="padding: 1rem;">
+                    <p><strong>Use when:</strong></p>
+                    <ul>
+                        <li>Rapid development</li>
+                        <li>Data processing</li>
+                        <li>Scripting tasks</li>
+                        <li>Prototyping</li>
+                        <li>Complex text parsing</li>
+                    </ul>
+                    <p style="margin-top: 1rem;"><strong>Avoid when:</strong></p>
+                    <ul>
+                        <li>CPU-bound operations</li>
+                        <li>Memory constraints</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Slide 13: Key Insights -->
+    <div class="slide" data-slide="13">
+        <h2>💡 Key Insights</h2>
+        <div class="info-box" style="margin-bottom: 1rem;">
+            <h4>1. Abstraction Level</h4>
+            <p>C exposes the mechanics (buffers, pointers, manual cleanup). Python hides complexity behind elegant interfaces. Both approaches have merit.</p>
+        </div>
+        <div class="info-box" style="margin-bottom: 1rem;">
+            <h4>2. Safety vs Control</h4>
+            <p>Python's context managers eliminate resource leaks. C requires discipline but offers fine-grained control.</p>
+        </div>
+        <div class="info-box" style="margin-bottom: 1rem;">
+            <h4>3. Error Handling Philosophy</h4>
+            <p>C: check return values constantly. Python: ask forgiveness (exceptions) rather than permission.</p>
+        </div>
+        <div class="info-box">
+            <h4>4. The Algorithm Remains the Same</h4>
+            <p>Regardless of language, the core logic is identical. Only syntax and memory management differ.</p>
+        </div>
+    </div>
+
+    <!-- Slide 14: Questions -->
+    <div class="slide end-slide" data-slide="14">
+        <h1>❓ Questions?</h1>
+        <p class="subtitle">Comparative Analysis Discussion</p>
+        <div style="margin-top: 3rem;">
+            <p>Remember: Learning multiple languages makes you a better programmer in <em>all</em> languages.</p>
+        </div>
+        <div class="badges" style="margin-top: 2rem;">
+            <span class="badge pseudocode">📝 Think</span>
+            <span class="badge c-lang">⚙️ Implement</span>
+            <span class="badge python">🐍 Prototype</span>
+        </div>
+    </div>
+
+</div>
+
+<!-- Navigation -->
+<div class="navigation">
+    <button class="nav-btn" id="prev-btn" onclick="prevSlide()">← Previous</button>
+    <button class="nav-btn" id="next-btn" onclick="nextSlide()">Next →</button>
+</div>
+
+<div class="slide-counter">
+    <span id="current-slide">1</span> / <span id="total-slides">14</span>
+</div>
+
+<script>
+    hljs.highlightAll();
+
+    let currentSlide = 1;
+    const totalSlides = document.querySelectorAll('.slide').length;
+    document.getElementById('total-slides').textContent = totalSlides;
+
+    function showSlide(n) {
+        const slides = document.querySelectorAll('.slide');
+        if (n < 1) n = 1;
+        if (n > totalSlides) n = totalSlides;
+        
+        slides.forEach(slide => slide.classList.remove('active'));
+        slides[n - 1].classList.add('active');
+        
+        currentSlide = n;
+        document.getElementById('current-slide').textContent = currentSlide;
+        
+        const progress = ((currentSlide - 1) / (totalSlides - 1)) * 100;
+        document.getElementById('progress-bar').style.width = progress + '%';
+        
+        document.getElementById('prev-btn').disabled = currentSlide === 1;
+        document.getElementById('next-btn').disabled = currentSlide === totalSlides;
+    }
+
+    function nextSlide() { showSlide(currentSlide + 1); }
+    function prevSlide() { showSlide(currentSlide - 1); }
+
+    document.addEventListener('keydown', function(e) {
+        switch(e.key) {
+            case 'ArrowRight':
+            case ' ':
+                e.preventDefault();
+                nextSlide();
+                break;
+            case 'ArrowLeft':
+                e.preventDefault();
+                prevSlide();
+                break;
+            case 'Home':
+                e.preventDefault();
+                showSlide(1);
+                break;
+            case 'End':
+                e.preventDefault();
+                showSlide(totalSlides);
+                break;
+        }
+    });
+
+    showSlide(1);
+</script>
+
+</body>
+</html>

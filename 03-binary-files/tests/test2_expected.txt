@@ -1,0 +1,50 @@
+
+╔════════════════════════════════════════════════════════════════╗
+║              INDEXED PRODUCT DATABASE SYSTEM                   ║
+╚════════════════════════════════════════════════════════════════╝
+
+Enter number of products: 
+[INFO] Adding 4 products to database...
+[OK] Product 101 added: Laptop
+[OK] Product 102 added: Mouse
+[OK] Product 103 added: Keyboard
+[OK] Product 104 added: Monitor
+
+[INFO] Current database contents:
+┌───────┬───────────────────────────┬────────────┬────────┬─────────┐
+│ Code  │ Name                      │      Price │    Qty │ Status  │
+├───────┼───────────────────────────┼────────────┼────────┼─────────┤
+│   101 │ Laptop                    │     999.99 │     50 │ Active  │
+│   102 │ Mouse                     │      29.99 │    200 │ Active  │
+│   103 │ Keyboard                  │      79.99 │    150 │ Active  │
+│   104 │ Monitor                   │     349.99 │     75 │ Active  │
+└───────┴───────────────────────────┴────────────┴────────┴─────────┘
+
+[INFO] Testing index-based search...
+Enter product code to search: [OK] Found: Laptop - $999.99 (50 in stock)
+
+Enter code and new price to update (or 0 0 to skip): [OK] Price updated for product 102
+
+Enter code to delete (or 0 to skip): [OK] Product 103 marked as deleted
+
+[INFO] Final database state:
+┌───────┬───────────────────────────┬────────────┬────────┬─────────┐
+│ Code  │ Name                      │      Price │    Qty │ Status  │
+├───────┼───────────────────────────┼────────────┼────────┼─────────┤
+│   101 │ Laptop                    │     999.99 │     50 │ Active  │
+│   102 │ Mouse                     │      35.99 │    200 │ Active  │
+│   103 │ Keyboard                  │      79.99 │    150 │ DELETED │
+│   104 │ Monitor                   │     349.99 │     75 │ Active  │
+└───────┴───────────────────────────┴────────────┴────────┴─────────┘
+
+╔════════════════════════════════════════════════════════════════╗
+║                    DATABASE STATISTICS                         ║
+╠════════════════════════════════════════════════════════════════╣
+║  Total Records:           4                                    ║
+║  Active Records:          3                                    ║
+║  Deleted Records:         1                                    ║
+║  File Size:             256 B                                  ║
+╚════════════════════════════════════════════════════════════════╝
+
+[INFO] Operations complete
+

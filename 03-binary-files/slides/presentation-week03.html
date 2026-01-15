@@ -1,0 +1,2151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Week 03: Binary Files in C | ATP Course</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+    <style>
+        /* =================================================================
+           CSS VARIABLES & RESET
+           ================================================================= */
+        :root {
+            /* GitHub Dark Theme Colours */
+            --bg-primary: #0d1117;
+            --bg-secondary: #161b22;
+            --bg-tertiary: #21262d;
+            --border-color: #30363d;
+            --text-primary: #e6edf3;
+            --text-secondary: #8b949e;
+            --text-muted: #6e7681;
+            
+            /* Accent Colours */
+            --accent-blue: #58a6ff;
+            --accent-green: #3fb950;
+            --accent-yellow: #d29922;
+            --accent-orange: #f0883e;
+            --accent-red: #f85149;
+            --accent-purple: #a371f7;
+            --accent-pink: #db61a2;
+            --accent-cyan: #39c5cf;
+            
+            /* Code Colours */
+            --code-bg: #161b22;
+            --code-border: #30363d;
+            
+            /* Slide Dimensions */
+            --slide-width: 1200px;
+            --slide-height: 700px;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans', Helvetica, Arial, sans-serif;
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.6;
+            overflow: hidden;
+        }
+
+        /* =================================================================
+           PROGRESS BAR
+           ================================================================= */
+        #progress-bar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 4px;
+            background: linear-gradient(90deg, var(--accent-blue), var(--accent-purple));
+            transition: width 0.3s ease;
+            z-index: 1000;
+        }
+
+        /* =================================================================
+           SLIDE CONTAINER
+           ================================================================= */
+        #presentation {
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            perspective: 1000px;
+        }
+
+        .slide {
+            display: none;
+            width: var(--slide-width);
+            max-width: 95vw;
+            min-height: var(--slide-height);
+            max-height: 95vh;
+            padding: 50px 60px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+            overflow-y: auto;
+            animation: fadeIn 0.4s ease;
+        }
+
+        .slide.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* =================================================================
+           TYPOGRAPHY
+           ================================================================= */
+        h1 {
+            font-size: 2.5rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 0.5rem;
+            border-bottom: 3px solid var(--accent-blue);
+            padding-bottom: 0.5rem;
+        }
+
+        h2 {
+            font-size: 2rem;
+            font-weight: 600;
+            color: var(--accent-blue);
+            margin-bottom: 1.5rem;
+        }
+
+        h3 {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: var(--accent-green);
+            margin: 1.5rem 0 1rem 0;
+        }
+
+        h4 {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--accent-yellow);
+            margin: 1rem 0 0.5rem 0;
+        }
+
+        p {
+            font-size: 1.1rem;
+            margin-bottom: 1rem;
+            color: var(--text-primary);
+        }
+
+        .subtitle {
+            font-size: 1.3rem;
+            color: var(--text-secondary);
+            margin-bottom: 2rem;
+        }
+
+        .small-text {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+        }
+
+        /* =================================================================
+           LISTS
+           ================================================================= */
+        ul, ol {
+            margin: 1rem 0;
+            padding-left: 1.5rem;
+        }
+
+        li {
+            font-size: 1.1rem;
+            margin-bottom: 0.75rem;
+            color: var(--text-primary);
+        }
+
+        li::marker {
+            color: var(--accent-blue);
+        }
+
+        /* =================================================================
+           CODE BLOCKS
+           ================================================================= */
+        .code-block {
+            background: var(--code-bg);
+            border: 1px solid var(--code-border);
+            border-radius: 8px;
+            margin: 1rem 0;
+            overflow: hidden;
+        }
+
+        .code-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 16px;
+            background: var(--bg-tertiary);
+            border-bottom: 1px solid var(--code-border);
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+
+        .lang-badge {
+            background: var(--accent-blue);
+            color: var(--bg-primary);
+            padding: 2px 10px;
+            border-radius: 4px;
+            font-weight: 600;
+            font-size: 0.75rem;
+        }
+
+        .lang-badge.python {
+            background: var(--accent-yellow);
+        }
+
+        .lang-badge.pseudo {
+            background: var(--accent-purple);
+        }
+
+        pre {
+            margin: 0;
+            padding: 16px;
+            overflow-x: auto;
+            font-size: 0.9rem;
+            line-height: 1.5;
+        }
+
+        code {
+            font-family: 'JetBrains Mono', 'Fira Code', 'SF Mono', Consolas, monospace;
+        }
+
+        .inline-code {
+            background: var(--bg-tertiary);
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.9em;
+            color: var(--accent-cyan);
+        }
+
+        /* =================================================================
+           BOXES & CARDS
+           ================================================================= */
+        .info-box {
+            background: rgba(88, 166, 255, 0.1);
+            border-left: 4px solid var(--accent-blue);
+            padding: 1rem 1.5rem;
+            margin: 1rem 0;
+            border-radius: 0 8px 8px 0;
+        }
+
+        .warning-box {
+            background: rgba(210, 153, 34, 0.1);
+            border-left: 4px solid var(--accent-yellow);
+            padding: 1rem 1.5rem;
+            margin: 1rem 0;
+            border-radius: 0 8px 8px 0;
+        }
+
+        .danger-box {
+            background: rgba(248, 81, 73, 0.1);
+            border-left: 4px solid var(--accent-red);
+            padding: 1rem 1.5rem;
+            margin: 1rem 0;
+            border-radius: 0 8px 8px 0;
+        }
+
+        .success-box {
+            background: rgba(63, 185, 80, 0.1);
+            border-left: 4px solid var(--accent-green);
+            padding: 1rem 1.5rem;
+            margin: 1rem 0;
+            border-radius: 0 8px 8px 0;
+        }
+
+        .card {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 1.25rem;
+            margin: 0.75rem 0;
+        }
+
+        .card-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1rem;
+            margin: 1rem 0;
+        }
+
+        /* =================================================================
+           TABLES
+           ================================================================= */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+            font-size: 0.95rem;
+        }
+
+        th {
+            background: var(--bg-tertiary);
+            color: var(--accent-blue);
+            padding: 12px 16px;
+            text-align: left;
+            border-bottom: 2px solid var(--border-color);
+            font-weight: 600;
+        }
+
+        td {
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        tr:hover {
+            background: rgba(88, 166, 255, 0.05);
+        }
+
+        /* =================================================================
+           DIAGRAMS (ASCII/BOX)
+           ================================================================= */
+        .diagram {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 1.5rem;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.85rem;
+            line-height: 1.4;
+            overflow-x: auto;
+            white-space: pre;
+            color: var(--text-secondary);
+        }
+
+        .diagram .highlight {
+            color: var(--accent-green);
+        }
+
+        .diagram .accent {
+            color: var(--accent-blue);
+        }
+
+        /* =================================================================
+           TWO-COLUMN LAYOUT
+           ================================================================= */
+        .two-columns {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            margin: 1rem 0;
+        }
+
+        .column {
+            padding: 0;
+        }
+
+        /* =================================================================
+           TITLE SLIDE SPECIFIC
+           ================================================================= */
+        .title-slide {
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .title-slide h1 {
+            font-size: 3rem;
+            border-bottom: none;
+            margin-bottom: 1rem;
+        }
+
+        .title-slide .week-number {
+            font-size: 1.5rem;
+            color: var(--accent-purple);
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        .title-slide .course-info {
+            font-size: 1.1rem;
+            color: var(--text-secondary);
+            margin-top: 2rem;
+        }
+
+        /* =================================================================
+           QUOTE BOXES
+           ================================================================= */
+        blockquote {
+            border-left: 4px solid var(--accent-purple);
+            padding: 1rem 1.5rem;
+            margin: 1.5rem 0;
+            background: rgba(163, 113, 247, 0.1);
+            border-radius: 0 8px 8px 0;
+            font-style: italic;
+        }
+
+        blockquote cite {
+            display: block;
+            margin-top: 0.5rem;
+            font-style: normal;
+            color: var(--text-secondary);
+        }
+
+        /* =================================================================
+           KEY POINTS / SUMMARY
+           ================================================================= */
+        .key-point {
+            display: flex;
+            align-items: flex-start;
+            gap: 1rem;
+            padding: 1rem;
+            background: var(--bg-tertiary);
+            border-radius: 8px;
+            margin: 0.75rem 0;
+        }
+
+        .key-point-icon {
+            font-size: 1.5rem;
+            flex-shrink: 0;
+        }
+
+        .key-point-content h4 {
+            margin: 0 0 0.25rem 0;
+            color: var(--accent-blue);
+        }
+
+        .key-point-content p {
+            margin: 0;
+            font-size: 1rem;
+        }
+
+        /* =================================================================
+           NAVIGATION
+           ================================================================= */
+        #nav-container {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            display: flex;
+            gap: 10px;
+            z-index: 100;
+        }
+
+        .nav-btn {
+            width: 50px;
+            height: 50px;
+            border: none;
+            border-radius: 8px;
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+            cursor: pointer;
+            font-size: 1.2rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+            border: 1px solid var(--border-color);
+        }
+
+        .nav-btn:hover {
+            background: var(--accent-blue);
+            color: var(--bg-primary);
+        }
+
+        .nav-btn:disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+        }
+
+        #slide-counter {
+            position: fixed;
+            bottom: 25px;
+            left: 30px;
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        /* =================================================================
+           KEYBOARD HINTS
+           ================================================================= */
+        .kbd {
+            display: inline-block;
+            padding: 3px 8px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            box-shadow: 0 2px 0 var(--border-color);
+        }
+
+        /* =================================================================
+           FUNCTION SIGNATURE
+           ================================================================= */
+        .func-sig {
+            background: var(--bg-tertiary);
+            padding: 1rem;
+            border-radius: 8px;
+            border-left: 4px solid var(--accent-cyan);
+            margin: 1rem 0;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.95rem;
+        }
+
+        .func-sig .return-type {
+            color: var(--accent-purple);
+        }
+
+        .func-sig .func-name {
+            color: var(--accent-blue);
+            font-weight: 600;
+        }
+
+        .func-sig .params {
+            color: var(--accent-yellow);
+        }
+
+        /* =================================================================
+           COMPARISON SECTIONS
+           ================================================================= */
+        .vs-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 2rem;
+        }
+
+        .vs-badge {
+            background: var(--accent-red);
+            color: white;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-weight: 700;
+            font-size: 0.9rem;
+        }
+
+        /* =================================================================
+           RESPONSIVE ADJUSTMENTS
+           ================================================================= */
+        @media (max-width: 768px) {
+            .slide {
+                padding: 30px 25px;
+            }
+
+            h1 { font-size: 1.8rem; }
+            h2 { font-size: 1.5rem; }
+            h3 { font-size: 1.2rem; }
+
+            .two-columns {
+                grid-template-columns: 1fr;
+            }
+
+            pre { font-size: 0.8rem; }
+        }
+    </style>
+</head>
+<body>
+    <!-- Progress Bar -->
+    <div id="progress-bar"></div>
+
+    <!-- Presentation Container -->
+    <div id="presentation">
+
+        <!-- ============================================================
+             SLIDE 1: Title Slide
+             ============================================================ -->
+        <div class="slide title-slide active">
+            <div class="week-number">WEEK 03</div>
+            <h1>Binary Files in C</h1>
+            <p class="subtitle">Low-Level Data Persistence and Random Access</p>
+            <div class="course-info">
+                <strong>Algorithms and Programming Techniques</strong><br>
+                Academy of Economic Studies • Bucharest<br>
+                <span class="small-text">Use ← → keys or buttons to navigate</span>
+            </div>
+        </div>
+
+        <!-- ============================================================
+             SLIDE 2: Learning Objectives
+             ============================================================ -->
+        <div class="slide">
+            <h2>🎯 Learning Objectives</h2>
+            <p>By the end of this lecture, you will be able to:</p>
+            
+            <ol>
+                <li><strong>Remember</strong> the fundamental differences between text and binary file modes, including newline translation and EOF handling</li>
+                <li><strong>Understand</strong> how data types are represented in memory and how this maps to binary file storage</li>
+                <li><strong>Apply</strong> <code class="inline-code">fread()</code>, <code class="inline-code">fwrite()</code>, <code class="inline-code">fseek()</code> and <code class="inline-code">ftell()</code> to implement persistent data storage</li>
+                <li><strong>Analyse</strong> trade-offs between text and binary formats in terms of portability, readability and efficiency</li>
+                <li><strong>Evaluate</strong> different serialisation strategies for complex data structures</li>
+                <li><strong>Create</strong> a complete binary file-based database with random access capabilities</li>
+            </ol>
+
+            <div class="info-box">
+                <strong>📌 Prerequisites:</strong> Week 02 material on text files, understanding of structures and pointers
+            </div>
+        </div>
+
+        <!-- ============================================================
+             SLIDE 3: Historical Context
+             ============================================================ -->
+        <div class="slide">
+            <h2>📜 Historical Context</h2>
+            
+            <div class="two-columns">
+                <div class="column">
+                    <h3>Evolution of File I/O</h3>
+                    <ul>
+                        <li><strong>1960s:</strong> IBM mainframes used record-oriented files with EBCDIC encoding</li>
+                        <li><strong>1969-73:</strong> Unix introduced stream-oriented files with ASCII</li>
+                        <li><strong>1989:</strong> ANSI C (C89) standardised text/binary distinction</li>
+                        <li><strong>1984:</strong> dBASE III popularised fixed-length binary records</li>
+                        <li><strong>1987:</strong> HDF format pioneered portable binary data</li>
+                    </ul>
+                </div>
+                <div class="column">
+                    <h3>Why Binary Files Matter</h3>
+                    <ul>
+                        <li>Exact representation of in-memory data</li>
+                        <li>No parsing overhead for structured data</li>
+                        <li>Random access with O(1) seek time</li>
+                        <li>Compact storage (no ASCII conversion)</li>
+                        <li>Foundation for databases and multimedia</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="warning-box">
+                <strong>⚠️ Platform Divergence:</strong> The split between Unix (newline = LF) and DOS/Windows (newline = CR+LF) continues to cause issues in text mode file handling today.
+            </div>
+        </div>
+
+        <!-- ============================================================
+             SLIDE 4: Dennis Ritchie
+             ============================================================ -->
+        <div class="slide">
+            <h2>👤 Key Figure: Dennis Ritchie (1941–2011)</h2>
+            
+            <div class="two-columns">
+                <div class="column">
+                    <div class="card">
+                        <h4>Achievements</h4>
+                        <ul>
+                            <li>Created the C programming language</li>
+                            <li>Co-developed Unix with Ken Thompson</li>
+                            <li>Designed the <code class="inline-code">FILE*</code> abstraction</li>
+                            <li>Turing Award recipient (1983)</li>
+                            <li>National Medal of Technology (1998)</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="column">
+                    <blockquote>
+                        "The only way to learn a new programming language is by writing programs in it."
+                        <cite>— Dennis Ritchie</cite>
+                    </blockquote>
+
+                    <div class="info-box">
+                        Known as "dmr" in the Unix community, Ritchie's philosophy of creating simple, composable tools profoundly shaped modern software engineering.
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ============================================================
+             SLIDE 5: Text vs Binary - Overview
+             ============================================================ -->
+        <div class="slide">
+            <h2>Text Mode vs Binary Mode</h2>
+            <p class="subtitle">Understanding the fundamental distinction</p>
+
+            <div class="vs-container">
+                <div style="flex: 1;">
+                    <h3 style="color: var(--accent-yellow);">📄 Text Mode</h3>
+                    <div class="card">
+                        <ul>
+                            <li>Mode strings: <code class="inline-code">"r"</code>, <code class="inline-code">"w"</code>, <code class="inline-code">"a"</code></li>
+                            <li>Newline translation occurs</li>
+                            <li>EOF character handling (Ctrl+Z)</li>
+                            <li>Human-readable content</li>
+                            <li>Platform-dependent behaviour</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="vs-badge">VS</div>
+
+                <div style="flex: 1;">
+                    <h3 style="color: var(--accent-cyan);">💾 Binary Mode</h3>
+                    <div class="card">
+                        <ul>
+                            <li>Mode strings: <code class="inline-code">"rb"</code>, <code class="inline-code">"wb"</code>, <code class="inline-code">"ab"</code></li>
+                            <li>No translation—bytes preserved</li>
+                            <li>No special EOF handling</li>
+                            <li>Exact memory representation</li>
+                            <li>Consistent across platforms</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ============================================================
+             SLIDE 6: Text vs Binary - Diagram
+             ============================================================ -->
+        <div class="slide">
+            <h2>Data Flow: Text vs Binary</h2>
+
+            <div class="diagram">
+                    Text Mode ("r", "w", "a")             Binary Mode ("rb", "wb", "ab")
+                    
+    ┌─────────────────────────────┐        ┌─────────────────────────────┐
+    │  Application Memory         │        │  Application Memory         │
+    │  "Hello<span class="highlight">\n</span>World"             │        │  "Hello<span class="highlight">\n</span>World"             │
+    └──────────────┬──────────────┘        └──────────────┬──────────────┘
+                   │                                      │
+                   ▼                                      ▼
+    ┌─────────────────────────────┐        ┌─────────────────────────────┐
+    │  <span class="accent">C Runtime Translation</span>      │        │  <span class="accent">No Translation</span>             │
+    │  • \n → \r\n (Windows)      │        │  • Bytes pass unchanged     │
+    │  • Ctrl+Z = EOF             │        │  • No EOF interpretation    │
+    └──────────────┬──────────────┘        └──────────────┬──────────────┘
+                   │                                      │
+                   ▼                                      ▼
+    ┌─────────────────────────────┐        ┌─────────────────────────────┐
+    │  File on Disk               │        │  File on Disk               │
+    │  "Hello<span class="highlight">\r\n</span>World" (Windows) │        │  "Hello<span class="highlight">\n</span>World"             │
+    │  "Hello<span class="highlight">\n</span>World" (Unix)      │        │  (identical everywhere)     │
+    └─────────────────────────────┘        └─────────────────────────────┘
+            </div>
+
+            <div class="danger-box">
+                <strong>⛔ Critical Rule:</strong> Never read a binary file in text mode! Bytes like <code class="inline-code">0x1A</code> will be misinterpreted as EOF, and <code class="inline-code">0x0D 0x0A</code> sequences will be corrupted.
+            </div>
+        </div>
+
+        <!-- ============================================================
+             SLIDE 7: File Opening Modes
+             ============================================================ -->
+        <div class="slide">
+            <h2>Binary File Opening Modes</h2>
+
+            <table>
+                <thead>
+                    <tr>
+                        <th>Mode</th>
+                        <th>Description</th>
+                        <th>File Must Exist?</th>
+                        <th>Initial Position</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><code class="inline-code">"rb"</code></td>
+                        <td>Read binary</td>
+                        <td>Yes</td>
+                        <td>Beginning</td>
+                    </tr>
+                    <tr>
+                        <td><code class="inline-code">"wb"</code></td>
+                        <td>Write binary (truncate/create)</td>
+                        <td>No</td>
+                        <td>Beginning</td>
+                    </tr>
+                    <tr>
+                        <td><code class="inline-code">"ab"</code></td>
+                        <td>Append binary</td>
+                        <td>No</td>
+                        <td>End</td>
+                    </tr>
+                    <tr>
+                        <td><code class="inline-code">"r+b"</code> / <code class="inline-code">"rb+"</code></td>
+                        <td>Read and write</td>
+                        <td>Yes</td>
+                        <td>Beginning</td>
+                    </tr>
+                    <tr>
+                        <td><code class="inline-code">"w+b"</code> / <code class="inline-code">"wb+"</code></td>
+                        <td>Read and write (truncate/create)</td>
+                        <td>No</td>
+                        <td>Beginning</td>
+                    </tr>
+                    <tr>
+                        <td><code class="inline-code">"a+b"</code> / <code class="inline-code">"ab+"</code></td>
+                        <td>Read and append</td>
+                        <td>No</td>
+                        <td>Read: beginning, Write: end</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <div class="info-box">
+                <strong>💡 Note:</strong> The <code class="inline-code">b</code> can appear anywhere after the first character: <code class="inline-code">"rb"</code>, <code class="inline-code">"r+b"</code>, and <code class="inline-code">"rb+"</code> are all equivalent.
+            </div>
+        </div>
+
+        <!-- ============================================================
+             SLIDE 8: Memory Layout
+             ============================================================ -->
+        <div class="slide">
+            <h2>Memory Layout and Serialisation</h2>
+            <p>Understanding how C stores data in memory is essential for binary files:</p>
+
+            <div class="code-block">
+                <div class="code-header">
+                    <span>Student Record Structure</span>
+                    <span class="lang-badge">C</span>
+                </div>
+                <pre><code class="language-c">typedef struct {
+    int   id;           // 4 bytes (typically)
+    char  name[32];     // 32 bytes
+    float gpa;          // 4 bytes (typically)  
+    int   year;         // 4 bytes (typically)
+} Student;              // Total: 44 bytes (no padding assumed)</code></pre>
+            </div>
+
+            <div class="diagram">
+Memory Layout (44 bytes):
+┌────────────┬──────────────────────────────────┬────────────┬────────────┐
+│  id (4B)   │           name (32B)             │  gpa (4B)  │ year (4B)  │
+├────────────┼──────────────────────────────────┼────────────┼────────────┤
+│ <span class="accent">0x00001234</span> │ "Alice Johnson\0..."             │ <span class="accent">0x40533333</span> │ <span class="accent">0x000007E8</span> │
+│   (4660)   │                                  │   (3.30)   │   (2024)   │
+└────────────┴──────────────────────────────────┴────────────┴────────────┘
+Offset:  0          4                            36          40         44
+            </div>
+        </div>
+
+        <!-- ============================================================
+             SLIDE 9: fwrite Function
+             ============================================================ -->
+        <div class="slide">
+            <h2>The fwrite() Function</h2>
+            <p class="subtitle">Writing binary data to files</p>
+
+            <div class="func-sig">
+                <span class="return-type">size_t</span> <span class="func-name">fwrite</span>(<span class="params">const void *ptr, size_t size, size_t nmemb, FILE *stream</span>);
+            </div>
+
+            <div class="two-columns">
+                <div class="column">
+                    <h4>Parameters</h4>
+                    <ul>
+                        <li><code class="inline-code">ptr</code> — Pointer to data to write</li>
+                        <li><code class="inline-code">size</code> — Size of each element</li>
+                        <li><code class="inline-code">nmemb</code> — Number of elements</li>
+                        <li><code class="inline-code">stream</code> — File pointer</li>
+                    </ul>
+                    <h4>Returns</h4>
+                    <p>Number of elements successfully written (may be less than <code class="inline-code">nmemb</code> on error)</p>
+                </div>
+                <div class="column">
+                    <div class="code-block">
+                        <div class="code-header">
+                            <span>Writing a single structure</span>
+                            <span class="lang-badge">C</span>
+                        </div>
+                        <pre><code class="language-c">Student s = {1001, "Alice", 3.75f, 2024};
+FILE *fp = fopen("students.bin", "wb");
+
+if (fwrite(&s, sizeof(Student), 1, fp) != 1) {
+    perror("Write failed");
+}
+
+fclose(fp);</code></pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ============================================================
+             SLIDE 10: fread Function
+             ============================================================ -->
+        <div class="slide">
+            <h2>The fread() Function</h2>
+            <p class="subtitle">Reading binary data from files</p>
+
+            <div class="func-sig">
+                <span class="return-type">size_t</span> <span class="func-name">fread</span>(<span class="params">void *ptr, size_t size, size_t nmemb, FILE *stream</span>);
+            </div>
+
+            <div class="two-columns">
+                <div class="column">
+                    <h4>Parameters</h4>
+                    <ul>
+                        <li><code class="inline-code">ptr</code> — Buffer to store data</li>
+                        <li><code class="inline-code">size</code> — Size of each element</li>
+                        <li><code class="inline-code">nmemb</code> — Max elements to read</li>
+                        <li><code class="inline-code">stream</code> — File pointer</li>
+                    </ul>
+                    <h4>Returns</h4>
+                    <p>Number of elements successfully read (may be less at EOF or on error)</p>
+                </div>
+                <div class="column">
+                    <div class="code-block">
+                        <div class="code-header">
+                            <span>Reading structures in a loop</span>
+                            <span class="lang-badge">C</span>
+                        </div>
+                        <pre><code class="language-c">Student s;
+FILE *fp = fopen("students.bin", "rb");
+
+while (fread(&s, sizeof(Student), 1, fp) == 1) {
+    printf("%d: %s (%.2f)\n", 
+           s.id, s.name, s.gpa);
+}
+
+fclose(fp);</code></pre>
+                    </div>
+                </div>
+            </div>
+
+            <div class="warning-box">
+                <strong>⚠️ Always check the return value!</strong> A return less than <code class="inline-code">nmemb</code> indicates EOF or error. Use <code class="inline-code">feof()</code> and <code class="inline-code">ferror()</code> to distinguish.
+            </div>
+        </div>
+
+        <!-- ============================================================
+             SLIDE 11: fseek Function
+             ============================================================ -->
+        <div class="slide">
+            <h2>The fseek() Function</h2>
+            <p class="subtitle">Positioning within binary files</p>
+
+            <div class="func-sig">
+                <span class="return-type">int</span> <span class="func-name">fseek</span>(<span class="params">FILE *stream, long offset, int whence</span>);
+            </div>
+
+            <table>
+                <thead>
+                    <tr>
+                        <th>whence Value</th>
+                        <th>Starting Point</th>
+                        <th>Typical Use</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><code class="inline-code">SEEK_SET</code></td>
+                        <td>Beginning of file</td>
+                        <td>Absolute positioning</td>
+                    </tr>
+                    <tr>
+                        <td><code class="inline-code">SEEK_CUR</code></td>
+                        <td>Current position</td>
+                        <td>Relative movement</td>
+                    </tr>
+                    <tr>
+                        <td><code class="inline-code">SEEK_END</code></td>
+                        <td>End of file</td>
+                        <td>Calculate file size, append</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <div class="code-block">
+                <div class="code-header">
+                    <span>Random access to record N</span>
+                    <span class="lang-badge">C</span>
+                </div>
+                <pre><code class="language-c">// Jump directly to record at index n (0-based)
+long offset = n * sizeof(Student);
+fseek(fp, offset, SEEK_SET);
+fread(&student, sizeof(Student), 1, fp);</code></pre>
+            </div>
+        </div>
+
+        <!-- ============================================================
+             SLIDE 12: ftell Function
+             ============================================================ -->
+        <div class="slide">
+            <h2>The ftell() Function</h2>
+            <p class="subtitle">Querying the current file position</p>
+
+            <div class="func-sig">
+                <span class="return-type">long</span> <span class="func-name">ftell</span>(<span class="params">FILE *stream</span>);
+            </div>
+
+            <div class="two-columns">
+                <div class="column">
+                    <h4>Returns</h4>
+                    <p>Current position in bytes from beginning, or <code class="inline-code">-1L</code> on error.</p>
+
+                    <h4>Common Uses</h4>
+                    <ul>
+                        <li>Calculating file size</li>
+                        <li>Saving position for later return</li>
+                        <li>Computing record count</li>
+                    </ul>
+                </div>
+                <div class="column">
+                    <div class="code-block">
+                        <div class="code-header">
+                            <span>Calculate file size and record count</span>
+                            <span class="lang-badge">C</span>
+                        </div>
+                        <pre><code class="language-c">fseek(fp, 0, SEEK_END);    // Go to end
+long file_size = ftell(fp); // Get position
+fseek(fp, 0, SEEK_SET);    // Return to start
+
+size_t record_count = file_size / sizeof(Student);
+printf("File contains %zu records\n", record_count);</code></pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ============================================================
+             SLIDE 13: File Position Model
+             ============================================================ -->
+        <div class="slide">
+            <h2>File Position Model</h2>
+
+            <div class="diagram">
+                        ftell() returns current position
+                                     │
+                                     ▼
+       ┌─────┬─────┬─────┬─────┬─────┬─────┬─────┬─────┐
+       │ R0  │ R1  │ R2  │ R3  │ R4  │ R5  │ R6  │ EOF │  Records
+       └─────┴─────┴─────┴─────┴─────┴─────┴─────┴─────┘
+         ↑                 ↑                         ↑
+         │                 │                         │
+    <span class="accent">SEEK_SET</span>=0     <span class="accent">SEEK_SET</span> + n×sizeof(R)      <span class="accent">SEEK_END</span>=0
+    
+    
+    <span class="highlight">Random Access Formula:</span>
+    
+        position = record_index × sizeof(record)
+        fseek(fp, position, SEEK_SET);
+        fread(&record, sizeof(record), 1, fp);
+            </div>
+
+            <div class="success-box">
+                <strong>✓ Key Insight:</strong> With fixed-size records, any record can be accessed in O(1) time using simple arithmetic—no need to read through preceding records.
+            </div>
+        </div>
+
+        <!-- ============================================================
+             SLIDE 14: Complexity Comparison
+             ============================================================ -->
+        <div class="slide">
+            <h2>Complexity Analysis</h2>
+            <p class="subtitle">Sequential vs Random Access Performance</p>
+
+            <table>
+                <thead>
+                    <tr>
+                        <th>Operation</th>
+                        <th>Sequential (Text)</th>
+                        <th>Random Access (Binary)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Read record n</td>
+                        <td style="color: var(--accent-red);">O(n)</td>
+                        <td style="color: var(--accent-green);">O(1)</td>
+                    </tr>
+                    <tr>
+                        <td>Append record</td>
+                        <td style="color: var(--accent-green);">O(1)</td>
+                        <td style="color: var(--accent-green);">O(1)</td>
+                    </tr>
+                    <tr>
+                        <td>Update record n</td>
+                        <td style="color: var(--accent-red);">O(n) rebuild</td>
+                        <td style="color: var(--accent-green);">O(1)</td>
+                    </tr>
+                    <tr>
+                        <td>Delete record n</td>
+                        <td style="color: var(--accent-red);">O(n) rebuild</td>
+                        <td style="color: var(--accent-yellow);">O(1) tombstone</td>
+                    </tr>
+                    <tr>
+                        <td>Search (unsorted)</td>
+                        <td>O(n)</td>
+                        <td>O(n)</td>
+                    </tr>
+                    <tr>
+                        <td>Search (sorted + index)</td>
+                        <td>O(n)</td>
+                        <td style="color: var(--accent-green);">O(log n)</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <div class="info-box">
+                <strong>💡 Trade-off:</strong> Binary files sacrifice human readability and portability for dramatic performance improvements on large datasets.
+            </div>
+        </div>
+
+        <!-- ============================================================
+             SLIDE 15: Complete Example - Writing
+             ============================================================ -->
+        <div class="slide">
+            <h2>Complete Example: Writing Records</h2>
+
+            <div class="code-block">
+                <div class="code-header">
+                    <span>Writing an array of structures to a binary file</span>
+                    <span class="lang-badge">C</span>
+                </div>
+                <pre><code class="language-c">#include &lt;stdio.h&gt;
+#include &lt;string.h&gt;
+
+typedef struct {
+    int   id;
+    char  name[50];
+    float gpa;
+    int   year;
+} Student;
+
+int save_students(const char *filename, Student *students, size_t count) {
+    FILE *fp = fopen(filename, "wb");
+    if (!fp) {
+        perror("Cannot open file for writing");
+        return -1;
+    }
+    
+    size_t written = fwrite(students, sizeof(Student), count, fp);
+    if (written != count) {
+        fprintf(stderr, "Warning: only wrote %zu of %zu records\n", written, count);
+    }
+    
+    fclose(fp);
+    return (int)written;
+}</code></pre>
+            </div>
+        </div>
+
+        <!-- ============================================================
+             SLIDE 16: Complete Example - Reading
+             ============================================================ -->
+        <div class="slide">
+            <h2>Complete Example: Reading Records</h2>
+
+            <div class="code-block">
+                <div class="code-header">
+                    <span>Reading all records from a binary file</span>
+                    <span class="lang-badge">C</span>
+                </div>
+                <pre><code class="language-c">int load_students(const char *filename, Student **students, size_t *count) {
+    FILE *fp = fopen(filename, "rb");
+    if (!fp) {
+        *students = NULL;
+        *count = 0;
+        return -1;
+    }
+    
+    // Calculate number of records
+    fseek(fp, 0, SEEK_END);
+    long file_size = ftell(fp);
+    fseek(fp, 0, SEEK_SET);
+    
+    *count = file_size / sizeof(Student);
+    *students = malloc(*count * sizeof(Student));
+    
+    if (!*students) {
+        fclose(fp);
+        return -1;
+    }
+    
+    size_t read = fread(*students, sizeof(Student), *count, fp);
+    fclose(fp);
+    
+    return (read == *count) ? 0 : -1;
+}</code></pre>
+            </div>
+        </div>
+
+        <!-- ============================================================
+             SLIDE 17: Random Access Update
+             ============================================================ -->
+        <div class="slide">
+            <h2>Random Access: Updating a Specific Record</h2>
+
+            <div class="code-block">
+                <div class="code-header">
+                    <span>Update student GPA by record index</span>
+                    <span class="lang-badge">C</span>
+                </div>
+                <pre><code class="language-c">int update_student_gpa(const char *filename, size_t index, float new_gpa) {
+    FILE *fp = fopen(filename, "r+b");  // Read and write mode
+    if (!fp) return -1;
+    
+    // Calculate offset and seek to the record
+    long offset = (long)(index * sizeof(Student));
+    if (fseek(fp, offset, SEEK_SET) != 0) {
+        fclose(fp);
+        return -1;
+    }
+    
+    // Read the existing record
+    Student s;
+    if (fread(&s, sizeof(Student), 1, fp) != 1) {
+        fclose(fp);
+        return -1;
+    }
+    
+    // Modify the field
+    s.gpa = new_gpa;
+    
+    // Seek back and write the updated record
+    fseek(fp, offset, SEEK_SET);
+    fwrite(&s, sizeof(Student), 1, fp);
+    
+    fclose(fp);
+    return 0;
+}</code></pre>
+            </div>
+        </div>
+
+        <!-- ============================================================
+             SLIDE 18: Portability Issues
+             ============================================================ -->
+        <div class="slide">
+            <h2>⚠️ Portability Concerns</h2>
+            <p class="subtitle">Why binary files can break across systems</p>
+
+            <div class="card-grid">
+                <div class="card">
+                    <h4 style="color: var(--accent-red);">Endianness</h4>
+                    <p>x86/x64: Little-endian<br>
+                    Network/PowerPC: Big-endian</p>
+                    <p class="small-text">Integer <code class="inline-code">0x12345678</code> stored differently!</p>
+                </div>
+
+                <div class="card">
+                    <h4 style="color: var(--accent-red);">Structure Padding</h4>
+                    <p>Compilers add padding bytes for alignment optimisation.</p>
+                    <p class="small-text">Same struct, different sizes on different compilers.</p>
+                </div>
+
+                <div class="card">
+                    <h4 style="color: var(--accent-red);">Type Sizes</h4>
+                    <p><code class="inline-code">int</code> may be 2, 4, or 8 bytes<br>
+                    <code class="inline-code">long</code> varies by platform</p>
+                    <p class="small-text">Use <code class="inline-code">int32_t</code>, <code class="inline-code">int64_t</code> for portability.</p>
+                </div>
+
+                <div class="card">
+                    <h4 style="color: var(--accent-yellow);">Floating-Point</h4>
+                    <p>IEEE 754 is near-universal but not guaranteed.</p>
+                    <p class="small-text">Embedded systems may use different formats.</p>
+                </div>
+            </div>
+
+            <div class="warning-box">
+                <strong>Solution:</strong> For portable binary formats, explicitly serialise each field with known sizes and byte order, or use established formats like Protocol Buffers or MessagePack.
+            </div>
+        </div>
+
+        <!-- ============================================================
+             SLIDE 19: Structure Padding
+             ============================================================ -->
+        <div class="slide">
+            <h2>Structure Padding Explained</h2>
+
+            <div class="two-columns">
+                <div class="column">
+                    <div class="code-block">
+                        <div class="code-header">
+                            <span>Unpadded expectation</span>
+                            <span class="lang-badge">C</span>
+                        </div>
+                        <pre><code class="language-c">struct BadLayout {
+    char  a;      // 1 byte
+    int   b;      // 4 bytes
+    char  c;      // 1 byte
+    double d;     // 8 bytes
+};
+// Expected: 14 bytes
+// Actual: often 24 bytes!</code></pre>
+                    </div>
+                </div>
+                <div class="column">
+                    <div class="diagram" style="font-size: 0.75rem;">
+With padding (typical 64-bit):
+┌───┬───────┬────────┬───┬───────┬──────────────────┐
+│ a │<span class="accent">padding</span>│   b    │ c │<span class="accent">padding</span>│        d         │
+└───┴───────┴────────┴───┴───────┴──────────────────┘
+ 1B    3B      4B     1B    7B         8B    = 24B
+                    </div>
+                </div>
+            </div>
+
+            <div class="code-block">
+                <div class="code-header">
+                    <span>Solutions for predictable layout</span>
+                    <span class="lang-badge">C</span>
+                </div>
+                <pre><code class="language-c">// Option 1: Use #pragma pack (compiler-specific)
+#pragma pack(push, 1)
+struct Packed { ... };
+#pragma pack(pop)
+
+// Option 2: Reorder fields (largest first)
+struct OptimalLayout {
+    double d;     // 8 bytes (8-byte aligned)
+    int    b;     // 4 bytes (4-byte aligned)
+    char   a;     // 1 byte
+    char   c;     // 1 byte
+    // 2 bytes padding at end
+};  // Total: 16 bytes</code></pre>
+            </div>
+        </div>
+
+        <!-- ============================================================
+             SLIDE 20: Binary File Format Design
+             ============================================================ -->
+        <div class="slide">
+            <h2>Designing a Binary File Format</h2>
+            <p class="subtitle">Best practices for robust file structures</p>
+
+            <div class="code-block">
+                <div class="code-header">
+                    <span>Professional file header design</span>
+                    <span class="lang-badge">C</span>
+                </div>
+                <pre><code class="language-c">typedef struct {
+    char     magic[4];       // "STDB" - identifies file type
+    uint32_t version;        // Format version for compatibility
+    uint32_t record_count;   // Number of records in file
+    uint32_t record_size;    // Size of each record
+    uint32_t flags;          // Feature flags
+    uint32_t checksum;       // Data integrity verification
+    uint8_t  reserved[40];   // Future expansion
+} FileHeader;                // Total: 64 bytes
+
+// Validation function
+int validate_header(const FileHeader *h) {
+    if (memcmp(h->magic, "STDB", 4) != 0) return -1;  // Wrong type
+    if (h->version > CURRENT_VERSION) return -2;      // Too new
+    if (h->record_size != sizeof(Student)) return -3; // Size mismatch
+    return 0;  // Valid
+}</code></pre>
+            </div>
+        </div>
+
+        <!-- ============================================================
+             SLIDE 21: Index Files
+             ============================================================ -->
+        <div class="slide">
+            <h2>Index Files for Fast Lookup</h2>
+            <p class="subtitle">Separating search keys from data for O(log n) access</p>
+
+            <div class="diagram">
+    <span class="highlight">Index File (sorted by ID)</span>                <span class="highlight">Data File (insertion order)</span>
+    ┌────────┬────────────┐                  ┌───────────────────────────┐
+    │   ID   │   Offset   │                  │  Offset 0: Record (ID=103)│
+    ├────────┼────────────┤                  ├───────────────────────────┤
+    │   101  │    128     │ ───────────┐     │  Offset 64: Record (ID=105)│
+    │   102  │    256     │ ────────┐  │     ├───────────────────────────┤
+    │   103  │     0      │ ──┐     │  │     │  Offset 128: Record (ID=101)│
+    │   104  │    320     │   │     │  └────▶├───────────────────────────┤
+    │   105  │     64     │ ──│──┐  │        │  Offset 192: Record (ID=102)│
+    └────────┴────────────┘   │  │  └───────▶├───────────────────────────┤
+                              │  │           │  Offset 256: Record (ID=104)│
+                              │  └──────────▶└───────────────────────────┘
+                              │
+                              └──▶ Direct jump to data!
+            </div>
+
+            <div class="success-box">
+                <strong>✓ Advantage:</strong> Binary search on the small index file, then single seek to data. Ideal for read-heavy workloads.
+            </div>
+        </div>
+
+        <!-- ============================================================
+             SLIDE 22: Index Implementation
+             ============================================================ -->
+        <div class="slide">
+            <h2>Index File Implementation</h2>
+
+            <div class="code-block">
+                <div class="code-header">
+                    <span>Index entry structure and binary search</span>
+                    <span class="lang-badge">C</span>
+                </div>
+                <pre><code class="language-c">typedef struct {
+    int  key;         // Search key (e.g., student ID)
+    long data_offset; // Position in data file
+} IndexEntry;
+
+// Comparison function for qsort/bsearch
+int compare_index(const void *a, const void *b) {
+    return ((IndexEntry*)a)->key - ((IndexEntry*)b)->key;
+}
+
+// Fast lookup using index
+Student* find_by_id(int id, IndexEntry *index, size_t index_count, FILE *data_fp) {
+    IndexEntry key = { .key = id };
+    IndexEntry *found = bsearch(&key, index, index_count, 
+                                sizeof(IndexEntry), compare_index);
+    if (!found) return NULL;
+    
+    static Student result;
+    fseek(data_fp, found->data_offset, SEEK_SET);
+    fread(&result, sizeof(Student), 1, data_fp);
+    return &result;
+}</code></pre>
+            </div>
+        </div>
+
+        <!-- ============================================================
+             SLIDE 23: Deletion Strategies
+             ============================================================ -->
+        <div class="slide">
+            <h2>Deletion Strategies</h2>
+            <p class="subtitle">Handling record removal in binary files</p>
+
+            <div class="two-columns">
+                <div class="column">
+                    <h3 style="color: var(--accent-yellow);">Tombstone Marking</h3>
+                    <div class="card">
+                        <ul>
+                            <li>Mark record as deleted (flag field)</li>
+                            <li>O(1) deletion time</li>
+                            <li>Space not reclaimed immediately</li>
+                            <li>Requires periodic compaction</li>
+                        </ul>
+                    </div>
+                    <div class="code-block">
+                        <div class="code-header"><span>Tombstone approach</span><span class="lang-badge">C</span></div>
+                        <pre><code class="language-c">typedef struct {
+    int  deleted;  // 1 = tombstone
+    int  id;
+    char name[50];
+    // ...
+} Record;</code></pre>
+                    </div>
+                </div>
+                <div class="column">
+                    <h3 style="color: var(--accent-cyan);">Swap and Truncate</h3>
+                    <div class="card">
+                        <ul>
+                            <li>Swap with last record</li>
+                            <li>Truncate file by one record</li>
+                            <li>Immediate space reclamation</li>
+                            <li>Changes record positions (breaks indices)</li>
+                        </ul>
+                    </div>
+                    <div class="code-block">
+                        <div class="code-header"><span>Swap approach</span><span class="lang-badge">C</span></div>
+                        <pre><code class="language-c">// Read last record
+// Write to deleted position
+// Truncate file
+ftruncate(fileno(fp), 
+  new_size);</code></pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ============================================================
+             SLIDE 24: Error Handling
+             ============================================================ -->
+        <div class="slide">
+            <h2>Robust Error Handling</h2>
+            <p class="subtitle">Defensive programming for file operations</p>
+
+            <div class="code-block">
+                <div class="code-header">
+                    <span>Comprehensive error checking pattern</span>
+                    <span class="lang-badge">C</span>
+                </div>
+                <pre><code class="language-c">int safe_write_record(const char *filename, const Student *s) {
+    FILE *fp = fopen(filename, "ab");
+    if (!fp) {
+        perror("Failed to open file");
+        return -1;
+    }
+    
+    size_t written = fwrite(s, sizeof(Student), 1, fp);
+    
+    if (written != 1) {
+        if (ferror(fp)) {
+            perror("Write error");
+        }
+        fclose(fp);
+        return -1;
+    }
+    
+    // Ensure data reaches disk
+    if (fflush(fp) != 0) {
+        perror("Flush failed");
+        fclose(fp);
+        return -1;
+    }
+    
+    fclose(fp);
+    return 0;
+}</code></pre>
+            </div>
+        </div>
+
+        <!-- ============================================================
+             SLIDE 25: ferror and feof
+             ============================================================ -->
+        <div class="slide">
+            <h2>Distinguishing EOF from Errors</h2>
+
+            <div class="two-columns">
+                <div class="column">
+                    <div class="func-sig">
+                        <span class="return-type">int</span> <span class="func-name">feof</span>(<span class="params">FILE *stream</span>);
+                    </div>
+                    <p>Returns non-zero if end-of-file indicator is set.</p>
+                    
+                    <div class="func-sig">
+                        <span class="return-type">int</span> <span class="func-name">ferror</span>(<span class="params">FILE *stream</span>);
+                    </div>
+                    <p>Returns non-zero if error indicator is set.</p>
+                    
+                    <div class="func-sig">
+                        <span class="return-type">void</span> <span class="func-name">clearerr</span>(<span class="params">FILE *stream</span>);
+                    </div>
+                    <p>Clears both EOF and error indicators.</p>
+                </div>
+                <div class="column">
+                    <div class="code-block">
+                        <div class="code-header"><span>Proper read loop with diagnostics</span><span class="lang-badge">C</span></div>
+                        <pre><code class="language-c">Student s;
+while (fread(&s, sizeof(s), 1, fp) == 1) {
+    process_student(&s);
+}
+
+// Why did we stop?
+if (feof(fp)) {
+    printf("Reached end of file\n");
+} else if (ferror(fp)) {
+    perror("Read error occurred");
+    clearerr(fp);  // Reset for retry
+}</code></pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ============================================================
+             SLIDE 26: Common Mistakes
+             ============================================================ -->
+        <div class="slide">
+            <h2>⚠️ Common Mistakes</h2>
+
+            <div class="danger-box">
+                <h4>1. Forgetting binary mode</h4>
+                <pre style="margin-top: 0.5rem;"><code class="language-c">FILE *fp = fopen("data.bin", "w");   // WRONG - text mode!
+FILE *fp = fopen("data.bin", "wb");  // CORRECT</code></pre>
+            </div>
+
+            <div class="danger-box">
+                <h4>2. Not checking return values</h4>
+                <pre style="margin-top: 0.5rem;"><code class="language-c">fwrite(&s, sizeof(s), 1, fp);        // WRONG - ignoring result
+if (fwrite(&s, sizeof(s), 1, fp) != 1) { /* handle error */ }</code></pre>
+            </div>
+
+            <div class="danger-box">
+                <h4>3. Using fseek incorrectly after write</h4>
+                <pre style="margin-top: 0.5rem;"><code class="language-c">// After writing, must seek before reading (even to current position)
+fwrite(&s, sizeof(s), 1, fp);
+fread(&t, sizeof(t), 1, fp);         // UNDEFINED BEHAVIOUR!
+
+fwrite(&s, sizeof(s), 1, fp);
+fseek(fp, 0, SEEK_CUR);              // Flush write buffer
+fread(&t, sizeof(t), 1, fp);         // CORRECT</code></pre>
+            </div>
+        </div>
+
+        <!-- ============================================================
+             SLIDE 27: More Common Mistakes
+             ============================================================ -->
+        <div class="slide">
+            <h2>⚠️ More Common Mistakes</h2>
+
+            <div class="danger-box">
+                <h4>4. Writing pointers to files</h4>
+                <pre style="margin-top: 0.5rem;"><code class="language-c">typedef struct {
+    char *name;  // Pointer - will be meaningless when file is reloaded!
+} BadRecord;
+// Solution: Use char name[SIZE] instead</code></pre>
+            </div>
+
+            <div class="danger-box">
+                <h4>5. Assuming sizeof is constant across platforms</h4>
+                <pre style="margin-top: 0.5rem;"><code class="language-c">// WRONG - different on 32-bit vs 64-bit
+fwrite(&ptr_value, sizeof(long), 1, fp);
+
+// CORRECT - use fixed-width types
+#include &lt;stdint.h&gt;
+int64_t value = ...;
+fwrite(&value, sizeof(int64_t), 1, fp);</code></pre>
+            </div>
+
+            <div class="danger-box">
+                <h4>6. Not closing files (resource leak)</h4>
+                <pre style="margin-top: 0.5rem;"><code class="language-c">void leak_example(void) {
+    FILE *fp = fopen("data.bin", "rb");
+    if (!fp) return;  // Early return without close!
+    // ... processing ...
+}   // fp never closed - file handle leaked!</code></pre>
+            </div>
+        </div>
+
+        <!-- ============================================================
+             SLIDE 28: Debugging with hexdump
+             ============================================================ -->
+        <div class="slide">
+            <h2>🔧 Debugging Binary Files</h2>
+            <p class="subtitle">Tools for inspecting binary content</p>
+
+            <div class="code-block">
+                <div class="code-header">
+                    <span>Using hexdump / xxd</span>
+                    <span class="lang-badge">Bash</span>
+                </div>
+                <pre><code class="language-bash"># View first 128 bytes in hex + ASCII
+$ hexdump -C students.bin | head -8
+00000000  e9 03 00 00 41 6c 69 63  65 20 4a 6f 68 6e 73 6f  |....Alice Johnso|
+00000010  6e 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00  |n...............|
+00000020  00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00  |................|
+00000030  00 00 00 00 00 00 70 f0  c0 40 e8 07 00 00        |......p..@....  |
+
+# Using xxd for more control
+$ xxd -l 64 -c 16 students.bin
+
+# View as specific data type (requires od)
+$ od -A x -t d4 students.bin   # View as 4-byte integers</code></pre>
+            </div>
+
+            <div class="info-box">
+                <strong>💡 Reading the output:</strong> <code class="inline-code">e9 03 00 00</code> is <code class="inline-code">0x000003e9</code> = 1001 (little-endian integer)
+            </div>
+        </div>
+
+        <!-- ============================================================
+             SLIDE 29: Valgrind for File Operations
+             ============================================================ -->
+        <div class="slide">
+            <h2>🔧 Memory Checking with Valgrind</h2>
+
+            <div class="code-block">
+                <div class="code-header">
+                    <span>Running Valgrind on file I/O programs</span>
+                    <span class="lang-badge">Bash</span>
+                </div>
+                <pre><code class="language-bash"># Check for memory leaks and file handle leaks
+$ valgrind --leak-check=full --track-fds=yes ./myprogram
+
+# Example output showing unclosed file
+==12345== FILE DESCRIPTORS: 4 open at exit.
+==12345== Open file descriptor 3: students.bin
+==12345==    at 0x4E7B4B0: fopen (in /lib/libc.so.6)
+==12345==    by 0x401234: main (myprogram.c:15)
+
+# Check for uninitialised reads (common with structs)
+$ valgrind --track-origins=yes ./myprogram</code></pre>
+            </div>
+
+            <div class="warning-box">
+                <strong>⚠️ Common Issue:</strong> Writing uninitialized padding bytes to binary files. Use <code class="inline-code">memset(&record, 0, sizeof(record))</code> before populating fields.
+            </div>
+        </div>
+
+        <!-- ============================================================
+             SLIDE 30: Industrial Application - SQLite
+             ============================================================ -->
+        <div class="slide">
+            <h2>🏭 Case Study: SQLite File Format</h2>
+            <p class="subtitle">Real-world binary file design</p>
+
+            <div class="two-columns">
+                <div class="column">
+                    <h4>Key Design Elements</h4>
+                    <ul>
+                        <li>16-byte magic header: <code class="inline-code">"SQLite format 3\0"</code></li>
+                        <li>Page-based structure (default 4KB pages)</li>
+                        <li>B-tree organisation for tables and indices</li>
+                        <li>Big-endian integers for cross-platform compatibility</li>
+                        <li>Write-ahead logging (WAL) for crash recovery</li>
+                    </ul>
+                </div>
+                <div class="column">
+                    <div class="diagram" style="font-size: 0.8rem;">
+SQLite File Structure:
+┌────────────────────────────────┐
+│ Database Header (100 bytes)    │
+│ • Magic number                 │
+│ • Page size                    │
+│ • File format versions         │
+├────────────────────────────────┤
+│ Page 1: Schema table           │
+├────────────────────────────────┤
+│ Page 2..N: B-tree pages        │
+│ • Table data                   │
+│ • Index data                   │
+├────────────────────────────────┤
+│ Free pages (linked list)       │
+└────────────────────────────────┘
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ============================================================
+             SLIDE 31: fflush and fsync
+             ============================================================ -->
+        <div class="slide">
+            <h2>Ensuring Data Persistence</h2>
+            <p class="subtitle">Understanding buffering and synchronisation</p>
+
+            <div class="diagram">
+Application Buffer     C Library Buffer       OS Page Cache          Disk
+┌─────────────┐       ┌─────────────┐       ┌─────────────┐       ┌─────────┐
+│  fwrite()   │ ───▶  │   Internal  │ ───▶  │   Kernel    │ ───▶  │ Platters│
+│   calls     │       │   Buffer    │       │   Buffer    │       │  /SSD   │
+└─────────────┘       └─────────────┘       └─────────────┘       └─────────┘
+                              │                     │
+                        <span class="accent">fflush()</span>            <span class="accent">fsync()</span>
+                      flushes here          syncs to disk
+            </div>
+
+            <div class="code-block">
+                <div class="code-header">
+                    <span>Guaranteeing data reaches disk</span>
+                    <span class="lang-badge">C</span>
+                </div>
+                <pre><code class="language-c">#include &lt;unistd.h&gt;
+
+fwrite(&critical_data, sizeof(critical_data), 1, fp);
+fflush(fp);                    // C library buffer → OS buffer
+fsync(fileno(fp));             // OS buffer → physical disk
+
+// Or use single call (POSIX)
+fdatasync(fileno(fp));         // Like fsync but skips metadata</code></pre>
+            </div>
+        </div>
+
+        <!-- ============================================================
+             SLIDE 32: setvbuf
+             ============================================================ -->
+        <div class="slide">
+            <h2>Controlling Buffering: setvbuf()</h2>
+
+            <div class="func-sig">
+                <span class="return-type">int</span> <span class="func-name">setvbuf</span>(<span class="params">FILE *stream, char *buf, int mode, size_t size</span>);
+            </div>
+
+            <table>
+                <thead>
+                    <tr>
+                        <th>Mode</th>
+                        <th>Constant</th>
+                        <th>Behaviour</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Full buffering</td>
+                        <td><code class="inline-code">_IOFBF</code></td>
+                        <td>Buffer fills before I/O (default for files)</td>
+                    </tr>
+                    <tr>
+                        <td>Line buffering</td>
+                        <td><code class="inline-code">_IOLBF</code></td>
+                        <td>Flush on newline (default for terminals)</td>
+                    </tr>
+                    <tr>
+                        <td>No buffering</td>
+                        <td><code class="inline-code">_IONBF</code></td>
+                        <td>Direct I/O—immediate but slow</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <div class="code-block">
+                <div class="code-header">
+                    <span>Custom buffer for performance</span>
+                    <span class="lang-badge">C</span>
+                </div>
+                <pre><code class="language-c">FILE *fp = fopen("large.bin", "wb");
+char buffer[65536];  // 64KB custom buffer
+setvbuf(fp, buffer, _IOFBF, sizeof(buffer));
+// Now writes are batched in 64KB chunks</code></pre>
+            </div>
+        </div>
+
+        <!-- ============================================================
+             SLIDE 33: Best Practices Summary
+             ============================================================ -->
+        <div class="slide">
+            <h2>✅ Best Practices</h2>
+
+            <div class="two-columns">
+                <div class="column">
+                    <h3 style="color: var(--accent-green);">Do</h3>
+                    <ul>
+                        <li>Always use <code class="inline-code">"b"</code> in mode string</li>
+                        <li>Check return values of all I/O functions</li>
+                        <li>Use fixed-width integer types (<code class="inline-code">int32_t</code>)</li>
+                        <li>Include magic numbers and version in file headers</li>
+                        <li>Initialise structs with <code class="inline-code">memset</code> before writing</li>
+                        <li>Close files as soon as you're done</li>
+                        <li>Use <code class="inline-code">fflush()</code> before switching read/write</li>
+                        <li>Test on multiple platforms</li>
+                    </ul>
+                </div>
+                <div class="column">
+                    <h3 style="color: var(--accent-red);">Don't</h3>
+                    <ul>
+                        <li>Write pointers to binary files</li>
+                        <li>Assume <code class="inline-code">sizeof(int)</code> is constant</li>
+                        <li>Ignore structure padding issues</li>
+                        <li>Mix text and binary modes on same file</li>
+                        <li>Use <code class="inline-code">fseek</code> in text mode except to start/end</li>
+                        <li>Forget to handle partial reads/writes</li>
+                        <li>Leave files open in error paths</li>
+                        <li>Trust data from unknown binary files</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- ============================================================
+             SLIDE 34: Laboratory Preview
+             ============================================================ -->
+        <div class="slide">
+            <h2>💻 Laboratory Preview</h2>
+            <p class="subtitle">What you'll build today</p>
+
+            <div class="card-grid">
+                <div class="card">
+                    <h4 style="color: var(--accent-blue);">Exercise 1: Student Database</h4>
+                    <ul>
+                        <li>Define <code class="inline-code">Student</code> structure</li>
+                        <li>Save/load records to binary file</li>
+                        <li>Search by ID (sequential)</li>
+                        <li>Update records in place</li>
+                        <li>Calculate file statistics</li>
+                    </ul>
+                    <p class="small-text">8 TODO markers • ~150 lines</p>
+                </div>
+
+                <div class="card">
+                    <h4 style="color: var(--accent-purple);">Exercise 2: Indexed Products</h4>
+                    <ul>
+                        <li>Separate data and index files</li>
+                        <li>Binary search on index</li>
+                        <li>Random access to records</li>
+                        <li>Tombstone-based deletion</li>
+                        <li>Index rebuilding</li>
+                    </ul>
+                    <p class="small-text">12 TODO markers • ~200 lines</p>
+                </div>
+            </div>
+
+            <div class="info-box">
+                <strong>🎯 Skills Applied:</strong> <code class="inline-code">fopen</code>, <code class="inline-code">fread</code>, <code class="inline-code">fwrite</code>, <code class="inline-code">fseek</code>, <code class="inline-code">ftell</code>, <code class="inline-code">bsearch</code>, <code class="inline-code">qsort</code>, structure serialisation, error handling.
+            </div>
+        </div>
+
+        <!-- ============================================================
+             SLIDE 35: Key Takeaways
+             ============================================================ -->
+        <div class="slide">
+            <h2>🔑 Key Takeaways</h2>
+
+            <div class="key-point">
+                <span class="key-point-icon">1️⃣</span>
+                <div class="key-point-content">
+                    <h4>Binary mode preserves byte fidelity</h4>
+                    <p>Always use <code class="inline-code">"rb"</code>/<code class="inline-code">"wb"</code> modes; text mode translation corrupts binary data.</p>
+                </div>
+            </div>
+
+            <div class="key-point">
+                <span class="key-point-icon">2️⃣</span>
+                <div class="key-point-content">
+                    <h4>Fixed-size records enable random access</h4>
+                    <p>Position = index × sizeof(record); seek is O(1) regardless of file size.</p>
+                </div>
+            </div>
+
+            <div class="key-point">
+                <span class="key-point-icon">3️⃣</span>
+                <div class="key-point-content">
+                    <h4>Index files accelerate searches</h4>
+                    <p>Sorted index + binary search = O(log n); essential for large datasets.</p>
+                </div>
+            </div>
+
+            <div class="key-point">
+                <span class="key-point-icon">4️⃣</span>
+                <div class="key-point-content">
+                    <h4>Portability requires explicit serialisation</h4>
+                    <p>Endianness, padding and type sizes vary; use fixed-width types and documented formats.</p>
+                </div>
+            </div>
+
+            <div class="key-point">
+                <span class="key-point-icon">5️⃣</span>
+                <div class="key-point-content">
+                    <h4>Always validate and handle errors</h4>
+                    <p>Check return values, use magic numbers, and design for partial failures.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- ============================================================
+             SLIDE 36: Summary Table
+             ============================================================ -->
+        <div class="slide">
+            <h2>📊 Function Reference Summary</h2>
+
+            <table>
+                <thead>
+                    <tr>
+                        <th>Function</th>
+                        <th>Purpose</th>
+                        <th>Returns on Success</th>
+                        <th>Returns on Failure</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><code class="inline-code">fopen()</code></td>
+                        <td>Open file</td>
+                        <td>FILE pointer</td>
+                        <td>NULL</td>
+                    </tr>
+                    <tr>
+                        <td><code class="inline-code">fclose()</code></td>
+                        <td>Close file</td>
+                        <td>0</td>
+                        <td>EOF</td>
+                    </tr>
+                    <tr>
+                        <td><code class="inline-code">fread()</code></td>
+                        <td>Read binary data</td>
+                        <td>Elements read</td>
+                        <td>&lt; nmemb</td>
+                    </tr>
+                    <tr>
+                        <td><code class="inline-code">fwrite()</code></td>
+                        <td>Write binary data</td>
+                        <td>Elements written</td>
+                        <td>&lt; nmemb</td>
+                    </tr>
+                    <tr>
+                        <td><code class="inline-code">fseek()</code></td>
+                        <td>Set position</td>
+                        <td>0</td>
+                        <td>Non-zero</td>
+                    </tr>
+                    <tr>
+                        <td><code class="inline-code">ftell()</code></td>
+                        <td>Get position</td>
+                        <td>Current offset</td>
+                        <td>-1L</td>
+                    </tr>
+                    <tr>
+                        <td><code class="inline-code">fflush()</code></td>
+                        <td>Flush buffer</td>
+                        <td>0</td>
+                        <td>EOF</td>
+                    </tr>
+                    <tr>
+                        <td><code class="inline-code">feof()</code></td>
+                        <td>Check EOF</td>
+                        <td colspan="2">Non-zero if EOF set</td>
+                    </tr>
+                    <tr>
+                        <td><code class="inline-code">ferror()</code></td>
+                        <td>Check error</td>
+                        <td colspan="2">Non-zero if error set</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- ============================================================
+             SLIDE 37: Resources
+             ============================================================ -->
+        <div class="slide">
+            <h2>📖 Resources</h2>
+
+            <div class="two-columns">
+                <div class="column">
+                    <h3>Essential Reading</h3>
+                    <ul>
+                        <li><strong>K&R Chapter 7</strong> — The C Programming Language</li>
+                        <li><strong>C11 Standard §7.21</strong> — stdio.h specification</li>
+                        <li><strong>cppreference.com</strong> — Online C reference</li>
+                    </ul>
+
+                    <h3>Advanced Topics</h3>
+                    <ul>
+                        <li><strong>CS:APP Chapter 10</strong> — System-Level I/O</li>
+                        <li><strong>SQLite File Format</strong> — sqlite.org/fileformat</li>
+                        <li><strong>HDF5 Format</strong> — hdfgroup.org</li>
+                    </ul>
+                </div>
+                <div class="column">
+                    <h3>Tools</h3>
+                    <ul>
+                        <li><code class="inline-code">hexdump -C</code> — View binary files</li>
+                        <li><code class="inline-code">xxd</code> — Hex dump and reverse</li>
+                        <li><code class="inline-code">od</code> — Octal dump with types</li>
+                        <li><code class="inline-code">valgrind --track-fds=yes</code> — Check file handles</li>
+                    </ul>
+
+                    <h3>Practice</h3>
+                    <ul>
+                        <li>LeetCode — File system design problems</li>
+                        <li>Project: Implement a mini key-value store</li>
+                        <li>Project: BMP image reader/writer</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- ============================================================
+             SLIDE 38: Questions
+             ============================================================ -->
+        <div class="slide title-slide">
+            <h1>❓ Questions?</h1>
+            <p class="subtitle">Discussion and Clarifications</p>
+            
+            <div class="info-box" style="max-width: 600px; margin: 2rem auto;">
+                <p><strong>Next Week:</strong> Linked Lists — Dynamic Data Structures</p>
+                <p>Building on binary files, we'll serialise linked structures to persistent storage.</p>
+            </div>
+
+            <div class="course-info">
+                <span class="small-text">Algorithms and Programming Techniques • Week 03</span><br>
+                <span class="small-text">Academy of Economic Studies</span>
+            </div>
+        </div>
+
+    </div> <!-- End presentation -->
+
+    <!-- Navigation -->
+    <div id="slide-counter">1 / 38</div>
+    <div id="nav-container">
+        <button class="nav-btn" id="prev-btn" title="Previous (←)">←</button>
+        <button class="nav-btn" id="next-btn" title="Next (→)">→</button>
+    </div>
+
+    <!-- Syntax Highlighting -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/c.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/bash.min.js"></script>
+
+    <script>
+        // Initialize highlight.js
+        hljs.highlightAll();
+
+        // Slide Navigation
+        const slides = document.querySelectorAll('.slide');
+        const progressBar = document.getElementById('progress-bar');
+        const slideCounter = document.getElementById('slide-counter');
+        const prevBtn = document.getElementById('prev-btn');
+        const nextBtn = document.getElementById('next-btn');
+        
+        let currentSlide = 0;
+        const totalSlides = slides.length;
+
+        function showSlide(index) {
+            // Bounds checking
+            if (index < 0) index = 0;
+            if (index >= totalSlides) index = totalSlides - 1;
+            
+            // Update slides
+            slides.forEach((slide, i) => {
+                slide.classList.toggle('active', i === index);
+            });
+            
+            currentSlide = index;
+            
+            // Update progress bar
+            const progress = ((currentSlide + 1) / totalSlides) * 100;
+            progressBar.style.width = progress + '%';
+            
+            // Update counter
+            slideCounter.textContent = `${currentSlide + 1} / ${totalSlides}`;
+            
+            // Update button states
+            prevBtn.disabled = currentSlide === 0;
+            nextBtn.disabled = currentSlide === totalSlides - 1;
+        }
+
+        function nextSlide() {
+            showSlide(currentSlide + 1);
+        }
+
+        function prevSlide() {
+            showSlide(currentSlide - 1);
+        }
+
+        // Button event listeners
+        prevBtn.addEventListener('click', prevSlide);
+        nextBtn.addEventListener('click', nextSlide);
+
+        // Keyboard navigation
+        document.addEventListener('keydown', (e) => {
+            switch(e.key) {
+                case 'ArrowRight':
+                case ' ':
+                    e.preventDefault();
+                    nextSlide();
+                    break;
+                case 'ArrowLeft':
+                    e.preventDefault();
+                    prevSlide();
+                    break;
+                case 'Home':
+                    e.preventDefault();
+                    showSlide(0);
+                    break;
+                case 'End':
+                    e.preventDefault();
+                    showSlide(totalSlides - 1);
+                    break;
+            }
+        });
+
+        // Touch/swipe support for mobile
+        let touchStartX = 0;
+        let touchEndX = 0;
+
+        document.addEventListener('touchstart', (e) => {
+            touchStartX = e.changedTouches[0].screenX;
+        });
+
+        document.addEventListener('touchend', (e) => {
+            touchEndX = e.changedTouches[0].screenX;
+            handleSwipe();
+        });
+
+        function handleSwipe() {
+            const swipeThreshold = 50;
+            const diff = touchStartX - touchEndX;
+            
+            if (Math.abs(diff) > swipeThreshold) {
+                if (diff > 0) {
+                    nextSlide();
+                } else {
+                    prevSlide();
+                }
+            }
+        }
+
+        // Initialize
+        showSlide(0);
+    </script>
+</body>
+</html>

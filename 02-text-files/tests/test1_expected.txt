@@ -1,0 +1,3 @@
+Loaded 3 students from file.
+Top student: TestStudent2 with average 10.00
+Report written to output/report.txt

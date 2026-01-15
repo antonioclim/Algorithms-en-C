@@ -1,0 +1,1124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Week 04: Language Comparison | Pseudocode → C → Python</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+    <style>
+        :root {
+            --bg-primary: #0d1117;
+            --bg-secondary: #161b22;
+            --bg-tertiary: #21262d;
+            --text-primary: #e6edf3;
+            --text-secondary: #8b949e;
+            --accent-blue: #58a6ff;
+            --accent-green: #3fb950;
+            --accent-yellow: #d29922;
+            --accent-red: #f85149;
+            --accent-purple: #a371f7;
+            --border-color: #30363d;
+            --pseudocode-bg: #1a1f2e;
+            --c-bg: #1f1a1a;
+            --python-bg: #1a1f1a;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans', Helvetica, Arial, sans-serif;
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.6;
+            overflow: hidden;
+        }
+
+        .progress-bar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 4px;
+            background: linear-gradient(90deg, var(--accent-blue), var(--accent-green), var(--accent-yellow));
+            transition: width 0.3s ease;
+            z-index: 1000;
+        }
+
+        .slides-container {
+            width: 100vw;
+            height: 100vh;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .slide {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            padding: 50px 60px;
+            display: none;
+            opacity: 0;
+            transition: opacity 0.4s ease;
+            overflow-y: auto;
+        }
+
+        .slide.active {
+            display: flex;
+            flex-direction: column;
+            opacity: 1;
+        }
+
+        h1 {
+            font-size: 2.5em;
+            color: var(--accent-blue);
+            margin-bottom: 20px;
+            font-weight: 600;
+        }
+
+        h2 {
+            font-size: 2em;
+            color: var(--accent-blue);
+            margin-bottom: 25px;
+            border-bottom: 2px solid var(--border-color);
+            padding-bottom: 15px;
+        }
+
+        h3 {
+            font-size: 1.3em;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        p {
+            font-size: 1.1em;
+            color: var(--text-primary);
+            margin-bottom: 15px;
+        }
+
+        .title-slide {
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            background: linear-gradient(135deg, var(--bg-primary) 0%, var(--bg-secondary) 100%);
+        }
+
+        .title-slide h1 {
+            font-size: 3em;
+            margin-bottom: 30px;
+            background: linear-gradient(90deg, var(--accent-blue), var(--accent-green), var(--accent-yellow));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .title-slide .subtitle {
+            font-size: 1.5em;
+            color: var(--text-secondary);
+        }
+
+        /* Three column layout */
+        .three-columns {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 20px;
+            flex: 1;
+            margin-top: 15px;
+        }
+
+        .column {
+            border-radius: 8px;
+            padding: 20px;
+            border: 1px solid var(--border-color);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .column.pseudocod {
+            background: var(--pseudocode-bg);
+            border-left: 4px solid var(--accent-blue);
+        }
+
+        .column.c-lang {
+            background: var(--c-bg);
+            border-left: 4px solid var(--accent-yellow);
+        }
+
+        .column.python {
+            background: var(--python-bg);
+            border-left: 4px solid var(--accent-green);
+        }
+
+        .column h3 {
+            color: var(--text-primary);
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 10px;
+            margin-bottom: 15px;
+        }
+
+        .column.pseudocod h3 { color: var(--accent-blue); }
+        .column.c-lang h3 { color: var(--accent-yellow); }
+        .column.python h3 { color: var(--accent-green); }
+
+        .code-content {
+            flex: 1;
+            overflow-y: auto;
+        }
+
+        .code-content pre {
+            margin: 0;
+            padding: 0;
+        }
+
+        .code-content code {
+            font-family: 'JetBrains Mono', 'Fira Code', 'Consolas', monospace;
+            font-size: 0.85em;
+            line-height: 1.4;
+        }
+
+        /* Pseudocode styling */
+        .pseudocode {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.9em;
+            line-height: 1.5;
+            white-space: pre-wrap;
+        }
+
+        .pseudocode .keyword {
+            color: var(--accent-blue);
+            font-weight: 600;
+        }
+
+        .pseudocode .comment {
+            color: var(--text-secondary);
+            font-style: italic;
+        }
+
+        .pseudocode .type {
+            color: var(--accent-purple);
+        }
+
+        /* Comparison table */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            font-size: 0.95em;
+        }
+
+        th, td {
+            padding: 12px 15px;
+            text-align: left;
+            border: 1px solid var(--border-color);
+        }
+
+        th {
+            background: var(--bg-tertiary);
+            font-weight: 600;
+        }
+
+        th:nth-child(1) { color: var(--accent-blue); }
+        th:nth-child(2) { color: var(--accent-yellow); }
+        th:nth-child(3) { color: var(--accent-green); }
+
+        tr:nth-child(even) {
+            background: var(--bg-secondary);
+        }
+
+        /* Info boxes */
+        .insight-box {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-left: 4px solid var(--accent-purple);
+            padding: 20px;
+            border-radius: 8px;
+            margin-top: 20px;
+        }
+
+        .insight-box h4 {
+            color: var(--accent-purple);
+            margin-bottom: 10px;
+        }
+
+        /* Navigation */
+        .navigation {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            display: flex;
+            gap: 10px;
+            z-index: 100;
+        }
+
+        .nav-btn {
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+            border: 1px solid var(--border-color);
+            padding: 12px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 1em;
+            transition: all 0.2s ease;
+        }
+
+        .nav-btn:hover {
+            background: var(--accent-blue);
+            color: var(--bg-primary);
+        }
+
+        .slide-counter {
+            position: fixed;
+            bottom: 30px;
+            left: 30px;
+            color: var(--text-secondary);
+            font-size: 1em;
+            z-index: 100;
+        }
+
+        .keyboard-hints {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: var(--text-secondary);
+            font-size: 0.85em;
+            z-index: 100;
+        }
+
+        kbd {
+            background: var(--bg-tertiary);
+            padding: 3px 8px;
+            border-radius: 4px;
+            border: 1px solid var(--border-color);
+            font-family: inherit;
+        }
+
+        .lang-icons {
+            display: flex;
+            justify-content: center;
+            gap: 60px;
+            margin: 40px 0;
+        }
+
+        .lang-icon {
+            text-align: center;
+            padding: 30px;
+            border-radius: 12px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            min-width: 180px;
+        }
+
+        .lang-icon .emoji {
+            font-size: 3em;
+            margin-bottom: 15px;
+        }
+
+        .lang-icon h4 {
+            color: var(--text-primary);
+            margin-bottom: 10px;
+        }
+
+        .lang-icon p {
+            color: var(--text-secondary);
+            font-size: 0.9em;
+        }
+
+        ul {
+            margin-left: 25px;
+            margin-bottom: 15px;
+        }
+
+        li {
+            margin-bottom: 8px;
+        }
+    </style>
+</head>
+<body>
+    <div class="progress-bar" id="progressBar"></div>
+    
+    <div class="slides-container">
+        <!-- Slide 1: Title -->
+        <div class="slide title-slide active" data-slide="1">
+            <h1>Linked Lists: Language Comparison</h1>
+            <p class="subtitle">Pseudocode → C → Python</p>
+            <p style="color: var(--text-secondary); margin-top: 30px;">Week 04 | Algorithms and Programming Techniques</p>
+            <div class="lang-icons">
+                <div class="lang-icon">
+                    <div class="emoji">📝</div>
+                    <h4>Pseudocode</h4>
+                    <p>Algorithm design</p>
+                </div>
+                <div class="lang-icon">
+                    <div class="emoji">⚙️</div>
+                    <h4>C</h4>
+                    <p>Low-level control</p>
+                </div>
+                <div class="lang-icon">
+                    <div class="emoji">🐍</div>
+                    <h4>Python</h4>
+                    <p>High-level abstraction</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 2: Why Compare? -->
+        <div class="slide" data-slide="2">
+            <h2>❓ Why Compare Languages?</h2>
+            <div class="three-columns" style="flex: initial;">
+                <div class="column pseudocod">
+                    <h3>📝 Pseudocode</h3>
+                    <ul>
+                        <li>Language-agnostic design</li>
+                        <li>Focus on algorithm logic</li>
+                        <li>Easy to understand</li>
+                        <li>Communication tool</li>
+                        <li>No syntax constraints</li>
+                    </ul>
+                </div>
+                <div class="column c-lang">
+                    <h3>⚙️ C</h3>
+                    <ul>
+                        <li>Manual memory management</li>
+                        <li>Pointer manipulation</li>
+                        <li>Maximum performance</li>
+                        <li>Hardware-level control</li>
+                        <li>Systems programming</li>
+                    </ul>
+                </div>
+                <div class="column python">
+                    <h3>🐍 Python</h3>
+                    <ul>
+                        <li>Automatic memory management</li>
+                        <li>Object-oriented design</li>
+                        <li>Rapid prototyping</li>
+                        <li>Built-in data structures</li>
+                        <li>Clean, readable syntax</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="insight-box">
+                <h4>💡 Key Insight</h4>
+                <p>Understanding the same concept in multiple paradigms deepens comprehension and reveals the trade-offs between abstraction levels, memory control and development speed.</p>
+            </div>
+        </div>
+
+        <!-- Slide 3: Node Definition -->
+        <div class="slide" data-slide="3">
+            <h2>📦 Node Structure Definition</h2>
+            <div class="three-columns">
+                <div class="column pseudocod">
+                    <h3>📝 Pseudocode</h3>
+                    <div class="code-content">
+                        <pre class="pseudocode"><span class="keyword">STRUCTURE</span> <span class="type">Node</span>
+    <span class="type">Integer</span> data
+    <span class="type">Node</span> next  <span class="comment">// Reference to next</span>
+<span class="keyword">END STRUCTURE</span>
+
+<span class="comment">// Create new node</span>
+<span class="keyword">FUNCTION</span> CreateNode(value)
+    node ← <span class="keyword">NEW</span> <span class="type">Node</span>
+    node.data ← value
+    node.next ← <span class="keyword">NULL</span>
+    <span class="keyword">RETURN</span> node
+<span class="keyword">END FUNCTION</span></pre>
+                    </div>
+                </div>
+                <div class="column c-lang">
+                    <h3>⚙️ C</h3>
+                    <div class="code-content">
+                        <pre><code class="language-c">typedef struct Node {
+    int data;
+    struct Node *next;
+} Node;
+
+// Create new node
+Node* create_node(int value) {
+    Node *node = malloc(sizeof(Node));
+    if (node == NULL) {
+        return NULL;  // Allocation failed
+    }
+    node->data = value;
+    node->next = NULL;
+    return node;
+}</code></pre>
+                    </div>
+                </div>
+                <div class="column python">
+                    <h3>🐍 Python</h3>
+                    <div class="code-content">
+                        <pre><code class="language-python">class Node:
+    def __init__(self, data):
+        self.data = data
+        self.next = None
+
+# Create new node
+def create_node(value):
+    return Node(value)
+
+# Or simply:
+node = Node(42)</code></pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 4: Traversal -->
+        <div class="slide" data-slide="4">
+            <h2>🚶 List Traversal</h2>
+            <div class="three-columns">
+                <div class="column pseudocod">
+                    <h3>📝 Pseudocode</h3>
+                    <div class="code-content">
+                        <pre class="pseudocode"><span class="keyword">FUNCTION</span> PrintList(head)
+    current ← head
+    
+    <span class="keyword">WHILE</span> current ≠ <span class="keyword">NULL</span> <span class="keyword">DO</span>
+        <span class="keyword">PRINT</span> current.data
+        current ← current.next
+    <span class="keyword">END WHILE</span>
+<span class="keyword">END FUNCTION</span>
+
+<span class="comment">// Time: O(n)</span>
+<span class="comment">// Space: O(1)</span></pre>
+                    </div>
+                </div>
+                <div class="column c-lang">
+                    <h3>⚙️ C</h3>
+                    <div class="code-content">
+                        <pre><code class="language-c">void print_list(Node *head) {
+    Node *current = head;
+    
+    while (current != NULL) {
+        printf("%d -> ", current->data);
+        current = current->next;
+    }
+    printf("NULL\n");
+}
+
+// Using for loop
+void print_list_v2(Node *head) {
+    for (Node *p = head; p; p = p->next) {
+        printf("%d ", p->data);
+    }
+}</code></pre>
+                    </div>
+                </div>
+                <div class="column python">
+                    <h3>🐍 Python</h3>
+                    <div class="code-content">
+                        <pre><code class="language-python">def print_list(head):
+    current = head
+    
+    while current is not None:
+        print(current.data, end=" -> ")
+        current = current.next
+    print("None")
+
+# With generator (Pythonic)
+def traverse(head):
+    current = head
+    while current:
+        yield current.data
+        current = current.next
+
+# Usage: list(traverse(head))</code></pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 5: Insert at Beginning -->
+        <div class="slide" data-slide="5">
+            <h2>⬆️ Insert at Beginning</h2>
+            <div class="three-columns">
+                <div class="column pseudocod">
+                    <h3>📝 Pseudocode</h3>
+                    <div class="code-content">
+                        <pre class="pseudocode"><span class="keyword">FUNCTION</span> InsertAtBeginning(head, value)
+    <span class="comment">// Create new node</span>
+    newNode ← CreateNode(value)
+    
+    <span class="comment">// Link new node to current head</span>
+    newNode.next ← head
+    
+    <span class="comment">// Update head reference</span>
+    head ← newNode
+    
+    <span class="keyword">RETURN</span> head
+<span class="keyword">END FUNCTION</span>
+
+<span class="comment">// Time: O(1)</span></pre>
+                    </div>
+                </div>
+                <div class="column c-lang">
+                    <h3>⚙️ C</h3>
+                    <div class="code-content">
+                        <pre><code class="language-c">// Note: Double pointer needed!
+void insert_at_beginning(
+    Node **head_ref, 
+    int value
+) {
+    Node *new_node = create_node(value);
+    if (new_node == NULL) return;
+    
+    new_node->next = *head_ref;
+    *head_ref = new_node;
+}
+
+// Call: insert_at_beginning(&head, 10);</code></pre>
+                    </div>
+                </div>
+                <div class="column python">
+                    <h3>🐍 Python</h3>
+                    <div class="code-content">
+                        <pre><code class="language-python">def insert_at_beginning(head, value):
+    new_node = Node(value)
+    new_node.next = head
+    return new_node  # New head
+
+# Usage:
+head = insert_at_beginning(head, 10)
+
+# Or with class:
+class LinkedList:
+    def __init__(self):
+        self.head = None
+    
+    def insert_beginning(self, value):
+        new_node = Node(value)
+        new_node.next = self.head
+        self.head = new_node</code></pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 6: Insert at End -->
+        <div class="slide" data-slide="6">
+            <h2>⬇️ Insert at End</h2>
+            <div class="three-columns">
+                <div class="column pseudocod">
+                    <h3>📝 Pseudocode</h3>
+                    <div class="code-content">
+                        <pre class="pseudocode"><span class="keyword">FUNCTION</span> InsertAtEnd(head, value)
+    newNode ← CreateNode(value)
+    
+    <span class="comment">// Empty list case</span>
+    <span class="keyword">IF</span> head = <span class="keyword">NULL</span> <span class="keyword">THEN</span>
+        <span class="keyword">RETURN</span> newNode
+    <span class="keyword">END IF</span>
+    
+    <span class="comment">// Find last node</span>
+    current ← head
+    <span class="keyword">WHILE</span> current.next ≠ <span class="keyword">NULL</span>
+        current ← current.next
+    <span class="keyword">END WHILE</span>
+    
+    current.next ← newNode
+    <span class="keyword">RETURN</span> head
+<span class="keyword">END FUNCTION</span></pre>
+                    </div>
+                </div>
+                <div class="column c-lang">
+                    <h3>⚙️ C</h3>
+                    <div class="code-content">
+                        <pre><code class="language-c">void insert_at_end(
+    Node **head_ref, 
+    int value
+) {
+    Node *new_node = create_node(value);
+    if (new_node == NULL) return;
+    
+    if (*head_ref == NULL) {
+        *head_ref = new_node;
+        return;
+    }
+    
+    Node *last = *head_ref;
+    while (last->next != NULL) {
+        last = last->next;
+    }
+    last->next = new_node;
+}</code></pre>
+                    </div>
+                </div>
+                <div class="column python">
+                    <h3>🐍 Python</h3>
+                    <div class="code-content">
+                        <pre><code class="language-python">def insert_at_end(head, value):
+    new_node = Node(value)
+    
+    if head is None:
+        return new_node
+    
+    current = head
+    while current.next:
+        current = current.next
+    
+    current.next = new_node
+    return head
+
+# In LinkedList class:
+def append(self, value):
+    if not self.head:
+        self.head = Node(value)
+    else:
+        current = self.head
+        while current.next:
+            current = current.next
+        current.next = Node(value)</code></pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 7: Delete Operation -->
+        <div class="slide" data-slide="7">
+            <h2>🗑️ Delete by Value</h2>
+            <div class="three-columns">
+                <div class="column pseudocod">
+                    <h3>📝 Pseudocode</h3>
+                    <div class="code-content">
+                        <pre class="pseudocode"><span class="keyword">FUNCTION</span> DeleteByValue(head, target)
+    <span class="keyword">IF</span> head = <span class="keyword">NULL</span> <span class="keyword">THEN</span>
+        <span class="keyword">RETURN</span> <span class="keyword">NULL</span>
+    <span class="keyword">END IF</span>
+    
+    <span class="comment">// Head contains target</span>
+    <span class="keyword">IF</span> head.data = target <span class="keyword">THEN</span>
+        temp ← head.next
+        <span class="keyword">DELETE</span> head
+        <span class="keyword">RETURN</span> temp
+    <span class="keyword">END IF</span>
+    
+    <span class="comment">// Search for target</span>
+    current ← head
+    <span class="keyword">WHILE</span> current.next ≠ <span class="keyword">NULL</span>
+        <span class="keyword">IF</span> current.next.data = target
+            temp ← current.next
+            current.next ← temp.next
+            <span class="keyword">DELETE</span> temp
+            <span class="keyword">RETURN</span> head
+        <span class="keyword">END IF</span>
+        current ← current.next
+    <span class="keyword">END WHILE</span>
+    <span class="keyword">RETURN</span> head
+<span class="keyword">END FUNCTION</span></pre>
+                    </div>
+                </div>
+                <div class="column c-lang">
+                    <h3>⚙️ C</h3>
+                    <div class="code-content">
+                        <pre><code class="language-c">void delete_by_value(
+    Node **head_ref, 
+    int target
+) {
+    if (*head_ref == NULL) return;
+    
+    // Head case
+    if ((*head_ref)->data == target) {
+        Node *temp = *head_ref;
+        *head_ref = (*head_ref)->next;
+        free(temp);  // MUST free!
+        return;
+    }
+    
+    Node *curr = *head_ref;
+    while (curr->next != NULL) {
+        if (curr->next->data == target) {
+            Node *temp = curr->next;
+            curr->next = temp->next;
+            free(temp);
+            return;
+        }
+        curr = curr->next;
+    }
+}</code></pre>
+                    </div>
+                </div>
+                <div class="column python">
+                    <h3>🐍 Python</h3>
+                    <div class="code-content">
+                        <pre><code class="language-python">def delete_by_value(head, target):
+    if head is None:
+        return None
+    
+    # Head case
+    if head.data == target:
+        return head.next  # GC handles memory
+    
+    current = head
+    while current.next:
+        if current.next.data == target:
+            current.next = current.next.next
+            return head
+        current = current.next
+    
+    return head  # Not found</code></pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 8: Reverse List -->
+        <div class="slide" data-slide="8">
+            <h2>🔄 Reverse List</h2>
+            <div class="three-columns">
+                <div class="column pseudocod">
+                    <h3>📝 Pseudocode</h3>
+                    <div class="code-content">
+                        <pre class="pseudocode"><span class="keyword">FUNCTION</span> ReverseList(head)
+    prev ← <span class="keyword">NULL</span>
+    current ← head
+    
+    <span class="keyword">WHILE</span> current ≠ <span class="keyword">NULL</span> <span class="keyword">DO</span>
+        <span class="comment">// Save next</span>
+        next ← current.next
+        
+        <span class="comment">// Reverse link</span>
+        current.next ← prev
+        
+        <span class="comment">// Move forward</span>
+        prev ← current
+        current ← next
+    <span class="keyword">END WHILE</span>
+    
+    <span class="keyword">RETURN</span> prev  <span class="comment">// New head</span>
+<span class="keyword">END FUNCTION</span></pre>
+                    </div>
+                </div>
+                <div class="column c-lang">
+                    <h3>⚙️ C</h3>
+                    <div class="code-content">
+                        <pre><code class="language-c">void reverse_list(Node **head_ref) {
+    Node *prev = NULL;
+    Node *current = *head_ref;
+    Node *next = NULL;
+    
+    while (current != NULL) {
+        next = current->next;
+        current->next = prev;
+        prev = current;
+        current = next;
+    }
+    
+    *head_ref = prev;
+}
+
+// Time: O(n), Space: O(1)</code></pre>
+                    </div>
+                </div>
+                <div class="column python">
+                    <h3>🐍 Python</h3>
+                    <div class="code-content">
+                        <pre><code class="language-python">def reverse_list(head):
+    prev = None
+    current = head
+    
+    while current:
+        next_node = current.next
+        current.next = prev
+        prev = current
+        current = next_node
+    
+    return prev
+
+# Recursive version
+def reverse_recursive(head):
+    if not head or not head.next:
+        return head
+    
+    new_head = reverse_recursive(head.next)
+    head.next.next = head
+    head.next = None
+    return new_head</code></pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 9: Free Memory -->
+        <div class="slide" data-slide="9">
+            <h2>🧹 Memory Management</h2>
+            <div class="three-columns">
+                <div class="column pseudocod">
+                    <h3>📝 Pseudocode</h3>
+                    <div class="code-content">
+                        <pre class="pseudocode"><span class="keyword">FUNCTION</span> FreeList(head)
+    <span class="keyword">WHILE</span> head ≠ <span class="keyword">NULL</span> <span class="keyword">DO</span>
+        temp ← head
+        head ← head.next
+        <span class="keyword">DELETE</span> temp
+    <span class="keyword">END WHILE</span>
+<span class="keyword">END FUNCTION</span>
+
+<span class="comment">// Pseudocode abstracts away</span>
+<span class="comment">// memory management details</span></pre>
+                    </div>
+                </div>
+                <div class="column c-lang">
+                    <h3>⚙️ C</h3>
+                    <div class="code-content">
+                        <pre><code class="language-c">void free_list(Node **head_ref) {
+    Node *current = *head_ref;
+    Node *next;
+    
+    while (current != NULL) {
+        next = current->next;
+        free(current);  // Manual deallocation
+        current = next;
+    }
+    
+    *head_ref = NULL;  // Prevent dangling ptr
+}
+
+// CRITICAL: Every malloc needs free!
+// Use Valgrind to verify no leaks</code></pre>
+                    </div>
+                </div>
+                <div class="column python">
+                    <h3>🐍 Python</h3>
+                    <div class="code-content">
+                        <pre><code class="language-python">def free_list(head):
+    # Python: Nothing to do!
+    # Garbage collector handles it
+    head = None
+    return head
+
+# When no references exist,
+# Python's GC automatically
+# reclaims memory.
+
+# For explicit cleanup:
+import gc
+gc.collect()  # Force GC run
+
+# Python's reference counting
+# + cyclic GC = automatic memory</code></pre>
+                    </div>
+                </div>
+            </div>
+            <div class="insight-box">
+                <h4>⚠️ Key Difference</h4>
+                <p>C requires explicit memory management (<code>malloc</code>/<code>free</code>). Python uses garbage collection. Understanding manual memory management in C builds deeper understanding of how computers actually work.</p>
+            </div>
+        </div>
+
+        <!-- Slide 10: Comparison Table -->
+        <div class="slide" data-slide="10">
+            <h2>📊 Feature Comparison</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Aspect</th>
+                        <th>📝 Pseudocode</th>
+                        <th>⚙️ C</th>
+                        <th>🐍 Python</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Memory allocation</td>
+                        <td>Abstract (NEW)</td>
+                        <td>malloc/free (manual)</td>
+                        <td>Automatic (GC)</td>
+                    </tr>
+                    <tr>
+                        <td>Pointer syntax</td>
+                        <td>None (references)</td>
+                        <td>*, &, -> operators</td>
+                        <td>None (references)</td>
+                    </tr>
+                    <tr>
+                        <td>Null check</td>
+                        <td>= NULL</td>
+                        <td>== NULL or !ptr</td>
+                        <td>is None</td>
+                    </tr>
+                    <tr>
+                        <td>Type system</td>
+                        <td>Implicit</td>
+                        <td>Static, explicit</td>
+                        <td>Dynamic, duck typing</td>
+                    </tr>
+                    <tr>
+                        <td>Modify head</td>
+                        <td>Return new head</td>
+                        <td>Double pointer **</td>
+                        <td>Return or class attr</td>
+                    </tr>
+                    <tr>
+                        <td>Error handling</td>
+                        <td>Informal</td>
+                        <td>Return codes, errno</td>
+                        <td>Exceptions</td>
+                    </tr>
+                    <tr>
+                        <td>Performance</td>
+                        <td>N/A</td>
+                        <td>Fastest (compiled)</td>
+                        <td>Slower (interpreted)</td>
+                    </tr>
+                    <tr>
+                        <td>Code verbosity</td>
+                        <td>Minimal</td>
+                        <td>Verbose</td>
+                        <td>Concise</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Slide 11: When to Use Which -->
+        <div class="slide" data-slide="11">
+            <h2>🎯 When to Use Each Approach</h2>
+            <div class="three-columns" style="flex: initial;">
+                <div class="column pseudocod">
+                    <h3>📝 Pseudocode</h3>
+                    <p><strong>Use when:</strong></p>
+                    <ul>
+                        <li>Designing algorithms</li>
+                        <li>Teaching concepts</li>
+                        <li>Documentation</li>
+                        <li>Academic papers</li>
+                        <li>Team discussions</li>
+                        <li>Interview whiteboarding</li>
+                    </ul>
+                    <p style="margin-top: 15px; color: var(--accent-blue);"><em>Think first, code second</em></p>
+                </div>
+                <div class="column c-lang">
+                    <h3>⚙️ C</h3>
+                    <p><strong>Use when:</strong></p>
+                    <ul>
+                        <li>Systems programming</li>
+                        <li>Embedded systems</li>
+                        <li>Performance critical code</li>
+                        <li>Operating systems</li>
+                        <li>Game engines</li>
+                        <li>Learning fundamentals</li>
+                    </ul>
+                    <p style="margin-top: 15px; color: var(--accent-yellow);"><em>Maximum control</em></p>
+                </div>
+                <div class="column python">
+                    <h3>🐍 Python</h3>
+                    <p><strong>Use when:</strong></p>
+                    <ul>
+                        <li>Rapid prototyping</li>
+                        <li>Data science/ML</li>
+                        <li>Scripting and automation</li>
+                        <li>Web development</li>
+                        <li>Testing algorithms</li>
+                        <li>Code interviews</li>
+                    </ul>
+                    <p style="margin-top: 15px; color: var(--accent-green);"><em>Developer productivity</em></p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 12: Key Insights -->
+        <div class="slide" data-slide="12">
+            <h2>💡 Key Insights</h2>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px; margin-top: 20px;">
+                <div class="insight-box" style="border-left-color: var(--accent-blue);">
+                    <h4 style="color: var(--accent-blue);">1. Algorithm vs Implementation</h4>
+                    <p>Pseudocode captures the <em>what</em>; C and Python show the <em>how</em>. Master the algorithm first, then adapt to any language.</p>
+                </div>
+                <div class="insight-box" style="border-left-color: var(--accent-yellow);">
+                    <h4 style="color: var(--accent-yellow);">2. Memory Matters</h4>
+                    <p>C forces you to understand memory layout, allocation and deallocation. This knowledge transfers to all programming.</p>
+                </div>
+                <div class="insight-box" style="border-left-color: var(--accent-green);">
+                    <h4 style="color: var(--accent-green);">3. Abstraction Trade-offs</h4>
+                    <p>Python's simplicity comes at the cost of control and performance. Choose the right tool for each task.</p>
+                </div>
+                <div class="insight-box" style="border-left-color: var(--accent-purple);">
+                    <h4 style="color: var(--accent-purple);">4. Transferable Skills</h4>
+                    <p>Learning linked lists in C gives you deep understanding. The concepts apply everywhere—just the syntax changes.</p>
+                </div>
+            </div>
+            <div style="text-align: center; margin-top: 40px;">
+                <p style="font-size: 1.3em; color: var(--accent-purple);">
+                    "A language that doesn't affect the way you think about programming<br>is not worth knowing." — Alan Perlis
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Navigation -->
+    <div class="slide-counter">
+        <span id="currentSlide">1</span> / <span id="totalSlides">12</span>
+    </div>
+    
+    <div class="keyboard-hints">
+        <kbd>←</kbd> Previous &nbsp;|&nbsp; <kbd>→</kbd> <kbd>Space</kbd> Next
+    </div>
+    
+    <div class="navigation">
+        <button class="nav-btn" onclick="prevSlide()">← Previous</button>
+        <button class="nav-btn" onclick="nextSlide()">Next →</button>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script>
+        hljs.highlightAll();
+
+        let currentSlide = 1;
+        const totalSlides = document.querySelectorAll('.slide').length;
+        
+        document.getElementById('totalSlides').textContent = totalSlides;
+
+        function showSlide(n) {
+            const slides = document.querySelectorAll('.slide');
+            
+            if (n > totalSlides) currentSlide = 1;
+            if (n < 1) currentSlide = totalSlides;
+            
+            slides.forEach(slide => slide.classList.remove('active'));
+            slides[currentSlide - 1].classList.add('active');
+            document.getElementById('currentSlide').textContent = currentSlide;
+            
+            const progress = (currentSlide / totalSlides) * 100;
+            document.getElementById('progressBar').style.width = progress + '%';
+        }
+
+        function nextSlide() {
+            currentSlide++;
+            showSlide(currentSlide);
+        }
+
+        function prevSlide() {
+            currentSlide--;
+            showSlide(currentSlide);
+        }
+
+        document.addEventListener('keydown', function(e) {
+            switch(e.key) {
+                case 'ArrowRight':
+                case ' ':
+                    e.preventDefault();
+                    nextSlide();
+                    break;
+                case 'ArrowLeft':
+                    prevSlide();
+                    break;
+                case 'Home':
+                    currentSlide = 1;
+                    showSlide(currentSlide);
+                    break;
+                case 'End':
+                    currentSlide = totalSlides;
+                    showSlide(currentSlide);
+                    break;
+            }
+        });
+
+        showSlide(currentSlide);
+    </script>
+</body>
+</html>

@@ -1,0 +1,11 @@
+# Test input for Exercise 1 - Student Records
+# This file tests basic operations
+
+ADD 1003 Charlie 3.50
+ADD 1001 Alice 3.75
+ADD 1002 Bob 3.85
+DISPLAY
+FIND 1002
+DELETE 1001
+DISPLAY
+COUNT

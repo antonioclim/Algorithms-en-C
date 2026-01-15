@@ -1,0 +1,12 @@
+1001 ValidStudent 2022 1050 8 9 7 8 9
+This line has no numeric ID at start
+2002 AnotherValid 2023 1051 7 8 7 8
+
+3003 Missing Year And Programme
+4004 GoodRecord 2022 1050 9 9 9 9 9 9 9 9
+   
+5005
+6006 PartialData 2022
+7007 CompleteRecord 2023 1051 6 7 6 7 6 7
+Invalid,CSV,Format,Data,Here
+8008 FinalValid 2022 1050 10 10 10 10 10

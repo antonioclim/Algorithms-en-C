@@ -1,0 +1,35 @@
+
+╔═══════════════════════════════════════════════════════════════╗
+║     EXERCISE 1: Array-Based Stack with Dynamic Resizing       ║
+╚═══════════════════════════════════════════════════════════════╝
+
+Creating stack with initial capacity 4...
+Stack created successfully.
+
+Pushing values 1 through 20:
+  push(1)   push(2)   push(3)   push(4) Stack resized: 4 -> 8
+  push(5) Stack [size=5, cap=8]: [ 1 2 3 4 5 ] <- top
+  push(6)   push(7)   push(8) Stack resized: 8 -> 16
+  push(9)   push(10) Stack [size=10, cap=16]: [ 1 2 3 4 5 6 7 8 9 10 ] <- top
+  push(11)   push(12)   push(13)   push(14)   push(15) Stack [size=15, cap=16]: [ 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 ] <- top
+  push(16) Stack resized: 16 -> 32
+  push(17)   push(18)   push(19)   push(20) Stack [size=20, cap=32]: [ 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 ] <- top
+
+Final state:
+Stack [size=20, cap=32]: [ 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 ] <- top
+Size: 20, Capacity: 32
+Top element (peek): 20
+Is empty: No
+
+Popping all values: 20 19 18 17 16 15 14 13 12 11 10 9 8 7 6 5 4 3 2 1 
+
+After popping all:
+Is empty: Yes
+Size: 0
+
+Stack destroyed. Memory freed.
+
+═══════════════════════════════════════════════════════════════
+  Exercise complete! Verify with: make valgrind
+═══════════════════════════════════════════════════════════════
+

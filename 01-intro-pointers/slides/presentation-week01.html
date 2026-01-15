@@ -1,0 +1,2099 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Week 01: Pointers to Functions and Callbacks in C | ATP Course</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/c.min.js"></script>
+    <style>
+        :root {
+            --bg-primary: #0d1117;
+            --bg-secondary: #161b22;
+            --bg-tertiary: #21262d;
+            --accent-blue: #58a6ff;
+            --accent-green: #3fb950;
+            --accent-orange: #d29922;
+            --accent-red: #f85149;
+            --accent-purple: #a371f7;
+            --text-primary: #e6edf3;
+            --text-secondary: #8b949e;
+            --border-color: #30363d;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            overflow: hidden;
+            height: 100vh;
+        }
+        
+        .presentation-container {
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .progress-bar {
+            height: 4px;
+            background: var(--bg-tertiary);
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--accent-blue), var(--accent-purple));
+            transition: width 0.3s ease;
+        }
+        
+        .slide {
+            display: none;
+            flex: 1;
+            padding: 40px 60px;
+            overflow-y: auto;
+            animation: fadeIn 0.4s ease;
+        }
+        
+        .slide.active {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .slide-title {
+            font-size: 2.2em;
+            margin-bottom: 30px;
+            color: var(--accent-blue);
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .slide-title .emoji {
+            font-size: 1.2em;
+        }
+        
+        .slide-subtitle {
+            font-size: 1.3em;
+            color: var(--accent-orange);
+            margin-bottom: 20px;
+        }
+        
+        .content-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            flex: 1;
+        }
+        
+        .content-box {
+            background: var(--bg-secondary);
+            border-radius: 12px;
+            padding: 25px;
+            border: 1px solid var(--border-color);
+        }
+        
+        .content-box h3 {
+            color: var(--accent-green);
+            margin-bottom: 15px;
+            font-size: 1.2em;
+        }
+        
+        .content-box ul {
+            list-style: none;
+        }
+        
+        .content-box li {
+            padding: 8px 0;
+            padding-left: 25px;
+            position: relative;
+            color: var(--text-secondary);
+        }
+        
+        .content-box li::before {
+            content: "→";
+            position: absolute;
+            left: 0;
+            color: var(--accent-blue);
+        }
+        
+        .code-block {
+            background: #1e1e1e;
+            border-radius: 10px;
+            overflow: hidden;
+            margin: 15px 0;
+        }
+        
+        .code-header {
+            background: var(--bg-tertiary);
+            padding: 10px 15px;
+            font-size: 0.85em;
+            color: var(--text-secondary);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .code-header .lang-badge {
+            background: var(--accent-blue);
+            color: var(--bg-primary);
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-weight: 600;
+        }
+        
+        .code-block pre {
+            padding: 20px;
+            overflow-x: auto;
+            font-size: 0.95em;
+            line-height: 1.5;
+        }
+        
+        .code-block code {
+            font-family: 'Fira Code', 'Consolas', monospace;
+        }
+        
+        .highlight-box {
+            background: linear-gradient(135deg, rgba(88, 166, 255, 0.1), rgba(163, 113, 247, 0.1));
+            border-left: 4px solid var(--accent-blue);
+            padding: 20px;
+            border-radius: 0 10px 10px 0;
+            margin: 15px 0;
+        }
+        
+        .warning-box {
+            background: rgba(248, 81, 73, 0.1);
+            border-left: 4px solid var(--accent-red);
+            padding: 20px;
+            border-radius: 0 10px 10px 0;
+            margin: 15px 0;
+        }
+        
+        .success-box {
+            background: rgba(63, 185, 80, 0.1);
+            border-left: 4px solid var(--accent-green);
+            padding: 20px;
+            border-radius: 0 10px 10px 0;
+            margin: 15px 0;
+        }
+        
+        .quote-box {
+            background: var(--bg-secondary);
+            border-left: 4px solid var(--accent-orange);
+            padding: 25px;
+            border-radius: 0 10px 10px 0;
+            margin: 20px 0;
+            font-style: italic;
+        }
+        
+        .quote-author {
+            text-align: right;
+            color: var(--text-secondary);
+            margin-top: 10px;
+            font-style: normal;
+        }
+        
+        .memory-diagram {
+            display: flex;
+            gap: 10px;
+            margin: 20px 0;
+            flex-wrap: wrap;
+        }
+        
+        .memory-cell {
+            background: var(--bg-tertiary);
+            border: 2px solid var(--border-color);
+            padding: 15px 20px;
+            border-radius: 8px;
+            text-align: center;
+            min-width: 100px;
+            transition: all 0.3s ease;
+        }
+        
+        .memory-cell:hover {
+            border-color: var(--accent-blue);
+            transform: translateY(-3px);
+        }
+        
+        .memory-cell .address {
+            font-size: 0.75em;
+            color: var(--accent-purple);
+            margin-bottom: 5px;
+        }
+        
+        .memory-cell .value {
+            font-size: 1.1em;
+            color: var(--accent-green);
+            font-weight: 600;
+        }
+        
+        .memory-cell .name {
+            font-size: 0.85em;
+            color: var(--text-secondary);
+            margin-top: 5px;
+        }
+        
+        .arrow {
+            display: flex;
+            align-items: center;
+            font-size: 1.5em;
+            color: var(--accent-orange);
+        }
+        
+        .comparison-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+        
+        .comparison-table th {
+            background: var(--bg-tertiary);
+            padding: 15px;
+            text-align: left;
+            color: var(--accent-blue);
+            border-bottom: 2px solid var(--accent-blue);
+        }
+        
+        .comparison-table td {
+            padding: 15px;
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        .comparison-table tr:hover {
+            background: var(--bg-secondary);
+        }
+        
+        .nav-controls {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            display: flex;
+            gap: 10px;
+            z-index: 100;
+        }
+        
+        .nav-btn {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+            padding: 12px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1em;
+            transition: all 0.2s ease;
+        }
+        
+        .nav-btn:hover {
+            background: var(--accent-blue);
+            color: var(--bg-primary);
+        }
+        
+        .slide-counter {
+            position: fixed;
+            bottom: 30px;
+            left: 30px;
+            background: var(--bg-tertiary);
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-size: 0.9em;
+            color: var(--text-secondary);
+        }
+        
+        .title-slide {
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+        }
+        
+        .title-slide h1 {
+            font-size: 3em;
+            margin-bottom: 20px;
+            background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .title-slide .subtitle {
+            font-size: 1.5em;
+            color: var(--text-secondary);
+            margin-bottom: 30px;
+        }
+        
+        .title-slide .meta {
+            color: var(--text-secondary);
+            font-size: 1.1em;
+        }
+        
+        .timeline {
+            position: relative;
+            padding-left: 30px;
+        }
+        
+        .timeline::before {
+            content: '';
+            position: absolute;
+            left: 10px;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: var(--accent-blue);
+        }
+        
+        .timeline-item {
+            position: relative;
+            margin-bottom: 25px;
+            padding-left: 25px;
+        }
+        
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            left: -24px;
+            top: 5px;
+            width: 12px;
+            height: 12px;
+            background: var(--accent-blue);
+            border-radius: 50%;
+        }
+        
+        .timeline-year {
+            color: var(--accent-orange);
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+        
+        .interactive-demo {
+            background: var(--bg-secondary);
+            border-radius: 12px;
+            padding: 25px;
+            margin: 20px 0;
+        }
+        
+        .demo-controls {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+        }
+        
+        .demo-btn {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .demo-btn:hover, .demo-btn.active {
+            background: var(--accent-green);
+            color: var(--bg-primary);
+            border-color: var(--accent-green);
+        }
+        
+        .demo-output {
+            background: #1e1e1e;
+            padding: 15px;
+            border-radius: 8px;
+            font-family: 'Fira Code', monospace;
+            min-height: 60px;
+        }
+        
+        .flex-center {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 30px;
+            flex-wrap: wrap;
+        }
+        
+        .profile-card {
+            background: var(--bg-secondary);
+            border-radius: 12px;
+            padding: 25px;
+            text-align: center;
+            max-width: 300px;
+            border: 1px solid var(--border-color);
+        }
+        
+        .profile-card img {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            margin-bottom: 15px;
+            border: 3px solid var(--accent-blue);
+        }
+        
+        .profile-card h3 {
+            color: var(--accent-blue);
+            margin-bottom: 5px;
+        }
+        
+        .profile-card .years {
+            color: var(--text-secondary);
+            font-size: 0.9em;
+        }
+        
+        .profile-card .achievements {
+            margin-top: 15px;
+            text-align: left;
+            font-size: 0.9em;
+        }
+        
+        .step-indicator {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin: 20px 0;
+        }
+        
+        .step {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: var(--bg-tertiary);
+            border: 2px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        
+        .step.active {
+            background: var(--accent-blue);
+            border-color: var(--accent-blue);
+            color: var(--bg-primary);
+        }
+        
+        .step.completed {
+            background: var(--accent-green);
+            border-color: var(--accent-green);
+            color: var(--bg-primary);
+        }
+        
+        .syntax-breakdown {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+            font-family: 'Fira Code', monospace;
+            font-size: 1.3em;
+            margin: 30px 0;
+            flex-wrap: wrap;
+        }
+        
+        .syntax-part {
+            padding: 10px 15px;
+            border-radius: 6px;
+            cursor: help;
+            transition: all 0.2s ease;
+        }
+        
+        .syntax-part:hover {
+            transform: translateY(-3px);
+        }
+        
+        .syntax-return { background: rgba(63, 185, 80, 0.2); color: var(--accent-green); }
+        .syntax-parens { background: rgba(210, 153, 34, 0.2); color: var(--accent-orange); }
+        .syntax-pointer { background: rgba(248, 81, 73, 0.2); color: var(--accent-red); }
+        .syntax-name { background: rgba(88, 166, 255, 0.2); color: var(--accent-blue); }
+        .syntax-params { background: rgba(163, 113, 247, 0.2); color: var(--accent-purple); }
+        
+        .complexity-card {
+            background: var(--bg-secondary);
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+            border: 1px solid var(--border-color);
+        }
+        
+        .complexity-card .big-o {
+            font-size: 2em;
+            color: var(--accent-green);
+            font-family: 'Fira Code', monospace;
+        }
+        
+        .complexity-card .label {
+            color: var(--text-secondary);
+            margin-top: 10px;
+        }
+        
+        .kbd {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            padding: 3px 8px;
+            font-family: 'Fira Code', monospace;
+            font-size: 0.9em;
+        }
+        
+        .full-width {
+            grid-column: 1 / -1;
+        }
+        
+        @media (max-width: 900px) {
+            .content-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .slide {
+                padding: 20px;
+            }
+            
+            .slide-title {
+                font-size: 1.6em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="presentation-container">
+        <div class="progress-bar">
+            <div class="progress-fill" id="progressFill"></div>
+        </div>
+        
+        <!-- ==================== SLIDE 1: TITLE ==================== -->
+        <div class="slide active title-slide" data-slide="1">
+            <h1>🎯 Pointers to Functions & Callbacks</h1>
+            <p class="subtitle">Week 01 | Algorithms and Programming Techniques</p>
+            <p class="meta">ASE-CSIE | Computer Science Department</p>
+            <div style="margin-top: 40px;">
+                <span class="kbd">←</span> <span class="kbd">→</span> or click buttons to navigate
+            </div>
+        </div>
+        
+        <!-- ==================== SLIDE 2: LEARNING OBJECTIVES ==================== -->
+        <div class="slide" data-slide="2">
+            <h2 class="slide-title"><span class="emoji">🎯</span> Learning Objectives</h2>
+            <div class="content-grid">
+                <div class="content-box">
+                    <h3>By the end of this lecture, you will be able to:</h3>
+                    <ul>
+                        <li>Explain what function pointers are and why they matter</li>
+                        <li>Declare, assign, and call function pointers correctly</li>
+                        <li>Implement callback patterns for generic algorithms</li>
+                        <li>Use qsort() and bsearch() from the C standard library</li>
+                        <li>Design dispatch tables using function pointer arrays</li>
+                        <li>Recognize industrial applications of callbacks</li>
+                    </ul>
+                </div>
+                <div class="content-box">
+                    <h3>Prerequisites:</h3>
+                    <ul>
+                        <li>Solid understanding of pointers in C</li>
+                        <li>Function declarations and definitions</li>
+                        <li>Basic knowledge of arrays and structures</li>
+                        <li>Familiarity with void* (generic pointers)</li>
+                    </ul>
+                    <div class="highlight-box" style="margin-top: 20px;">
+                        <strong>Key Insight:</strong> Function pointers are the C way to achieve polymorphism and higher-order functions!
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- ==================== SLIDE 3: HISTORICAL CONTEXT ==================== -->
+        <div class="slide" data-slide="3">
+            <h2 class="slide-title"><span class="emoji">📜</span> Historical Context</h2>
+            <div class="content-grid">
+                <div class="content-box">
+                    <h3>The Birth of C (1969-1973)</h3>
+                    <div class="timeline">
+                        <div class="timeline-item">
+                            <div class="timeline-year">1969</div>
+                            <p>Ken Thompson creates B language for early Unix</p>
+                        </div>
+                        <div class="timeline-item">
+                            <div class="timeline-year">1972</div>
+                            <p>Dennis Ritchie evolves B into C at Bell Labs</p>
+                        </div>
+                        <div class="timeline-item">
+                            <div class="timeline-year">1973</div>
+                            <p>Unix kernel rewritten in C (90%+ of code)</p>
+                        </div>
+                        <div class="timeline-item">
+                            <div class="timeline-year">1978</div>
+                            <p>K&R "The C Programming Language" published</p>
+                        </div>
+                        <div class="timeline-item">
+                            <div class="timeline-year">1989</div>
+                            <p>ANSI C standardized (C89)</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="content-box">
+                    <h3>Why Function Pointers?</h3>
+                    <p style="margin-bottom: 15px;">C was designed to be close to the hardware while remaining portable. Function pointers directly mirror assembly language concepts:</p>
+                    <div class="highlight-box">
+                        <code>(*fptr)()</code> compiles to:
+                        <ol style="margin-top: 10px; color: var(--text-secondary);">
+                            <li>Load address into register</li>
+                            <li>Execute indirect CALL instruction</li>
+                        </ol>
+                    </div>
+                    <p style="margin-top: 15px; color: var(--text-secondary);">This 1:1 mapping to hardware makes C efficient for systems programming while enabling powerful abstractions.</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- ==================== SLIDE 4: DENNIS RITCHIE ==================== -->
+        <div class="slide" data-slide="4">
+            <h2 class="slide-title"><span class="emoji">👨‍💻</span> Key Figure: Dennis Ritchie</h2>
+            <div class="flex-center">
+                <div class="profile-card">
+                    <div style="width: 120px; height: 120px; border-radius: 50%; background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple)); margin: 0 auto 15px; display: flex; align-items: center; justify-content: center; font-size: 3em;">👤</div>
+                    <h3>Dennis M. Ritchie</h3>
+                    <p class="years">1941 - 2011</p>
+                    <div class="achievements">
+                        <p>🏆 Turing Award 1983</p>
+                        <p>🖥️ Creator of C</p>
+                        <p>🐧 Co-creator of Unix</p>
+                        <p>📚 K&R Co-author</p>
+                    </div>
+                </div>
+                <div style="max-width: 500px;">
+                    <div class="quote-box">
+                        "C is not a 'very high level' language, nor a 'big' one, and is not specialized to any particular area of application. But its absence of restrictions and its generality make it more convenient and effective for many tasks than supposedly more powerful languages."
+                        <div class="quote-author">— K&R, Preface to First Edition</div>
+                    </div>
+                    <div class="success-box">
+                        <strong>Philosophy of Trust:</strong> "Programmers know what they are doing; it only requires that they state their intentions explicitly."
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- ==================== SLIDE 5: WHAT IS A FUNCTION POINTER? ==================== -->
+        <div class="slide" data-slide="5">
+            <h2 class="slide-title"><span class="emoji">🔍</span> What is a Function Pointer?</h2>
+            <div class="content-grid">
+                <div class="content-box">
+                    <h3>Definition</h3>
+                    <p>A <strong>function pointer</strong> is a variable that stores the memory address of a function. Just like data pointers point to data, function pointers point to executable code.</p>
+                    
+                    <div class="memory-diagram" style="margin-top: 20px;">
+                        <div class="memory-cell">
+                            <div class="address">0x4005f0</div>
+                            <div class="value">int add()</div>
+                            <div class="name">Code segment</div>
+                        </div>
+                        <div class="arrow">←</div>
+                        <div class="memory-cell">
+                            <div class="address">0x7fff...</div>
+                            <div class="value">0x4005f0</div>
+                            <div class="name">fptr</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="content-box">
+                    <h3>Key Characteristics</h3>
+                    <ul>
+                        <li>Stores the address of a function's first instruction</li>
+                        <li>Must match the function's signature (return type + parameters)</li>
+                        <li>Can be called like a regular function</li>
+                        <li>Enables runtime selection of functions</li>
+                        <li>Foundation for callbacks and polymorphism in C</li>
+                    </ul>
+                    <div class="warning-box" style="margin-top: 15px;">
+                        <strong>Remember:</strong> The type of a function pointer includes both return type AND parameter types. Mismatches cause undefined behavior!
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- ==================== SLIDE 6: SYNTAX BREAKDOWN ==================== -->
+        <div class="slide" data-slide="6">
+            <h2 class="slide-title"><span class="emoji">🔤</span> Syntax Breakdown</h2>
+            <p style="text-align: center; margin-bottom: 20px;">Declaration of a function pointer:</p>
+            
+            <div class="syntax-breakdown">
+                <span class="syntax-part syntax-return" title="Return type of the function">int</span>
+                <span class="syntax-part syntax-parens" title="Parentheses required!">(</span>
+                <span class="syntax-part syntax-pointer" title="Asterisk - it's a pointer">*</span>
+                <span class="syntax-part syntax-name" title="Name of the pointer variable">fptr</span>
+                <span class="syntax-part syntax-parens" title="Parentheses required!">)</span>
+                <span class="syntax-part syntax-params" title="Parameter types">(int, int)</span>
+            </div>
+            
+            <div class="content-grid" style="margin-top: 30px;">
+                <div class="content-box">
+                    <h3>Reading the Declaration</h3>
+                    <p><code>fptr</code> is a pointer to a function that:</p>
+                    <ul>
+                        <li>Takes <strong>two int parameters</strong></li>
+                        <li>Returns an <strong>int</strong></li>
+                    </ul>
+                    <div class="highlight-box" style="margin-top: 15px;">
+                        <strong>The parentheses around <code>*fptr</code> are CRITICAL!</strong>
+                    </div>
+                </div>
+                <div class="content-box">
+                    <h3>Common Mistake</h3>
+                    <div class="code-block">
+                        <div class="code-header">
+                            <span>Comparison</span>
+                            <span class="lang-badge">C</span>
+                        </div>
+                        <pre><code class="language-c">// Function pointer (correct)
+int (*fptr)(int);
+
+// Function returning int pointer (DIFFERENT!)
+int *fptr(int);</code></pre>
+                    </div>
+                    <p style="color: var(--accent-red);">Without parentheses, you declare a function, not a pointer!</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- ==================== SLIDE 7: DECLARATION PATTERNS ==================== -->
+        <div class="slide" data-slide="7">
+            <h2 class="slide-title"><span class="emoji">📝</span> Declaration Patterns</h2>
+            <div class="code-block">
+                <div class="code-header">
+                    <span>Various function pointer declarations</span>
+                    <span class="lang-badge">C</span>
+                </div>
+                <pre><code class="language-c">// Pointer to function with no parameters, returning void
+void (*simple)(void);
+
+// Pointer to function taking two ints, returning int
+int (*binary_op)(int, int);
+
+// Pointer to function taking const char*, returning int
+int (*string_func)(const char*);
+
+// Pointer to function taking void*, returning void*
+void* (*generic)(void*);
+
+// Pointer to comparator function (used by qsort/bsearch)
+int (*comparator)(const void*, const void*);
+
+// Array of function pointers
+int (*operations[4])(int, int);
+
+// Function returning a function pointer
+int (*get_operation(char op))(int, int);</code></pre>
+            </div>
+            <div class="success-box">
+                <strong>Pro Tip:</strong> Use <code>typedef</code> to simplify complex declarations and improve readability.
+            </div>
+        </div>
+        
+        <!-- ==================== SLIDE 8: TYPEDEF FOR CLARITY ==================== -->
+        <div class="slide" data-slide="8">
+            <h2 class="slide-title"><span class="emoji">✨</span> Using typedef for Clarity</h2>
+            <div class="content-grid">
+                <div class="content-box">
+                    <h3>Without typedef</h3>
+                    <div class="code-block">
+                        <div class="code-header">
+                            <span>Complex and hard to read</span>
+                            <span class="lang-badge">C</span>
+                        </div>
+                        <pre><code class="language-c">// Declaration
+int (*operations[4])(int, int);
+
+// Function parameter
+void process(int (*op)(int, int));
+
+// Return type
+int (*get_op(char c))(int, int);</code></pre>
+                    </div>
+                </div>
+                <div class="content-box">
+                    <h3>With typedef</h3>
+                    <div class="code-block">
+                        <div class="code-header">
+                            <span>Clean and readable</span>
+                            <span class="lang-badge">C</span>
+                        </div>
+                        <pre><code class="language-c">// Define the type once
+typedef int (*BinaryOp)(int, int);
+
+// Clear declarations
+BinaryOp operations[4];
+
+// Clear function parameter
+void process(BinaryOp op);
+
+// Clear return type
+BinaryOp get_op(char c);</code></pre>
+                    </div>
+                </div>
+            </div>
+            <div class="highlight-box">
+                <strong>Best Practice:</strong> Always use typedef for function pointer types in real-world code. It dramatically improves maintainability.
+            </div>
+        </div>
+        
+        <!-- ==================== SLIDE 9: ASSIGNING FUNCTION POINTERS ==================== -->
+        <div class="slide" data-slide="9">
+            <h2 class="slide-title"><span class="emoji">➡️</span> Assigning Function Pointers</h2>
+            <div class="code-block">
+                <div class="code-header">
+                    <span>Two equivalent assignment methods</span>
+                    <span class="lang-badge">C</span>
+                </div>
+                <pre><code class="language-c">#include &lt;stdio.h&gt;
+
+int add(int a, int b) {
+    return a + b;
+}
+
+int main() {
+    // Declare a function pointer
+    int (*operation)(int, int);
+    
+    // Method 1: Using address-of operator (explicit)
+    operation = &add;
+    
+    // Method 2: Direct assignment (implicit conversion)
+    operation = add;  // Function name decays to pointer
+    
+    // Both methods are valid and equivalent!
+    
+    return 0;
+}</code></pre>
+            </div>
+            <div class="content-grid" style="margin-top: 20px;">
+                <div class="highlight-box">
+                    <strong>Note:</strong> The function name automatically "decays" to a pointer to the function, similar to how array names decay to pointers. Both forms are correct C.
+                </div>
+                <div class="warning-box">
+                    <strong>Type Safety:</strong> The compiler will warn if you assign a function with a different signature. Always pay attention to these warnings!
+                </div>
+            </div>
+        </div>
+        
+        <!-- ==================== SLIDE 10: CALLING THROUGH POINTERS ==================== -->
+        <div class="slide" data-slide="10">
+            <h2 class="slide-title"><span class="emoji">📞</span> Calling Through Function Pointers</h2>
+            <div class="code-block">
+                <div class="code-header">
+                    <span>Two equivalent calling methods</span>
+                    <span class="lang-badge">C</span>
+                </div>
+                <pre><code class="language-c">#include &lt;stdio.h&gt;
+
+int multiply(int a, int b) {
+    return a * b;
+}
+
+int main() {
+    int (*op)(int, int) = multiply;
+    
+    // Method 1: Direct call (modern, preferred)
+    int result1 = op(5, 3);
+    
+    // Method 2: Explicit dereference (traditional)
+    int result2 = (*op)(5, 3);
+    
+    printf("Result 1: %d\n", result1);  // 15
+    printf("Result 2: %d\n", result2);  // 15
+    
+    // Both produce the same result!
+    return 0;
+}</code></pre>
+            </div>
+            <div class="success-box">
+                <strong>Modern Style:</strong> The direct call syntax <code>op(5, 3)</code> is preferred in modern C. The dereference syntax <code>(*op)(5, 3)</code> is from older standards but still valid.
+            </div>
+        </div>
+        
+        <!-- ==================== SLIDE 11: CALLBACK PATTERN ==================== -->
+        <div class="slide" data-slide="11">
+            <h2 class="slide-title"><span class="emoji">🔄</span> The Callback Pattern</h2>
+            <div class="content-grid">
+                <div class="content-box">
+                    <h3>What is a Callback?</h3>
+                    <p>A <strong>callback</strong> is a function passed as an argument to another function, to be "called back" later.</p>
+                    <div style="margin: 20px 0; text-align: center;">
+                        <div class="memory-diagram" style="justify-content: center;">
+                            <div class="memory-cell" style="background: var(--accent-blue); color: var(--bg-primary);">
+                                <div class="value">Your Code</div>
+                            </div>
+                            <div class="arrow">→</div>
+                            <div class="memory-cell">
+                                <div class="value">Library</div>
+                            </div>
+                            <div class="arrow">→</div>
+                            <div class="memory-cell" style="background: var(--accent-green); color: var(--bg-primary);">
+                                <div class="value">Callback</div>
+                            </div>
+                        </div>
+                    </div>
+                    <p style="text-align: center; color: var(--text-secondary);">The library calls YOUR function!</p>
+                </div>
+                <div class="content-box">
+                    <h3>Why Use Callbacks?</h3>
+                    <ul>
+                        <li><strong>Customization:</strong> Generic algorithms with custom behavior</li>
+                        <li><strong>Event Handling:</strong> React to events asynchronously</li>
+                        <li><strong>Inversion of Control:</strong> Framework calls your code</li>
+                        <li><strong>Decoupling:</strong> Separate algorithm from policy</li>
+                    </ul>
+                    <div class="highlight-box" style="margin-top: 15px;">
+                        <strong>Key Insight:</strong> Callbacks enable writing generic, reusable code that can work with any compatible function!
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- ==================== SLIDE 12: CALLBACK EXAMPLE ==================== -->
+        <div class="slide" data-slide="12">
+            <h2 class="slide-title"><span class="emoji">💡</span> Callback Example: Generic Apply</h2>
+            <div class="code-block">
+                <div class="code-header">
+                    <span>A generic function that applies an operation</span>
+                    <span class="lang-badge">C</span>
+                </div>
+                <pre><code class="language-c">#include &lt;stdio.h&gt;
+
+// Define some operations
+int add(int a, int b) { return a + b; }
+int sub(int a, int b) { return a - b; }
+int mul(int a, int b) { return a * b; }
+int divide(int a, int b) { return b != 0 ? a / b : 0; }
+
+// Generic function that accepts a callback
+int apply_operation(int x, int y, int (*operation)(int, int)) {
+    return operation(x, y);  // Call the callback!
+}
+
+int main() {
+    int a = 20, b = 5;
+    
+    printf("%d + %d = %d\n", a, b, apply_operation(a, b, add));
+    printf("%d - %d = %d\n", a, b, apply_operation(a, b, sub));
+    printf("%d * %d = %d\n", a, b, apply_operation(a, b, mul));
+    printf("%d / %d = %d\n", a, b, apply_operation(a, b, divide));
+    
+    return 0;
+}</code></pre>
+            </div>
+            <div class="success-box">
+                <strong>Output:</strong> 20 + 5 = 25 | 20 - 5 = 15 | 20 * 5 = 100 | 20 / 5 = 4
+            </div>
+        </div>
+        
+        <!-- ==================== SLIDE 13: ARRAY OF FUNCTION POINTERS ==================== -->
+        <div class="slide" data-slide="13">
+            <h2 class="slide-title"><span class="emoji">📚</span> Array of Function Pointers (Dispatch Table)</h2>
+            <div class="code-block">
+                <div class="code-header">
+                    <span>Calculator using dispatch table</span>
+                    <span class="lang-badge">C</span>
+                </div>
+                <pre><code class="language-c">#include &lt;stdio.h&gt;
+
+int add(int a, int b) { return a + b; }
+int sub(int a, int b) { return a - b; }
+int mul(int a, int b) { return a * b; }
+int divide(int a, int b) { return b ? a / b : 0; }
+
+int main() {
+    // Dispatch table: array of function pointers
+    int (*operations[])(int, int) = {add, sub, mul, divide};
+    char symbols[] = {'+', '-', '*', '/'};
+    
+    int a = 12, b = 4;
+    
+    // Iterate through all operations
+    for (int i = 0; i < 4; i++) {
+        printf("%d %c %d = %d\n", a, symbols[i], b, operations[i](a, b));
+    }
+    
+    return 0;
+}</code></pre>
+            </div>
+            <div class="highlight-box">
+                <strong>Use Case:</strong> Dispatch tables are perfect for implementing state machines, command processors, and menu systems. They replace long switch statements with elegant table lookups.
+            </div>
+        </div>
+        
+        <!-- ==================== SLIDE 14: QSORT INTRODUCTION ==================== -->
+        <div class="slide" data-slide="14">
+            <h2 class="slide-title"><span class="emoji">📊</span> The qsort() Function</h2>
+            <div class="content-grid">
+                <div class="content-box">
+                    <h3>Signature (from stdlib.h)</h3>
+                    <div class="code-block">
+                        <div class="code-header">
+                            <span>Function prototype</span>
+                            <span class="lang-badge">C</span>
+                        </div>
+                        <pre><code class="language-c">void qsort(
+    void *base,      // Array to sort
+    size_t nmemb,    // Number of elements
+    size_t size,     // Size of each element
+    int (*compar)(   // Comparator callback
+        const void *,
+        const void *
+    )
+);</code></pre>
+                    </div>
+                </div>
+                <div class="content-box">
+                    <h3>Parameters Explained</h3>
+                    <table class="comparison-table">
+                        <tr>
+                            <th>Parameter</th>
+                            <th>Description</th>
+                        </tr>
+                        <tr>
+                            <td><code>base</code></td>
+                            <td>Pointer to first element</td>
+                        </tr>
+                        <tr>
+                            <td><code>nmemb</code></td>
+                            <td>Number of elements to sort</td>
+                        </tr>
+                        <tr>
+                            <td><code>size</code></td>
+                            <td>sizeof(element)</td>
+                        </tr>
+                        <tr>
+                            <td><code>compar</code></td>
+                            <td>Your comparison function</td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+        </div>
+        
+        <!-- ==================== SLIDE 15: COMPARATOR RULES ==================== -->
+        <div class="slide" data-slide="15">
+            <h2 class="slide-title"><span class="emoji">⚖️</span> Comparator Rules (POSIX Standard)</h2>
+            <div class="content-grid">
+                <div class="content-box full-width">
+                    <h3>Return Value Contract</h3>
+                    <div class="memory-diagram" style="justify-content: center; margin: 30px 0;">
+                        <div class="memory-cell" style="background: rgba(248, 81, 73, 0.2); min-width: 150px;">
+                            <div class="value" style="color: var(--accent-red);">< 0</div>
+                            <div class="name">a comes BEFORE b</div>
+                        </div>
+                        <div class="memory-cell" style="background: rgba(210, 153, 34, 0.2); min-width: 150px;">
+                            <div class="value" style="color: var(--accent-orange);">= 0</div>
+                            <div class="name">a EQUALS b</div>
+                        </div>
+                        <div class="memory-cell" style="background: rgba(63, 185, 80, 0.2); min-width: 150px;">
+                            <div class="value" style="color: var(--accent-green);">> 0</div>
+                            <div class="name">a comes AFTER b</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="content-grid">
+                <div class="content-box">
+                    <h3>Simple Integer Comparator</h3>
+                    <div class="code-block">
+                        <div class="code-header">
+                            <span>Ascending order</span>
+                            <span class="lang-badge">C</span>
+                        </div>
+                        <pre><code class="language-c">int cmp_int_asc(const void *a, 
+                const void *b) {
+    int ia = *(const int*)a;
+    int ib = *(const int*)b;
+    return ia - ib;
+}</code></pre>
+                    </div>
+                </div>
+                <div class="content-box">
+                    <h3>Descending Order</h3>
+                    <div class="code-block">
+                        <div class="code-header">
+                            <span>Just swap the subtraction</span>
+                            <span class="lang-badge">C</span>
+                        </div>
+                        <pre><code class="language-c">int cmp_int_desc(const void *a, 
+                 const void *b) {
+    int ia = *(const int*)a;
+    int ib = *(const int*)b;
+    return ib - ia;  // Reversed!
+}</code></pre>
+                    </div>
+                </div>
+            </div>
+            <div class="warning-box">
+                <strong>⚠️ Integer Overflow Warning:</strong> For very large integers, <code>a - b</code> can overflow! Use conditional comparison for safety.
+            </div>
+        </div>
+        
+        <!-- ==================== SLIDE 16: SAFE COMPARATOR ==================== -->
+        <div class="slide" data-slide="16">
+            <h2 class="slide-title"><span class="emoji">🛡️</span> Safe Integer Comparator</h2>
+            <div class="content-grid">
+                <div class="content-box">
+                    <h3>The Problem</h3>
+                    <div class="code-block">
+                        <div class="code-header">
+                            <span>Overflow example</span>
+                            <span class="lang-badge">C</span>
+                        </div>
+                        <pre><code class="language-c">int a = INT_MAX;  // 2147483647
+int b = -1;
+
+// a - b overflows!
+// 2147483647 - (-1) = 2147483648
+// But INT_MAX = 2147483647
+// Result wraps to negative!</code></pre>
+                    </div>
+                </div>
+                <div class="content-box">
+                    <h3>The Solution</h3>
+                    <div class="code-block">
+                        <div class="code-header">
+                            <span>Safe comparator</span>
+                            <span class="lang-badge">C</span>
+                        </div>
+                        <pre><code class="language-c">int safe_cmp_int(const void *a, 
+                 const void *b) {
+    int ia = *(const int*)a;
+    int ib = *(const int*)b;
+    
+    // Use conditionals instead
+    if (ia < ib) return -1;
+    if (ia > ib) return 1;
+    return 0;
+    
+    // Or the elegant form:
+    // return (ia > ib) - (ia < ib);
+}</code></pre>
+                    </div>
+                </div>
+            </div>
+            <div class="success-box">
+                <strong>Best Practice:</strong> Always use the conditional form when dealing with potentially large numbers or when comparing signed values.
+            </div>
+        </div>
+        
+        <!-- ==================== SLIDE 17: QSORT WITH INTEGERS ==================== -->
+        <div class="slide" data-slide="17">
+            <h2 class="slide-title"><span class="emoji">🔢</span> qsort() with Integers</h2>
+            <div class="code-block">
+                <div class="code-header">
+                    <span>Complete working example</span>
+                    <span class="lang-badge">C</span>
+                </div>
+                <pre><code class="language-c">#include &lt;stdio.h&gt;
+#include &lt;stdlib.h&gt;
+
+int cmp_asc(const void *a, const void *b) {
+    return (*(int*)a > *(int*)b) - (*(int*)a < *(int*)b);
+}
+
+void print_array(int arr[], int n) {
+    for (int i = 0; i < n; i++) printf("%d ", arr[i]);
+    printf("\n");
+}
+
+int main() {
+    int arr[] = {64, 34, 25, 12, 22, 11, 90};
+    int n = sizeof(arr) / sizeof(arr[0]);
+    
+    printf("Original: ");
+    print_array(arr, n);
+    
+    qsort(arr, n, sizeof(int), cmp_asc);
+    
+    printf("Sorted:   ");
+    print_array(arr, n);
+    
+    return 0;
+}</code></pre>
+            </div>
+            <div class="highlight-box">
+                <strong>Output:</strong><br>
+                Original: 64 34 25 12 22 11 90<br>
+                Sorted:   11 12 22 25 34 64 90
+            </div>
+        </div>
+        
+        <!-- ==================== SLIDE 18: QSORT WITH STRUCTS ==================== -->
+        <div class="slide" data-slide="18">
+            <h2 class="slide-title"><span class="emoji">🏗️</span> qsort() with Structures</h2>
+            <div class="code-block">
+                <div class="code-header">
+                    <span>Sorting students by grade</span>
+                    <span class="lang-badge">C</span>
+                </div>
+                <pre><code class="language-c">#include &lt;stdio.h&gt;
+#include &lt;stdlib.h&gt;
+#include &lt;string.h&gt;
+
+typedef struct {
+    int id;
+    char name[50];
+    float grade;
+} Student;
+
+// Compare by grade (descending - highest first)
+int cmp_by_grade(const void *a, const void *b) {
+    const Student *s1 = (const Student*)a;
+    const Student *s2 = (const Student*)b;
+    
+    // For floats, use conditional comparison
+    if (s2->grade > s1->grade) return 1;
+    if (s2->grade < s1->grade) return -1;
+    return 0;
+}
+
+// Compare by name (alphabetical)
+int cmp_by_name(const void *a, const void *b) {
+    const Student *s1 = (const Student*)a;
+    const Student *s2 = (const Student*)b;
+    return strcmp(s1->name, s2->name);
+}</code></pre>
+            </div>
+        </div>
+        
+        <!-- ==================== SLIDE 19: QSORT STRUCTS CONTINUED ==================== -->
+        <div class="slide" data-slide="19">
+            <h2 class="slide-title"><span class="emoji">🏗️</span> qsort() with Structures (continued)</h2>
+            <div class="code-block">
+                <div class="code-header">
+                    <span>Using the comparators</span>
+                    <span class="lang-badge">C</span>
+                </div>
+                <pre><code class="language-c">int main() {
+    Student students[] = {
+        {103, "Popescu Ion", 8.5},
+        {101, "Ionescu Maria", 9.2},
+        {105, "Georgescu Ana", 7.8},
+        {102, "Vasilescu Dan", 9.5}
+    };
+    int n = sizeof(students) / sizeof(students[0]);
+    
+    // Sort by grade (highest first)
+    qsort(students, n, sizeof(Student), cmp_by_grade);
+    
+    printf("Top Students:\n");
+    for (int i = 0; i < n; i++) {
+        printf("%d. %s - %.2f\n", 
+               i + 1, students[i].name, students[i].grade);
+    }
+    
+    return 0;
+}</code></pre>
+            </div>
+            <div class="success-box">
+                <strong>Output:</strong><br>
+                1. Vasilescu Dan - 9.50<br>
+                2. Ionescu Maria - 9.20<br>
+                3. Popescu Ion - 8.50<br>
+                4. Georgescu Ana - 7.80
+            </div>
+        </div>
+        
+        <!-- ==================== SLIDE 20: BSEARCH INTRODUCTION ==================== -->
+        <div class="slide" data-slide="20">
+            <h2 class="slide-title"><span class="emoji">🔍</span> The bsearch() Function</h2>
+            <div class="content-grid">
+                <div class="content-box">
+                    <h3>Signature (from stdlib.h)</h3>
+                    <div class="code-block">
+                        <div class="code-header">
+                            <span>Function prototype</span>
+                            <span class="lang-badge">C</span>
+                        </div>
+                        <pre><code class="language-c">void *bsearch(
+    const void *key,  // What to find
+    const void *base, // Sorted array
+    size_t nmemb,     // Element count
+    size_t size,      // Element size
+    int (*compar)(    // Same comparator!
+        const void *,
+        const void *
+    )
+);</code></pre>
+                    </div>
+                </div>
+                <div class="content-box">
+                    <h3>Key Differences from qsort()</h3>
+                    <ul>
+                        <li>First parameter is the <strong>search key</strong></li>
+                        <li>Returns pointer to found element or <strong>NULL</strong></li>
+                        <li>Array <strong>MUST be sorted</strong> first!</li>
+                        <li>Uses the same comparator function type</li>
+                    </ul>
+                    <div class="warning-box" style="margin-top: 15px;">
+                        <strong>Critical:</strong> In the comparator, the first argument is always the KEY, the second is the array element!
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- ==================== SLIDE 21: BSEARCH COMPLEXITY ==================== -->
+        <div class="slide" data-slide="21">
+            <h2 class="slide-title"><span class="emoji">⏱️</span> Algorithm Complexity</h2>
+            <div class="content-grid" style="grid-template-columns: repeat(3, 1fr);">
+                <div class="complexity-card">
+                    <div class="big-o">O(n log n)</div>
+                    <div class="label">qsort() Average</div>
+                </div>
+                <div class="complexity-card">
+                    <div class="big-o">O(n²)</div>
+                    <div class="label">qsort() Worst</div>
+                </div>
+                <div class="complexity-card">
+                    <div class="big-o">O(log n)</div>
+                    <div class="label">bsearch()</div>
+                </div>
+            </div>
+            <div class="content-grid" style="margin-top: 30px;">
+                <div class="content-box">
+                    <h3>qsort() Implementation</h3>
+                    <ul>
+                        <li>Typically QuickSort or hybrid</li>
+                        <li>Average: O(n log n)</li>
+                        <li>Worst case: O(n²) for bad pivots</li>
+                        <li>Space: O(log n) for recursion stack</li>
+                        <li><strong>NOT stable</strong> - equal elements may reorder</li>
+                    </ul>
+                </div>
+                <div class="content-box">
+                    <h3>bsearch() Implementation</h3>
+                    <ul>
+                        <li>Binary search algorithm</li>
+                        <li>Always: O(log n)</li>
+                        <li>Space: O(1) constant</li>
+                        <li><strong>Requires sorted array!</strong></li>
+                        <li>Returns first match found (not necessarily first in array)</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        
+        <!-- ==================== SLIDE 22: BSEARCH EXAMPLE ==================== -->
+        <div class="slide" data-slide="22">
+            <h2 class="slide-title"><span class="emoji">💻</span> bsearch() Complete Example</h2>
+            <div class="code-block">
+                <div class="code-header">
+                    <span>Searching for a student by name</span>
+                    <span class="lang-badge">C</span>
+                </div>
+                <pre><code class="language-c">#include &lt;stdio.h&gt;
+#include &lt;stdlib.h&gt;
+#include &lt;string.h&gt;
+
+typedef struct { int id; char name[50]; float grade; } Student;
+
+// Comparator: key is a string (char*), element is Student
+int cmp_search_name(const void *key, const void *elem) {
+    const char *search_name = (const char*)key;
+    const Student *student = (const Student*)elem;
+    return strcmp(search_name, student->name);
+}
+
+int main() {
+    Student students[] = {
+        {101, "Georgescu Ana", 7.8},
+        {102, "Ionescu Maria", 9.2},
+        {103, "Popescu Ion", 8.5}  // Already sorted by name!
+    };
+    int n = sizeof(students) / sizeof(students[0]);
+    
+    char *to_find = "Ionescu Maria";
+    Student *found = bsearch(to_find, students, n, sizeof(Student), cmp_search_name);
+    
+    if (found) {
+        printf("Found: %s (ID: %d, Grade: %.2f)\n", found->name, found->id, found->grade);
+    } else {
+        printf("Student not found!\n");
+    }
+    return 0;
+}</code></pre>
+            </div>
+        </div>
+        
+        <!-- ==================== SLIDE 23: INDUSTRIAL APPLICATIONS ==================== -->
+        <div class="slide" data-slide="23">
+            <h2 class="slide-title"><span class="emoji">🏭</span> Industrial Applications</h2>
+            <div class="content-grid">
+                <div class="content-box">
+                    <h3>GTK/GLib (Linux GUI)</h3>
+                    <div class="code-block">
+                        <div class="code-header">
+                            <span>Signal handling</span>
+                            <span class="lang-badge">C</span>
+                        </div>
+                        <pre><code class="language-c">// Connect button click to handler
+g_signal_connect(
+    button,
+    "clicked",
+    G_CALLBACK(on_button_click),
+    user_data
+);</code></pre>
+                    </div>
+                </div>
+                <div class="content-box">
+                    <h3>Win32 API (Windows)</h3>
+                    <div class="code-block">
+                        <div class="code-header">
+                            <span>Window procedure callback</span>
+                            <span class="lang-badge">C</span>
+                        </div>
+                        <pre><code class="language-c">LRESULT CALLBACK WndProc(
+    HWND hwnd, UINT msg,
+    WPARAM wParam, LPARAM lParam
+) {
+    switch (msg) {
+        case WM_DESTROY:
+            PostQuitMessage(0);
+            break;
+    }
+    return DefWindowProc(...);
+}</code></pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- ==================== SLIDE 24: MORE INDUSTRIAL APPLICATIONS ==================== -->
+        <div class="slide" data-slide="24">
+            <h2 class="slide-title"><span class="emoji">🏭</span> More Industrial Applications</h2>
+            <div class="content-grid">
+                <div class="content-box">
+                    <h3>Unix Signal Handling</h3>
+                    <div class="code-block">
+                        <div class="code-header">
+                            <span>Handling Ctrl+C</span>
+                            <span class="lang-badge">C</span>
+                        </div>
+                        <pre><code class="language-c">#include &lt;signal.h&gt;
+
+void handle_sigint(int sig) {
+    printf("Caught signal %d\n", sig);
+    // Cleanup code here
+    exit(0);
+}
+
+int main() {
+    // Register callback for SIGINT
+    signal(SIGINT, handle_sigint);
+    
+    while(1) {
+        // Main program loop
+    }
+    return 0;
+}</code></pre>
+                    </div>
+                </div>
+                <div class="content-box">
+                    <h3>Node.js / libuv (Event Loop)</h3>
+                    <p>The entire Node.js event loop is implemented in C using callbacks:</p>
+                    <ul>
+                        <li>File I/O operations</li>
+                        <li>Network sockets</li>
+                        <li>Timers and intervals</li>
+                        <li>Child processes</li>
+                    </ul>
+                    <div class="highlight-box" style="margin-top: 15px;">
+                        <strong>Fun Fact:</strong> libuv handles ~1 million concurrent connections using callback-based async I/O!
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- ==================== SLIDE 25: GENERIC ARRAY PROCESSING ==================== -->
+        <div class="slide" data-slide="25">
+            <h2 class="slide-title"><span class="emoji">🔄</span> Generic Array Processing</h2>
+            <div class="code-block">
+                <div class="code-header">
+                    <span>forEach, map, filter patterns in C</span>
+                    <span class="lang-badge">C</span>
+                </div>
+                <pre><code class="language-c">#include &lt;stdio.h&gt;
+#include &lt;stdlib.h&gt;
+
+// forEach: Apply function to each element
+void array_foreach(void *arr, size_t n, size_t size,
+                   void (*action)(void *elem)) {
+    char *ptr = (char*)arr;
+    for (size_t i = 0; i < n; i++) {
+        action(ptr + i * size);
+    }
+}
+
+// Example action: print integer
+void print_int(void *elem) {
+    printf("%d ", *(int*)elem);
+}
+
+// Example action: double the value
+void double_int(void *elem) {
+    *(int*)elem *= 2;
+}
+
+int main() {
+    int arr[] = {1, 2, 3, 4, 5};
+    int n = 5;
+    
+    printf("Original: ");
+    array_foreach(arr, n, sizeof(int), print_int);
+    
+    array_foreach(arr, n, sizeof(int), double_int);
+    
+    printf("\nDoubled:  ");
+    array_foreach(arr, n, sizeof(int), print_int);
+    
+    return 0;
+}</code></pre>
+            </div>
+        </div>
+        
+        <!-- ==================== SLIDE 26: STATE MACHINES ==================== -->
+        <div class="slide" data-slide="26">
+            <h2 class="slide-title"><span class="emoji">🔀</span> State Machines with Function Pointers</h2>
+            <div class="code-block">
+                <div class="code-header">
+                    <span>Simple traffic light state machine</span>
+                    <span class="lang-badge">C</span>
+                </div>
+                <pre><code class="language-c">#include &lt;stdio.h&gt;
+
+typedef enum { RED, YELLOW, GREEN } State;
+
+// State handler function type
+typedef State (*StateHandler)(void);
+
+// State handlers
+State handle_red(void)    { printf("🔴 STOP!\n");    return GREEN; }
+State handle_yellow(void) { printf("🟡 CAUTION!\n"); return RED; }
+State handle_green(void)  { printf("🟢 GO!\n");      return YELLOW; }
+
+int main() {
+    // Dispatch table indexed by state
+    StateHandler handlers[] = {
+        [RED]    = handle_red,
+        [YELLOW] = handle_yellow,
+        [GREEN]  = handle_green
+    };
+    
+    State current = RED;
+    
+    for (int i = 0; i < 6; i++) {
+        current = handlers[current]();  // Execute and transition
+    }
+    
+    return 0;
+}</code></pre>
+            </div>
+        </div>
+        
+        <!-- ==================== SLIDE 27: INTERVIEW QUESTION 1 ==================== -->
+        <div class="slide" data-slide="27">
+            <h2 class="slide-title"><span class="emoji">💼</span> Interview Question #1</h2>
+            <div class="content-grid">
+                <div class="content-box">
+                    <h3>The Question</h3>
+                    <p style="font-size: 1.1em; margin-bottom: 20px;">Declare a pointer to a function that takes two integers and returns an integer.</p>
+                    <div class="interactive-demo">
+                        <p style="margin-bottom: 15px;">What's the correct syntax?</p>
+                        <div class="demo-controls">
+                            <button class="demo-btn" onclick="checkAnswer1(1)">int *func(int, int)</button>
+                            <button class="demo-btn" onclick="checkAnswer1(2)">int (*func)(int, int)</button>
+                            <button class="demo-btn" onclick="checkAnswer1(3)">int func*(int, int)</button>
+                        </div>
+                        <div id="answer1" class="demo-output" style="margin-top: 15px;"></div>
+                    </div>
+                </div>
+                <div class="content-box">
+                    <h3>Analysis</h3>
+                    <ul>
+                        <li><code>int *func(int, int)</code> — Function returning int pointer</li>
+                        <li><code>int (*func)(int, int)</code> — Pointer to function ✓</li>
+                        <li><code>int func*(int, int)</code> — Syntax error</li>
+                    </ul>
+                    <div class="highlight-box" style="margin-top: 20px;">
+                        <strong>Remember:</strong> Parentheses around <code>*func</code> are essential to make it a pointer to a function rather than a function returning a pointer!
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- ==================== SLIDE 28: INTERVIEW QUESTION 2 ==================== -->
+        <div class="slide" data-slide="28">
+            <h2 class="slide-title"><span class="emoji">💼</span> Interview Question #2</h2>
+            <div class="content-grid">
+                <div class="content-box full-width">
+                    <h3>The Question</h3>
+                    <p>Implement a dispatch table using an array of function pointers for a simple calculator.</p>
+                </div>
+            </div>
+            <div class="code-block">
+                <div class="code-header">
+                    <span>Solution</span>
+                    <span class="lang-badge">C</span>
+                </div>
+                <pre><code class="language-c">typedef int (*Operation)(int, int);
+
+int add(int a, int b) { return a + b; }
+int sub(int a, int b) { return a - b; }
+int mul(int a, int b) { return a * b; }
+int divide(int a, int b) { return b ? a / b : 0; }
+
+int calculate(char op, int a, int b) {
+    // Map operators to indices
+    Operation ops[256] = {0};  // Initialize all to NULL
+    ops['+'] = add;
+    ops['-'] = sub;
+    ops['*'] = mul;
+    ops['/'] = divide;
+    
+    if (ops[(unsigned char)op]) {
+        return ops[(unsigned char)op](a, b);
+    }
+    return 0;  // Unknown operator
+}</code></pre>
+            </div>
+        </div>
+        
+        <!-- ==================== SLIDE 29: INTERVIEW QUESTION 3 ==================== -->
+        <div class="slide" data-slide="29">
+            <h2 class="slide-title"><span class="emoji">💼</span> Interview Question #3</h2>
+            <div class="content-grid">
+                <div class="content-box">
+                    <h3>The Question</h3>
+                    <p>Explain the difference between:</p>
+                    <div class="code-block">
+                        <div class="code-header">
+                            <span>Two declarations</span>
+                            <span class="lang-badge">C</span>
+                        </div>
+                        <pre><code class="language-c">int (*fptr)(int);
+
+int *fptr(int);</code></pre>
+                    </div>
+                </div>
+                <div class="content-box">
+                    <h3>Answer</h3>
+                    <table class="comparison-table">
+                        <tr>
+                            <th>Declaration</th>
+                            <th>Meaning</th>
+                        </tr>
+                        <tr>
+                            <td><code>int (*fptr)(int)</code></td>
+                            <td>Pointer to a function that takes int and returns int</td>
+                        </tr>
+                        <tr>
+                            <td><code>int *fptr(int)</code></td>
+                            <td>Function that takes int and returns pointer to int</td>
+                        </tr>
+                    </table>
+                    <div class="warning-box" style="margin-top: 15px;">
+                        <strong>Key Insight:</strong> The parentheses bind the * to fptr, making it a pointer. Without them, * binds to the return type.
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- ==================== SLIDE 30: COMMON PITFALLS ==================== -->
+        <div class="slide" data-slide="30">
+            <h2 class="slide-title"><span class="emoji">⚠️</span> Common Pitfalls</h2>
+            <div class="content-grid">
+                <div class="content-box">
+                    <h3>1. Forgetting to Sort Before bsearch()</h3>
+                    <div class="code-block">
+                        <div class="code-header">
+                            <span>Wrong!</span>
+                            <span class="lang-badge">C</span>
+                        </div>
+                        <pre><code class="language-c">// Array not sorted!
+int arr[] = {5, 2, 8, 1};
+
+// bsearch will give wrong results
+int *p = bsearch(&key, arr, 4, 
+                 sizeof(int), cmp);</code></pre>
+                    </div>
+                </div>
+                <div class="content-box">
+                    <h3>2. Wrong Comparator for bsearch()</h3>
+                    <div class="code-block">
+                        <div class="code-header">
+                            <span>Remember!</span>
+                            <span class="lang-badge">C</span>
+                        </div>
+                        <pre><code class="language-c">// In bsearch comparator:
+// First arg = KEY (what you search)
+// Second arg = array element
+
+int cmp(const void *key, 
+        const void *elem) {
+    // key is what we're looking for
+    // elem is current array element
+}</code></pre>
+                    </div>
+                </div>
+                <div class="content-box">
+                    <h3>3. Integer Overflow in Comparator</h3>
+                    <p>Use conditionals, not subtraction:</p>
+                    <div class="code-block">
+                        <div class="code-header">
+                            <span>Safe pattern</span>
+                            <span class="lang-badge">C</span>
+                        </div>
+                        <pre><code class="language-c">return (a > b) - (a < b);</code></pre>
+                    </div>
+                </div>
+                <div class="content-box">
+                    <h3>4. Mismatched Function Signatures</h3>
+                    <p>The pointer type must EXACTLY match the function signature. Compiler warnings are your friend!</p>
+                    <div class="warning-box" style="margin-top: 15px;">
+                        Never ignore warnings about incompatible pointer types!
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- ==================== SLIDE 31: MEMORY MODEL ==================== -->
+        <div class="slide" data-slide="31">
+            <h2 class="slide-title"><span class="emoji">🧠</span> Memory Model: Function Pointers</h2>
+            <div class="content-box" style="max-width: 900px; margin: 0 auto;">
+                <h3 style="text-align: center; margin-bottom: 30px;">Where Code Lives in Memory</h3>
+                <div style="display: grid; grid-template-columns: 200px 1fr; gap: 20px;">
+                    <div style="text-align: right; padding-right: 20px; border-right: 3px solid var(--accent-blue);">
+                        <div style="margin-bottom: 40px;">
+                            <div style="color: var(--accent-purple); font-weight: bold;">High Address</div>
+                            <div style="color: var(--text-secondary);">0xFFFF...</div>
+                        </div>
+                        <div style="margin-bottom: 40px;">
+                            <div style="color: var(--text-secondary);">↓</div>
+                        </div>
+                        <div style="margin-bottom: 40px;">
+                            <div style="color: var(--text-secondary);">↓</div>
+                        </div>
+                        <div>
+                            <div style="color: var(--accent-green); font-weight: bold;">Low Address</div>
+                            <div style="color: var(--text-secondary);">0x0000...</div>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="memory-cell" style="margin-bottom: 10px; background: rgba(248, 81, 73, 0.2);">
+                            <div class="value" style="color: var(--accent-red);">Stack</div>
+                            <div class="name">Local variables, function parameters, return addresses</div>
+                        </div>
+                        <div style="text-align: center; padding: 10px;">↕ grows/shrinks</div>
+                        <div class="memory-cell" style="margin-bottom: 10px; background: rgba(163, 113, 247, 0.2);">
+                            <div class="value" style="color: var(--accent-purple);">Heap</div>
+                            <div class="name">malloc(), dynamic allocation</div>
+                        </div>
+                        <div class="memory-cell" style="margin-bottom: 10px; background: rgba(210, 153, 34, 0.2);">
+                            <div class="value" style="color: var(--accent-orange);">Data Segment</div>
+                            <div class="name">Global/static variables (BSS + initialized data)</div>
+                        </div>
+                        <div class="memory-cell" style="background: rgba(63, 185, 80, 0.2);">
+                            <div class="value" style="color: var(--accent-green);">Text (Code) Segment</div>
+                            <div class="name">Executable instructions - FUNCTION CODE LIVES HERE!</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="highlight-box" style="max-width: 900px; margin: 20px auto 0;">
+                <strong>Key Insight:</strong> Function pointers store addresses pointing into the Text segment. The code itself is read-only and shared between all instances of a program.
+            </div>
+        </div>
+        
+        <!-- ==================== SLIDE 32: DEBUGGING TIPS ==================== -->
+        <div class="slide" data-slide="32">
+            <h2 class="slide-title"><span class="emoji">🐛</span> Debugging Function Pointers</h2>
+            <div class="content-grid">
+                <div class="content-box">
+                    <h3>GDB Commands</h3>
+                    <div class="code-block">
+                        <div class="code-header">
+                            <span>Useful GDB commands</span>
+                            <span class="lang-badge">BASH</span>
+                        </div>
+                        <pre><code class="language-bash"># Print function pointer value
+(gdb) p fptr
+$1 = (int (*)(int, int)) 0x4005f0 &lt;add&gt;
+
+# Print what function it points to
+(gdb) p *fptr
+$2 = {int (int, int)} 0x4005f0 &lt;add&gt;
+
+# Set breakpoint on function pointer
+(gdb) b *fptr
+
+# Step into function pointer call
+(gdb) step</code></pre>
+                    </div>
+                </div>
+                <div class="content-box">
+                    <h3>Verification Pattern</h3>
+                    <div class="code-block">
+                        <div class="code-header">
+                            <span>Always check before calling</span>
+                            <span class="lang-badge">C</span>
+                        </div>
+                        <pre><code class="language-c">int safe_call(int (*fptr)(int, int),
+              int a, int b) {
+    // Always check for NULL!
+    if (fptr == NULL) {
+        fprintf(stderr, 
+                "Error: NULL function pointer\n");
+        return -1;  // Or handle appropriately
+    }
+    
+    return fptr(a, b);
+}</code></pre>
+                    </div>
+                </div>
+            </div>
+            <div class="warning-box">
+                <strong>Remember:</strong> Calling a NULL function pointer causes a segmentation fault. Always validate pointers before use!
+            </div>
+        </div>
+        
+        <!-- ==================== SLIDE 33: BEST PRACTICES ==================== -->
+        <div class="slide" data-slide="33">
+            <h2 class="slide-title"><span class="emoji">✅</span> Best Practices Summary</h2>
+            <div class="content-grid">
+                <div class="content-box">
+                    <h3>Do:</h3>
+                    <ul>
+                        <li>Use <code>typedef</code> for function pointer types</li>
+                        <li>Check for NULL before calling</li>
+                        <li>Use safe comparator patterns (no overflow)</li>
+                        <li>Sort arrays before using bsearch()</li>
+                        <li>Match comparator with sort criteria</li>
+                        <li>Document callback contracts clearly</li>
+                        <li>Use descriptive names for function pointers</li>
+                    </ul>
+                </div>
+                <div class="content-box">
+                    <h3>Don't:</h3>
+                    <ul>
+                        <li>Ignore compiler warnings about pointer types</li>
+                        <li>Use subtraction for comparing large integers</li>
+                        <li>Forget parentheses in declarations</li>
+                        <li>Assume qsort() is stable</li>
+                        <li>Cast function pointers to incompatible types</li>
+                        <li>Call bsearch() on unsorted arrays</li>
+                        <li>Mix up key and element in bsearch comparator</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        
+        <!-- ==================== SLIDE 34: EXERCISES PREVIEW ==================== -->
+        <div class="slide" data-slide="34">
+            <h2 class="slide-title"><span class="emoji">📝</span> Laboratory Exercises</h2>
+            <div class="content-grid">
+                <div class="content-box">
+                    <h3>Exercise 1: Calculator with Callbacks</h3>
+                    <p>Implement a calculator that:</p>
+                    <ul>
+                        <li>Reads operation (+, -, *, /, %) from user</li>
+                        <li>Uses a dispatch table of function pointers</li>
+                        <li>Handles division by zero gracefully</li>
+                        <li>Supports modulo operation</li>
+                    </ul>
+                    <div class="highlight-box" style="margin-top: 15px;">
+                        <strong>Difficulty:</strong> ⭐⭐☆☆☆
+                    </div>
+                </div>
+                <div class="content-box">
+                    <h3>Exercise 2: Student Database</h3>
+                    <p>Create a student management system with:</p>
+                    <ul>
+                        <li>Sort by name, ID, or grade</li>
+                        <li>Search by name using bsearch()</li>
+                        <li>Filter students above a threshold</li>
+                        <li>Custom comparators for each criterion</li>
+                    </ul>
+                    <div class="highlight-box" style="margin-top: 15px;">
+                        <strong>Difficulty:</strong> ⭐⭐⭐☆☆
+                    </div>
+                </div>
+            </div>
+            <div class="success-box" style="margin-top: 20px;">
+                <strong>Lab Files:</strong> Check <code>src/exercise1.c</code> and <code>src/exercise2.c</code> for starter templates with TODO markers.
+            </div>
+        </div>
+        
+        <!-- ==================== SLIDE 35: KEY TAKEAWAYS ==================== -->
+        <div class="slide" data-slide="35">
+            <h2 class="slide-title"><span class="emoji">🎯</span> Key Takeaways</h2>
+            <div class="content-grid" style="grid-template-columns: repeat(2, 1fr);">
+                <div class="memory-cell" style="text-align: left; padding: 25px;">
+                    <div class="value" style="font-size: 1.2em; margin-bottom: 10px;">1. Syntax Matters</div>
+                    <div class="name"><code>int (*fp)(int)</code> ≠ <code>int *fp(int)</code></div>
+                </div>
+                <div class="memory-cell" style="text-align: left; padding: 25px;">
+                    <div class="value" style="font-size: 1.2em; margin-bottom: 10px;">2. Use typedef</div>
+                    <div class="name">Makes code readable and maintainable</div>
+                </div>
+                <div class="memory-cell" style="text-align: left; padding: 25px;">
+                    <div class="value" style="font-size: 1.2em; margin-bottom: 10px;">3. Callbacks Enable Genericity</div>
+                    <div class="name">Write once, customize behavior</div>
+                </div>
+                <div class="memory-cell" style="text-align: left; padding: 25px;">
+                    <div class="value" style="font-size: 1.2em; margin-bottom: 10px;">4. qsort() is Powerful</div>
+                    <div class="name">Sort any data type with custom comparators</div>
+                </div>
+                <div class="memory-cell" style="text-align: left; padding: 25px;">
+                    <div class="value" style="font-size: 1.2em; margin-bottom: 10px;">5. bsearch() Needs Sorted Data</div>
+                    <div class="name">Always sort first, O(log n) search</div>
+                </div>
+                <div class="memory-cell" style="text-align: left; padding: 25px;">
+                    <div class="value" style="font-size: 1.2em; margin-bottom: 10px;">6. Dispatch Tables</div>
+                    <div class="name">Replace switch with elegance</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- ==================== SLIDE 36: RESOURCES ==================== -->
+        <div class="slide" data-slide="36">
+            <h2 class="slide-title"><span class="emoji">📚</span> Additional Resources</h2>
+            <div class="content-grid">
+                <div class="content-box">
+                    <h3>Essential Reading</h3>
+                    <ul>
+                        <li><strong>K&R</strong> - Chapter 5.11: Pointers to Functions</li>
+                        <li><strong>Modern C</strong> - Chapter 11: Function Pointers</li>
+                        <li><strong>CLRS</strong> - Sorting algorithms theory</li>
+                        <li><strong>man qsort</strong> - System documentation</li>
+                        <li><strong>man bsearch</strong> - Binary search docs</li>
+                    </ul>
+                </div>
+                <div class="content-box">
+                    <h3>Online Resources</h3>
+                    <ul>
+                        <li>cppreference.com - C standard library</li>
+                        <li>cdecl.org - Decode C declarations</li>
+                        <li>Compiler Explorer (godbolt.org) - See assembly</li>
+                        <li>Stack Overflow - Practical examples</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="quote-box">
+                "The only way to learn a new programming language is by writing programs in it."
+                <div class="quote-author">— Dennis Ritchie</div>
+            </div>
+        </div>
+        
+        <!-- ==================== SLIDE 37: THANK YOU ==================== -->
+        <div class="slide title-slide" data-slide="37">
+            <h1>🎉 Questions?</h1>
+            <p class="subtitle">Week 01: Pointers to Functions and Callbacks</p>
+            <div style="margin-top: 30px;">
+                <p style="color: var(--text-secondary);">Next week: Text Files in C</p>
+            </div>
+            <div style="margin-top: 40px; display: flex; justify-content: center; gap: 30px;">
+                <div class="memory-cell">
+                    <div class="value">📧</div>
+                    <div class="name">Contact your instructor</div>
+                </div>
+                <div class="memory-cell">
+                    <div class="value">💻</div>
+                    <div class="name">Practice exercises</div>
+                </div>
+                <div class="memory-cell">
+                    <div class="value">📖</div>
+                    <div class="name">Read K&R Ch. 5.11</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Navigation Controls -->
+        <div class="nav-controls">
+            <button class="nav-btn" onclick="prevSlide()">← Previous</button>
+            <button class="nav-btn" onclick="nextSlide()">Next →</button>
+        </div>
+        
+        <div class="slide-counter">
+            Slide <span id="currentSlide">1</span> / <span id="totalSlides">37</span>
+        </div>
+    </div>
+    
+    <script>
+        // Initialize highlight.js
+        hljs.highlightAll();
+        
+        let currentSlide = 1;
+        const totalSlides = document.querySelectorAll('.slide').length;
+        
+        document.getElementById('totalSlides').textContent = totalSlides;
+        
+        function showSlide(n) {
+            const slides = document.querySelectorAll('.slide');
+            
+            if (n > totalSlides) currentSlide = 1;
+            if (n < 1) currentSlide = totalSlides;
+            
+            slides.forEach(slide => slide.classList.remove('active'));
+            slides[currentSlide - 1].classList.add('active');
+            
+            document.getElementById('currentSlide').textContent = currentSlide;
+            document.getElementById('progressFill').style.width = 
+                ((currentSlide / totalSlides) * 100) + '%';
+        }
+        
+        function nextSlide() {
+            currentSlide++;
+            showSlide(currentSlide);
+        }
+        
+        function prevSlide() {
+            currentSlide--;
+            showSlide(currentSlide);
+        }
+        
+        // Keyboard navigation
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowRight' || e.key === ' ') {
+                nextSlide();
+            } else if (e.key === 'ArrowLeft') {
+                prevSlide();
+            } else if (e.key === 'Home') {
+                currentSlide = 1;
+                showSlide(currentSlide);
+            } else if (e.key === 'End') {
+                currentSlide = totalSlides;
+                showSlide(currentSlide);
+            }
+        });
+        
+        // Interactive demo functions
+        function checkAnswer1(choice) {
+            const output = document.getElementById('answer1');
+            const buttons = document.querySelectorAll('#answer1').closest('.interactive-demo').querySelectorAll('.demo-btn');
+            
+            buttons.forEach(btn => btn.classList.remove('active'));
+            
+            if (choice === 2) {
+                output.innerHTML = '<span style="color: var(--accent-green)">✓ Correct!</span> <code>int (*func)(int, int)</code> declares a pointer to a function.';
+                buttons[1].classList.add('active');
+            } else {
+                output.innerHTML = '<span style="color: var(--accent-red)">✗ Try again.</span> Remember: parentheses around *func are required!';
+            }
+        }
+        
+        // Initialize first slide
+        showSlide(1);
+    </script>
+</body>
+</html>

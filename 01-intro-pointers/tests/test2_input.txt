@@ -1,0 +1,4 @@
+id,name,grade
+101,Ionescu Maria,9.25
+102,Popescu Ion,8.50
+103,Georgescu Ana,7.80

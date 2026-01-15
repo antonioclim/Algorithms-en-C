@@ -1,0 +1,14 @@
+Calculator with Dispatch Table
+Enter operations (e.g., '10 + 5'), Ctrl+D to exit:
+─────────────────────────────────────────────────
+10 + 5 = 15
+20 - 8 = 12
+7 * 3 = 21
+15 / 4 = 3
+17 % 5 = 2
+Error: Division by zero
+Error: Division by zero
+-5 + 10 = 5
+12 * -3 = -36
+─────────────────────────────────────────────────
+Calculator terminated.

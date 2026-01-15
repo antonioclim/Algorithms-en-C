@@ -1,0 +1,1823 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Week 02: Text File Processing in C | ATP Course</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <style>
+        :root {
+            --bg-primary: #0d1117;
+            --bg-secondary: #161b22;
+            --bg-tertiary: #21262d;
+            --text-primary: #e6edf3;
+            --text-secondary: #8b949e;
+            --accent-blue: #58a6ff;
+            --accent-green: #3fb950;
+            --accent-yellow: #d29922;
+            --accent-red: #f85149;
+            --accent-purple: #a371f7;
+            --border-color: #30363d;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans', Helvetica, Arial, sans-serif;
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.6;
+            overflow: hidden;
+        }
+
+        /* Progress Bar */
+        #progress-bar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 4px;
+            background: linear-gradient(90deg, var(--accent-blue), var(--accent-purple));
+            transition: width 0.3s ease;
+            z-index: 1000;
+        }
+
+        /* Slide Container */
+        .slides-container {
+            width: 100vw;
+            height: 100vh;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .slide {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            padding: 60px 80px;
+            display: none;
+            opacity: 0;
+            transition: opacity 0.4s ease;
+            overflow-y: auto;
+        }
+
+        .slide.active {
+            display: flex;
+            flex-direction: column;
+            opacity: 1;
+        }
+
+        /* Typography */
+        h1 {
+            font-size: 2.8rem;
+            font-weight: 600;
+            margin-bottom: 1.5rem;
+            color: var(--text-primary);
+        }
+
+        h2 {
+            font-size: 2.2rem;
+            font-weight: 600;
+            margin-bottom: 1.2rem;
+            color: var(--accent-blue);
+        }
+
+        h3 {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 0.8rem;
+            color: var(--accent-green);
+        }
+
+        p {
+            font-size: 1.25rem;
+            margin-bottom: 1rem;
+            color: var(--text-secondary);
+        }
+
+        ul, ol {
+            font-size: 1.2rem;
+            margin-left: 2rem;
+            margin-bottom: 1rem;
+        }
+
+        li {
+            margin-bottom: 0.6rem;
+            color: var(--text-secondary);
+        }
+
+        li strong {
+            color: var(--text-primary);
+        }
+
+        /* Title Slide */
+        .title-slide {
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            background: linear-gradient(135deg, var(--bg-primary) 0%, var(--bg-secondary) 100%);
+        }
+
+        .title-slide h1 {
+            font-size: 3.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .title-slide .subtitle {
+            font-size: 2rem;
+            color: var(--accent-blue);
+            margin-bottom: 2rem;
+        }
+
+        .title-slide .meta {
+            font-size: 1.2rem;
+            color: var(--text-secondary);
+        }
+
+        .week-badge {
+            display: inline-block;
+            background: var(--accent-purple);
+            color: white;
+            padding: 0.5rem 1.5rem;
+            border-radius: 30px;
+            font-size: 1.2rem;
+            margin-bottom: 1.5rem;
+        }
+
+        /* Code Blocks */
+        .code-block {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            margin: 1rem 0;
+            overflow: hidden;
+        }
+
+        .code-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.5rem 1rem;
+            background: var(--bg-tertiary);
+            border-bottom: 1px solid var(--border-color);
+            font-size: 0.9rem;
+        }
+
+        .lang-badge {
+            background: var(--accent-blue);
+            color: white;
+            padding: 0.2rem 0.6rem;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        .code-block pre {
+            margin: 0;
+            padding: 1rem;
+            overflow-x: auto;
+        }
+
+        .code-block code {
+            font-family: 'Fira Code', 'Consolas', 'Monaco', monospace;
+            font-size: 0.95rem;
+            line-height: 1.5;
+        }
+
+        /* Tables */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+            font-size: 1.1rem;
+        }
+
+        th {
+            background: var(--bg-tertiary);
+            color: var(--accent-blue);
+            padding: 0.8rem 1rem;
+            text-align: left;
+            border: 1px solid var(--border-color);
+        }
+
+        td {
+            padding: 0.8rem 1rem;
+            border: 1px solid var(--border-color);
+            color: var(--text-secondary);
+        }
+
+        tr:nth-child(even) {
+            background: var(--bg-secondary);
+        }
+
+        /* Info Boxes */
+        .info-box {
+            padding: 1rem 1.5rem;
+            border-radius: 8px;
+            margin: 1rem 0;
+            border-left: 4px solid;
+        }
+
+        .info-box.tip {
+            background: rgba(63, 185, 80, 0.1);
+            border-color: var(--accent-green);
+        }
+
+        .info-box.warning {
+            background: rgba(210, 153, 34, 0.1);
+            border-color: var(--accent-yellow);
+        }
+
+        .info-box.danger {
+            background: rgba(248, 81, 73, 0.1);
+            border-color: var(--accent-red);
+        }
+
+        .info-box.note {
+            background: rgba(88, 166, 255, 0.1);
+            border-color: var(--accent-blue);
+        }
+
+        .info-box-title {
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        /* Two Column Layout */
+        .two-columns {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            margin: 1rem 0;
+        }
+
+        .column {
+            background: var(--bg-secondary);
+            padding: 1.5rem;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+        }
+
+        /* ASCII Diagram */
+        .ascii-diagram {
+            background: var(--bg-secondary);
+            padding: 1.5rem;
+            border-radius: 8px;
+            font-family: 'Fira Code', monospace;
+            font-size: 0.9rem;
+            line-height: 1.4;
+            white-space: pre;
+            overflow-x: auto;
+            color: var(--accent-green);
+            border: 1px solid var(--border-color);
+        }
+
+        /* Key Figure Box */
+        .figure-box {
+            display: flex;
+            gap: 2rem;
+            background: var(--bg-secondary);
+            padding: 2rem;
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+            align-items: flex-start;
+        }
+
+        .figure-image {
+            width: 150px;
+            height: 150px;
+            background: var(--bg-tertiary);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 4rem;
+            flex-shrink: 0;
+        }
+
+        .figure-content {
+            flex: 1;
+        }
+
+        .quote {
+            font-style: italic;
+            color: var(--accent-yellow);
+            border-left: 3px solid var(--accent-yellow);
+            padding-left: 1rem;
+            margin-top: 1rem;
+        }
+
+        /* Summary Boxes */
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+            margin: 1rem 0;
+        }
+
+        .summary-box {
+            background: var(--bg-secondary);
+            padding: 1rem;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            text-align: center;
+        }
+
+        .summary-box .icon {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .summary-box h4 {
+            color: var(--accent-blue);
+            margin-bottom: 0.5rem;
+        }
+
+        /* Navigation */
+        .navigation {
+            position: fixed;
+            bottom: 20px;
+            right: 30px;
+            display: flex;
+            gap: 10px;
+            z-index: 100;
+        }
+
+        .nav-btn {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: all 0.2s ease;
+        }
+
+        .nav-btn:hover {
+            background: var(--accent-blue);
+            border-color: var(--accent-blue);
+        }
+
+        .nav-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* Slide Counter */
+        .slide-counter {
+            position: fixed;
+            bottom: 25px;
+            left: 30px;
+            font-size: 1rem;
+            color: var(--text-secondary);
+            z-index: 100;
+        }
+
+        /* Timeline */
+        .timeline {
+            position: relative;
+            padding-left: 30px;
+        }
+
+        .timeline::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 3px;
+            background: var(--accent-blue);
+        }
+
+        .timeline-item {
+            position: relative;
+            margin-bottom: 1.5rem;
+            padding-left: 1rem;
+        }
+
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            left: -30px;
+            top: 8px;
+            width: 12px;
+            height: 12px;
+            background: var(--accent-blue);
+            border-radius: 50%;
+        }
+
+        .timeline-year {
+            color: var(--accent-purple);
+            font-weight: 600;
+        }
+
+        /* Function Signature */
+        .function-sig {
+            background: var(--bg-tertiary);
+            padding: 1rem;
+            border-radius: 8px;
+            font-family: 'Fira Code', monospace;
+            margin: 1rem 0;
+            border-left: 4px solid var(--accent-purple);
+        }
+
+        .param {
+            color: var(--accent-yellow);
+        }
+
+        .return-type {
+            color: var(--accent-green);
+        }
+
+        /* Comparison Table Highlight */
+        .highlight-row {
+            background: rgba(88, 166, 255, 0.2) !important;
+        }
+
+        /* End Slide */
+        .end-slide {
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+        }
+
+        .end-slide h1 {
+            font-size: 4rem;
+            margin-bottom: 2rem;
+        }
+
+        /* Responsive */
+        @media (max-width: 1024px) {
+            .slide {
+                padding: 40px;
+            }
+            
+            .two-columns {
+                grid-template-columns: 1fr;
+            }
+            
+            .summary-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div id="progress-bar"></div>
+
+<div class="slides-container">
+
+    <!-- Slide 1: Title -->
+    <div class="slide title-slide active" data-slide="1">
+        <div class="week-badge">WEEK 02</div>
+        <h1>Text File Processing in C</h1>
+        <p class="subtitle">Streams, Buffers and the Art of Parsing</p>
+        <p class="meta">Algorithms and Programming Techniques (ATP)</p>
+        <p class="meta">Academy of Economic Studies, Bucharest</p>
+    </div>
+
+    <!-- Slide 2: Learning Objectives -->
+    <div class="slide" data-slide="2">
+        <h2>🎯 Learning Objectives</h2>
+        <p>By the end of this session, you will be able to:</p>
+        <ul>
+            <li><strong>Remember</strong> the fundamental file I/O functions: <code>fopen</code>, <code>fclose</code>, <code>fgets</code>, <code>fprintf</code>, <code>fscanf</code></li>
+            <li><strong>Understand</strong> the distinction between text mode and binary mode file operations</li>
+            <li><strong>Apply</strong> file handling techniques to read, parse and process structured data</li>
+            <li><strong>Analyse</strong> the performance implications of different buffering strategies</li>
+            <li><strong>Evaluate</strong> error handling strategies for file operations</li>
+            <li><strong>Create</strong> robust file processing utilities that handle malformed input gracefully</li>
+        </ul>
+    </div>
+
+    <!-- Slide 3: Historical Timeline -->
+    <div class="slide" data-slide="3">
+        <h2>📜 Historical Context</h2>
+        <div class="timeline">
+            <div class="timeline-item">
+                <span class="timeline-year">1969-1973</span>
+                <p>Dennis Ritchie and Ken Thompson develop C at Bell Labs for Unix</p>
+            </div>
+            <div class="timeline-item">
+                <span class="timeline-year">1978</span>
+                <p>K&R C — "The C Programming Language" first edition published</p>
+            </div>
+            <div class="timeline-item">
+                <span class="timeline-year">1989</span>
+                <p>ANSI C standardised — <code>&lt;stdio.h&gt;</code> becomes official</p>
+            </div>
+            <div class="timeline-item">
+                <span class="timeline-year">1999</span>
+                <p>C99 deprecates <code>gets()</code> due to security vulnerabilities</p>
+            </div>
+            <div class="timeline-item">
+                <span class="timeline-year">2011</span>
+                <p>C11 removes <code>gets()</code> entirely, adds bounds-checking functions</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Slide 4: Key Figure -->
+    <div class="slide" data-slide="4">
+        <h2>👤 Key Figure: Dennis Ritchie (1941–2011)</h2>
+        <div class="figure-box">
+            <div class="figure-image">👨‍💻</div>
+            <div class="figure-content">
+                <h3>Father of C and Co-Creator of Unix</h3>
+                <p>Dennis MacAlistair Ritchie created the C programming language and, together with Ken Thompson, developed the Unix operating system at Bell Labs.</p>
+                <p>His elegant design of C's I/O system — abstracting files as streams — influenced virtually every programming language that followed.</p>
+                <p><strong>Turing Award</strong> (1983) — shared with Ken Thompson</p>
+                <div class="quote">
+                    "Unix is basically a simple operating system, but you have to be a genius to understand the simplicity."
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Slide 5: The Stream Abstraction -->
+    <div class="slide" data-slide="5">
+        <h2>📊 The Stream Abstraction</h2>
+        <p>In C, a <strong>stream</strong> is a logical connection between your programme and an I/O device:</p>
+        <div class="ascii-diagram">
+┌─────────────────┐         ┌─────────────────┐         ┌─────────────────┐
+│   Your Program  │ ──────► │   FILE Stream   │ ──────► │   Disk/Device   │
+│                 │ ◄────── │   (Buffered)    │ ◄────── │                 │
+└─────────────────┘         └─────────────────┘         └─────────────────┘
+                                    │
+                            ┌───────┴───────┐
+                            │ Contains:     │
+                            │ • Buffer ptr  │
+                            │ • Position    │
+                            │ • Error flags │
+                            │ • EOF flag    │
+                            └───────────────┘
+        </div>
+        <div class="info-box note">
+            <div class="info-box-title">💡 Key Insight</div>
+            The <code>FILE</code> type is an <strong>opaque structure</strong> — you never access its members directly. Always use the provided functions.
+        </div>
+    </div>
+
+    <!-- Slide 6: Standard Streams -->
+    <div class="slide" data-slide="6">
+        <h2>🔌 Standard Streams</h2>
+        <p>Three streams are automatically available when your programme starts:</p>
+        <table>
+            <tr>
+                <th>Stream</th>
+                <th>File Pointer</th>
+                <th>Default Device</th>
+                <th>Typical Use</th>
+            </tr>
+            <tr>
+                <td><code>stdin</code></td>
+                <td>Predefined</td>
+                <td>Keyboard</td>
+                <td>Reading user input</td>
+            </tr>
+            <tr>
+                <td><code>stdout</code></td>
+                <td>Predefined</td>
+                <td>Terminal</td>
+                <td>Normal programme output</td>
+            </tr>
+            <tr>
+                <td><code>stderr</code></td>
+                <td>Predefined</td>
+                <td>Terminal</td>
+                <td>Error messages (unbuffered)</td>
+            </tr>
+        </table>
+        <div class="code-block">
+            <div class="code-header">
+                <span>Using standard streams</span>
+                <span class="lang-badge">C</span>
+            </div>
+            <pre><code class="language-c">/* These two are equivalent */
+printf("Hello, World!\n");
+fprintf(stdout, "Hello, World!\n");
+
+/* Error messages go to stderr */
+fprintf(stderr, "Error: File not found\n");</code></pre>
+        </div>
+    </div>
+
+    <!-- Slide 7: Opening Files -->
+    <div class="slide" data-slide="7">
+        <h2>📂 Opening Files: fopen()</h2>
+        <div class="function-sig">
+            <span class="return-type">FILE *</span><strong>fopen</strong>(const char *<span class="param">filename</span>, const char *<span class="param">mode</span>);
+        </div>
+        <p>Returns a <code>FILE *</code> pointer on success, or <code>NULL</code> on failure.</p>
+        <div class="code-block">
+            <div class="code-header">
+                <span>Basic file opening pattern</span>
+                <span class="lang-badge">C</span>
+            </div>
+            <pre><code class="language-c">FILE *fp = fopen("data.txt", "r");
+if (fp == NULL) {
+    perror("Error opening file");
+    return 1;
+}
+/* ... use the file ... */
+fclose(fp);</code></pre>
+        </div>
+        <div class="info-box warning">
+            <div class="info-box-title">⚠️ Always Check Return Value</div>
+            Never assume <code>fopen()</code> succeeds. File might not exist, permissions may be denied, or disk may be full.
+        </div>
+    </div>
+
+    <!-- Slide 8: File Modes -->
+    <div class="slide" data-slide="8">
+        <h2>🔧 File Opening Modes</h2>
+        <table>
+            <tr>
+                <th>Mode</th>
+                <th>Description</th>
+                <th>File Must Exist</th>
+                <th>Creates File</th>
+                <th>Truncates</th>
+            </tr>
+            <tr>
+                <td><code>"r"</code></td>
+                <td>Read text</td>
+                <td>✅ Yes</td>
+                <td>❌ No</td>
+                <td>❌ No</td>
+            </tr>
+            <tr>
+                <td><code>"w"</code></td>
+                <td>Write text</td>
+                <td>❌ No</td>
+                <td>✅ Yes</td>
+                <td>✅ Yes</td>
+            </tr>
+            <tr>
+                <td><code>"a"</code></td>
+                <td>Append text</td>
+                <td>❌ No</td>
+                <td>✅ Yes</td>
+                <td>❌ No</td>
+            </tr>
+            <tr>
+                <td><code>"r+"</code></td>
+                <td>Read and write</td>
+                <td>✅ Yes</td>
+                <td>❌ No</td>
+                <td>❌ No</td>
+            </tr>
+            <tr>
+                <td><code>"w+"</code></td>
+                <td>Read and write</td>
+                <td>❌ No</td>
+                <td>✅ Yes</td>
+                <td>✅ Yes</td>
+            </tr>
+            <tr>
+                <td><code>"a+"</code></td>
+                <td>Read and append</td>
+                <td>❌ No</td>
+                <td>✅ Yes</td>
+                <td>❌ No</td>
+            </tr>
+        </table>
+        <div class="info-box tip">
+            <div class="info-box-title">✅ Binary Mode</div>
+            Add <code>"b"</code> suffix (e.g., <code>"rb"</code>, <code>"wb"</code>) for binary mode — essential on Windows where text mode translates <code>\n</code> ↔ <code>\r\n</code>.
+        </div>
+    </div>
+
+    <!-- Slide 9: Reading Lines with fgets -->
+    <div class="slide" data-slide="9">
+        <h2>📖 Reading Lines: fgets()</h2>
+        <div class="function-sig">
+            char *<strong>fgets</strong>(char *<span class="param">str</span>, int <span class="param">n</span>, FILE *<span class="param">stream</span>);
+        </div>
+        <p>Reads at most <strong>n-1</strong> characters into <code>str</code>, stopping at newline or EOF. Always null-terminates.</p>
+        <div class="two-columns">
+            <div class="column">
+                <h3>✅ Safe Pattern</h3>
+                <div class="code-block">
+                    <div class="code-header">
+                        <span>Using fgets correctly</span>
+                        <span class="lang-badge">C</span>
+                    </div>
+                    <pre><code class="language-c">char line[256];
+while (fgets(line, sizeof(line), fp)) {
+    /* Process line */
+    printf("%s", line);
+}</code></pre>
+                </div>
+            </div>
+            <div class="column">
+                <h3>❌ Never Use gets()</h3>
+                <div class="code-block">
+                    <div class="code-header">
+                        <span>DANGEROUS - removed in C11</span>
+                        <span class="lang-badge">C</span>
+                    </div>
+                    <pre><code class="language-c">char line[256];
+gets(line);  /* NO SIZE LIMIT! */
+/* Buffer overflow vulnerability */</code></pre>
+                </div>
+            </div>
+        </div>
+        <div class="info-box note">
+            <div class="info-box-title">💡 Newline Handling</div>
+            <code>fgets()</code> <strong>includes</strong> the newline character if present. Use <code>strcspn()</code> to remove it: <code>line[strcspn(line, "\n")] = '\0';</code>
+        </div>
+    </div>
+
+    <!-- Slide 10: Writing with fprintf -->
+    <div class="slide" data-slide="10">
+        <h2>✏️ Writing Formatted Output: fprintf()</h2>
+        <div class="function-sig">
+            int <strong>fprintf</strong>(FILE *<span class="param">stream</span>, const char *<span class="param">format</span>, ...);
+        </div>
+        <p>Writes formatted output to the specified stream. Returns number of characters written, or negative on error.</p>
+        <div class="code-block">
+            <div class="code-header">
+                <span>Writing formatted data to a file</span>
+                <span class="lang-badge">C</span>
+            </div>
+            <pre><code class="language-c">FILE *fp = fopen("output.txt", "w");
+if (fp == NULL) {
+    perror("Cannot create file");
+    return 1;
+}
+
+/* Write header */
+fprintf(fp, "%-20s %10s %8s\n", "Name", "ID", "Grade");
+fprintf(fp, "%-20s %10s %8s\n", "----", "--", "-----");
+
+/* Write data */
+fprintf(fp, "%-20s %10d %8.2f\n", "Alice Smith", 12345, 9.75);
+fprintf(fp, "%-20s %10d %8.2f\n", "Bob Jones", 12346, 8.50);
+
+fclose(fp);</code></pre>
+        </div>
+    </div>
+
+    <!-- Slide 11: Reading with fscanf -->
+    <div class="slide" data-slide="11">
+        <h2>📥 Parsing Input: fscanf()</h2>
+        <div class="function-sig">
+            int <strong>fscanf</strong>(FILE *<span class="param">stream</span>, const char *<span class="param">format</span>, ...);
+        </div>
+        <p>Returns number of items successfully matched, or <code>EOF</code> on error or end of file.</p>
+        <div class="code-block">
+            <div class="code-header">
+                <span>Reading structured data</span>
+                <span class="lang-badge">C</span>
+            </div>
+            <pre><code class="language-c">int id;
+char name[50];
+float grade;
+
+/* Read space-separated fields */
+while (fscanf(fp, "%d %49s %f", &id, name, &grade) == 3) {
+    printf("Student %d: %s scored %.2f\n", id, name, grade);
+}</code></pre>
+        </div>
+        <div class="info-box warning">
+            <div class="info-box-title">⚠️ Whitespace Behaviour</div>
+            <code>fscanf()</code> skips leading whitespace for most specifiers. Use <code>fgets()</code> + <code>sscanf()</code> for more control over line-based parsing.
+        </div>
+    </div>
+
+    <!-- Slide 12: The fgets + sscanf Pattern -->
+    <div class="slide" data-slide="12">
+        <h2>🎯 Robust Parsing: fgets() + sscanf()</h2>
+        <p>Combining <code>fgets()</code> for line reading with <code>sscanf()</code> for parsing provides better control:</p>
+        <div class="code-block">
+            <div class="code-header">
+                <span>Line-by-line parsing with error handling</span>
+                <span class="lang-badge">C</span>
+            </div>
+            <pre><code class="language-c">char line[256];
+int line_num = 0;
+
+while (fgets(line, sizeof(line), fp)) {
+    line_num++;
+    
+    int id;
+    char name[50];
+    float grade;
+    
+    /* sscanf returns number of items matched */
+    int matched = sscanf(line, "%d %49s %f", &id, name, &grade);
+    
+    if (matched != 3) {
+        fprintf(stderr, "Warning: Line %d malformed: %s", line_num, line);
+        continue;  /* Skip bad lines */
+    }
+    
+    /* Process valid data */
+    process_student(id, name, grade);
+}</code></pre>
+        </div>
+        <div class="info-box tip">
+            <div class="info-box-title">✅ Best Practice</div>
+            This pattern lets you report exact line numbers for errors and recover gracefully from malformed input.
+        </div>
+    </div>
+
+    <!-- Slide 13: Character I/O -->
+    <div class="slide" data-slide="13">
+        <h2>🔤 Character-by-Character I/O</h2>
+        <div class="two-columns">
+            <div class="column">
+                <h3>Reading Characters</h3>
+                <div class="function-sig">int <strong>fgetc</strong>(FILE *stream);</div>
+                <div class="code-block">
+                    <div class="code-header">
+                        <span>Character reading loop</span>
+                        <span class="lang-badge">C</span>
+                    </div>
+                    <pre><code class="language-c">int ch;
+while ((ch = fgetc(fp)) != EOF) {
+    /* Process character */
+    putchar(ch);
+}</code></pre>
+                </div>
+            </div>
+            <div class="column">
+                <h3>Writing Characters</h3>
+                <div class="function-sig">int <strong>fputc</strong>(int c, FILE *stream);</div>
+                <div class="code-block">
+                    <div class="code-header">
+                        <span>Character writing</span>
+                        <span class="lang-badge">C</span>
+                    </div>
+                    <pre><code class="language-c">/* Write single character */
+fputc('A', fp);
+
+/* Convert to uppercase */
+int ch;
+while ((ch = fgetc(in)) != EOF) {
+    fputc(toupper(ch), out);
+}</code></pre>
+                </div>
+            </div>
+        </div>
+        <div class="info-box note">
+            <div class="info-box-title">💡 Why int, not char?</div>
+            <code>fgetc()</code> returns <code>int</code> because <code>EOF</code> (-1) must be distinguishable from valid character values (0–255).
+        </div>
+    </div>
+
+    <!-- Slide 14: Closing Files -->
+    <div class="slide" data-slide="14">
+        <h2>🚪 Closing Files: fclose()</h2>
+        <div class="function-sig">
+            int <strong>fclose</strong>(FILE *<span class="param">stream</span>);
+        </div>
+        <p>Flushes buffers and releases resources. Returns <code>0</code> on success, <code>EOF</code> on error.</p>
+        <div class="code-block">
+            <div class="code-header">
+                <span>Proper resource cleanup</span>
+                <span class="lang-badge">C</span>
+            </div>
+            <pre><code class="language-c">FILE *fp = fopen("data.txt", "r");
+if (fp == NULL) {
+    return 1;
+}
+
+/* ... process file ... */
+
+if (fclose(fp) == EOF) {
+    perror("Error closing file");
+    /* Data may not have been written! */
+}</code></pre>
+        </div>
+        <div class="info-box danger">
+            <div class="info-box-title">🔥 Consequences of Forgetting fclose()</div>
+            <ul>
+                <li>Buffered data may be <strong>lost</strong> (not written to disk)</li>
+                <li>File descriptors <strong>leaked</strong> (limited system resource)</li>
+                <li>Other processes may be <strong>blocked</strong> from accessing the file</li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- Slide 15: Error Handling -->
+    <div class="slide" data-slide="15">
+        <h2>🛡️ Error Handling Functions</h2>
+        <table>
+            <tr>
+                <th>Function</th>
+                <th>Purpose</th>
+                <th>Usage</th>
+            </tr>
+            <tr>
+                <td><code>ferror(fp)</code></td>
+                <td>Check if error occurred</td>
+                <td>Returns non-zero if error flag set</td>
+            </tr>
+            <tr>
+                <td><code>feof(fp)</code></td>
+                <td>Check for end of file</td>
+                <td>Returns non-zero if EOF reached</td>
+            </tr>
+            <tr>
+                <td><code>clearerr(fp)</code></td>
+                <td>Reset error and EOF flags</td>
+                <td>Call before retrying operations</td>
+            </tr>
+            <tr>
+                <td><code>perror(msg)</code></td>
+                <td>Print error message</td>
+                <td>Uses global <code>errno</code></td>
+            </tr>
+        </table>
+        <div class="code-block">
+            <div class="code-header">
+                <span>Comprehensive error checking</span>
+                <span class="lang-badge">C</span>
+            </div>
+            <pre><code class="language-c">while (fgets(line, sizeof(line), fp)) {
+    /* process */
+}
+
+if (ferror(fp)) {
+    perror("Read error occurred");
+} else if (feof(fp)) {
+    printf("Reached end of file normally\n");
+}</code></pre>
+        </div>
+    </div>
+
+    <!-- Slide 16: Buffering Overview -->
+    <div class="slide" data-slide="16">
+        <h2>🔄 Buffering Strategies</h2>
+        <p>The C library buffers I/O to reduce expensive system calls:</p>
+        <div class="ascii-diagram">
+Your Program          stdio Buffer              Operating System          Disk
+     │                     │                          │                    │
+     │ fprintf(...)        │                          │                    │
+     ├────────────────────►│                          │                    │
+     │ fprintf(...)        │                          │                    │
+     ├────────────────────►│                          │                    │
+     │ fprintf(...)        │                          │                    │
+     ├────────────────────►│   Buffer full or         │                    │
+     │                     │   fflush() called        │                    │
+     │                     ├─────────────────────────►│                    │
+     │                     │   write() syscall        │                    │
+     │                     │                          ├───────────────────►│
+        </div>
+        <p style="margin-top: 1rem;"><strong>Why buffer?</strong> System calls have significant overhead. Batching data reduces context switches between user and kernel mode.</p>
+    </div>
+
+    <!-- Slide 17: Buffering Modes -->
+    <div class="slide" data-slide="17">
+        <h2>⚙️ Configuring Buffer Behaviour</h2>
+        <div class="function-sig">
+            int <strong>setvbuf</strong>(FILE *<span class="param">stream</span>, char *<span class="param">buffer</span>, int <span class="param">mode</span>, size_t <span class="param">size</span>);
+        </div>
+        <table>
+            <tr>
+                <th>Mode</th>
+                <th>Constant</th>
+                <th>Behaviour</th>
+                <th>Use Case</th>
+            </tr>
+            <tr>
+                <td>Full buffering</td>
+                <td><code>_IOFBF</code></td>
+                <td>Write when buffer fills</td>
+                <td>File output (default)</td>
+            </tr>
+            <tr>
+                <td>Line buffering</td>
+                <td><code>_IOLBF</code></td>
+                <td>Write on newline</td>
+                <td>Interactive terminals</td>
+            </tr>
+            <tr>
+                <td>No buffering</td>
+                <td><code>_IONBF</code></td>
+                <td>Write immediately</td>
+                <td>Error output, logging</td>
+            </tr>
+        </table>
+        <div class="code-block">
+            <div class="code-header">
+                <span>Setting buffer mode</span>
+                <span class="lang-badge">C</span>
+            </div>
+            <pre><code class="language-c">FILE *fp = fopen("log.txt", "w");
+
+/* Line buffering for log files */
+setvbuf(fp, NULL, _IOLBF, 0);
+
+/* Or: custom buffer with full buffering */
+char buffer[32768];  /* 32KB buffer */
+setvbuf(fp, buffer, _IOFBF, sizeof(buffer));</code></pre>
+        </div>
+    </div>
+
+    <!-- Slide 18: Flushing Buffers -->
+    <div class="slide" data-slide="18">
+        <h2>💨 Flushing Buffers: fflush()</h2>
+        <div class="function-sig">
+            int <strong>fflush</strong>(FILE *<span class="param">stream</span>);
+        </div>
+        <p>Forces buffered output data to be written to the underlying file.</p>
+        <div class="code-block">
+            <div class="code-header">
+                <span>When to use fflush()</span>
+                <span class="lang-badge">C</span>
+            </div>
+            <pre><code class="language-c">/* Before expecting output to appear */
+printf("Enter your name: ");
+fflush(stdout);  /* Ensure prompt appears before waiting */
+fgets(name, sizeof(name), stdin);
+
+/* Before potentially crashing operations */
+fprintf(log_fp, "About to process %s...\n", filename);
+fflush(log_fp);  /* Ensure log is written before risky code */
+dangerous_operation();
+
+/* Flush all open output streams */
+fflush(NULL);</code></pre>
+        </div>
+        <div class="info-box warning">
+            <div class="info-box-title">⚠️ Important Note</div>
+            <code>fflush(stdin)</code> is <strong>undefined behaviour</strong> in standard C. It may work on some systems but is not portable.
+        </div>
+    </div>
+
+    <!-- Slide 19: Parsing CSV Files -->
+    <div class="slide" data-slide="19">
+        <h2>📊 Parsing CSV Files</h2>
+        <p>CSV (Comma-Separated Values) is ubiquitous for data exchange:</p>
+        <div class="code-block">
+            <div class="code-header">
+                <span>Simple CSV parser (no quoted fields)</span>
+                <span class="lang-badge">C</span>
+            </div>
+            <pre><code class="language-c">#include &lt;string.h&gt;
+
+void parse_csv_line(char *line) {
+    char *token;
+    int field = 0;
+    
+    /* Remove trailing newline */
+    line[strcspn(line, "\n")] = '\0';
+    
+    /* Split by comma */
+    token = strtok(line, ",");
+    while (token != NULL) {
+        printf("Field %d: '%s'\n", field++, token);
+        token = strtok(NULL, ",");
+    }
+}
+
+/* Usage */
+char line[1024];
+while (fgets(line, sizeof(line), fp)) {
+    parse_csv_line(line);
+}</code></pre>
+        </div>
+        <div class="info-box note">
+            <div class="info-box-title">💡 Limitation</div>
+            <code>strtok()</code> cannot handle quoted fields like <code>"Smith, John"</code>. For robust CSV, consider dedicated libraries.
+        </div>
+    </div>
+
+    <!-- Slide 20: strtok Mechanics -->
+    <div class="slide" data-slide="20">
+        <h2>🔧 Understanding strtok()</h2>
+        <div class="function-sig">
+            char *<strong>strtok</strong>(char *<span class="param">str</span>, const char *<span class="param">delimiters</span>);
+        </div>
+        <p><code>strtok()</code> maintains internal state — it modifies the original string!</p>
+        <div class="ascii-diagram">
+Original:  "Alice,Bob,Charlie\0"
+           ↓
+After 1st: "Alice\0Bob,Charlie\0"  → returns "Alice"
+           ↓
+After 2nd: "Alice\0Bob\0Charlie\0" → returns "Bob"
+           ↓
+After 3rd: "Alice\0Bob\0Charlie\0" → returns "Charlie"
+           ↓
+After 4th:                         → returns NULL
+        </div>
+        <div class="info-box danger">
+            <div class="info-box-title">🔥 Pitfalls of strtok()</div>
+            <ul>
+                <li><strong>Modifies</strong> the input string (replaces delimiters with <code>\0</code>)</li>
+                <li><strong>Not reentrant</strong> — cannot nest or use in multithreaded code</li>
+                <li>Use <code>strtok_r()</code> for thread-safe version (POSIX)</li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- Slide 21: File Position -->
+    <div class="slide" data-slide="21">
+        <h2>📍 File Position Indicators</h2>
+        <p>Every stream has a position indicator that tracks where the next read/write occurs:</p>
+        <table>
+            <tr>
+                <th>Function</th>
+                <th>Purpose</th>
+                <th>Returns</th>
+            </tr>
+            <tr>
+                <td><code>ftell(fp)</code></td>
+                <td>Get current position</td>
+                <td>Position as <code>long</code>, or -1 on error</td>
+            </tr>
+            <tr>
+                <td><code>fseek(fp, offset, origin)</code></td>
+                <td>Set position</td>
+                <td>0 on success, non-zero on error</td>
+            </tr>
+            <tr>
+                <td><code>rewind(fp)</code></td>
+                <td>Go to beginning</td>
+                <td>None (void)</td>
+            </tr>
+        </table>
+        <div class="code-block">
+            <div class="code-header">
+                <span>Position manipulation</span>
+                <span class="lang-badge">C</span>
+            </div>
+            <pre><code class="language-c">/* Origins for fseek */
+fseek(fp, 0, SEEK_SET);    /* Beginning of file */
+fseek(fp, 0, SEEK_CUR);    /* Current position */
+fseek(fp, 0, SEEK_END);    /* End of file */
+
+/* Get file size */
+fseek(fp, 0, SEEK_END);
+long size = ftell(fp);
+rewind(fp);  /* Go back to start */</code></pre>
+        </div>
+    </div>
+
+    <!-- Slide 22: Complete Read-Process-Write Example -->
+    <div class="slide" data-slide="22">
+        <h2>🎯 Complete Example: Grade Processor</h2>
+        <div class="code-block">
+            <div class="code-header">
+                <span>Reading, processing and writing student grades</span>
+                <span class="lang-badge">C</span>
+            </div>
+            <pre><code class="language-c">typedef struct {
+    int id;
+    char name[50];
+    int year;
+    int programme;
+    float grades[10];
+    int grade_count;
+} Student;
+
+float calculate_average(Student *s) {
+    if (s->grade_count == 0) return 0.0f;
+    float sum = 0.0f;
+    for (int i = 0; i < s->grade_count; i++) {
+        sum += s->grades[i];
+    }
+    return sum / s->grade_count;
+}
+
+int read_student(FILE *fp, Student *s) {
+    char line[256];
+    if (!fgets(line, sizeof(line), fp)) return 0;
+    
+    /* Parse fixed fields first */
+    int offset;
+    if (sscanf(line, "%d %49s %d %d%n", 
+               &s->id, s->name, &s->year, &s->programme, &offset) != 4) {
+        return 0;
+    }
+    
+    /* Parse variable number of grades */
+    s->grade_count = 0;
+    char *ptr = line + offset;
+    while (s->grade_count < 10 && sscanf(ptr, "%f%n", 
+           &s->grades[s->grade_count], &offset) == 1) {
+        s->grade_count++;
+        ptr += offset;
+    }
+    return 1;
+}</code></pre>
+        </div>
+    </div>
+
+    <!-- Slide 23: Defensive Programming -->
+    <div class="slide" data-slide="23">
+        <h2>🛡️ Defensive Programming Patterns</h2>
+        <div class="code-block">
+            <div class="code-header">
+                <span>Resource cleanup with early returns</span>
+                <span class="lang-badge">C</span>
+            </div>
+            <pre><code class="language-c">int process_files(const char *input_name, const char *output_name) {
+    int result = -1;  /* Assume failure */
+    FILE *in = NULL;
+    FILE *out = NULL;
+    
+    in = fopen(input_name, "r");
+    if (in == NULL) {
+        perror("Cannot open input file");
+        goto cleanup;
+    }
+    
+    out = fopen(output_name, "w");
+    if (out == NULL) {
+        perror("Cannot create output file");
+        goto cleanup;
+    }
+    
+    /* Process files... */
+    result = 0;  /* Success */
+    
+cleanup:
+    if (out) fclose(out);
+    if (in) fclose(in);
+    return result;
+}</code></pre>
+        </div>
+        <div class="info-box tip">
+            <div class="info-box-title">✅ Single Exit Point</div>
+            Using <code>goto cleanup</code> ensures resources are always released, regardless of where errors occur.
+        </div>
+    </div>
+
+    <!-- Slide 24: Common Mistake 1 -->
+    <div class="slide" data-slide="24">
+        <h2>❌ Common Mistake #1: Using feof() Wrong</h2>
+        <div class="two-columns">
+            <div class="column">
+                <h3>❌ WRONG</h3>
+                <div class="code-block">
+                    <div class="code-header">
+                        <span>Don't do this!</span>
+                        <span class="lang-badge">C</span>
+                    </div>
+                    <pre><code class="language-c">while (!feof(fp)) {
+    fgets(line, sizeof(line), fp);
+    printf("%s", line);  /* BUG! */
+}
+/* Last line printed twice! */</code></pre>
+                </div>
+            </div>
+            <div class="column">
+                <h3>✅ CORRECT</h3>
+                <div class="code-block">
+                    <div class="code-header">
+                        <span>Check return value instead</span>
+                        <span class="lang-badge">C</span>
+                    </div>
+                    <pre><code class="language-c">while (fgets(line, sizeof(line), fp)) {
+    printf("%s", line);
+}
+/* Correct: loop exits when
+   fgets returns NULL */</code></pre>
+                </div>
+            </div>
+        </div>
+        <div class="info-box danger">
+            <div class="info-box-title">🔥 Why is while(!feof()) Wrong?</div>
+            <code>feof()</code> returns true only <strong>after</strong> a read attempt fails. The loop body executes one extra time with stale data or undefined behaviour.
+        </div>
+    </div>
+
+    <!-- Slide 25: Common Mistake 2 -->
+    <div class="slide" data-slide="25">
+        <h2>❌ Common Mistake #2: Buffer Overflow</h2>
+        <div class="two-columns">
+            <div class="column">
+                <h3>❌ WRONG</h3>
+                <div class="code-block">
+                    <div class="code-header">
+                        <span>No length limit!</span>
+                        <span class="lang-badge">C</span>
+                    </div>
+                    <pre><code class="language-c">char name[20];
+fscanf(fp, "%s", name);
+/* If input > 19 chars,
+   buffer overflow! */</code></pre>
+                </div>
+            </div>
+            <div class="column">
+                <h3>✅ CORRECT</h3>
+                <div class="code-block">
+                    <div class="code-header">
+                        <span>Specify field width</span>
+                        <span class="lang-badge">C</span>
+                    </div>
+                    <pre><code class="language-c">char name[20];
+fscanf(fp, "%19s", name);
+/* Width 19 = size - 1
+   leaves room for \0 */</code></pre>
+                </div>
+            </div>
+        </div>
+        <div class="info-box warning">
+            <div class="info-box-title">⚠️ Rule of Thumb</div>
+            <strong>Always</strong> specify width for <code>%s</code> and <code>%[...]</code> specifiers. The width should be buffer size minus one.
+        </div>
+    </div>
+
+    <!-- Slide 26: Common Mistake 3 -->
+    <div class="slide" data-slide="26">
+        <h2>❌ Common Mistake #3: Ignoring Return Values</h2>
+        <div class="two-columns">
+            <div class="column">
+                <h3>❌ WRONG</h3>
+                <div class="code-block">
+                    <div class="code-header">
+                        <span>Assuming success</span>
+                        <span class="lang-badge">C</span>
+                    </div>
+                    <pre><code class="language-c">FILE *fp = fopen("data.txt", "r");
+fscanf(fp, "%d %s", &id, name);
+/* What if fopen failed?
+   What if fscanf matched 0 items? */
+fclose(fp);</code></pre>
+                </div>
+            </div>
+            <div class="column">
+                <h3>✅ CORRECT</h3>
+                <div class="code-block">
+                    <div class="code-header">
+                        <span>Always check returns</span>
+                        <span class="lang-badge">C</span>
+                    </div>
+                    <pre><code class="language-c">FILE *fp = fopen("data.txt", "r");
+if (fp == NULL) {
+    perror("fopen");
+    return 1;
+}
+if (fscanf(fp, "%d %49s", &id, name) != 2) {
+    fprintf(stderr, "Parse error\n");
+}
+fclose(fp);</code></pre>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Slide 27: Debugging with GDB -->
+    <div class="slide" data-slide="27">
+        <h2>🔍 Debugging File I/O with GDB</h2>
+        <div class="code-block">
+            <div class="code-header">
+                <span>Useful GDB commands for file debugging</span>
+                <span class="lang-badge">Bash</span>
+            </div>
+            <pre><code class="language-bash"># Compile with debug symbols
+gcc -g -Wall program.c -o program
+
+# Start GDB
+gdb ./program
+
+# Set breakpoint at file operations
+(gdb) break fopen
+(gdb) break main
+
+# Run programme
+(gdb) run
+
+# Examine FILE pointer
+(gdb) print *fp
+
+# Watch variable changes
+(gdb) watch buffer
+
+# Print string contents
+(gdb) print line
+(gdb) x/20c line  # Examine 20 chars</code></pre>
+        </div>
+    </div>
+
+    <!-- Slide 28: Memory Checking with Valgrind -->
+    <div class="slide" data-slide="28">
+        <h2>🧪 Memory Checking with Valgrind</h2>
+        <div class="code-block">
+            <div class="code-header">
+                <span>Detecting file-related memory issues</span>
+                <span class="lang-badge">Bash</span>
+            </div>
+            <pre><code class="language-bash"># Run with Valgrind
+valgrind --leak-check=full --track-origins=yes ./program
+
+# Common output for unclosed file:
+# ==12345== FILE DESCRIPTORS: 4 open at exit.
+# ==12345== Open file descriptor 3: data.txt
+# ==12345==    at 0x4E8BFDF: fopen@@GLIBC_2.1 (fopen.c:53)
+# ==12345==    by 0x401234: main (program.c:15)
+
+# This indicates fclose() was not called!</code></pre>
+        </div>
+        <div class="info-box tip">
+            <div class="info-box-title">✅ Valgrind Flags</div>
+            <ul>
+                <li><code>--leak-check=full</code> — Detailed leak information</li>
+                <li><code>--track-origins=yes</code> — Show where uninitialised values came from</li>
+                <li><code>--track-fds=yes</code> — Report unclosed file descriptors</li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- Slide 29: Best Practices -->
+    <div class="slide" data-slide="29">
+        <h2>✅ Best Practices Summary</h2>
+        <div class="two-columns">
+            <div class="column">
+                <h3>✅ DO</h3>
+                <ul>
+                    <li>Always check <code>fopen()</code> return value</li>
+                    <li>Use <code>fgets()</code> over <code>gets()</code></li>
+                    <li>Specify width in <code>scanf</code> format strings</li>
+                    <li>Check return values of read functions</li>
+                    <li>Use <code>fgets() + sscanf()</code> for robust parsing</li>
+                    <li>Close files in reverse order of opening</li>
+                    <li>Use <code>perror()</code> for meaningful error messages</li>
+                    <li>Flush output before blocking input</li>
+                </ul>
+            </div>
+            <div class="column">
+                <h3>❌ DON'T</h3>
+                <ul>
+                    <li>Use <code>while (!feof())</code> as loop condition</li>
+                    <li>Assume files exist or can be created</li>
+                    <li>Forget to close opened files</li>
+                    <li>Ignore <code>scanf()</code> return values</li>
+                    <li>Use <code>fflush(stdin)</code> (undefined)</li>
+                    <li>Hard-code buffer sizes without constants</li>
+                    <li>Mix buffered and unbuffered I/O carelessly</li>
+                    <li>Use <code>strtok()</code> in multithreaded code</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- Slide 30: Performance Comparison -->
+    <div class="slide" data-slide="30">
+        <h2>📈 Performance: Buffering Impact</h2>
+        <p>Benchmark: Writing 1,000,000 integers to a file</p>
+        <table>
+            <tr>
+                <th>Buffering Mode</th>
+                <th>Buffer Size</th>
+                <th>Time (typical)</th>
+                <th>System Calls</th>
+            </tr>
+            <tr class="highlight-row">
+                <td>Full (<code>_IOFBF</code>)</td>
+                <td>8 KB</td>
+                <td>~0.05s</td>
+                <td>~125</td>
+            </tr>
+            <tr>
+                <td>Full (<code>_IOFBF</code>)</td>
+                <td>64 KB</td>
+                <td>~0.04s</td>
+                <td>~16</td>
+            </tr>
+            <tr>
+                <td>Line (<code>_IOLBF</code>)</td>
+                <td>—</td>
+                <td>~0.15s</td>
+                <td>~1,000,000</td>
+            </tr>
+            <tr>
+                <td>None (<code>_IONBF</code>)</td>
+                <td>—</td>
+                <td>~2.50s</td>
+                <td>~1,000,000</td>
+            </tr>
+        </table>
+        <div class="info-box note">
+            <div class="info-box-title">💡 Key Insight</div>
+            Full buffering can be <strong>50× faster</strong> than unbuffered I/O. Default settings are usually optimal; tune only when necessary.
+        </div>
+    </div>
+
+    <!-- Slide 31: Text vs Binary Mode -->
+    <div class="slide" data-slide="31">
+        <h2>📝 Text Mode vs Binary Mode</h2>
+        <div class="two-columns">
+            <div class="column">
+                <h3>Text Mode (<code>"r"</code>, <code>"w"</code>)</h3>
+                <ul>
+                    <li>Newline translation on Windows: <code>\n</code> ↔ <code>\r\n</code></li>
+                    <li>May stop at Ctrl+Z (Windows EOF marker)</li>
+                    <li>Suitable for: source code, config files, logs</li>
+                </ul>
+            </div>
+            <div class="column">
+                <h3>Binary Mode (<code>"rb"</code>, <code>"wb"</code>)</h3>
+                <ul>
+                    <li>No translation — exact byte-for-byte copy</li>
+                    <li>Required for: images, executables, archives</li>
+                    <li>Portable across platforms</li>
+                </ul>
+            </div>
+        </div>
+        <div class="code-block">
+            <div class="code-header">
+                <span>Cross-platform file copying</span>
+                <span class="lang-badge">C</span>
+            </div>
+            <pre><code class="language-c">/* Always use binary mode for generic file copying */
+FILE *src = fopen(source_path, "rb");
+FILE *dst = fopen(dest_path, "wb");
+
+char buffer[8192];
+size_t bytes;
+
+while ((bytes = fread(buffer, 1, sizeof(buffer), src)) > 0) {
+    fwrite(buffer, 1, bytes, dst);
+}</code></pre>
+        </div>
+    </div>
+
+    <!-- Slide 32: Real-World Application -->
+    <div class="slide" data-slide="32">
+        <h2>🏭 Real-World: Log File Analysis</h2>
+        <div class="code-block">
+            <div class="code-header">
+                <span>Parsing web server access logs</span>
+                <span class="lang-badge">C</span>
+            </div>
+            <pre><code class="language-c">/* Apache Common Log Format:
+   127.0.0.1 - - [10/Oct/2000:13:55:36 -0700] "GET /index.html HTTP/1.0" 200 2326 */
+
+typedef struct {
+    char ip[64];
+    char method[16];
+    char path[256];
+    int status;
+    long bytes;
+} LogEntry;
+
+int parse_log_line(const char *line, LogEntry *entry) {
+    return sscanf(line,
+        "%63s %*s %*s %*s \"%15s %255s %*[^\"]\" %d %ld",
+        entry->ip, entry->method, entry->path,
+        &entry->status, &entry->bytes) == 5;
+}
+
+/* Usage: count 404 errors */
+LogEntry entry;
+int errors_404 = 0;
+while (fgets(line, sizeof(line), log_fp)) {
+    if (parse_log_line(line, &entry) && entry.status == 404) {
+        errors_404++;
+        printf("Not found: %s\n", entry.path);
+    }
+}</code></pre>
+        </div>
+    </div>
+
+    <!-- Slide 33: Laboratory Preview -->
+    <div class="slide" data-slide="33">
+        <h2>💻 Laboratory Exercises Preview</h2>
+        <div class="two-columns">
+            <div class="column">
+                <h3>Exercise 1: Student Grade Processor</h3>
+                <ul>
+                    <li>Read student records from text file</li>
+                    <li>Parse: ID, name, year, programme, grades</li>
+                    <li>Calculate statistics (average, min, max)</li>
+                    <li>Identify top performers</li>
+                    <li>Write formatted report</li>
+                </ul>
+                <p><strong>Skills:</strong> <code>fopen</code>, <code>fgets</code>, <code>sscanf</code>, <code>fprintf</code></p>
+            </div>
+            <div class="column">
+                <h3>Exercise 2: CSV Transformer</h3>
+                <ul>
+                    <li>Parse CSV with comma and field handling</li>
+                    <li>Filter rows by column values</li>
+                    <li>Sort by specified column</li>
+                    <li>Output in multiple formats</li>
+                    <li>Handle malformed input gracefully</li>
+                </ul>
+                <p><strong>Skills:</strong> <code>strtok</code>, dynamic arrays, error handling</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Slide 34: Standard Library Summary -->
+    <div class="slide" data-slide="34">
+        <h2>📚 Key Functions Reference</h2>
+        <table>
+            <tr>
+                <th>Category</th>
+                <th>Functions</th>
+            </tr>
+            <tr>
+                <td>File Access</td>
+                <td><code>fopen</code>, <code>fclose</code>, <code>freopen</code></td>
+            </tr>
+            <tr>
+                <td>Character I/O</td>
+                <td><code>fgetc</code>, <code>fputc</code>, <code>getchar</code>, <code>putchar</code></td>
+            </tr>
+            <tr>
+                <td>Line I/O</td>
+                <td><code>fgets</code>, <code>fputs</code></td>
+            </tr>
+            <tr>
+                <td>Formatted I/O</td>
+                <td><code>fprintf</code>, <code>fscanf</code>, <code>printf</code>, <code>scanf</code>, <code>sscanf</code></td>
+            </tr>
+            <tr>
+                <td>Positioning</td>
+                <td><code>ftell</code>, <code>fseek</code>, <code>rewind</code></td>
+            </tr>
+            <tr>
+                <td>Error Handling</td>
+                <td><code>feof</code>, <code>ferror</code>, <code>clearerr</code>, <code>perror</code></td>
+            </tr>
+            <tr>
+                <td>Buffering</td>
+                <td><code>setvbuf</code>, <code>fflush</code></td>
+            </tr>
+            <tr>
+                <td>String Parsing</td>
+                <td><code>strtok</code>, <code>strtok_r</code>, <code>strcspn</code></td>
+            </tr>
+        </table>
+    </div>
+
+    <!-- Slide 35: Key Takeaways -->
+    <div class="slide" data-slide="35">
+        <h2>🎯 Key Takeaways</h2>
+        <div class="summary-grid">
+            <div class="summary-box">
+                <div class="icon">📂</div>
+                <h4>Streams</h4>
+                <p>FILE* abstracts I/O; always check fopen() returns</p>
+            </div>
+            <div class="summary-box">
+                <div class="icon">📖</div>
+                <h4>Reading</h4>
+                <p>Use fgets() for safety; avoid gets() completely</p>
+            </div>
+            <div class="summary-box">
+                <div class="icon">✏️</div>
+                <h4>Writing</h4>
+                <p>fprintf() for formatted output; fflush() when needed</p>
+            </div>
+            <div class="summary-box">
+                <div class="icon">🎯</div>
+                <h4>Parsing</h4>
+                <p>fgets() + sscanf() for robust line parsing</p>
+            </div>
+            <div class="summary-box">
+                <div class="icon">🔄</div>
+                <h4>Buffering</h4>
+                <p>Full buffering default; tune with setvbuf() if needed</p>
+            </div>
+            <div class="summary-box">
+                <div class="icon">🛡️</div>
+                <h4>Safety</h4>
+                <p>Check returns, close files, validate input</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Slide 36: Resources -->
+    <div class="slide" data-slide="36">
+        <h2>📖 Recommended Resources</h2>
+        <div class="two-columns">
+            <div class="column">
+                <h3>Essential Reading</h3>
+                <ul>
+                    <li><strong>K&R</strong> — "The C Programming Language", Chapter 7</li>
+                    <li><strong>ISO/IEC 9899:2011</strong> — Section 7.21 (stdio.h)</li>
+                    <li><strong>cppreference.com</strong> — C file I/O documentation</li>
+                </ul>
+                <h3>Advanced Topics</h3>
+                <ul>
+                    <li><strong>APUE</strong> — "Advanced Programming in the UNIX Environment", Chapter 5</li>
+                    <li><strong>RFC 4180</strong> — CSV format specification</li>
+                </ul>
+            </div>
+            <div class="column">
+                <h3>Online References</h3>
+                <ul>
+                    <li>GNU C Library Manual — I/O on Streams</li>
+                    <li>man pages: <code>fopen(3)</code>, <code>fgets(3)</code>, <code>printf(3)</code></li>
+                </ul>
+                <h3>Practice</h3>
+                <ul>
+                    <li>Implement a simple <code>wc</code> (word count) clone</li>
+                    <li>Build a log file analyser</li>
+                    <li>Create a CSV to JSON converter</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- Slide 37: Questions -->
+    <div class="slide end-slide" data-slide="37">
+        <h1>❓ Questions?</h1>
+        <p class="subtitle">Discussion and Q&A</p>
+        <div style="margin-top: 3rem;">
+            <h3>Next Week Preview</h3>
+            <p><strong>Week 03: Binary File Processing</strong></p>
+            <p>fread/fwrite, random access, struct serialisation, portable binary formats</p>
+        </div>
+    </div>
+
+</div>
+
+<!-- Navigation -->
+<div class="navigation">
+    <button class="nav-btn" id="prev-btn" onclick="prevSlide()">← Previous</button>
+    <button class="nav-btn" id="next-btn" onclick="nextSlide()">Next →</button>
+</div>
+
+<!-- Slide Counter -->
+<div class="slide-counter">
+    <span id="current-slide">1</span> / <span id="total-slides">37</span>
+</div>
+
+<script>
+    // Initialise highlight.js
+    hljs.highlightAll();
+
+    // Slide navigation
+    let currentSlide = 1;
+    const totalSlides = document.querySelectorAll('.slide').length;
+
+    document.getElementById('total-slides').textContent = totalSlides;
+
+    function showSlide(n) {
+        const slides = document.querySelectorAll('.slide');
+        
+        if (n < 1) n = 1;
+        if (n > totalSlides) n = totalSlides;
+        
+        slides.forEach(slide => slide.classList.remove('active'));
+        slides[n - 1].classList.add('active');
+        
+        currentSlide = n;
+        document.getElementById('current-slide').textContent = currentSlide;
+        
+        // Update progress bar
+        const progress = ((currentSlide - 1) / (totalSlides - 1)) * 100;
+        document.getElementById('progress-bar').style.width = progress + '%';
+        
+        // Update button states
+        document.getElementById('prev-btn').disabled = currentSlide === 1;
+        document.getElementById('next-btn').disabled = currentSlide === totalSlides;
+    }
+
+    function nextSlide() {
+        showSlide(currentSlide + 1);
+    }
+
+    function prevSlide() {
+        showSlide(currentSlide - 1);
+    }
+
+    // Keyboard navigation
+    document.addEventListener('keydown', function(e) {
+        switch(e.key) {
+            case 'ArrowRight':
+            case ' ':
+                e.preventDefault();
+                nextSlide();
+                break;
+            case 'ArrowLeft':
+                e.preventDefault();
+                prevSlide();
+                break;
+            case 'Home':
+                e.preventDefault();
+                showSlide(1);
+                break;
+            case 'End':
+                e.preventDefault();
+                showSlide(totalSlides);
+                break;
+        }
+    });
+
+    // Initialise
+    showSlide(1);
+</script>
+
+</body>
+</html>

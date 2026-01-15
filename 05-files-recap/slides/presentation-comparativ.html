@@ -1,0 +1,937 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Week 05: Stacks — Language Comparison</title>
+    
+    <!-- highlight.js -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/c.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/python.min.js"></script>
+    
+    <style>
+        :root {
+            --bg-primary: #0d1117;
+            --bg-secondary: #161b22;
+            --bg-tertiary: #21262d;
+            --text-primary: #c9d1d9;
+            --text-secondary: #8b949e;
+            --accent-blue: #58a6ff;
+            --accent-green: #3fb950;
+            --accent-yellow: #d29922;
+            --accent-red: #f85149;
+            --accent-purple: #a371f7;
+            --accent-orange: #db6d28;
+            --border-color: #30363d;
+            --pseudocode-bg: #1a1f29;
+            --c-bg: #1a2433;
+            --python-bg: #1f2a1a;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        html, body {
+            height: 100%;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            overflow: hidden;
+        }
+
+        #progress-bar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 4px;
+            background: linear-gradient(90deg, var(--accent-yellow), var(--accent-orange));
+            transition: width 0.3s ease;
+            z-index: 1000;
+        }
+
+        .slide {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            padding: 50px 60px;
+            display: none;
+            opacity: 0;
+            transition: opacity 0.4s ease;
+            overflow-y: auto;
+        }
+
+        .slide.active {
+            display: flex;
+            flex-direction: column;
+            opacity: 1;
+        }
+
+        .title-slide {
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+        }
+
+        h1 {
+            font-size: 2.8em;
+            margin-bottom: 20px;
+            background: linear-gradient(90deg, var(--accent-yellow), var(--accent-orange));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        h2 {
+            font-size: 2em;
+            color: var(--accent-blue);
+            margin-bottom: 25px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid var(--border-color);
+        }
+
+        p {
+            font-size: 1.2em;
+            line-height: 1.6;
+            margin-bottom: 15px;
+        }
+
+        .subtitle {
+            font-size: 1.5em;
+            color: var(--text-secondary);
+        }
+
+        .week-badge {
+            display: inline-block;
+            background: var(--accent-orange);
+            color: var(--bg-primary);
+            padding: 8px 25px;
+            border-radius: 25px;
+            font-size: 1.2em;
+            font-weight: 600;
+            margin-bottom: 25px;
+        }
+
+        /* Three Column Layout */
+        .three-columns {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 20px;
+            flex: 1;
+            min-height: 0;
+        }
+
+        .column {
+            border-radius: 10px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .column.pseudocod {
+            background: var(--pseudocode-bg);
+            border: 1px solid #3d4450;
+        }
+
+        .column.c-lang {
+            background: var(--c-bg);
+            border: 1px solid #2d4a6d;
+        }
+
+        .column.python {
+            background: var(--python-bg);
+            border: 1px solid #3d5a2d;
+        }
+
+        .column h3 {
+            font-size: 1.3em;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .column.pseudocod h3 { color: var(--accent-yellow); }
+        .column.c-lang h3 { color: var(--accent-blue); }
+        .column.python h3 { color: var(--accent-green); }
+
+        .column pre {
+            flex: 1;
+            margin: 0;
+            padding: 15px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 6px;
+            overflow: auto;
+            font-size: 0.85em;
+        }
+
+        .column code {
+            font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+            line-height: 1.5;
+        }
+
+        /* Comparison Table */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            font-size: 1.05em;
+        }
+
+        th, td {
+            padding: 15px 20px;
+            text-align: left;
+            border: 1px solid var(--border-color);
+        }
+
+        th {
+            background: var(--bg-tertiary);
+            font-weight: 600;
+        }
+
+        th:nth-child(1) { color: var(--accent-yellow); }
+        th:nth-child(2) { color: var(--accent-blue); }
+        th:nth-child(3) { color: var(--accent-green); }
+
+        tr:nth-child(even) { background: var(--bg-secondary); }
+
+        /* Info boxes */
+        .insight-box {
+            background: rgba(163, 113, 247, 0.1);
+            border-left: 4px solid var(--accent-purple);
+            padding: 20px;
+            border-radius: 0 8px 8px 0;
+            margin: 20px 0;
+        }
+
+        .insight-box h4 {
+            color: var(--accent-purple);
+            margin-bottom: 10px;
+        }
+
+        /* Navigation */
+        #nav-container {
+            position: fixed;
+            bottom: 25px;
+            right: 35px;
+            display: flex;
+            gap: 12px;
+            z-index: 100;
+        }
+
+        .nav-btn {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+            padding: 10px 18px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.95em;
+            transition: all 0.2s ease;
+        }
+
+        .nav-btn:hover {
+            background: var(--accent-orange);
+            color: var(--bg-primary);
+        }
+
+        .nav-btn:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+
+        #slide-counter {
+            position: fixed;
+            bottom: 30px;
+            left: 35px;
+            font-size: 0.95em;
+            color: var(--text-secondary);
+        }
+
+        .two-columns {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin: 20px 0;
+        }
+
+        ul {
+            margin-left: 25px;
+            font-size: 1.1em;
+            line-height: 1.8;
+        }
+
+        li { margin-bottom: 8px; }
+        li::marker { color: var(--accent-blue); }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(15px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .slide.active > * {
+            animation: fadeIn 0.4s ease forwards;
+        }
+    </style>
+</head>
+<body>
+    <div id="progress-bar"></div>
+    <div id="slide-counter">1 / 12</div>
+    
+    <div id="nav-container">
+        <button class="nav-btn" onclick="prevSlide()">← Previous</button>
+        <button class="nav-btn" onclick="nextSlide()">Next →</button>
+    </div>
+
+    <div id="presentation">
+
+        <!-- SLIDE 1: Title -->
+        <div class="slide title-slide active">
+            <div class="week-badge">Week 05 — Comparative Analysis</div>
+            <h1>Stacks: Pseudocode → C → Python</h1>
+            <p class="subtitle">Understanding Implementation Across Languages</p>
+            <p style="margin-top: 30px; color: var(--text-secondary);">
+                Algorithms and Programming Techniques<br>
+                Academy of Economic Studies, Bucharest
+            </p>
+        </div>
+
+        <!-- SLIDE 2: Why Compare? -->
+        <div class="slide">
+            <h2>🤔 Why Compare Languages?</h2>
+            <div class="two-columns">
+                <div>
+                    <h3 style="color: var(--accent-green);">Benefits</h3>
+                    <ul>
+                        <li>Understand algorithm <strong>essence</strong> vs implementation details</li>
+                        <li>See how language features affect code structure</li>
+                        <li>Appreciate memory management trade-offs</li>
+                        <li>Prepare for multi-language projects</li>
+                        <li>Recognise patterns that transcend syntax</li>
+                    </ul>
+                </div>
+                <div>
+                    <h3 style="color: var(--accent-yellow);">Our Approach</h3>
+                    <ul>
+                        <li><strong>Pseudocode:</strong> Algorithm logic, language-agnostic</li>
+                        <li><strong>C:</strong> Manual memory, explicit pointers</li>
+                        <li><strong>Python:</strong> High-level, built-in structures</li>
+                    </ul>
+                    <div class="insight-box" style="margin-top: 20px;">
+                        <h4>💡 Key Insight</h4>
+                        <p>The <em>algorithm</em> remains constant; only the <em>expression</em> changes.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SLIDE 3: Stack Structure -->
+        <div class="slide">
+            <h2>📦 Stack Structure Definition</h2>
+            <div class="three-columns">
+                <div class="column pseudocod">
+                    <h3>📝 Pseudocode</h3>
+                    <pre><code>STRUCTURE Stack:
+    data: Array of Elements
+    top: Integer  // -1 if empty
+    capacity: Integer
+END STRUCTURE
+
+FUNCTION CreateStack(size):
+    s ← new Stack
+    s.data ← new Array[size]
+    s.top ← -1
+    s.capacity ← size
+    RETURN s
+END FUNCTION</code></pre>
+                </div>
+                <div class="column c-lang">
+                    <h3>⚙️ C</h3>
+                    <pre><code class="language-c">typedef struct {
+    int *data;
+    int top;
+    int capacity;
+} Stack;
+
+Stack* stack_create(int cap) {
+    Stack *s = malloc(sizeof(Stack));
+    if (!s) return NULL;
+    
+    s->data = malloc(cap * sizeof(int));
+    if (!s->data) {
+        free(s);
+        return NULL;
+    }
+    s->top = -1;
+    s->capacity = cap;
+    return s;
+}</code></pre>
+                </div>
+                <div class="column python">
+                    <h3>🐍 Python</h3>
+                    <pre><code class="language-python">class Stack:
+    def __init__(self, capacity=None):
+        self.data = []
+        # Python lists grow automatically
+        # capacity is optional
+        self.capacity = capacity
+    
+    # Or simply use a list directly:
+    # stack = []
+    
+    # Python's list already provides
+    # append() for push
+    # pop() for pop
+    # [-1] for peek</code></pre>
+                </div>
+            </div>
+        </div>
+
+        <!-- SLIDE 4: Push Operation -->
+        <div class="slide">
+            <h2>⬆️ Push Operation</h2>
+            <div class="three-columns">
+                <div class="column pseudocod">
+                    <h3>📝 Pseudocode</h3>
+                    <pre><code>FUNCTION Push(stack, value):
+    IF stack.top = stack.capacity - 1:
+        // Option 1: Error
+        ERROR "Stack overflow"
+        // Option 2: Resize
+        ResizeStack(stack)
+    END IF
+    
+    stack.top ← stack.top + 1
+    stack.data[stack.top] ← value
+END FUNCTION</code></pre>
+                </div>
+                <div class="column c-lang">
+                    <h3>⚙️ C</h3>
+                    <pre><code class="language-c">int stack_push(Stack *s, int val) {
+    // Check for overflow
+    if (s->top == s->capacity - 1) {
+        // Resize: double capacity
+        int new_cap = s->capacity * 2;
+        int *new_data = realloc(
+            s->data, 
+            new_cap * sizeof(int)
+        );
+        if (!new_data) return -1;
+        s->data = new_data;
+        s->capacity = new_cap;
+    }
+    
+    s->data[++s->top] = val;
+    return 0;  // Success
+}</code></pre>
+                </div>
+                <div class="column python">
+                    <h3>🐍 Python</h3>
+                    <pre><code class="language-python">def push(self, value):
+    # Check capacity if bounded
+    if self.capacity is not None:
+        if len(self.data) >= self.capacity:
+            raise OverflowError("Stack full")
+    
+    self.data.append(value)
+
+# Or with plain list:
+stack = []
+stack.append(42)  # That's it!
+
+# Python handles memory
+# automatically - no malloc,
+# no realloc, no worries!</code></pre>
+                </div>
+            </div>
+        </div>
+
+        <!-- SLIDE 5: Pop Operation -->
+        <div class="slide">
+            <h2>⬇️ Pop Operation</h2>
+            <div class="three-columns">
+                <div class="column pseudocod">
+                    <h3>📝 Pseudocode</h3>
+                    <pre><code>FUNCTION Pop(stack):
+    IF IsEmpty(stack):
+        ERROR "Stack underflow"
+    END IF
+    
+    value ← stack.data[stack.top]
+    stack.top ← stack.top - 1
+    RETURN value
+END FUNCTION
+
+FUNCTION IsEmpty(stack):
+    RETURN stack.top = -1
+END FUNCTION</code></pre>
+                </div>
+                <div class="column c-lang">
+                    <h3>⚙️ C</h3>
+                    <pre><code class="language-c">int stack_pop(Stack *s) {
+    if (s->top == -1) {
+        fprintf(stderr, 
+            "Error: Stack underflow\n");
+        exit(EXIT_FAILURE);
+    }
+    return s->data[s->top--];
+}
+
+int stack_is_empty(Stack *s) {
+    return s->top == -1;
+}
+
+// Safe version:
+int stack_pop_safe(Stack *s, int *out) {
+    if (s->top == -1) return -1;
+    *out = s->data[s->top--];
+    return 0;
+}</code></pre>
+                </div>
+                <div class="column python">
+                    <h3>🐍 Python</h3>
+                    <pre><code class="language-python">def pop(self):
+    if not self.data:
+        raise IndexError("Stack empty")
+    return self.data.pop()
+
+def is_empty(self):
+    return len(self.data) == 0
+
+# With plain list:
+stack = [1, 2, 3]
+value = stack.pop()  # Returns 3
+
+# pop() raises IndexError
+# automatically if empty
+
+# Check empty:
+if not stack:  # Pythonic!
+    print("Empty")</code></pre>
+                </div>
+            </div>
+        </div>
+
+        <!-- SLIDE 6: Peek and Destroy -->
+        <div class="slide">
+            <h2>👁️ Peek and Cleanup</h2>
+            <div class="three-columns">
+                <div class="column pseudocod">
+                    <h3>📝 Pseudocode</h3>
+                    <pre><code>FUNCTION Peek(stack):
+    IF IsEmpty(stack):
+        ERROR "Stack empty"
+    END IF
+    RETURN stack.data[stack.top]
+END FUNCTION
+
+FUNCTION Destroy(stack):
+    // Free resources
+    DELETE stack.data
+    DELETE stack
+END FUNCTION</code></pre>
+                </div>
+                <div class="column c-lang">
+                    <h3>⚙️ C</h3>
+                    <pre><code class="language-c">int stack_peek(Stack *s) {
+    if (s->top == -1) {
+        fprintf(stderr, "Empty\n");
+        exit(EXIT_FAILURE);
+    }
+    return s->data[s->top];
+}
+
+void stack_destroy(Stack *s) {
+    if (s) {
+        free(s->data);  // Free array
+        free(s);        // Free struct
+    }
+}
+
+// CRITICAL: Must call destroy
+// to avoid memory leaks!</code></pre>
+                </div>
+                <div class="column python">
+                    <h3>🐍 Python</h3>
+                    <pre><code class="language-python">def peek(self):
+    if not self.data:
+        raise IndexError("Empty")
+    return self.data[-1]
+
+# No destroy needed!
+# Python has garbage collection
+
+# When stack goes out of scope
+# or is reassigned, memory is
+# automatically reclaimed
+
+stack = [1, 2, 3]
+top = stack[-1]  # Peek: 3
+
+# No cleanup required
+del stack  # Optional explicit</code></pre>
+                </div>
+            </div>
+        </div>
+
+        <!-- SLIDE 7: Bracket Matching Algorithm -->
+        <div class="slide">
+            <h2>🔍 Bracket Matching</h2>
+            <div class="three-columns">
+                <div class="column pseudocod">
+                    <h3>📝 Pseudocode</h3>
+                    <pre><code>FUNCTION CheckBrackets(expr):
+    stack ← CreateStack()
+    
+    FOR EACH char IN expr:
+        IF char IS opening bracket:
+            Push(stack, char)
+        ELSE IF char IS closing:
+            IF IsEmpty(stack):
+                RETURN FALSE
+            END IF
+            top ← Pop(stack)
+            IF NOT Matches(top, char):
+                RETURN FALSE
+            END IF
+        END IF
+    END FOR
+    
+    RETURN IsEmpty(stack)
+END FUNCTION</code></pre>
+                </div>
+                <div class="column c-lang">
+                    <h3>⚙️ C</h3>
+                    <pre><code class="language-c">int check_brackets(const char *s) {
+    Stack *stk = stack_create(100);
+    
+    for (int i = 0; s[i]; i++) {
+        char c = s[i];
+        if (c=='(' || c=='[' || c=='{') {
+            stack_push(stk, c);
+        }
+        else if (c==')' || c==']' || c=='}') {
+            if (stack_is_empty(stk)) {
+                stack_destroy(stk);
+                return 0;
+            }
+            char top = stack_pop(stk);
+            if (!matches(top, c)) {
+                stack_destroy(stk);
+                return 0;
+            }
+        }
+    }
+    int valid = stack_is_empty(stk);
+    stack_destroy(stk);
+    return valid;
+}</code></pre>
+                </div>
+                <div class="column python">
+                    <h3>🐍 Python</h3>
+                    <pre><code class="language-python">def check_brackets(expr):
+    stack = []
+    pairs = {')':'(', ']':'[', '}':'{'}
+    
+    for char in expr:
+        if char in '([{':
+            stack.append(char)
+        elif char in ')]}':
+            if not stack:
+                return False
+            if stack.pop() != pairs[char]:
+                return False
+    
+    return len(stack) == 0
+
+# Usage:
+print(check_brackets("{[()]}"))  # True
+print(check_brackets("{[(])}"))  # False
+
+# Python: 12 lines
+# C: 25+ lines (plus helpers)</code></pre>
+                </div>
+            </div>
+        </div>
+
+        <!-- SLIDE 8: Postfix Evaluation -->
+        <div class="slide">
+            <h2>🧮 Postfix Expression Evaluation</h2>
+            <div class="three-columns">
+                <div class="column pseudocod">
+                    <h3>📝 Pseudocode</h3>
+                    <pre><code>FUNCTION EvalPostfix(tokens):
+    stack ← CreateStack()
+    
+    FOR EACH token IN tokens:
+        IF token IS number:
+            Push(stack, token)
+        ELSE IF token IS operator:
+            b ← Pop(stack)
+            a ← Pop(stack)
+            result ← Apply(token, a, b)
+            Push(stack, result)
+        END IF
+    END FOR
+    
+    RETURN Pop(stack)
+END FUNCTION</code></pre>
+                </div>
+                <div class="column c-lang">
+                    <h3>⚙️ C</h3>
+                    <pre><code class="language-c">int eval_postfix(char *expr) {
+    Stack *s = stack_create(64);
+    char *token = strtok(expr, " ");
+    
+    while (token) {
+        if (isdigit(token[0])) {
+            stack_push(s, atoi(token));
+        } else {
+            int b = stack_pop(s);
+            int a = stack_pop(s);
+            int r;
+            switch (token[0]) {
+                case '+': r = a + b; break;
+                case '-': r = a - b; break;
+                case '*': r = a * b; break;
+                case '/': r = a / b; break;
+            }
+            stack_push(s, r);
+        }
+        token = strtok(NULL, " ");
+    }
+    int result = stack_pop(s);
+    stack_destroy(s);
+    return result;
+}</code></pre>
+                </div>
+                <div class="column python">
+                    <h3>🐍 Python</h3>
+                    <pre><code class="language-python">def eval_postfix(expr):
+    stack = []
+    ops = {
+        '+': lambda a,b: a+b,
+        '-': lambda a,b: a-b,
+        '*': lambda a,b: a*b,
+        '/': lambda a,b: a//b,
+    }
+    
+    for token in expr.split():
+        if token.lstrip('-').isdigit():
+            stack.append(int(token))
+        else:
+            b, a = stack.pop(), stack.pop()
+            stack.append(ops[token](a, b))
+    
+    return stack.pop()
+
+# Usage:
+result = eval_postfix("3 4 2 * +")
+print(result)  # 11</code></pre>
+                </div>
+            </div>
+        </div>
+
+        <!-- SLIDE 9: Memory Management -->
+        <div class="slide">
+            <h2>🧠 Memory Management Comparison</h2>
+            <table>
+                <tr>
+                    <th>Aspect</th>
+                    <th>C</th>
+                    <th>Python</th>
+                </tr>
+                <tr>
+                    <td>Allocation</td>
+                    <td>Manual: <code>malloc()</code>, <code>calloc()</code></td>
+                    <td>Automatic: object creation</td>
+                </tr>
+                <tr>
+                    <td>Deallocation</td>
+                    <td>Manual: <code>free()</code></td>
+                    <td>Automatic: garbage collection</td>
+                </tr>
+                <tr>
+                    <td>Resizing</td>
+                    <td>Manual: <code>realloc()</code></td>
+                    <td>Automatic: list grows as needed</td>
+                </tr>
+                <tr>
+                    <td>Memory Leaks</td>
+                    <td>Common bug if forget <code>free()</code></td>
+                    <td>Rare (GC handles it)</td>
+                </tr>
+                <tr>
+                    <td>Performance</td>
+                    <td>Optimal (direct control)</td>
+                    <td>Overhead from GC</td>
+                </tr>
+                <tr>
+                    <td>Safety</td>
+                    <td>Prone to buffer overflow, dangling pointers</td>
+                    <td>Memory-safe by design</td>
+                </tr>
+            </table>
+            <div class="insight-box">
+                <h4>💡 Trade-off</h4>
+                <p>C offers control and performance; Python offers safety and simplicity. Choose based on requirements.</p>
+            </div>
+        </div>
+
+        <!-- SLIDE 10: Error Handling -->
+        <div class="slide">
+            <h2>⚠️ Error Handling Styles</h2>
+            <div class="three-columns">
+                <div class="column pseudocod">
+                    <h3>📝 Pseudocode</h3>
+                    <pre><code>// Option 1: Return codes
+FUNCTION SafePop(stack, result):
+    IF IsEmpty(stack):
+        RETURN ERROR_EMPTY
+    END IF
+    result ← stack.data[stack.top]
+    stack.top ← stack.top - 1
+    RETURN SUCCESS
+END FUNCTION
+
+// Option 2: Exceptions
+FUNCTION Pop(stack):
+    IF IsEmpty(stack):
+        THROW StackUnderflowError
+    END IF
+    // ... rest of code
+END FUNCTION</code></pre>
+                </div>
+                <div class="column c-lang">
+                    <h3>⚙️ C</h3>
+                    <pre><code class="language-c">// Return codes (common in C)
+typedef enum {
+    STACK_OK = 0,
+    STACK_EMPTY = -1,
+    STACK_FULL = -2
+} StackResult;
+
+StackResult stack_pop(Stack *s, int *out) {
+    if (s->top == -1) {
+        return STACK_EMPTY;
+    }
+    *out = s->data[s->top--];
+    return STACK_OK;
+}
+
+// Usage:
+int value;
+if (stack_pop(s, &value) == STACK_OK) {
+    printf("Popped: %d\n", value);
+} else {
+    printf("Stack was empty\n");
+}</code></pre>
+                </div>
+                <div class="column python">
+                    <h3>🐍 Python</h3>
+                    <pre><code class="language-python"># Exceptions (Pythonic)
+def pop(self):
+    if not self.data:
+        raise IndexError(
+            "pop from empty stack"
+        )
+    return self.data.pop()
+
+# Usage with try/except:
+try:
+    value = stack.pop()
+    print(f"Popped: {value}")
+except IndexError as e:
+    print(f"Error: {e}")
+
+# Or with EAFP style:
+# (Easier to Ask Forgiveness
+#  than Permission)
+try:
+    value = stack.pop()
+except IndexError:
+    value = None  # Default</code></pre>
+                </div>
+            </div>
+        </div>
+
+        <!-- SLIDE 11: When to Use Which -->
+        <div class="slide">
+            <h2>🎯 When to Use Which Language</h2>
+            <div class="two-columns">
+                <div>
+                    <h3 style="color: var(--accent-blue);">Choose C When:</h3>
+                    <ul>
+                        <li>Performance is critical (systems programming)</li>
+                        <li>Memory usage must be minimised</li>
+                        <li>Working close to hardware (embedded, OS)</li>
+                        <li>Need precise control over memory layout</li>
+                        <li>Interfacing with existing C libraries</li>
+                        <li>Building foundational infrastructure</li>
+                    </ul>
+                </div>
+                <div>
+                    <h3 style="color: var(--accent-green);">Choose Python When:</h3>
+                    <ul>
+                        <li>Development speed matters more than runtime</li>
+                        <li>Prototyping and experimentation</li>
+                        <li>Data analysis, scripting, automation</li>
+                        <li>Teaching algorithm concepts</li>
+                        <li>When memory management bugs are costly</li>
+                        <li>Integration with scientific libraries</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="insight-box" style="margin-top: 30px;">
+                <h4>🔑 Key Takeaway</h4>
+                <p>Master the algorithm in pseudocode first. Then translate to the appropriate language for your context. The logic transfers; only syntax and memory handling differ.</p>
+            </div>
+        </div>
+
+        <!-- SLIDE 12: Summary -->
+        <div class="slide title-slide">
+            <h1>Key Insights</h1>
+            <div style="text-align: left; max-width: 800px; margin: 30px auto;">
+                <ul style="font-size: 1.3em; line-height: 2;">
+                    <li><strong>Pseudocode</strong> captures pure algorithm logic</li>
+                    <li><strong>C</strong> requires explicit memory management</li>
+                    <li><strong>Python</strong> abstracts memory, focuses on logic</li>
+                    <li>Stack operations are O(1) in all implementations</li>
+                    <li>Error handling style differs: return codes vs exceptions</li>
+                    <li>Choose language based on project requirements</li>
+                </ul>
+            </div>
+            <p style="margin-top: 40px; color: var(--text-secondary);">
+                Understanding multiple perspectives deepens algorithmic thinking.
+            </p>
+        </div>
+
+    </div>
+
+    <script>
+        const slides = document.querySelectorAll('.slide');
+        const totalSlides = slides.length;
+        let currentSlide = 0;
+        
+        function updateSlide() {
+            slides.forEach((slide, i) => slide.classList.toggle('active', i === currentSlide));
+            document.getElementById('progress-bar').style.width = ((currentSlide + 1) / totalSlides * 100) + '%';
+            document.getElementById('slide-counter').textContent = `${currentSlide + 1} / ${totalSlides}`;
+        }
+        
+        function nextSlide() { if (currentSlide < totalSlides - 1) { currentSlide++; updateSlide(); } }
+        function prevSlide() { if (currentSlide > 0) { currentSlide--; updateSlide(); } }
+        
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowRight' || e.key === ' ') { e.preventDefault(); nextSlide(); }
+            if (e.key === 'ArrowLeft') { e.preventDefault(); prevSlide(); }
+            if (e.key === 'Home') { e.preventDefault(); currentSlide = 0; updateSlide(); }
+            if (e.key === 'End') { e.preventDefault(); currentSlide = totalSlides - 1; updateSlide(); }
+        });
+        
+        document.addEventListener('DOMContentLoaded', () => { hljs.highlightAll(); updateSlide(); });
+    </script>
+</body>
+</html>

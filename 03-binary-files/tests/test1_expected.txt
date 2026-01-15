@@ -1,0 +1,29 @@
+
+╔════════════════════════════════════════════════════════════════╗
+║                    STUDENT RECORDS DATABASE                    ║
+╚════════════════════════════════════════════════════════════════╝
+
+Enter number of students: 
+[INFO] Saving 3 students to database...
+[OK] Student 1001 saved successfully
+[OK] Student 1002 saved successfully
+[OK] Student 1003 saved successfully
+
+[INFO] Loading all students from database...
+┌────────┬──────────────────────┬───────┬──────┐
+│   ID   │        Name          │  GPA  │ Year │
+├────────┼──────────────────────┼───────┼──────┤
+│   1001 │ Alice Johnson        │  3.75 │ 2024 │
+│   1002 │ Bob Smith            │  3.42 │ 2023 │
+│   1003 │ Carol Williams       │  3.91 │ 2024 │
+└────────┴──────────────────────┴───────┴──────┘
+
+Total records: 3
+File size: 186 bytes
+
+[INFO] Testing search functionality...
+[OK] Found student 1001: Alice Johnson
+[OK] Correctly returned NULL for non-existent ID
+
+[INFO] Database operations complete
+

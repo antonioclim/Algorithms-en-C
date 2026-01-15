@@ -1,0 +1,2 @@
+# Exercise 1 is self-contained and does not require input
+# This file exists for consistency with the test framework
