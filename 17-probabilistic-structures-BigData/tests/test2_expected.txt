@@ -1,0 +1,17 @@
+Network Traffic Analysis Results:
+
+Heavy Hitters (Count-Min Sketch):
+  IP Address        Estimated Count    Actual Count
+  192.168.1.15      ~100              100
+  10.45.23.78       ~50               50
+  172.16.45.100     ~30               30
+
+Unique IP Count (HyperLogLog):
+  Estimated: ~6
+  Actual: 6
+  Error: <5%
+
+Memory Usage Comparison:
+  Exact counting: ~200 bytes
+  Count-Min Sketch: ~160 bytes
+  HyperLogLog: ~64 bytes

@@ -1,0 +1,1510 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Week 17: Probabilistic Data Structures for Big Data | ATP Course</title>
+    
+    <!-- Highlight.js for syntax highlighting -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/c.min.js"></script>
+    
+    <style>
+        /* ================================================================
+           CSS VARIABLES - Dark Theme
+           ================================================================ */
+        :root {
+            --bg-primary: #0d1117;
+            --bg-secondary: #161b22;
+            --bg-tertiary: #21262d;
+            --bg-code: #1e2228;
+            
+            --accent-blue: #58a6ff;
+            --accent-green: #3fb950;
+            --accent-orange: #d29922;
+            --accent-red: #f85149;
+            --accent-purple: #a371f7;
+            --accent-cyan: #39c5cf;
+            
+            --text-primary: #e6edf3;
+            --text-secondary: #8b949e;
+            --text-muted: #6e7681;
+            
+            --border-default: #30363d;
+            --border-muted: #21262d;
+            
+            --shadow-large: 0 8px 24px rgba(0,0,0,0.5);
+            --shadow-medium: 0 4px 12px rgba(0,0,0,0.4);
+        }
+        
+        /* ================================================================
+           RESET AND BASE STYLES
+           ================================================================ */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        html, body {
+            height: 100%;
+            width: 100%;
+            overflow: hidden;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.6;
+        }
+        
+        /* ================================================================
+           SLIDE CONTAINER
+           ================================================================ */
+        .slides-container {
+            height: 100vh;
+            width: 100vw;
+            overflow: hidden;
+            position: relative;
+        }
+        
+        .slide {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            padding: 60px 80px;
+            display: none;
+            flex-direction: column;
+            background-color: var(--bg-primary);
+            overflow-y: auto;
+        }
+        
+        .slide.active {
+            display: flex;
+        }
+        
+        /* ================================================================
+           PROGRESS BAR
+           ================================================================ */
+        .progress-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background-color: var(--bg-tertiary);
+            z-index: 1000;
+        }
+        
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, var(--accent-blue), var(--accent-purple));
+            transition: width 0.3s ease;
+        }
+        
+        /* ================================================================
+           TYPOGRAPHY
+           ================================================================ */
+        h1 {
+            font-size: 2.8em;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 20px;
+            line-height: 1.2;
+        }
+        
+        h1 .emoji {
+            margin-right: 15px;
+        }
+        
+        h2 {
+            font-size: 2.2em;
+            font-weight: 600;
+            color: var(--accent-blue);
+            margin-bottom: 30px;
+            border-bottom: 2px solid var(--border-default);
+            padding-bottom: 15px;
+        }
+        
+        h3 {
+            font-size: 1.5em;
+            font-weight: 600;
+            color: var(--accent-green);
+            margin: 25px 0 15px 0;
+        }
+        
+        p {
+            font-size: 1.3em;
+            margin-bottom: 20px;
+            color: var(--text-secondary);
+        }
+        
+        .lead {
+            font-size: 1.5em;
+            color: var(--text-primary);
+        }
+        
+        /* ================================================================
+           LISTS
+           ================================================================ */
+        ul, ol {
+            font-size: 1.3em;
+            margin-left: 40px;
+            margin-bottom: 20px;
+        }
+        
+        li {
+            margin-bottom: 12px;
+            color: var(--text-secondary);
+        }
+        
+        li strong {
+            color: var(--text-primary);
+        }
+        
+        /* ================================================================
+           CODE BLOCKS
+           ================================================================ */
+        pre {
+            background-color: var(--bg-code);
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+            overflow-x: auto;
+            border: 1px solid var(--border-default);
+        }
+        
+        code {
+            font-family: 'SF Mono', 'Fira Code', 'Monaco', monospace;
+            font-size: 0.95em;
+        }
+        
+        .inline-code {
+            background-color: var(--bg-tertiary);
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-family: 'SF Mono', 'Fira Code', monospace;
+            font-size: 0.9em;
+            color: var(--accent-orange);
+        }
+        
+        /* ================================================================
+           BOXES AND CARDS
+           ================================================================ */
+        .info-box {
+            background-color: var(--bg-secondary);
+            border-left: 4px solid var(--accent-blue);
+            padding: 20px 25px;
+            margin: 20px 0;
+            border-radius: 0 8px 8px 0;
+        }
+        
+        .warning-box {
+            background-color: var(--bg-secondary);
+            border-left: 4px solid var(--accent-orange);
+            padding: 20px 25px;
+            margin: 20px 0;
+            border-radius: 0 8px 8px 0;
+        }
+        
+        .success-box {
+            background-color: var(--bg-secondary);
+            border-left: 4px solid var(--accent-green);
+            padding: 20px 25px;
+            margin: 20px 0;
+            border-radius: 0 8px 8px 0;
+        }
+        
+        .card {
+            background-color: var(--bg-secondary);
+            border: 1px solid var(--border-default);
+            border-radius: 12px;
+            padding: 25px;
+            margin: 15px 0;
+            box-shadow: var(--shadow-medium);
+        }
+        
+        .card-title {
+            font-size: 1.3em;
+            font-weight: 600;
+            color: var(--accent-blue);
+            margin-bottom: 10px;
+        }
+        
+        /* ================================================================
+           TABLES
+           ================================================================ */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            font-size: 1.1em;
+        }
+        
+        th, td {
+            padding: 15px;
+            text-align: left;
+            border-bottom: 1px solid var(--border-default);
+        }
+        
+        th {
+            background-color: var(--bg-tertiary);
+            color: var(--accent-blue);
+            font-weight: 600;
+        }
+        
+        tr:hover {
+            background-color: var(--bg-secondary);
+        }
+        
+        /* ================================================================
+           ASCII DIAGRAMS
+           ================================================================ */
+        .ascii-diagram {
+            font-family: 'SF Mono', 'Fira Code', monospace;
+            font-size: 1em;
+            line-height: 1.4;
+            background-color: var(--bg-code);
+            padding: 25px;
+            border-radius: 8px;
+            overflow-x: auto;
+            white-space: pre;
+            color: var(--accent-cyan);
+            border: 1px solid var(--border-default);
+        }
+        
+        /* ================================================================
+           TWO COLUMN LAYOUT
+           ================================================================ */
+        .two-columns {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 40px;
+            margin: 20px 0;
+        }
+        
+        .column {
+            padding: 10px;
+        }
+        
+        /* ================================================================
+           FORMULA DISPLAY
+           ================================================================ */
+        .formula {
+            font-family: 'Times New Roman', serif;
+            font-size: 1.4em;
+            text-align: center;
+            padding: 20px;
+            background-color: var(--bg-secondary);
+            border-radius: 8px;
+            margin: 20px 0;
+            color: var(--accent-green);
+        }
+        
+        /* ================================================================
+           QUOTE
+           ================================================================ */
+        blockquote {
+            font-style: italic;
+            font-size: 1.4em;
+            color: var(--text-secondary);
+            border-left: 4px solid var(--accent-purple);
+            padding-left: 25px;
+            margin: 30px 0;
+        }
+        
+        blockquote cite {
+            display: block;
+            margin-top: 15px;
+            font-size: 0.8em;
+            color: var(--text-muted);
+            font-style: normal;
+        }
+        
+        /* ================================================================
+           TITLE SLIDE
+           ================================================================ */
+        .title-slide {
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+        }
+        
+        .title-slide h1 {
+            font-size: 3.5em;
+            margin-bottom: 30px;
+        }
+        
+        .title-slide .subtitle {
+            font-size: 1.8em;
+            color: var(--accent-blue);
+            margin-bottom: 20px;
+        }
+        
+        .title-slide .meta {
+            font-size: 1.2em;
+            color: var(--text-muted);
+        }
+        
+        /* ================================================================
+           NAVIGATION
+           ================================================================ */
+        .nav-container {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 15px;
+            z-index: 1000;
+        }
+        
+        .nav-btn {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background-color: var(--bg-tertiary);
+            border: 1px solid var(--border-default);
+            color: var(--text-primary);
+            font-size: 1.2em;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .nav-btn:hover {
+            background-color: var(--accent-blue);
+            border-color: var(--accent-blue);
+        }
+        
+        .slide-counter {
+            position: fixed;
+            bottom: 30px;
+            right: 40px;
+            font-size: 1em;
+            color: var(--text-muted);
+            z-index: 1000;
+        }
+        
+        /* ================================================================
+           ANIMATIONS
+           ================================================================ */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .slide.active > * {
+            animation: fadeIn 0.4s ease forwards;
+        }
+        
+        /* ================================================================
+           RESPONSIVE
+           ================================================================ */
+        @media (max-width: 1200px) {
+            .slide { padding: 40px 50px; }
+            h1 { font-size: 2.2em; }
+            h2 { font-size: 1.8em; }
+            .two-columns { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <!-- Progress Bar -->
+    <div class="progress-container">
+        <div class="progress-bar" id="progressBar"></div>
+    </div>
+    
+    <!-- Slides Container -->
+    <div class="slides-container" id="slidesContainer">
+        
+        <!-- SLIDE 1: Title -->
+        <div class="slide title-slide active">
+            <h1>🎲 Probabilistic Data Structures</h1>
+            <div class="subtitle">For Big Data Applications</div>
+            <div class="meta">
+                Week 17 | ATP Course<br>
+                Academy of Economic Studies - CSIE Bucharest
+            </div>
+        </div>
+        
+        <!-- SLIDE 2: Learning Objectives -->
+        <div class="slide">
+            <h2>🎯 Learning Objectives</h2>
+            <ul>
+                <li><strong>Remember</strong> the key characteristics of probabilistic data structures</li>
+                <li><strong>Understand</strong> the trade-offs between accuracy and space efficiency</li>
+                <li><strong>Apply</strong> Bloom filters, Count-Min Sketch and HyperLogLog to practical problems</li>
+                <li><strong>Analyse</strong> false positive rates and error bounds</li>
+                <li><strong>Evaluate</strong> when to use probabilistic vs exact data structures</li>
+                <li><strong>Create</strong> efficient solutions for Big Data challenges</li>
+            </ul>
+        </div>
+        
+        <!-- SLIDE 3: The Big Data Challenge -->
+        <div class="slide">
+            <h2>📊 The Big Data Challenge</h2>
+            <p class="lead">Modern applications process enormous amounts of data:</p>
+            <div class="two-columns">
+                <div class="column">
+                    <div class="card">
+                        <div class="card-title">Scale Examples</div>
+                        <ul>
+                            <li>Google: 3.5 billion searches/day</li>
+                            <li>Twitter: 500 million tweets/day</li>
+                            <li>YouTube: 500 hours video/minute</li>
+                            <li>IoT: billions of sensor readings</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="column">
+                    <div class="card">
+                        <div class="card-title">Common Questions</div>
+                        <ul>
+                            <li>How many unique visitors today?</li>
+                            <li>Have we seen this URL before?</li>
+                            <li>What are the most frequent items?</li>
+                            <li>Is this a duplicate?</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            <div class="warning-box">
+                <strong>Problem:</strong> Exact answers require O(n) space — often terabytes!
+            </div>
+        </div>
+        
+        <!-- SLIDE 4: The Probabilistic Approach -->
+        <div class="slide">
+            <h2>🎲 The Probabilistic Approach</h2>
+            <blockquote>
+                "Approximately right is better than exactly wrong."
+                <cite>— Engineering wisdom for Big Data</cite>
+            </blockquote>
+            <div class="info-box">
+                <strong>Key Insight:</strong> For many applications, an approximate answer with bounded error is acceptable — especially if it uses orders of magnitude less memory.
+            </div>
+            <h3>The Trade-off</h3>
+            <div class="ascii-diagram">
+    EXACT                              PROBABILISTIC
+    ┌─────────────────┐               ┌─────────────────┐
+    │ 100% accurate   │               │ ~99% accurate   │
+    │ O(n) space      │     vs        │ O(log n) space  │
+    │ No false pos    │               │ Small FP rate   │
+    │ Terabytes       │               │ Kilobytes       │
+    └─────────────────┘               └─────────────────┘
+            </div>
+        </div>
+        
+        <!-- SLIDE 5: Historical Context -->
+        <div class="slide">
+            <h2>📜 Historical Context</h2>
+            <div class="two-columns">
+                <div class="column">
+                    <div class="card">
+                        <div class="card-title">Burton H. Bloom (1970)</div>
+                        <p>Created the Bloom filter — a space-efficient probabilistic structure for set membership testing.</p>
+                        <blockquote style="font-size: 1em; margin: 10px 0;">
+                            "Space/Time Trade-offs in Hash Coding with Allowable Errors"
+                        </blockquote>
+                    </div>
+                    <div class="card">
+                        <div class="card-title">Philippe Flajolet (1948–2011)</div>
+                        <p>Pioneered probabilistic counting algorithms. Created LogLog and HyperLogLog.</p>
+                    </div>
+                </div>
+                <div class="column">
+                    <div class="card">
+                        <div class="card-title">Cormode & Muthukrishnan (2005)</div>
+                        <p>Introduced the Count-Min Sketch for frequency estimation in data streams.</p>
+                    </div>
+                    <div class="card">
+                        <div class="card-title">William Pugh (1990)</div>
+                        <p>Created Skip Lists — a probabilistic alternative to balanced trees.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- SLIDE 6: Overview of Structures -->
+        <div class="slide">
+            <h2>🗂️ Overview: Probabilistic Structures</h2>
+            <table>
+                <tr>
+                    <th>Structure</th>
+                    <th>Purpose</th>
+                    <th>Space</th>
+                    <th>Error Type</th>
+                </tr>
+                <tr>
+                    <td><strong>Bloom Filter</strong></td>
+                    <td>Set membership</td>
+                    <td>~10 bits/item</td>
+                    <td>False positives only</td>
+                </tr>
+                <tr>
+                    <td><strong>Count-Min Sketch</strong></td>
+                    <td>Frequency estimation</td>
+                    <td>O(1/ε × log(1/δ))</td>
+                    <td>Overestimation</td>
+                </tr>
+                <tr>
+                    <td><strong>HyperLogLog</strong></td>
+                    <td>Cardinality</td>
+                    <td>~1.5 KB</td>
+                    <td>±2% error</td>
+                </tr>
+                <tr>
+                    <td><strong>Skip List</strong></td>
+                    <td>Sorted structure</td>
+                    <td>O(n)</td>
+                    <td>None (probabilistic balance)</td>
+                </tr>
+            </table>
+        </div>
+        
+        <!-- SLIDE 7: Hash Functions Foundation -->
+        <div class="slide">
+            <h2>🔑 Foundation: Hash Functions</h2>
+            <p>All probabilistic structures rely on good hash functions:</p>
+            <div class="info-box">
+                <strong>Requirements:</strong> Deterministic, uniform distribution, fast computation, low collision rate.
+            </div>
+            <h3>Kirsch-Mitzenmacher Technique</h3>
+            <p>Generate k hash functions from just two:</p>
+            <div class="formula">
+                h<sub>i</sub>(x) = h<sub>1</sub>(x) + i × h<sub>2</sub>(x) mod m
+            </div>
+            <pre><code class="language-c">uint64_t get_hash(const char *data, size_t i, size_t m) {
+    uint64_t h1 = hash_function_1(data);
+    uint64_t h2 = hash_function_2(data);
+    return (h1 + i * h2) % m;
+}</code></pre>
+        </div>
+        
+        <!-- SLIDE 8: Bloom Filter Introduction -->
+        <div class="slide">
+            <h2>🌸 Bloom Filter: Introduction</h2>
+            <p class="lead">A space-efficient probabilistic structure for set membership testing.</p>
+            <div class="two-columns">
+                <div class="column">
+                    <h3>Operations</h3>
+                    <ul>
+                        <li><strong>Insert:</strong> Add element to set</li>
+                        <li><strong>Query:</strong> Check if element might be in set</li>
+                        <li><strong>No Delete:</strong> Standard version cannot remove elements</li>
+                    </ul>
+                </div>
+                <div class="column">
+                    <h3>Properties</h3>
+                    <ul>
+                        <li>False positives possible</li>
+                        <li>False negatives impossible</li>
+                        <li>Space: ~10 bits per element</li>
+                        <li>O(k) insert and query</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="success-box">
+                <strong>Key Guarantee:</strong> If query returns "no", the element is definitely not in the set.
+            </div>
+        </div>
+        
+        <!-- SLIDE 9: Bloom Filter Structure -->
+        <div class="slide">
+            <h2>🌸 Bloom Filter: Structure</h2>
+            <div class="ascii-diagram">
+    Bit Array (m bits):
+    ┌───┬───┬───┬───┬───┬───┬───┬───┬───┬───┬───┬───┬───┬───┬───┬───┐
+    │ 0 │ 1 │ 0 │ 0 │ 1 │ 0 │ 1 │ 0 │ 0 │ 0 │ 1 │ 0 │ 0 │ 1 │ 0 │ 0 │
+    └───┴───┴───┴───┴───┴───┴───┴───┴───┴───┴───┴───┴───┴───┴───┴───┘
+      0   1   2   3   4   5   6   7   8   9  10  11  12  13  14  15
+
+    Insert "apple" (k=3 hash functions):
+    h₁("apple") = 1   → set bit 1
+    h₂("apple") = 4   → set bit 4
+    h₃("apple") = 10  → set bit 10
+
+    Query "apple": bits 1, 4, 10 all set → "possibly present" ✓
+    Query "grape": bits 3, 7, 12 → bit 7 is 0 → "definitely absent" ✗
+            </div>
+        </div>
+        
+        <!-- SLIDE 10: Bloom Filter Implementation -->
+        <div class="slide">
+            <h2>🌸 Bloom Filter: Implementation</h2>
+            <pre><code class="language-c">typedef struct {
+    uint8_t *bits;       /* Bit array */
+    size_t num_bits;     /* Size of bit array (m) */
+    size_t num_hashes;   /* Number of hash functions (k) */
+    size_t num_items;    /* Items inserted (n) */
+} BloomFilter;
+
+void bloom_insert(BloomFilter *bf, const char *item) {
+    for (size_t i = 0; i < bf->num_hashes; i++) {
+        size_t bit_idx = get_hash(item, i, bf->num_bits);
+        bf->bits[bit_idx / 8] |= (1 << (bit_idx % 8));
+    }
+    bf->num_items++;
+}
+
+bool bloom_query(BloomFilter *bf, const char *item) {
+    for (size_t i = 0; i < bf->num_hashes; i++) {
+        size_t bit_idx = get_hash(item, i, bf->num_bits);
+        if (!(bf->bits[bit_idx / 8] & (1 << (bit_idx % 8))))
+            return false;  /* Definitely not present */
+    }
+    return true;  /* Possibly present */
+}</code></pre>
+        </div>
+        
+        <!-- SLIDE 11: Bloom Filter Math -->
+        <div class="slide">
+            <h2>🌸 Bloom Filter: Mathematics</h2>
+            <h3>False Positive Probability</h3>
+            <div class="formula">
+                P(FP) ≈ (1 - e<sup>-kn/m</sup>)<sup>k</sup>
+            </div>
+            <p>Where: k = hash functions, n = inserted items, m = bits</p>
+            
+            <h3>Optimal Number of Hash Functions</h3>
+            <div class="formula">
+                k<sub>optimal</sub> = (m/n) × ln(2) ≈ 0.693 × (m/n)
+            </div>
+            
+            <h3>Optimal Bits for Target FP Rate</h3>
+            <div class="formula">
+                m = -n × ln(p) / (ln(2))² ≈ -1.44 × n × log₂(p)
+            </div>
+            
+            <div class="info-box">
+                <strong>Example:</strong> For 1 million items with 1% FP rate: m ≈ 9.6 million bits (1.2 MB), k ≈ 7
+            </div>
+        </div>
+        
+        <!-- SLIDE 12: Bloom Filter Applications -->
+        <div class="slide">
+            <h2>🌸 Bloom Filter: Applications</h2>
+            <div class="two-columns">
+                <div class="column">
+                    <div class="card">
+                        <div class="card-title">🌐 Web Browsers</div>
+                        <p>Google Chrome uses Bloom filters for Safe Browsing. Checks URLs against known malicious sites without downloading the entire list.</p>
+                    </div>
+                    <div class="card">
+                        <div class="card-title">💾 Databases</div>
+                        <p>Apache Cassandra, PostgreSQL use Bloom filters to avoid unnecessary disk reads for non-existent keys.</p>
+                    </div>
+                </div>
+                <div class="column">
+                    <div class="card">
+                        <div class="card-title">📧 Spam Filtering</div>
+                        <p>Check if an email address or domain is on a blocklist without storing all blocklisted addresses.</p>
+                    </div>
+                    <div class="card">
+                        <div class="card-title">🔄 Deduplication</div>
+                        <p>Quickly identify potential duplicates in large datasets before expensive comparison.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- SLIDE 13: Count-Min Sketch Introduction -->
+        <div class="slide">
+            <h2>📊 Count-Min Sketch: Introduction</h2>
+            <p class="lead">Estimate the frequency of elements in a data stream.</p>
+            
+            <div class="info-box">
+                <strong>Problem:</strong> Given a stream of billions of events, answer "How many times did event X occur?" using sublinear space.
+            </div>
+            
+            <h3>Properties</h3>
+            <ul>
+                <li><strong>Update:</strong> O(d) time to increment counters</li>
+                <li><strong>Query:</strong> O(d) time to estimate frequency</li>
+                <li><strong>Space:</strong> O(w × d) counters</li>
+                <li><strong>Error:</strong> Never underestimates, may overestimate</li>
+            </ul>
+            
+            <div class="success-box">
+                <strong>Guarantee:</strong> With probability 1-δ, estimate ≤ true count + ε × N
+            </div>
+        </div>
+        
+        <!-- SLIDE 14: Count-Min Sketch Structure -->
+        <div class="slide">
+            <h2>📊 Count-Min Sketch: Structure</h2>
+            <div class="ascii-diagram">
+    2D Array of Counters (d rows × w columns):
+    
+            col 0   col 1   col 2   col 3   col 4   col 5   ...
+          ┌───────┬───────┬───────┬───────┬───────┬───────┬─────
+    row 0 │   3   │  12   │   0   │   7   │   1   │   5   │ ...   ← h₀(x)
+          ├───────┼───────┼───────┼───────┼───────┼───────┼─────
+    row 1 │   1   │   4   │  15   │   2   │   8   │   0   │ ...   ← h₁(x)
+          ├───────┼───────┼───────┼───────┼───────┼───────┼─────
+    row 2 │   5   │   0   │   3   │  10   │   2   │   6   │ ...   ← h₂(x)
+          ├───────┼───────┼───────┼───────┼───────┼───────┼─────
+    row 3 │   2   │   8   │   4   │   1   │  11   │   3   │ ...   ← h₃(x)
+          └───────┴───────┴───────┴───────┴───────┴───────┴─────
+
+    Update("apple"):    Increment table[i][hᵢ("apple")] for all rows
+    Query("apple"):     Return MIN(table[i][hᵢ("apple")]) over all rows
+            </div>
+        </div>
+        
+        <!-- SLIDE 15: Count-Min Sketch Implementation -->
+        <div class="slide">
+            <h2>📊 Count-Min Sketch: Implementation</h2>
+            <pre><code class="language-c">typedef struct {
+    uint32_t **table;    /* 2D array: depth × width */
+    size_t width;        /* Number of columns (w) */
+    size_t depth;        /* Number of rows/hash functions (d) */
+    size_t total_count;  /* Total items seen */
+} CountMinSketch;
+
+void cms_update(CountMinSketch *cms, const char *item, uint32_t count) {
+    for (size_t row = 0; row < cms->depth; row++) {
+        size_t col = get_hash(item, row, cms->width);
+        cms->table[row][col] += count;
+    }
+    cms->total_count += count;
+}
+
+uint32_t cms_query(CountMinSketch *cms, const char *item) {
+    uint32_t min_count = UINT32_MAX;
+    for (size_t row = 0; row < cms->depth; row++) {
+        size_t col = get_hash(item, row, cms->width);
+        if (cms->table[row][col] < min_count)
+            min_count = cms->table[row][col];
+    }
+    return min_count;
+}</code></pre>
+        </div>
+        
+        <!-- SLIDE 16: Count-Min Sketch Parameters -->
+        <div class="slide">
+            <h2>📊 Count-Min Sketch: Parameters</h2>
+            <h3>Choosing Width and Depth</h3>
+            <div class="formula">
+                width = ⌈e / ε⌉ ≈ 2.72 / ε
+            </div>
+            <div class="formula">
+                depth = ⌈ln(1 / δ)⌉
+            </div>
+            
+            <table>
+                <tr>
+                    <th>Accuracy (ε)</th>
+                    <th>Confidence (δ)</th>
+                    <th>Width</th>
+                    <th>Depth</th>
+                    <th>Memory</th>
+                </tr>
+                <tr>
+                    <td>0.1%</td>
+                    <td>0.1%</td>
+                    <td>2,719</td>
+                    <td>7</td>
+                    <td>~76 KB</td>
+                </tr>
+                <tr>
+                    <td>0.01%</td>
+                    <td>0.01%</td>
+                    <td>27,183</td>
+                    <td>10</td>
+                    <td>~1 MB</td>
+                </tr>
+                <tr>
+                    <td>1%</td>
+                    <td>1%</td>
+                    <td>272</td>
+                    <td>5</td>
+                    <td>~5 KB</td>
+                </tr>
+            </table>
+        </div>
+        
+        <!-- SLIDE 17: Count-Min Sketch Applications -->
+        <div class="slide">
+            <h2>📊 Count-Min Sketch: Applications</h2>
+            <div class="two-columns">
+                <div class="column">
+                    <div class="card">
+                        <div class="card-title">📈 Heavy Hitters</div>
+                        <p>Find the most frequent items in a stream. Used for trending topics, popular products, DDoS detection.</p>
+                    </div>
+                    <div class="card">
+                        <div class="card-title">🔍 Query Optimisation</div>
+                        <p>Databases use frequency estimates to choose optimal query plans.</p>
+                    </div>
+                </div>
+                <div class="column">
+                    <div class="card">
+                        <div class="card-title">🌊 Network Monitoring</div>
+                        <p>Track traffic patterns, identify heavy flows, detect anomalies in real-time.</p>
+                    </div>
+                    <div class="card">
+                        <div class="card-title">📊 Analytics</div>
+                        <p>Approximate aggregations in streaming analytics platforms (Apache Flink, Spark).</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- SLIDE 18: HyperLogLog Introduction -->
+        <div class="slide">
+            <h2>🔢 HyperLogLog: Introduction</h2>
+            <p class="lead">Estimate the cardinality (count of distinct elements) of a multiset.</p>
+            
+            <div class="warning-box">
+                <strong>Challenge:</strong> Count unique visitors across billions of page views. Exact solution requires storing all visitor IDs!
+            </div>
+            
+            <h3>HyperLogLog Solution</h3>
+            <ul>
+                <li>Space: ~1.5 KB (for 16,384 registers)</li>
+                <li>Error: ~2% relative error</li>
+                <li>Mergeable: Combine counts from distributed systems</li>
+                <li>Used by: Redis, Presto, BigQuery, Druid</li>
+            </ul>
+            
+            <blockquote>
+                "I can count billions of unique elements using only 1.5 kilobytes."
+                <cite>— Philippe Flajolet, paraphrased</cite>
+            </blockquote>
+        </div>
+        
+        <!-- SLIDE 19: HyperLogLog Theory -->
+        <div class="slide">
+            <h2>🔢 HyperLogLog: Theory</h2>
+            <h3>Key Observation</h3>
+            <p>If you hash n random values uniformly, the maximum number of leading zeros observed is approximately log₂(n).</p>
+            
+            <div class="ascii-diagram">
+    Hash values (binary):
+    
+    h("user1") = 0110 1010 ...  → 1 leading zero
+    h("user2") = 1101 0011 ...  → 0 leading zeros
+    h("user3") = 0001 1101 ...  → 3 leading zeros
+    h("user4") = 0000 0101 ...  → 5 leading zeros  ← max observed
+
+    Intuition: Seeing 5 leading zeros suggests n ≈ 2⁵ = 32 items
+            </div>
+            
+            <div class="info-box">
+                <strong>Refinement:</strong> Use m registers, each tracking a subset of items. Combine using harmonic mean for accuracy.
+            </div>
+        </div>
+        
+        <!-- SLIDE 20: HyperLogLog Implementation -->
+        <div class="slide">
+            <h2>🔢 HyperLogLog: Implementation</h2>
+            <pre><code class="language-c">typedef struct {
+    uint8_t *registers;  /* Array of m registers */
+    uint8_t precision;   /* p bits; m = 2^p */
+} HyperLogLog;
+
+void hll_add(HyperLogLog *hll, const char *item) {
+    uint64_t hash = hash64(item);
+    size_t m = 1UL << hll->precision;
+    
+    /* First p bits determine register index */
+    size_t reg_idx = hash >> (64 - hll->precision);
+    
+    /* Remaining bits: count leading zeros + 1 */
+    uint64_t remaining = hash << hll->precision;
+    uint8_t zeros = count_leading_zeros(remaining) + 1;
+    
+    /* Update register with maximum */
+    if (zeros > hll->registers[reg_idx])
+        hll->registers[reg_idx] = zeros;
+}
+
+uint64_t hll_count(HyperLogLog *hll) {
+    size_t m = 1UL << hll->precision;
+    double sum = 0.0;
+    for (size_t i = 0; i < m; i++)
+        sum += pow(2.0, -hll->registers[i]);
+    return (uint64_t)(ALPHA * m * m / sum);  /* With bias correction */
+}</code></pre>
+        </div>
+        
+        <!-- SLIDE 21: HyperLogLog Merging -->
+        <div class="slide">
+            <h2>🔢 HyperLogLog: Distributed Counting</h2>
+            <p class="lead">A key advantage: HyperLogLog can be merged across distributed systems.</p>
+            
+            <div class="ascii-diagram">
+    Server 1          Server 2          Server 3
+    ┌──────────┐     ┌──────────┐     ┌──────────┐
+    │ HLL-1    │     │ HLL-2    │     │ HLL-3    │
+    │ [3,5,2]  │     │ [4,2,6]  │     │ [1,5,4]  │
+    └────┬─────┘     └────┬─────┘     └────┬─────┘
+         │                │                │
+         └────────────────┼────────────────┘
+                          ▼
+                   MERGE: MAX per register
+                    ┌──────────┐
+                    │ [4,5,6]  │  = Combined HLL
+                    └──────────┘
+            </div>
+            
+            <pre><code class="language-c">void hll_merge(HyperLogLog *dest, HyperLogLog *src) {
+    size_t m = 1UL << dest->precision;
+    for (size_t i = 0; i < m; i++)
+        dest->registers[i] = MAX(dest->registers[i], src->registers[i]);
+}</code></pre>
+        </div>
+        
+        <!-- SLIDE 22: Skip List Introduction -->
+        <div class="slide">
+            <h2>⏩ Skip List: Introduction</h2>
+            <p class="lead">A probabilistic alternative to balanced trees.</p>
+            
+            <blockquote>
+                "Skip lists are a data structure that can be used in place of balanced trees. Skip lists use probabilistic balancing rather than strictly enforced balancing."
+                <cite>— William Pugh, 1990</cite>
+            </blockquote>
+            
+            <div class="two-columns">
+                <div class="column">
+                    <h3>Properties</h3>
+                    <ul>
+                        <li>Expected O(log n) search, insert, delete</li>
+                        <li>Simpler than AVL/Red-Black trees</li>
+                        <li>Good cache locality</li>
+                        <li>Easy concurrent implementation</li>
+                    </ul>
+                </div>
+                <div class="column">
+                    <h3>Used In</h3>
+                    <ul>
+                        <li>Redis sorted sets</li>
+                        <li>LevelDB / RocksDB</li>
+                        <li>Apache Lucene</li>
+                        <li>Many in-memory databases</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        
+        <!-- SLIDE 23: Skip List Structure -->
+        <div class="slide">
+            <h2>⏩ Skip List: Structure</h2>
+            <div class="ascii-diagram">
+    Level 3:   HEAD ─────────────────────────────────── 50 ────────────── NIL
+                │                                        │
+    Level 2:   HEAD ─────────── 20 ───────────────────── 50 ────── 70 ── NIL
+                │                │                        │         │
+    Level 1:   HEAD ─── 10 ─── 20 ─── 30 ─── 40 ─────── 50 ─ 60 ─ 70 ── NIL
+                │       │       │       │       │         │    │    │
+    Level 0:   HEAD ─ 5 ─ 10 ─ 20 ─ 25 ─ 30 ─ 40 ─ 45 ─ 50 ─ 60 ─ 70 ─ 80 ─ NIL
+               (all elements at level 0, higher levels skip)
+
+    Search for 45:
+    1. Start at HEAD, level 3 → 50 > 45, go down
+    2. Level 2 → 20 < 45, move right → 50 > 45, go down
+    3. Level 1 → 30 < 45, move right → 40 < 45, move right → 50 > 45, go down
+    4. Level 0 → 45 found!
+            </div>
+        </div>
+        
+        <!-- SLIDE 24: Skip List Random Level -->
+        <div class="slide">
+            <h2>⏩ Skip List: Random Level Generation</h2>
+            <p>Each node's level is determined probabilistically:</p>
+            
+            <div class="formula">
+                P(level ≥ i) = p<sup>i</sup>, typically p = 0.5
+            </div>
+            
+            <pre><code class="language-c">int random_level(int max_level) {
+    int level = 1;
+    while ((rand() / (double)RAND_MAX) < 0.5 && level < max_level)
+        level++;
+    return level;
+}
+
+/* Expected distribution:
+ * Level 1: 50% of nodes
+ * Level 2: 25% of nodes
+ * Level 3: 12.5% of nodes
+ * Level 4: 6.25% of nodes
+ * ...
+ */</code></pre>
+            
+            <div class="info-box">
+                <strong>Result:</strong> On average, the search path visits O(log n) nodes, similar to balanced trees but without rotations!
+            </div>
+        </div>
+        
+        <!-- SLIDE 25: Reservoir Sampling -->
+        <div class="slide">
+            <h2>🎰 Reservoir Sampling</h2>
+            <p class="lead">Select k random samples from a stream of unknown size.</p>
+            
+            <div class="warning-box">
+                <strong>Problem:</strong> You're processing a stream of events. You want a uniform random sample of k items, but you don't know the total count in advance.
+            </div>
+            
+            <h3>Algorithm R (Vitter)</h3>
+            <pre><code class="language-c">void reservoir_sample(int *stream, int n, int *reservoir, int k) {
+    /* Fill reservoir with first k items */
+    for (int i = 0; i < k; i++)
+        reservoir[i] = stream[i];
+    
+    /* Process remaining items */
+    for (int i = k; i < n; i++) {
+        int j = rand() % (i + 1);  /* Random index in [0, i] */
+        if (j < k)
+            reservoir[j] = stream[i];  /* Replace */
+    }
+}</code></pre>
+            
+            <div class="success-box">
+                <strong>Guarantee:</strong> Each item has probability k/n of being in the final sample.
+            </div>
+        </div>
+        
+        <!-- SLIDE 26: Comparison Table -->
+        <div class="slide">
+            <h2>📋 Summary Comparison</h2>
+            <table>
+                <tr>
+                    <th>Structure</th>
+                    <th>Insert</th>
+                    <th>Query</th>
+                    <th>Space</th>
+                    <th>Use Case</th>
+                </tr>
+                <tr>
+                    <td>Bloom Filter</td>
+                    <td>O(k)</td>
+                    <td>O(k)</td>
+                    <td>~10 bits/item</td>
+                    <td>Membership test</td>
+                </tr>
+                <tr>
+                    <td>Counting Bloom</td>
+                    <td>O(k)</td>
+                    <td>O(k)</td>
+                    <td>~40 bits/item</td>
+                    <td>Membership + delete</td>
+                </tr>
+                <tr>
+                    <td>Count-Min Sketch</td>
+                    <td>O(d)</td>
+                    <td>O(d)</td>
+                    <td>O(1/ε × log 1/δ)</td>
+                    <td>Frequency estimation</td>
+                </tr>
+                <tr>
+                    <td>HyperLogLog</td>
+                    <td>O(1)</td>
+                    <td>O(m)</td>
+                    <td>~1.5 KB</td>
+                    <td>Cardinality</td>
+                </tr>
+                <tr>
+                    <td>Skip List</td>
+                    <td>O(log n)</td>
+                    <td>O(log n)</td>
+                    <td>O(n)</td>
+                    <td>Sorted structure</td>
+                </tr>
+            </table>
+        </div>
+        
+        <!-- SLIDE 27: When to Use What -->
+        <div class="slide">
+            <h2>🤔 When to Use What?</h2>
+            <div class="two-columns">
+                <div class="column">
+                    <div class="card">
+                        <div class="card-title">Use Bloom Filter when:</div>
+                        <ul>
+                            <li>You need fast membership tests</li>
+                            <li>False positives are acceptable</li>
+                            <li>False negatives are not acceptable</li>
+                            <li>Memory is constrained</li>
+                        </ul>
+                    </div>
+                    <div class="card">
+                        <div class="card-title">Use Count-Min Sketch when:</div>
+                        <ul>
+                            <li>You need frequency estimates</li>
+                            <li>Overestimation is acceptable</li>
+                            <li>Finding heavy hitters</li>
+                            <li>Streaming data</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="column">
+                    <div class="card">
+                        <div class="card-title">Use HyperLogLog when:</div>
+                        <ul>
+                            <li>Counting distinct elements</li>
+                            <li>Approximate count is sufficient</li>
+                            <li>Need to merge counts</li>
+                            <li>Billions of elements</li>
+                        </ul>
+                    </div>
+                    <div class="card">
+                        <div class="card-title">Use Skip List when:</div>
+                        <ul>
+                            <li>Need sorted structure</li>
+                            <li>Simpler than balanced trees</li>
+                            <li>Concurrent access needed</li>
+                            <li>Range queries</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- SLIDE 28: Real World Example -->
+        <div class="slide">
+            <h2>🌍 Real World: Google Safe Browsing</h2>
+            <div class="info-box">
+                <strong>Problem:</strong> Check if a URL is malicious without sending all URLs to Google (privacy) and without downloading the entire database (too large).
+            </div>
+            
+            <h3>Solution: Bloom Filter</h3>
+            <ol>
+                <li>Google maintains a Bloom filter of known bad URLs</li>
+                <li>Browser downloads compact Bloom filter (~30 MB)</li>
+                <li>For each URL, query local Bloom filter</li>
+                <li>If "possibly present" → check with Google server</li>
+                <li>If "definitely absent" → URL is safe (no server contact)</li>
+            </ol>
+            
+            <div class="success-box">
+                <strong>Result:</strong> 99%+ of lookups answered locally, minimal server load, user privacy preserved for safe URLs.
+            </div>
+        </div>
+        
+        <!-- SLIDE 29: Exercise Overview -->
+        <div class="slide">
+            <h2>💻 Laboratory Exercises</h2>
+            <div class="two-columns">
+                <div class="column">
+                    <div class="card">
+                        <div class="card-title">Exercise 1: Spell Checker</div>
+                        <p>Implement a Bloom filter-based spell checker:</p>
+                        <ul>
+                            <li>Load dictionary into Bloom filter</li>
+                            <li>Check words from text file</li>
+                            <li>Report suspected misspellings</li>
+                            <li>Measure false positive rate</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="column">
+                    <div class="card">
+                        <div class="card-title">Exercise 2: Network Analysis</div>
+                        <p>Analyse network traffic using CMS and HLL:</p>
+                        <ul>
+                            <li>Count-Min Sketch for IP frequencies</li>
+                            <li>HyperLogLog for unique IPs</li>
+                            <li>Detect heavy hitters</li>
+                            <li>Compare with exact counting</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- SLIDE 30: Key Formulas -->
+        <div class="slide">
+            <h2>📐 Key Formulas Reference</h2>
+            <table>
+                <tr>
+                    <th>Structure</th>
+                    <th>Formula</th>
+                    <th>Description</th>
+                </tr>
+                <tr>
+                    <td>Bloom FP Rate</td>
+                    <td class="inline-code">(1-e^(-kn/m))^k</td>
+                    <td>False positive probability</td>
+                </tr>
+                <tr>
+                    <td>Bloom Optimal k</td>
+                    <td class="inline-code">(m/n) × ln(2)</td>
+                    <td>Optimal hash functions</td>
+                </tr>
+                <tr>
+                    <td>Bloom Optimal m</td>
+                    <td class="inline-code">-n×ln(p)/(ln2)²</td>
+                    <td>Bits for target FP rate</td>
+                </tr>
+                <tr>
+                    <td>CMS Width</td>
+                    <td class="inline-code">⌈e/ε⌉</td>
+                    <td>Columns for accuracy ε</td>
+                </tr>
+                <tr>
+                    <td>CMS Depth</td>
+                    <td class="inline-code">⌈ln(1/δ)⌉</td>
+                    <td>Rows for confidence δ</td>
+                </tr>
+                <tr>
+                    <td>HLL Error</td>
+                    <td class="inline-code">1.04/√m</td>
+                    <td>Relative error (m registers)</td>
+                </tr>
+            </table>
+        </div>
+        
+        <!-- SLIDE 31: Common Pitfalls -->
+        <div class="slide">
+            <h2>⚠️ Common Pitfalls</h2>
+            <div class="two-columns">
+                <div class="column">
+                    <div class="warning-box">
+                        <strong>Bloom Filter</strong>
+                        <ul>
+                            <li>Using too few hash functions</li>
+                            <li>Filter too small → high FP rate</li>
+                            <li>Forgetting deletion is not supported</li>
+                            <li>Poor hash function choice</li>
+                        </ul>
+                    </div>
+                    <div class="warning-box">
+                        <strong>Count-Min Sketch</strong>
+                        <ul>
+                            <li>Width/depth mismatch for requirements</li>
+                            <li>Counter overflow (use 32+ bits)</li>
+                            <li>Expecting exact counts</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="column">
+                    <div class="warning-box">
+                        <strong>HyperLogLog</strong>
+                        <ul>
+                            <li>Forgetting small range correction</li>
+                            <li>Merging with different precisions</li>
+                            <li>Expecting exact cardinality</li>
+                        </ul>
+                    </div>
+                    <div class="warning-box">
+                        <strong>Skip List</strong>
+                        <ul>
+                            <li>Poor random number generator</li>
+                            <li>Not setting max level appropriately</li>
+                            <li>Memory leaks in complex operations</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- SLIDE 32: Interview Questions -->
+        <div class="slide">
+            <h2>💼 Interview Questions</h2>
+            <div class="card">
+                <div class="card-title">Q1: Bloom Filter Deletion</div>
+                <p><strong>Question:</strong> "Why can't you delete from a standard Bloom filter?"</p>
+                <p><strong>Key insight:</strong> Clearing bits might affect other elements sharing those positions.</p>
+            </div>
+            <div class="card">
+                <div class="card-title">Q2: False Negative Impossibility</div>
+                <p><strong>Question:</strong> "Why are false negatives impossible in Bloom filters?"</p>
+                <p><strong>Key insight:</strong> Once bits are set, they stay set. If all k bits are set, we inserted that element.</p>
+            </div>
+            <div class="card">
+                <div class="card-title">Q3: System Design</div>
+                <p><strong>Question:</strong> "Design a system to count unique visitors across millions of pages."</p>
+                <p><strong>Key insight:</strong> HyperLogLog per page, merge for totals, ~1.5KB per page.</p>
+            </div>
+        </div>
+        
+        <!-- SLIDE 33: Further Reading -->
+        <div class="slide">
+            <h2>📚 Recommended Reading</h2>
+            <div class="two-columns">
+                <div class="column">
+                    <h3>Essential Papers</h3>
+                    <ul>
+                        <li>Bloom (1970): "Space/Time Trade-offs in Hash Coding"</li>
+                        <li>Flajolet et al. (2007): "HyperLogLog"</li>
+                        <li>Cormode & Muthukrishnan (2005): "Count-Min Sketch"</li>
+                        <li>Pugh (1990): "Skip Lists"</li>
+                    </ul>
+                </div>
+                <div class="column">
+                    <h3>Books & Resources</h3>
+                    <ul>
+                        <li>CLRS: Chapter on Probabilistic Analysis</li>
+                        <li>Leskovec et al.: "Mining of Massive Datasets"</li>
+                        <li>Redis Documentation: HyperLogLog commands</li>
+                        <li>Apache DataSketches library</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        
+        <!-- SLIDE 34: Summary -->
+        <div class="slide">
+            <h2>📝 Key Takeaways</h2>
+            <ul>
+                <li><strong>Probabilistic structures</strong> trade accuracy for dramatic space savings</li>
+                <li><strong>Bloom filters</strong> answer "Is X in the set?" with possible false positives</li>
+                <li><strong>Count-Min Sketch</strong> estimates frequencies with bounded overestimation</li>
+                <li><strong>HyperLogLog</strong> counts distinct elements in ~1.5KB with ~2% error</li>
+                <li><strong>Skip Lists</strong> provide O(log n) operations with simpler implementation</li>
+                <li><strong>All structures</strong> rely on good hash functions</li>
+                <li><strong>Choose wisely</strong> based on your specific requirements and error tolerance</li>
+            </ul>
+            <div class="success-box">
+                <strong>Remember:</strong> "Approximately right is better than exactly wrong" — especially at Big Data scale!
+            </div>
+        </div>
+        
+        <!-- SLIDE 35: Next Week -->
+        <div class="slide">
+            <h2>🔮 Next Week Preview</h2>
+            <h3>Week 18: Machine Learning Fundamentals in C</h3>
+            <ul>
+                <li>Linear algebra basics in C (vectors, matrices)</li>
+                <li>Gradient descent optimisation</li>
+                <li>Linear and logistic regression</li>
+                <li>K-Nearest Neighbours</li>
+                <li>K-Means clustering</li>
+                <li>Introduction to neural networks</li>
+            </ul>
+            <div class="info-box">
+                <strong>Preparation:</strong> Review matrix operations and basic calculus (derivatives).
+            </div>
+        </div>
+        
+        <!-- SLIDE 36: Thank You -->
+        <div class="slide title-slide">
+            <h1>Thank You!</h1>
+            <div class="subtitle">Questions?</div>
+            <div class="meta">
+                Week 17: Probabilistic Data Structures for Big Data<br>
+                ATP Course | ASE-CSIE Bucharest<br><br>
+                <em>"In God we trust. All others must bring data."</em><br>
+                — W. Edwards Deming
+            </div>
+        </div>
+        
+    </div>
+    
+    <!-- Navigation -->
+    <div class="nav-container">
+        <button class="nav-btn" id="prevBtn">←</button>
+        <button class="nav-btn" id="nextBtn">→</button>
+    </div>
+    
+    <!-- Slide Counter -->
+    <div class="slide-counter" id="slideCounter">1 / 36</div>
+    
+    <script>
+        // Slide navigation
+        let currentSlide = 0;
+        const slides = document.querySelectorAll('.slide');
+        const totalSlides = slides.length;
+        const progressBar = document.getElementById('progressBar');
+        const slideCounter = document.getElementById('slideCounter');
+        
+        function showSlide(index) {
+            // Ensure index is within bounds
+            if (index < 0) index = 0;
+            if (index >= totalSlides) index = totalSlides - 1;
+            
+            // Hide all slides
+            slides.forEach(slide => slide.classList.remove('active'));
+            
+            // Show current slide
+            slides[index].classList.add('active');
+            currentSlide = index;
+            
+            // Update progress bar
+            const progress = ((index + 1) / totalSlides) * 100;
+            progressBar.style.width = progress + '%';
+            
+            // Update counter
+            slideCounter.textContent = (index + 1) + ' / ' + totalSlides;
+        }
+        
+        function nextSlide() {
+            showSlide(currentSlide + 1);
+        }
+        
+        function prevSlide() {
+            showSlide(currentSlide - 1);
+        }
+        
+        // Button event listeners
+        document.getElementById('nextBtn').addEventListener('click', nextSlide);
+        document.getElementById('prevBtn').addEventListener('click', prevSlide);
+        
+        // Keyboard navigation
+        document.addEventListener('keydown', function(e) {
+            switch(e.key) {
+                case 'ArrowRight':
+                case ' ':
+                case 'Enter':
+                    e.preventDefault();
+                    nextSlide();
+                    break;
+                case 'ArrowLeft':
+                case 'Backspace':
+                    e.preventDefault();
+                    prevSlide();
+                    break;
+                case 'Home':
+                    e.preventDefault();
+                    showSlide(0);
+                    break;
+                case 'End':
+                    e.preventDefault();
+                    showSlide(totalSlides - 1);
+                    break;
+            }
+        });
+        
+        // Touch support for mobile
+        let touchStartX = 0;
+        let touchEndX = 0;
+        
+        document.addEventListener('touchstart', e => {
+            touchStartX = e.changedTouches[0].screenX;
+        });
+        
+        document.addEventListener('touchend', e => {
+            touchEndX = e.changedTouches[0].screenX;
+            handleSwipe();
+        });
+        
+        function handleSwipe() {
+            const threshold = 50;
+            const diff = touchStartX - touchEndX;
+            
+            if (Math.abs(diff) > threshold) {
+                if (diff > 0) {
+                    nextSlide();
+                } else {
+                    prevSlide();
+                }
+            }
+        }
+        
+        // Initialise syntax highlighting
+        hljs.highlightAll();
+        
+        // Show first slide
+        showSlide(0);
+    </script>
+</body>
+</html>
