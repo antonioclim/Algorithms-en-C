@@ -1,223 +1,180 @@
-# Extended Challenges - Week 10
+# Extended challenges: Week 10
 
-## 🚀 Advanced Challenges (Optional)
+These challenges are optional and are intended for students who want to explore non-trivial extensions of the binary heap beyond the baseline syllabus. Each completed challenge that meets the functional and complexity requirements is worth **+10 bonus points** subject to the course policy on maximum bonus credit.
 
-Each correctly solved challenge: **+10 bonus points**
+## General rules
+
+- Each challenge must be submitted as a **separate** C11 source file.
+- Each file must compile independently without external headers beyond the standard library.
+- Each file must contain a minimal `main` function that exercises the implementation and demonstrates representative edge cases.
+- You are assessed on correctness, asymptotic efficiency and engineering quality.
 
 ---
 
-## ⭐ Challenge 1: Running Median Tracker (Difficulty: Medium)
+## Challenge 1: Running median tracker
 
-### Description
+### Problem
 
-Implement a data structure that efficiently tracks the median of a stream of numbers. Support adding numbers and querying the current median in optimal time.
+Design a data structure that maintains the median of a stream of integers under online updates. After each insertion, the current median should be available in `O(1)` time.
 
-### Requirements
+### Required API
 
-- `MedianTracker *median_create(void)` - Create tracker
-- `void median_add(MedianTracker *mt, int value)` - Add number O(log n)
-- `double median_get(MedianTracker *mt)` - Get current median O(1)
-- `void median_destroy(MedianTracker *mt)` - Free memory
+- `MedianTracker *median_create(void)`
+- `void median_add(MedianTracker *mt, int value)`
+- `double median_get(const MedianTracker *mt)`
+- `void median_destroy(MedianTracker *mt)`
 
-### Implementation Hint
+### Core idea
 
-Use two heaps:
-- Max-heap for the lower half of numbers
-- Min-heap for the upper half of numbers
+Maintain two heaps:
 
-Balance the heaps so their sizes differ by at most 1.
+- a **max-heap** `L` that stores the lower half of the elements
+- a **min-heap** `U` that stores the upper half of the elements
 
-### Example
+Invariant:
+
+- `|size(L) - size(U)| <= 1`
+- every element of `L` is `<=` every element of `U`
+
+With this invariant the median is either the root of the larger heap or the average of both roots when the heaps are balanced.
+
+### Pseudocode
+
+```
+ADD(mt, x):
+  if L is empty or x <= max(L):
+    insert L <- x
+  else:
+    insert U <- x
+
+  # rebalance
+  if size(L) > size(U) + 1:
+    move max(L) to U
+  if size(U) > size(L) + 1:
+    move min(U) to L
+
+MEDIAN(mt):
+  if size(L) == size(U):
+    return (max(L) + min(U)) / 2
+  if size(L) > size(U):
+    return max(L)
+  return min(U)
+```
+
+### Complexity target
+
+`median_add`: `O(log n)` amortised time, `median_get`: `O(1)` time.
+
+---
+
+## Challenge 2: Heap with decrease-key
+
+### Problem
+
+Extend the priority queue to support `decrease_key` or more generally `change_key` in `O(log n)` time. This operation is central to Dijkstra’s algorithm and to several shortest path and minimum spanning tree variants.
+
+### Design requirement
+
+A decrease-key operation requires a way to locate an element inside the heap in sublinear time. You therefore need a *handle* that remains valid across swaps.
+
+Two acceptable approaches are:
+
+1. **Explicit handles:** store an integer handle in each node and maintain a `handle -> index` table.
+2. **External identifiers:** if tasks have unique ids, maintain `id -> index` in an array or hash table.
+
+### Required API (one possible design)
+
+- `Handle pq_insert_tracked(PriorityQueue *pq, const void *element)`
+- `bool pq_decrease_key(PriorityQueue *pq, Handle h, const void *new_key)`
+
+### Correctness constraints
+
+- After any swap in `sift_up` or `sift_down` you must update the position map.
+- `pq_decrease_key` must restore heap order using a single `sift_up` from the modified index.
+
+### Pseudocode
+
+```
+DECREASE_KEY(pq, h, new_val):
+  i <- position[h]
+  A[i] <- new_val
+  SIFT_UP(pq, i)
+```
+
+---
+
+## Challenge 3: D-ary heap
+
+### Problem
+
+Generalise the binary heap to a `d`-ary heap where each node has `d` children. Analyse how `d` changes the trade-off between insertion and extraction.
+
+### Index relations (0-indexed)
+
+- `parent(i) = floor((i - 1) / d)` for `i > 0`
+- `child(i, k) = d*i + k + 1` for `k in {0, ..., d-1}`
+
+### Analysis questions
+
+1. How does increasing `d` change the height of the heap?
+2. How many comparisons are needed to select the best child during sift-down?
+3. For which workloads is larger `d` beneficial given modern cache hierarchies?
+
+---
+
+## Challenge 4: Event-driven simulation engine
+
+### Problem
+
+Implement a discrete event simulation of a queueing system using a priority queue ordered by event time. The simulator should model arrivals, service begins and service completions.
+
+### Required components
+
+- event representation with timestamp and type
+- priority queue ordered by timestamp (min-heap)
+- simulation state including queue length, server availability and accumulated statistics
+
+### Statistical outputs
+
+- mean waiting time
+- mean queue length (time-weighted)
+- maximum queue length
+- utilisation per server
+
+### Suggested methodology
+
+Use the standard technique of advancing the simulation clock to the next event time and updating time-weighted statistics by integrating over inter-event intervals.
+
+---
+
+## Challenge 5: External merge sort
+
+### Problem
+
+Implement external merge sort for input files that do not fit into memory. Use heapsort for in-memory chunk sorting and a heap-based `K`-way merge for the merge phase.
+
+### Required function signature
 
 ```c
-MedianTracker *mt = median_create();
-median_add(mt, 5);  // median = 5.0
-median_add(mt, 2);  // median = 3.5
-median_add(mt, 8);  // median = 5.0
-median_add(mt, 1);  // median = 3.5
-median_add(mt, 9);  // median = 5.0
-printf("Median: %.1f\n", median_get(mt));  // 5.0
-median_destroy(mt);
+int external_sort(const char *input_file, const char *output_file, size_t memory_limit);
 ```
 
-### Bonus Points: +10
+### Algorithm outline
+
+1. **Run generation:** read the input in chunks of size `<= memory_limit`, sort each chunk and write it as a run to a temporary file.
+2. **Multiway merge:** open `K` run files, keep a min-heap of the current head element from each run, repeatedly extract-min and advance that run.
+
+### Complexity target
+
+Total CPU time should be `O(N log N)` comparisons and total I/O should be `O(N/B)` block transfers up to logarithmic factors depending on `K`.
 
 ---
 
-## ⭐ Challenge 2: Heap with Decrease-Key (Difficulty: Medium)
+## Evaluation rubric
 
-### Description
+Each challenge is assessed using the same criteria:
 
-Extend the priority queue to support efficient `decrease_key` operation, essential for Dijkstra's algorithm. This requires tracking element positions in the heap.
+- **Correctness:** functional behaviour matches the specification for normal and adversarial inputs.
+- **Efficiency:** the stated asymptotic complexity is met and constant factors are reasonable.
+- **Engineering quality:** clear invariants, defensive programming and a testable design.
 
-### Requirements
-
-- All standard priority queue operations
-- `pq_decrease_key(PriorityQueue *pq, void *element, void *new_key)` - O(log n)
-- Handle to element for position tracking
-- Works with custom key comparison
-
-### Implementation Hint
-
-Maintain a hash map or array mapping element IDs to their current positions in the heap array. Update positions during sift operations.
-
-### Example
-
-```c
-/* For Dijkstra's algorithm */
-typedef struct {
-    int vertex;
-    int distance;
-} DijkstraNode;
-
-PriorityQueue *pq = pq_create_with_tracking(...);
-
-DijkstraNode n = {5, 100};
-Handle h = pq_insert_tracked(pq, &n);
-
-/* Later, when we find a shorter path */
-DijkstraNode updated = {5, 50};
-pq_decrease_key(pq, h, &updated);
-```
-
-### Bonus Points: +10
-
----
-
-## ⭐ Challenge 3: D-ary Heap Implementation (Difficulty: Medium)
-
-### Description
-
-Implement a d-ary heap where each node has d children instead of 2. Analyse the trade-offs between different values of d.
-
-### Requirements
-
-- Configurable branching factor d (2, 4, 8, 16)
-- All standard heap operations
-- Benchmark comparing d=2, d=4, d=8
-- Analysis document explaining when higher d is beneficial
-
-### Implementation Hint
-
-Index calculations for d-ary heap (0-indexed):
-- Parent of i: `(i - 1) / d`
-- k-th child of i: `d * i + k + 1` (for k = 0 to d-1)
-
-### Analysis Questions
-
-1. How does d affect insertion time?
-2. How does d affect extraction time?
-3. What is the optimal d for different workloads?
-4. How does cache performance vary with d?
-
-### Bonus Points: +10
-
----
-
-## ⭐ Challenge 4: Event-Driven Simulation Engine (Difficulty: Hard)
-
-### Description
-
-Build a discrete event simulation engine using a priority queue for event scheduling. Simulate a simple queueing system (e.g., bank with multiple tellers).
-
-### Requirements
-
-1. **Event Structure**
-   - Timestamp (when event occurs)
-   - Event type (arrival, service_start, service_end)
-   - Associated data (customer ID, teller ID)
-
-2. **Simulation Engine**
-   - `sim_create(int num_tellers, double arrival_rate, double service_rate)`
-   - `sim_run(Simulation *s, double duration)`
-   - `sim_get_stats(Simulation *s, SimStats *stats)`
-
-3. **Statistics**
-   - Average wait time
-   - Average queue length
-   - Teller utilisation
-   - Maximum queue length
-
-### Example Output
-
-```
-Simulation Results (1000 time units):
-─────────────────────────────────────
-Customers served:     487
-Average wait time:    2.34 units
-Max queue length:     12
-Teller utilisation:   78.5%
-```
-
-### Bonus Points: +10
-
----
-
-## ⭐ Challenge 5: External Merge Sort (Difficulty: Hard)
-
-### Description
-
-Implement external merge sort for sorting files that don't fit in memory. Use a heap-based K-way merge for the merge phase.
-
-### Requirements
-
-1. **Chunking Phase**
-   - Read file in chunks that fit in memory
-   - Sort each chunk using heapsort
-   - Write sorted chunks to temporary files
-
-2. **Merge Phase**
-   - Use min-heap to merge K sorted files
-   - Buffered I/O for efficiency
-   - Handle arbitrarily large files
-
-3. **Performance**
-   - Track I/O operations
-   - Measure wall-clock time
-   - Test with files larger than available RAM
-
-### Function Signature
-
-```c
-int external_sort(const char *input_file, 
-                  const char *output_file,
-                  size_t memory_limit);
-```
-
-### Testing
-
-Create a 1GB file of random integers and sort it with only 64MB of memory available for the sort.
-
-### Bonus Points: +10
-
----
-
-## 📊 Bonus Point System
-
-| Challenges Completed | Total Bonus |
-|---------------------|-------------|
-| 1 | +10 points |
-| 2 | +20 points |
-| 3 | +30 points |
-| 4 | +40 points |
-| All 5 | +50 points + "Heap Master" badge 🏆 |
-
----
-
-## 📤 Submission
-
-- Create a separate `.c` file for each challenge
-- Name files: `challenge1_median.c`, `challenge2_decrease_key.c`, etc.
-- Include test cases demonstrating functionality
-- Submit alongside regular homework
-
----
-
-## 🎯 Evaluation
-
-Each challenge evaluated on:
-- Correctness (50%)
-- Efficiency - meets specified complexity (30%)
-- Code quality (20%)
-
-Partial credit available for incomplete but working solutions.

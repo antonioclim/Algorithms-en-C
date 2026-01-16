@@ -1,383 +1,363 @@
 # Week 10: Heaps and Priority Queues
 
-## 🎯 Learning Objectives
+## Scope
 
-By the end of this week, students will be able to:
+This week introduces the binary heap as an implicit complete binary tree stored in a contiguous array and develops it into a priority queue abstract data type and into heapsort. The emphasis is on algorithmic invariants, explicit cost models and implementation discipline in C11.
 
-1. **Remember** the structural and ordering properties that define binary heaps, distinguishing between max-heaps and min-heaps through their invariant conditions
-2. **Understand** how the implicit array representation maps a complete binary tree to contiguous memory, deriving parent-child index relationships mathematically
-3. **Apply** the heapify operation to restore heap order after element insertion or removal, implementing both iterative and recursive variants
-4. **Analyse** the time complexity of heap operations (O(log n) for insertion/extraction, O(n) for build-heap) and justify why Floyd's algorithm achieves linear construction
-5. **Evaluate** when a heap-based priority queue outperforms alternative implementations (sorted arrays, balanced BSTs, unsorted lists) across different workload patterns
-6. **Create** a fully-functional priority queue ADT supporting dynamic resizing, generic element types through void pointers and custom comparator functions
+The repository contains three C programmes:
 
----
+- `src/example1.c`: a complete didactic implementation of an integer max-heap and associated demonstrations
+- `src/exercise1.c`: a generic priority queue implemented as a binary heap over dynamically allocated element copies
+- `src/exercise2.c`: an in-place heapsort implementation using Floyd’s bottom up heap construction with a comparison counter for empirical analysis
 
-## 📜 Historical Context
+A deterministic test harness compares program output against golden transcripts in `tests/` using `diff`. The tests therefore enforce both semantic correctness and output format stability.
 
-The heap data structure emerged from the seminal work on sorting algorithms during the early 1960s, a period of intense research into fundamental computational problems. **J.W.J. Williams** introduced the binary heap in 1964 as the foundational mechanism for **heapsort**, publishing his findings in the journal *Communications of the ACM*. Williams recognised that maintaining a partially ordered complete binary tree enabled efficient in-place sorting with guaranteed O(n log n) worst-case performance—a significant improvement over quicksort's pathological quadratic behaviour.
+## Learning outcomes
 
-The following year, **Robert W. Floyd** refined Williams's approach by devising a more elegant heap construction algorithm. Whereas Williams's original method inserted elements one-by-one (yielding O(n log n) construction), Floyd's bottom-up strategy exploits the observation that leaf nodes are trivially valid heaps, propagating the heap property upward in linear time. This insight exemplifies the profound algorithmic improvements achievable through careful analysis of problem structure.
+After completing this week you should be able to:
 
-Beyond sorting, heaps found their most enduring application in **priority queue implementations**. The abstract data type—where elements exit according to priority rather than arrival order—appears ubiquitously in operating system schedulers (process management), network routers (packet prioritisation), discrete event simulation engines and graph algorithms such as Dijkstra's shortest path. The heap's elegant balance between structural simplicity and operational efficiency has secured its place in every programmer's fundamental toolkit.
+1. Define the structural invariant of a complete binary tree and derive the corresponding index arithmetic for a 0-indexed array representation.
+2. State and preserve the heap order invariant for max-heaps and min-heaps.
+3. Implement and reason about the `sift_up` and `sift_down` primitives as local repair operations for the heap order property.
+4. Explain why bottom up heap construction (Floyd’s method) runs in linear time even though a single `sift_down` can be logarithmic.
+5. Implement a priority queue interface over a heap with asymptotically optimal insertion and extraction costs for comparison-based priority queues.
+6. Implement heapsort and empirically validate its `O(n log n)` comparison behaviour across several input distributions.
 
-### Key Figure: J.W.J. Williams (1930–2012)
+## Mathematical specification
 
-John William Joseph Williams developed heapsort whilst working at the Atomic Weapons Research Establishment in Aldermaston, United Kingdom. A mathematician by training, Williams brought rigorous analytical methods to the nascent field of computer science. His 1964 paper, "Algorithm 232: Heapsort", established both the data structure and its canonical sorting application.
+### Data model
 
-> "The heap is to priority queues what the hash table is to dictionaries—an elegantly simple structure whose utility far exceeds its apparent complexity."
+A binary heap over a totally ordered set `(K, \preceq)` is a finite sequence `A[0..n-1]` together with an implicit complete binary tree structure induced by index arithmetic.
 
----
+The structure is complete in the sense that nodes are filled level by level and within the last level from left to right. This property is not merely aesthetic. It is the reason that the representation requires no explicit pointers and supports cache-friendly sequential storage.
 
-## 📚 Theoretical Foundations
+### Index calculus for 0-indexed arrays
 
-### 1. Heap Structure and Properties
+For any valid node index `i`:
 
-A **binary heap** is a complete binary tree satisfying the **heap property**. In a **max-heap**, every parent node stores a value greater than or equal to its children; a **min-heap** inverts this relationship.
+- `parent(i) = floor((i − 1) / 2)` for `i > 0`
+- `left(i)   = 2i + 1`
+- `right(i)  = 2i + 2`
+
+These relations are derived by observing that level-order enumeration of a complete binary tree assigns consecutive indices to nodes and that each node contributes exactly two child positions in the next level.
+
+### Heap order property
+
+For a **max-heap** the heap order invariant is:
+
+\[
+\forall i \in \{0, \ldots, n-1\}:\; (left(i) < n \Rightarrow A[i] \succeq A[left(i)]) \;\wedge\; (right(i) < n \Rightarrow A[i] \succeq A[right(i)])
+\]
+
+For a **min-heap** the inequalities are reversed.
+
+The crucial observation is that the heap order property is strictly weaker than a total order over the array. Siblings are not ordered relative to each other in general. As a consequence the heap supports efficient access to the extremal element but not efficient arbitrary search.
+
+## Core algorithms
+
+### Sift-up
+
+`sift_up` restores heap order after inserting an element at the end of the array. Only the path from the insertion index to the root can violate the heap order invariant.
+
+Pseudocode for a max-heap is:
 
 ```
-                    MAX-HEAP                         MIN-HEAP
-                       90                               10
-                      /  \                             /  \
-                    85    70                         20    15
-                   /  \  /  \                       /  \  /  \
-                  50  60 65  40                    35  25 30  40
-
-        Parent ≥ Children                   Parent ≤ Children
+SIFT_UP(A, i):
+  while i > 0:
+    p <- parent(i)
+    if A[p] >= A[i]:
+      break
+    swap A[p] and A[i]
+    i <- p
 ```
 
-The **complete binary tree** property mandates that all levels except possibly the last are fully populated, with nodes in the final level packed leftward. This regularity permits an **implicit array representation**:
+The operation performs at most one swap per level and therefore runs in `O(log n)` time.
 
-```
-Index:      0    1    2    3    4    5    6    7    8    9
-Array:   [ 90 | 85 | 70 | 50 | 60 | 65 | 40 | 30 | 20 | 55 ]
-            │    │    │
-            │    │    └── Right child of root
-            │    └─────── Left child of root
-            └──────────── Root element
+### Sift-down
 
-Navigation Formulae (0-indexed):
-  • Parent of node i:      (i - 1) / 2
-  • Left child of node i:  2*i + 1
-  • Right child of node i: 2*i + 2
-```
+`sift_down` restores heap order after replacing the root by a smaller element (max-heap case) and is also the key primitive used by Floyd’s build-heap.
 
-### 2. Core Operations
-
-| Operation | Description | Time Complexity |
-|-----------|-------------|-----------------|
-| `insert` | Add element at end, then "bubble up" | O(log n) |
-| `extract_max/min` | Remove root, move last to root, "sift down" | O(log n) |
-| `peek` | Return root without removal | O(1) |
-| `build_heap` | Convert arbitrary array to heap (Floyd's method) | O(n) |
-| `heapsort` | Repeated extraction yields sorted sequence | O(n log n) |
-
-**Sift-Down (Heapify)** pseudocode for max-heap:
+A canonical iterative version is:
 
 ```
 SIFT_DOWN(A, n, i):
-    largest ← i
-    left ← 2*i + 1
-    right ← 2*i + 2
-    
-    if left < n AND A[left] > A[largest]:
-        largest ← left
-    if right < n AND A[right] > A[largest]:
-        largest ← right
-    
-    if largest ≠ i:
-        SWAP(A[i], A[largest])
-        SIFT_DOWN(A, n, largest)
+  loop:
+    largest <- i
+    l <- left(i)
+    r <- right(i)
+
+    if l < n and A[l] > A[largest]:
+      largest <- l
+    if r < n and A[r] > A[largest]:
+      largest <- r
+
+    if largest == i:
+      break
+
+    swap A[i] and A[largest]
+    i <- largest
 ```
 
-### 3. Floyd's Build-Heap Algorithm
+The loop follows a single root-to-leaf path so the worst case running time is `O(log n)`.
 
-Floyd's insight: leaf nodes (indices ⌊n/2⌋ to n−1) are already valid 1-element heaps. We need only heapify internal nodes from the bottom up:
+### Insert and extract
+
+In a max-heap based priority queue:
+
+- `insert(x)` appends `x` and then calls `sift_up`
+- `extract_max()` returns the root, moves the last element to the root, decreases the heap size and then calls `sift_down`
+
+Both operations are `O(log n)`.
+
+### Floyd’s build-heap
+
+Floyd’s bottom up heap construction converts an arbitrary array into a heap by fixing subheaps from the last internal node down to the root.
 
 ```
 BUILD_MAX_HEAP(A, n):
-    for i ← (n/2 - 1) down to 0:
-        SIFT_DOWN(A, n, i)
+  for i <- floor(n/2) - 1 down to 0:
+    SIFT_DOWN(A, n, i)
 ```
 
-**Complexity Analysis:** Although each sift-down costs O(log n), most nodes reside near the bottom where sift distances are small. Summing over all levels yields O(n) total work—a non-obvious result demonstrating that naive "O(n × log n)" intuition can be sharpened through careful analysis.
+#### Why the running time is `O(n)`
+
+A naive bound would multiply `O(log n)` by `n/2` internal nodes. The linear bound follows from a sharper accounting argument. Most nodes are near the leaves and have small height so their `sift_down` traversals are short.
+
+Let the heap height be `H = floor(log2 n)`. At depth `d` there are at most `2^d` nodes and each such node has height at most `H - d`. The total work can be bounded by:
+
+\[
+\sum_{d=0}^{H} 2^d (H - d) = O(n)
+\]
+
+This is an instance of a weighted geometric series where the linear term dominates because the weight decays faster than the node count grows.
+
+### Heapsort
+
+Heapsort sorts an array in ascending order by:
+
+1. building a max-heap
+2. repeatedly swapping the maximum element at the root with the last element of the current heap
+3. shrinking the heap boundary and restoring heap order at the root
 
 ```
-Level:    Nodes at level:    Max sift distance:    Work at level:
-  0            1                  log n               log n
-  1            2                  log n - 1           2(log n - 1)
-  2            4                  log n - 2           4(log n - 2)
-  ...
-  k           2^k                 log n - k           2^k(log n - k)
-
-Total = Σ 2^k(log n - k) = O(n)  [Geometric series evaluation]
+HEAPSORT(A, n):
+  BUILD_MAX_HEAP(A, n)
+  for end <- n-1 down to 1:
+    swap A[0] and A[end]
+    SIFT_DOWN(A, end, 0)
 ```
 
----
+Heapsort runs in `O(n log n)` time in the comparison model and sorts in place. It is not stable.
 
-## 🏭 Industrial Applications
+## Implementation notes for this repository
 
-### 1. Operating System Process Scheduling
+### `src/example1.c`
 
-Modern operating systems employ priority queues to manage process execution. The Linux kernel's Completely Fair Scheduler (CFS) uses a red-black tree, but earlier O(1) schedulers utilised bitmap-indexed arrays of run queues—essentially multiple priority buckets.
+`example1.c` implements an integer max-heap with dynamic resizing and demonstrates:
 
-```c
-/* Simplified priority-based scheduler */
-typedef struct {
-    int pid;
-    int priority;       /* Higher value = higher priority */
-    int time_quantum;
-} Process;
+- insertion and extraction
+- heap construction
+- a standalone heapsort
 
-/* Comparator for max-heap (highest priority first) */
-int compare_processes(const void *a, const void *b) {
-    const Process *pa = (const Process *)a;
-    const Process *pb = (const Process *)b;
-    return pa->priority - pb->priority;
-}
-```
+Its purpose is explanatory. It favours clarity and traceability over minimal code size.
 
-### 2. Dijkstra's Algorithm with Priority Queue
+### `src/exercise1.c`: generic priority queue
 
-Graph shortest-path algorithms achieve optimal complexity through heap-based priority queues:
+The priority queue stores elements as independent heap allocated byte-copies. This design has two consequences:
 
-```c
-/* Priority queue node for Dijkstra */
-typedef struct {
-    int vertex;
-    int distance;
-} PQNode;
+1. the queue owns the lifetime of stored values and releases them in `pq_destroy` and during extraction
+2. the API is type-agnostic: it treats values as opaque byte sequences and relies on a comparator callback
 
-/* Process vertices in order of increasing distance */
-while (!pq_is_empty(pq)) {
-    PQNode current = pq_extract_min(pq);
-    if (visited[current.vertex]) continue;
-    visited[current.vertex] = 1;
-    
-    /* Relax neighbours */
-    for (Edge *e = adj[current.vertex]; e; e = e->next) {
-        int new_dist = current.distance + e->weight;
-        if (new_dist < dist[e->dest]) {
-            dist[e->dest] = new_dist;
-            pq_insert(pq, (PQNode){e->dest, new_dist});
-        }
-    }
-}
-```
+#### Comparator contract
 
-### 3. Event-Driven Simulation
+A comparator `cmp(a, b)` must return a positive integer when `a` has strictly higher priority than `b` under the intended ordering, a negative integer when `a` has strictly lower priority and zero when they are equivalent. The heap uses this predicate exclusively to maintain heap order. If the comparator is not transitive or not antisymmetric then the heap may not terminate or may behave inconsistently.
 
-Discrete event simulators schedule future events in timestamp order:
+#### Memory and resizing model
 
-```c
-typedef struct {
-    double timestamp;
-    EventType type;
-    void *data;
-} SimEvent;
+The internal array is an array of pointers `void **data`. Each insertion allocates `elem_size` bytes, copies the provided object into that memory and stores the pointer.
 
-/* Min-heap ordered by timestamp */
-int compare_events(const void *a, const void *b) {
-    const SimEvent *ea = (const SimEvent *)a;
-    const SimEvent *eb = (const SimEvent *)b;
-    return (ea->timestamp > eb->timestamp) - (ea->timestamp < eb->timestamp);
-}
-```
+The array grows geometrically by a factor of 2 when full. The implementation also supports optional shrinking when the occupancy ratio becomes small. Shrinking is deliberately conservative because repeated grow–shrink oscillations can dominate runtime under adversarial workloads.
 
-### 4. Memory Allocation (Buddy System)
+### `src/exercise2.c`: heapsort with comparison counting
 
-The buddy allocator tracks free memory blocks using heaps indexed by block size, enabling O(log n) allocation and coalescing.
+The heapsort implementation includes a global comparison counter. The counter increments exactly when a key-to-key comparison is performed inside heap maintenance. This permits an empirical comparison against the asymptotic model `n log2(n)`.
 
-### 5. Data Stream Processing (Top-K Elements)
+The file contains two sift-down variants:
 
-Finding the k largest elements in a stream uses a min-heap of size k—new elements displace the smallest when larger:
+- `sift_down`: counts comparisons
+- `sift_down_standard`: does not count comparisons and is useful for operations where instrumentation would be misleading
 
-```c
-/* Maintain k largest elements seen so far */
-void process_stream_element(MinHeap *heap, int k, int element) {
-    if (heap->size < k) {
-        heap_insert(heap, element);
-    } else if (element > heap_peek(heap)) {
-        heap_extract_min(heap);
-        heap_insert(heap, element);
-    }
-}
-```
+The test transcript expects a specific comparison count for the small demonstration instance. That count is a property of the concrete control flow of the chosen implementation rather than a mathematical invariant. If you change the sift-down strategy you may legitimately change the comparison count even when the sorted output remains correct.
 
----
+### Deterministic testing
 
-## 💻 Laboratory Exercises
+The Makefile target `make test` runs:
 
-### Exercise 1: Generic Priority Queue Implementation
+- `./exercise1 < tests/test1_input.txt` and diffs against `tests/test1_expected.txt`
+- `./exercise2 < tests/test2_input.txt` and diffs against `tests/test2_expected.txt`
 
-Implement a complete priority queue ADT supporting arbitrary element types through `void *` pointers and function pointer comparators.
+Because the tests are transcript-based you must treat output formatting as part of the specification. In particular trailing spaces and blank lines are significant.
 
-**Requirements:**
-- Dynamic array storage with automatic resizing (double on overflow, halve when quarter-full)
-- Support for both min-heap and max-heap through comparator inversion
-- Complete API: `pq_create`, `pq_destroy`, `pq_insert`, `pq_extract`, `pq_peek`, `pq_size`, `pq_is_empty`
-- Memory safety: no leaks, no use-after-free, no buffer overflows
-- Handle `malloc` failures gracefully
-
-### Exercise 2: Heapsort with Performance Analysis
-
-Implement heapsort and benchmark against other O(n log n) algorithms.
-
-**Requirements:**
-- In-place heapsort using Floyd's build-heap
-- Comparison counter to verify O(n log n) behaviour empirically
-- Benchmark framework measuring execution time across input sizes (100 to 1,000,000 elements)
-- Test with sorted, reverse-sorted and random input distributions
-- Generate CSV output for plotting
-
----
-
-## 🔧 Compilation and Execution
+## Building, running and testing
 
 ```bash
-# Build all targets
 make
+make test
 
-# Build specific targets
-make example1          # Complete heap demonstration
-make exercise1         # Priority queue exercise
-make exercise2         # Heapsort exercise
+# Run the complete worked example
+make run
 
-# Run demonstrations
-make run               # Execute example1
-
-# Run automated tests
-make test              # Compare outputs against expected results
-
-# Memory leak detection
-make valgrind          # Run Valgrind on all executables
-
-# Clean build artefacts
-make clean
-
-# Display help
-make help
+# Optional: compile and run the instructor solutions
+make solutions
 ```
 
----
+If Valgrind is available on your system you may also run `make valgrind`.
 
-## 📁 Directory Structure
+## Typical failure modes and diagnostic checklist
 
+1. **Off-by-one index arithmetic**: errors in `parent`, `left` or `right` silently corrupt heap structure.
+2. **Forgetting to update heap size**: insertion and extraction must update the size before calling `sift_up` or `sift_down`.
+3. **Swapping values rather than pointers in the generic queue**: swapping the pointed-to bytes is unnecessary and error-prone.
+4. **Comparator misuse**: reversing the comparator order converts a max-heap into a min-heap. Mixing both in one queue breaks invariants.
+5. **Memory ownership confusion**: if the queue stores pointers to external objects rather than copies then freeing them in `pq_destroy` is incorrect.
+6. **Transcript instability**: additional debug prints will cause automated tests to fail.
+
+## Correctness arguments and invariants
+
+The implementation choices in this week are best understood through explicit invariants. Each heap routine is a local transformation that preserves a global property. The proofs below are intentionally concise but they identify the exact statements that should be used when you justify behaviour in a written solution or when you construct unit tests.
+
+### Invariant for `sift_up`
+
+Consider a max-heap stored in `A[0..n-1]` and an index `i` such that every node except possibly along the path from `i` to the root already satisfies the heap order property. This situation arises when a new element has been appended at `A[i]`.
+
+A suitable loop invariant for the iterative version is:
+
+- at the start of each loop iteration the heap order property holds for every index `j` not on the path from the current `i` to the root
+- the subtrees rooted at the children of `i` are heaps
+- the only potential violation of heap order is between `A[i]` and `A[parent(i)]`
+
+Each swap moves the potential violation strictly upward and cannot introduce a new violation below because the swapped value becomes a parent of a subtree that was already a heap. Termination occurs when either `i = 0` or `A[parent(i)] >= A[i]` which implies the heap order property holds everywhere.
+
+### Invariant for `sift_down`
+
+`sift_down` is invoked when the root of a subheap may be smaller than one of its children. The standard situation is extraction where the last element is moved to the root.
+
+A useful invariant is:
+
+- at the start of each iteration all nodes outside the subtree rooted at the current `i` satisfy heap order
+- the left and right subtrees of `i` are heaps
+- the only possible heap order violation is at `i` itself
+
+Choosing the larger child and swapping ensures that after the swap the new parent is at least as large as its two children so heap order is restored at the previous location. The violation moves downward into the selected child subtree and the process terminates when `i` becomes a leaf or dominates both children.
+
+### Correctness of Floyd’s build-heap
+
+Build-heap performs `sift_down` on internal nodes in reverse level order. The proof is by induction on the index order.
+
+Let `i` range from `floor(n/2) - 1` down to `0`. At the moment we call `sift_down(A, n, i)` all nodes with indices larger than `i` that are roots of subheaps already satisfy the heap property because:
+
+- every leaf is trivially a heap
+- when we process `i` both children of `i` are either leaves or roots of subheaps already heapified
+
+Since `sift_down` assumes the children subtrees are heaps it follows that after the call the subtree rooted at `i` is a heap. When the loop finishes the subtree rooted at `0` is the entire tree and therefore the whole array is a heap.
+
+### Correctness of heapsort
+
+The extraction phase maintains a clear loop invariant.
+
+For a max-heap based heapsort, just before each iteration where the current heap boundary is `end`:
+
+- `A[0..end]` is a valid max-heap
+- `A[end+1..n-1]` is sorted in ascending order
+- every element in the suffix `A[end+1..n-1]` is greater than or equal to every element in the heap prefix
+
+The swap places the maximum element of the heap at `A[end]`. The subsequent `sift_down(A, end, 0)` restores the heap property over the reduced prefix. By induction the suffix grows by one element per iteration and the final state is a fully sorted array.
+
+## Cost model and empirical instrumentation
+
+Heapsort is often analysed in the comparison model. In `src/exercise2.c` the macro `COMPARE(x, y)` increments a counter and then performs a subtraction. The counter therefore measures key-to-key comparisons that occur inside heap maintenance.
+
+Two caveats are pedagogically important:
+
+1. **Comparison counts are implementation dependent.** Two correct heapsort implementations can legally differ in their number of comparisons because they may select children in different orders or short-circuit in different places.
+2. **The counter is not a time measurement.** Branch prediction, cache behaviour and swap costs can dominate runtime even when comparison counts are similar.
+
+For small arrays the comparison count is a useful sanity check because it detects accidental quadratic behaviour. For large arrays you should treat it as one observable among several.
+
+## Comparative perspective: priority queue implementations
+
+A priority queue is specified by the operations `insert`, `peek` and `extract` and optionally `decrease_key` and `merge`. Different concrete data structures realise different points in the asymptotic and constant factor design space.
+
+| Representation | `insert` | `peek` | `extract` | Notes |
+|---|---:|---:|---:|---|
+| Unsorted array | `O(1)` | `O(n)` | `O(n)` | Good when extractions are rare and inserts are frequent. |
+| Sorted array | `O(n)` | `O(1)` | `O(1)` | Good when the queue is mostly read and rarely updated. |
+| Balanced BST | `O(log n)` | `O(1)` or `O(log n)` | `O(log n)` | Supports ordered iteration and deletion of arbitrary elements. |
+| Binary heap | `O(log n)` | `O(1)` | `O(log n)` | Simple, cache-friendly and usually optimal in practice. |
+| Fibonacci heap | amortised `O(1)` | `O(1)` | amortised `O(log n)` | Asymptotically strong for `decrease_key` but heavy constants. |
+
+The binary heap is the canonical choice when you need predictable worst case bounds, compact memory usage and straightforward implementation.
+
+## Cross-language correspondence
+
+This repository is implemented in C because it forces explicit reasoning about representation and ownership. In many production settings a heap is consumed through a standard library interface. The underlying invariants are the same but the surface API differs.
+
+### Python
+
+Python’s `heapq` module implements a min-heap over a list. To obtain max-heap behaviour you typically negate keys or store pairs such as `(-priority, item)`.
+
+```python
+import heapq
+
+h = []
+heapq.heappush(h, (5, 'a'))
+heapq.heappush(h, (1, 'b'))
+heapq.heappush(h, (3, 'c'))
+
+# Extract in increasing priority
+while h:
+    pr, x = heapq.heappop(h)
+    print(pr, x)
 ```
-week-10-heaps/
-├── README.md                           # This file
-├── Makefile                            # Build automation
-│
-├── slides/
-│   ├── presentation-week10.html        # Main lecture (35+ slides)
-│   └── presentation-comparativ.html    # Cross-language comparison
-│
-├── src/
-│   ├── example1.c                      # Complete working demonstration
-│   ├── exercise1.c                     # Priority queue exercise
-│   └── exercise2.c                     # Heapsort exercise
-│
-├── data/
-│   ├── priorities.txt                  # Sample priority data
-│   └── numbers.txt                     # Numeric test data
-│
-├── tests/
-│   ├── test1_input.txt                 # Priority queue test input
-│   ├── test1_expected.txt              # Expected output
-│   ├── test2_input.txt                 # Heapsort test input
-│   └── test2_expected.txt              # Expected sorted output
-│
-├── teme/
-│   ├── homework-requirements.md        # Main homework (100 points)
-│   └── homework-extended.md            # Bonus challenges (+50 points)
-│
-└── solution/
-    ├── exercise1_sol.c                 # Priority queue solution
-    ├── exercise2_sol.c                 # Heapsort solution
-    ├── homework1_sol.c                 # Homework 1 solution
-    └── homework2_sol.c                 # Homework 2 solution
+
+### C++
+
+The C++ Standard Library provides `std::priority_queue` which is a max-heap by default.
+
+```cpp
+#include <queue>
+#include <vector>
+
+std::priority_queue<int> pq;
+for (int x : {5, 3, 8, 1}) pq.push(x);
+while (!pq.empty()) {
+    std::cout << pq.top() << ' ';
+    pq.pop();
+}
 ```
 
----
+### Java
 
-## 📖 Recommended Reading
+Java’s `PriorityQueue` is a min-heap by default and can be inverted via a comparator.
 
-### Essential
+```java
+import java.util.PriorityQueue;
+import java.util.Comparator;
 
-- Cormen, T.H., Leiserson, C.E., Rivest, R.L. and Stein, C. (2022) *Introduction to Algorithms*, 4th edn. Cambridge: MIT Press. [Chapter 6: Heapsort]
-- Sedgewick, R. and Wayne, K. (2011) *Algorithms*, 4th edn. Boston: Addison-Wesley. [Section 2.4: Priority Queues]
+PriorityQueue<Integer> minQ = new PriorityQueue<>();
+PriorityQueue<Integer> maxQ = new PriorityQueue<>(Comparator.reverseOrder());
+```
 
-### Advanced
+The translation exercise is conceptually simple: replace index arithmetic by library calls but keep the mental model of heap order repair operations.
 
-- Williams, J.W.J. (1964) 'Algorithm 232: Heapsort', *Communications of the ACM*, 7(6), pp. 347–348.
-- Floyd, R.W. (1964) 'Algorithm 245: Treesort 3', *Communications of the ACM*, 7(12), p. 701.
-- Gonnet, G.H. and Munro, J.I. (1986) 'Heaps on Heaps', *SIAM Journal on Computing*, 15(4), pp. 964–971. [Analysis of Floyd's algorithm]
 
-### Online Resources
+## Reproducibility and instrumentation caveats
 
-- Visualgo Heap Visualisation: https://visualgo.net/en/heap
-- GeeksforGeeks Heap Tutorial: https://www.geeksforgeeks.org/heap-data-structure/
-- OpenDSA Heaps Chapter: https://opendsa-server.cs.vt.edu/OpenDSA/Books/CS3/html/Heaps.html
+The comparison counter in `src/exercise2.c` measures the number of key comparisons performed by the selected control flow. Two correct heapsort implementations can have different counts because they choose different sift-down variants, different tie-breaking rules or different stopping conditions. For this reason the transcript includes a fixed expected count for the specific code in this repository and that value should not be treated as a universal constant for heapsort.
 
----
+## Further reading
 
-## ✅ Self-Assessment Checklist
-
-Upon completing this week's materials, verify your mastery:
-
-- [ ] I can draw a max-heap and min-heap from an arbitrary array, showing the array-to-tree mapping
-- [ ] I can trace the sift-up operation step-by-step when inserting an element
-- [ ] I can trace the sift-down operation step-by-step when extracting the root
-- [ ] I can implement `build_heap` using Floyd's bottom-up method and explain why it runs in O(n) time
-- [ ] I can implement heapsort and prove its O(n log n) worst-case complexity
-- [ ] I can design a generic priority queue in C using `void *` and function pointers
-- [ ] I can explain when a heap outperforms a balanced BST for priority queue operations
-- [ ] I can adapt min-heap code to max-heap code by adjusting the comparator
-- [ ] I can implement decrease-key efficiently for Dijkstra's algorithm
-- [ ] I can analyse space complexity of both implicit (array) and explicit (pointer-based) heap implementations
-
----
-
-## 💼 Interview Preparation
-
-### Common Heap Interview Questions
-
-1. **"Implement a heap from scratch."**
-   - Demonstrate array-based storage, index calculations, sift-up/down operations
-   - Discuss trade-offs: array vs pointer-based implementation
-
-2. **"Find the k-th largest element in an unsorted array."**
-   - Approach A: Build max-heap, extract k times. O(n + k log n)
-   - Approach B: Build min-heap of size k, process all elements. O(n log k)
-   - Discuss which is better for small k vs large k
-
-3. **"Merge k sorted lists efficiently."**
-   - Min-heap of k elements (one from each list)
-   - Repeatedly extract-min and insert next element from that list
-   - Time: O(N log k) where N is total elements
-
-4. **"How would you implement a median-tracking structure?"**
-   - Two heaps: max-heap for lower half, min-heap for upper half
-   - Balance sizes after each insertion
-   - Median accessible in O(1) from heap roots
-
-5. **"What is the time complexity of `heapify` and why?"**
-   - Explain the geometric series summation yielding O(n)
-   - Contrast with naive O(n log n) upper bound
-
----
-
-## 🔗 Next Week Preview
-
-**Week 11: Hash Tables** will introduce constant-time average-case dictionary operations through hash functions. We shall examine:
-- Hash function design principles (division, multiplication, universal hashing)
-- Collision resolution strategies (chaining, open addressing, Robin Hood hashing)
-- Load factor management and dynamic resizing
-- Applications: symbol tables, caches, set operations
-
-The transition from heaps to hash tables marks a shift from comparison-based to randomised data structures—a fundamental dichotomy in algorithm design.
-
----
-
-*Prepared for the Algorithms and Programming Techniques course*
-*Academy of Economic Studies, Bucharest*
+- Williams, J. W. J. (1964). Algorithm 232: Heapsort. *Communications of the ACM, 7*(6), 347–348. https://doi.org/10.1145/512274.3734138
+- Floyd, R. W. (1964). Algorithm 245: Treesort 3. *Communications of the ACM, 7*(12), 701. https://doi.org/10.1145/355588.365103
+- Fredman, M. L. and Tarjan, R. E. (1987). Fibonacci heaps and their uses in improved network optimization algorithms. *Journal of the ACM, 34*(3), 596–615. https://doi.org/10.1145/28869.28874
+- Gonnet, G. H. and Munro, J. I. (1986). Heaps on heaps. *SIAM Journal on Computing, 15*(4), 964–971. https://doi.org/10.1137/0215068
