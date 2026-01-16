@@ -4,14 +4,14 @@
 
 Loading student records from file...
 
-Inserted: S001 (Alice) at bucket 4
-Inserted: S002 (Bob) at bucket 7
-Inserted: S003 (Carol) at bucket 2
-Inserted: S004 (Dave) at bucket 5
-Inserted: S005 (Eve) at bucket 0
-Inserted: S006 (Frank) at bucket 3
-Inserted: S007 (Grace) at bucket 6
-Inserted: S008 (Henry) at bucket 1
+Inserted: S001 (Alice) at bucket 9
+Inserted: S002 (Bob) at bucket 10
+Inserted: S003 (Carol) at bucket 11
+Inserted: S004 (Dave) at bucket 12
+Inserted: S005 (Eve) at bucket 13
+Inserted: S006 (Frank) at bucket 14
+Inserted: S007 (Grace) at bucket 15
+Inserted: S008 (Henry) at bucket 0
 
 --- Hash Table Statistics ---
   Table size:        16

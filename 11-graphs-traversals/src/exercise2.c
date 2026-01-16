@@ -1,43 +1,33 @@
 /**
  * =============================================================================
- * EXERCISE 2: Open Addressing Hash Table - Word Frequency Counter
+ * EXERCISE 2: Word Frequency Counter (Open Addressing)
  * =============================================================================
  *
- * OBJECTIVE:
- *   Implement a hash table using open addressing with double hashing to
- *   count word frequencies in a text file. The system must handle collisions
- *   using double hashing, track probe counts and automatically rehash when
- *   the load factor exceeds 0.7.
+ * OVERVIEW
+ *   This programme implements a hash table using open addressing with double
+ *   hashing. It consumes a text file, tokenises it into alphabetic words,
+ *   normalises case and counts word frequencies.
  *
- * REQUIREMENTS:
- *   1. Implement the FNV-1a hash function (primary hash)
- *   2. Implement a secondary hash function for double hashing
- *   3. Create an open addressing table with tombstone-based deletion
- *   4. Track probe counts for performance analysis
- *   5. Implement automatic rehashing at load factor > 0.7
- *   6. Process a text file and count word occurrences
- *   7. Display top N most frequent words
- *   8. Show detailed statistics about table performance
+ *   The implementation emphasises:
+ *     - FNV-1a as the primary hash
+ *     - A secondary hash (djb2-derived) to generate probe steps
+ *     - Tombstones to support deletion without breaking probe chains
+ *     - A rehash mechanism triggered by an effective load factor threshold
+ *     - Probe-count instrumentation to enable empirical performance analysis
  *
- * EXAMPLE INPUT (text_sample.txt):
- *   The quick brown fox jumps over the lazy dog.
- *   The dog barks at the fox.
+ * NOTATION
+ *   Table size: m
+ *   Occupied entries: n
+ *   Tombstones: d
+ *   Effective load factor: (n + d) / m
  *
- * EXPECTED OUTPUT:
- *   Hash Table Statistics:
- *     Table size: 16
- *     Entries: 10
- *     Load factor: 0.63
- *     Total probes: 15
- *     Average probes per insert: 1.50
+ * COMPLEXITY
+ *   Under standard simple-uniform-hashing assumptions, expected cost for
+ *   successful search and insertion is O(1) for moderate load factors. In the
+ *   worst case (adversarial or degenerate probing), costs degrade to O(m).
  *
- *   Top 5 Words:
- *     1. the      (3 occurrences)
- *     2. dog      (2 occurrences)
- *     3. fox      (2 occurrences)
- *     ...
- *
- * COMPILATION: gcc -Wall -Wextra -std=c11 -o exercise2 exercise2.c
+ * BUILD
+ *   gcc -Wall -Wextra -std=c11 -O2 -o exercise2 exercise2.c
  *
  * =============================================================================
  */
@@ -49,13 +39,13 @@
 #include <ctype.h>
 
 /* =============================================================================
- * CONSTANTS
+ * CONFIGURATION
  * =============================================================================
  */
 
-#define INITIAL_SIZE 11          /* Initial table size (prime number) */
-#define LOAD_FACTOR_MAX 0.7      /* Rehash threshold */
-#define MAX_WORD_LEN 64          /* Maximum word length */
+#define INITIAL_SIZE 127         /* Prime: good distribution for modular hashing */
+#define LOAD_FACTOR_MAX 0.70f
+#define MAX_WORD_LEN 64
 
 #define FNV_OFFSET_BASIS 2166136261u
 #define FNV_PRIME 16777619u
@@ -65,359 +55,354 @@
  * =============================================================================
  */
 
-/**
- * Entry states for open addressing
- */
 typedef enum {
-    SLOT_EMPTY,     /* Never used */
-    SLOT_OCCUPIED,  /* Currently holds data */
-    SLOT_DELETED    /* Tombstone - was deleted */
+    SLOT_EMPTY,
+    SLOT_OCCUPIED,
+    SLOT_DELETED
 } SlotState;
 
-/**
- * TODO 1: Define the Entry structure for word counting
- *
- * Each entry should contain:
- *   - word: the word string (use char pointer, allocate with strdup)
- *   - count: number of occurrences (integer)
- *   - state: the slot state (use SlotState enum)
- *
- * Hint: The state field is crucial for open addressing deletion
- */
 typedef struct {
-    /* YOUR CODE HERE */
     char *word;
     int count;
     SlotState state;
 } Entry;
 
-/**
- * TODO 2: Define the OpenHashTable structure
- *
- * The hash table should contain:
- *   - entries: array of Entry structures
- *   - size: current table size
- *   - count: number of occupied entries (excluding tombstones)
- *   - tombstones: number of deleted entries
- *   - total_probes: cumulative probe count (for statistics)
- *   - total_inserts: number of insert operations (for statistics)
- *
- * Hint: Track tombstones separately for accurate load factor calculation
- */
 typedef struct {
-    /* YOUR CODE HERE */
     Entry *entries;
     int size;
     int count;
     int tombstones;
-    unsigned long total_probes;
-    unsigned long total_inserts;
+
+    /* Instrumentation */
+    unsigned long total_probes;   /* total slot inspections across all operations */
+    unsigned long total_ops;      /* number of insert/update operations */
 } OpenHashTable;
+
+typedef struct {
+    char *word;
+    int count;
+} WordFreq;
+
+/* =============================================================================
+ * SMALL UTILITIES
+ * =============================================================================
+ */
+
+static char *xstrdup(const char *s) {
+    if (s == NULL) return NULL;
+    size_t n = strlen(s) + 1u;
+    char *p = (char *)malloc(n);
+    if (p == NULL) return NULL;
+    memcpy(p, s, n);
+    return p;
+}
+
+static int is_prime_int(int x) {
+    if (x <= 1) return 0;
+    if (x <= 3) return 1;
+    if (x % 2 == 0 || x % 3 == 0) return 0;
+    for (int i = 5; (long long)i * i <= x; i += 6) {
+        if (x % i == 0 || x % (i + 2) == 0) return 0;
+    }
+    return 1;
+}
+
+static int next_prime_int(int x) {
+    if (x <= 2) return 2;
+    if (x % 2 == 0) x++;
+    while (!is_prime_int(x)) {
+        x += 2;
+    }
+    return x;
+}
 
 /* =============================================================================
  * HASH FUNCTIONS
  * =============================================================================
  */
 
-/**
- * TODO 3: Implement the FNV-1a hash function (primary hash)
- *
- * The FNV-1a algorithm:
- *   1. Start with hash = FNV_OFFSET_BASIS (2166136261)
- *   2. For each byte in the key:
- *      a. XOR the hash with the byte: hash = hash ^ byte
- *      b. Multiply by FNV_PRIME: hash = hash * 16777619
- *   3. Return the final hash value
- *
- * @param key The string to hash
- * @return The hash value (unsigned int)
- *
- * Hint: Process each character as an unsigned char
- */
-unsigned int hash_fnv1a(const char *key) {
-    /* YOUR CODE HERE */
+static unsigned int hash_fnv1a(const char *key) {
     unsigned int hash = FNV_OFFSET_BASIS;
-    
-    /* Implement FNV-1a algorithm here */
-    
-    return hash;  /* Replace with correct implementation */
+
+    while (*key) {
+        hash ^= (unsigned char)*key++;
+        hash *= FNV_PRIME;
+    }
+
+    return hash;
 }
 
-/**
- * TODO 4: Implement the secondary hash function for double hashing
- *
- * Requirements for secondary hash in double hashing:
- *   - Must NEVER return 0 (would cause infinite loop)
- *   - Should return a value coprime to table_size
- *   - For prime table sizes, any value 1 to size-1 works
- *   - For power-of-2 sizes, return an ODD value
- *
- * Suggested approach:
- *   1. Compute a hash using a different method (e.g., djb2)
- *   2. Take modulo (table_size - 1)
- *   3. Ensure the result is at least 1
- *
- * @param key The string to hash
- * @param table_size Current size of the table
- * @return Step size for probing (must be >= 1)
- *
- * Hint: result = (hash % (table_size - 1)) + 1 ensures range [1, table_size-1]
- */
-unsigned int hash_secondary(const char *key, int table_size) {
-    /* YOUR CODE HERE */
-    
-    return 1;  /* Replace with correct implementation */
+static unsigned int hash_secondary(const char *key, int table_size) {
+    /* djb2-derived step generator */
+    unsigned int hash = 5381u;
+    int c;
+
+    while ((c = (unsigned char)*key++) != 0) {
+        hash = ((hash << 5) + hash) + (unsigned int)c;
+    }
+
+    /* Step must be in [1, table_size - 1]. */
+    if (table_size <= 1) return 1u;
+    return (hash % (unsigned int)(table_size - 1)) + 1u;
 }
 
 /* =============================================================================
- * HASH TABLE OPERATIONS
+ * HASH TABLE CORE
  * =============================================================================
  */
 
-/**
- * TODO 5: Implement hash table creation
- *
- * Steps:
- *   1. Allocate memory for the OpenHashTable structure
- *   2. Allocate memory for the entries array (size Entry structures)
- *   3. Initialise all entries:
- *      - word = NULL
- *      - count = 0
- *      - state = SLOT_EMPTY
- *   4. Set size, count, tombstones, total_probes, total_inserts to 0/initial
- *   5. Return the created table
- *
- * @param size The initial number of slots
- * @return Pointer to created table, or NULL on failure
- */
-OpenHashTable *oht_create(int size) {
-    /* YOUR CODE HERE */
-    
-    return NULL;  /* Replace with correct implementation */
-}
+static OpenHashTable *oht_create(int size) {
+    if (size <= 0) return NULL;
 
-/**
- * Calculate effective load factor (including tombstones)
- */
-float oht_load_factor(OpenHashTable *ht) {
-    if (ht == NULL || ht->size == 0) return 0.0f;
-    return (float)(ht->count + ht->tombstones) / ht->size;
-}
+    OpenHashTable *ht = (OpenHashTable *)malloc(sizeof(*ht));
+    if (ht == NULL) return NULL;
 
-/**
- * TODO 6: Implement the rehash operation
- *
- * Steps:
- *   1. Save the old entries array and old size
- *   2. Create a new entries array with double the size
- *   3. Reset count and tombstones to 0
- *   4. For each OCCUPIED entry in the old array:
- *      - Reinsert into the new array (recalculate index)
- *   5. Free the old entries array (but not the word strings!)
- *
- * @param ht Pointer to the hash table
- *
- * Hint: Don't free the word strings - they're reused in new positions
- */
-void oht_rehash(OpenHashTable *ht) {
-    if (ht == NULL) return;
-    
-    printf("  [Rehashing: %d -> %d slots]\n", ht->size, ht->size * 2);
-    
-    /* YOUR CODE HERE */
-}
+    ht->size = size;
+    ht->count = 0;
+    ht->tombstones = 0;
+    ht->total_probes = 0;
+    ht->total_ops = 0;
 
-/**
- * TODO 7: Implement the insert/update operation with double hashing
- *
- * Steps:
- *   1. Check load factor; if > LOAD_FACTOR_MAX, call oht_rehash()
- *   2. Calculate primary index: hash_fnv1a(word) % size
- *   3. Calculate step size: hash_secondary(word, size)
- *   4. Probe until finding:
- *      a. An EMPTY slot (word not in table - insert new)
- *      b. An OCCUPIED slot with matching word (increment count)
- *      c. A DELETED slot - remember position but keep probing
- *   5. If inserting new:
- *      - Use first DELETED slot found, or EMPTY slot
- *      - Set word = strdup(word), count = 1, state = OCCUPIED
- *   6. Update statistics (total_probes, total_inserts)
- *   7. Return the number of probes used
- *
- * @param ht Pointer to the hash table
- * @param word The word to insert/update
- * @return Number of probes used for this operation
- *
- * Hint: Remember first tombstone position but don't stop there -
- *       the word might exist later in the probe sequence!
- */
-int oht_insert(OpenHashTable *ht, const char *word) {
-    if (ht == NULL || word == NULL) return 0;
-    
-    /* Check load factor and rehash if needed */
-    if (oht_load_factor(ht) > LOAD_FACTOR_MAX) {
-        oht_rehash(ht);
-    }
-    
-    /* YOUR CODE HERE */
-    
-    return 0;  /* Replace with probe count */
-}
-
-/**
- * TODO 8: Implement the search operation
- *
- * Steps:
- *   1. Calculate primary index and step size
- *   2. Probe until finding:
- *      a. An EMPTY slot -> word not found, return NULL
- *      b. An OCCUPIED slot with matching word -> return pointer to Entry
- *      c. A DELETED slot -> continue probing
- *   3. Track probe count in the probes output parameter
- *
- * @param ht Pointer to the hash table
- * @param word The word to search for
- * @param probes Output parameter for number of probes used
- * @return Pointer to Entry if found, NULL otherwise
- */
-Entry *oht_search(OpenHashTable *ht, const char *word, int *probes) {
-    if (ht == NULL || word == NULL) {
-        if (probes) *probes = 0;
+    ht->entries = (Entry *)calloc((size_t)size, sizeof(Entry));
+    if (ht->entries == NULL) {
+        free(ht);
         return NULL;
     }
-    
-    /* YOUR CODE HERE */
-    
-    return NULL;  /* Replace with correct implementation */
+
+    for (int i = 0; i < size; i++) {
+        ht->entries[i].word = NULL;
+        ht->entries[i].count = 0;
+        ht->entries[i].state = SLOT_EMPTY;
+    }
+
+    return ht;
 }
 
-/**
- * TODO 9: Implement the delete operation using tombstones
- *
- * Steps:
- *   1. Calculate primary index and step size
- *   2. Probe until finding:
- *      a. An EMPTY slot -> word not found, return false
- *      b. An OCCUPIED slot with matching word:
- *         - Free the word string
- *         - Set state to SLOT_DELETED (tombstone)
- *         - Decrement count, increment tombstones
- *         - Return true
- *      c. A DELETED slot -> continue probing
- *
- * @param ht Pointer to the hash table
- * @param word The word to delete
- * @return true if deleted, false if not found
- *
- * Hint: We mark as DELETED rather than EMPTY to preserve probe chains
- */
-bool oht_delete(OpenHashTable *ht, const char *word) {
-    if (ht == NULL || word == NULL) return false;
-    
-    /* YOUR CODE HERE */
-    
-    return false;  /* Replace with correct implementation */
+static float oht_effective_load_factor(const OpenHashTable *ht) {
+    if (ht == NULL || ht->size <= 0) return 0.0f;
+    return (float)(ht->count + ht->tombstones) / (float)ht->size;
 }
 
-/**
- * Destroy the hash table and free all memory
- */
-void oht_destroy(OpenHashTable *ht) {
+static void oht_rehash(OpenHashTable *ht) {
     if (ht == NULL) return;
-    
+
+    Entry *old_entries = ht->entries;
+    int old_size = ht->size;
+
+    /* Use a prime size to keep the modular arithmetic well behaved. */
+    int new_size = next_prime_int(old_size * 2);
+    Entry *new_entries = (Entry *)calloc((size_t)new_size, sizeof(Entry));
+    if (new_entries == NULL) {
+        /* If rehash fails, keep operating with the old table. */
+        return;
+    }
+
+    for (int i = 0; i < new_size; i++) {
+        new_entries[i].word = NULL;
+        new_entries[i].count = 0;
+        new_entries[i].state = SLOT_EMPTY;
+    }
+
+    ht->entries = new_entries;
+    ht->size = new_size;
+    ht->count = 0;
+    ht->tombstones = 0;
+
+    /* Transfer occupied entries without allocating new strings. */
+    for (int i = 0; i < old_size; i++) {
+        if (old_entries[i].state != SLOT_OCCUPIED) continue;
+
+        unsigned int index = hash_fnv1a(old_entries[i].word) % (unsigned int)ht->size;
+        unsigned int step = hash_secondary(old_entries[i].word, ht->size);
+
+        while (ht->entries[index].state == SLOT_OCCUPIED) {
+            index = (index + step) % (unsigned int)ht->size;
+        }
+
+        ht->entries[index].word = old_entries[i].word;
+        ht->entries[index].count = old_entries[i].count;
+        ht->entries[index].state = SLOT_OCCUPIED;
+        ht->count++;
+    }
+
+    free(old_entries);
+}
+
+static int oht_insert(OpenHashTable *ht, const char *word) {
+    if (ht == NULL || word == NULL || *word == '\0') return 0;
+
+    if (oht_effective_load_factor(ht) > LOAD_FACTOR_MAX) {
+        oht_rehash(ht);
+    }
+
+    unsigned int index = hash_fnv1a(word) % (unsigned int)ht->size;
+    unsigned int step = hash_secondary(word, ht->size);
+
+    int first_tombstone = -1;
+    int probes = 0;
+
+    for (;;) {
+        probes++;
+        Entry *slot = &ht->entries[index];
+
+        if (slot->state == SLOT_EMPTY) {
+            unsigned int insert_index = (first_tombstone >= 0) ? (unsigned int)first_tombstone : index;
+            Entry *ins = &ht->entries[insert_index];
+
+            if (ins->state == SLOT_DELETED) {
+                ht->tombstones--;
+            }
+
+            ins->word = xstrdup(word);
+            if (ins->word == NULL) {
+                /* Allocation failure: return probes so callers can still record cost. */
+                ht->total_probes += (unsigned long)probes;
+                ht->total_ops++;
+                return probes;
+            }
+
+            ins->count = 1;
+            ins->state = SLOT_OCCUPIED;
+            ht->count++;
+
+            ht->total_probes += (unsigned long)probes;
+            ht->total_ops++;
+            return probes;
+        }
+
+        if (slot->state == SLOT_DELETED) {
+            if (first_tombstone < 0) {
+                first_tombstone = (int)index;
+            }
+        } else {
+            /* OCCUPIED */
+            if (strcmp(slot->word, word) == 0) {
+                slot->count++;
+                ht->total_probes += (unsigned long)probes;
+                ht->total_ops++;
+                return probes;
+            }
+        }
+
+        index = (index + step) % (unsigned int)ht->size;
+    }
+}
+
+static Entry *oht_search(OpenHashTable *ht, const char *word, int *probes) {
+    if (probes) *probes = 0;
+    if (ht == NULL || word == NULL || *word == '\0') return NULL;
+
+    unsigned int index = hash_fnv1a(word) % (unsigned int)ht->size;
+    unsigned int step = hash_secondary(word, ht->size);
+    int p = 0;
+
+    while (ht->entries[index].state != SLOT_EMPTY) {
+        p++;
+        if (ht->entries[index].state == SLOT_OCCUPIED &&
+            strcmp(ht->entries[index].word, word) == 0) {
+            if (probes) *probes = p;
+            return &ht->entries[index];
+        }
+        index = (index + step) % (unsigned int)ht->size;
+    }
+
+    if (probes) *probes = p + 1; /* final EMPTY probe */
+    return NULL;
+}
+
+static bool oht_delete(OpenHashTable *ht, const char *word) {
+    if (ht == NULL || word == NULL || *word == '\0') return false;
+
+    unsigned int index = hash_fnv1a(word) % (unsigned int)ht->size;
+    unsigned int step = hash_secondary(word, ht->size);
+
+    while (ht->entries[index].state != SLOT_EMPTY) {
+        if (ht->entries[index].state == SLOT_OCCUPIED &&
+            strcmp(ht->entries[index].word, word) == 0) {
+            free(ht->entries[index].word);
+            ht->entries[index].word = NULL;
+            ht->entries[index].count = 0;
+            ht->entries[index].state = SLOT_DELETED;
+            ht->count--;
+            ht->tombstones++;
+            return true;
+        }
+
+        index = (index + step) % (unsigned int)ht->size;
+    }
+
+    return false;
+}
+
+static void oht_destroy(OpenHashTable *ht) {
+    if (ht == NULL) return;
+
     for (int i = 0; i < ht->size; i++) {
         if (ht->entries[i].state == SLOT_OCCUPIED) {
             free(ht->entries[i].word);
         }
     }
-    
+
     free(ht->entries);
     free(ht);
 }
 
 /* =============================================================================
- * STATISTICS AND DISPLAY
+ * REPORTING
  * =============================================================================
  */
 
-/**
- * Print hash table statistics
- */
-void oht_print_stats(OpenHashTable *ht) {
+static void oht_print_stats(const OpenHashTable *ht) {
     if (ht == NULL) return;
-    
-    printf("\nHash Table Statistics:\n");
-    printf("  Table size:       %d slots\n", ht->size);
+
+    printf("--- Hash Table Statistics ---\n");
+    printf("  Table size:       %d\n", ht->size);
     printf("  Entries:          %d\n", ht->count);
-    printf("  Tombstones:       %d\n", ht->tombstones);
-    printf("  Load factor:      %.2f\n", (float)ht->count / ht->size);
-    printf("  Effective LF:     %.2f (including tombstones)\n", 
-           oht_load_factor(ht));
+    printf("  Load factor:      %.2f\n", (float)ht->count / (float)ht->size);
     printf("  Total probes:     %lu\n", ht->total_probes);
-    printf("  Total inserts:    %lu\n", ht->total_inserts);
-    if (ht->total_inserts > 0) {
-        printf("  Avg probes/op:    %.2f\n", 
-               (float)ht->total_probes / ht->total_inserts);
+    if (ht->total_ops > 0) {
+        printf("  Avg probes/op:    %.2f\n", (float)ht->total_probes / (float)ht->total_ops);
     }
 }
 
-/**
- * TODO 10: Find and display top N most frequent words
- *
- * Steps:
- *   1. Create an array of pointers to all OCCUPIED entries
- *   2. Sort this array by count (descending order)
- *   3. Print the top N entries
- *
- * @param ht Pointer to the hash table
- * @param n Number of top words to display
- *
- * Hint: Use qsort() with a comparison function, or implement simple
- *       selection sort for the top N elements
- */
-void oht_top_n_words(OpenHashTable *ht, int n) {
-    if (ht == NULL || n <= 0) return;
-    
-    printf("\nTop %d Words:\n", n);
-    
-    /* YOUR CODE HERE */
-    
-    /* Simple approach: for each position 1..n, find the max */
-    /* More elegant: collect all entries and qsort */
+static int compare_wordfreq_desc(const void *a, const void *b) {
+    const WordFreq *wa = (const WordFreq *)a;
+    const WordFreq *wb = (const WordFreq *)b;
+
+    if (wa->count != wb->count) {
+        return (wb->count - wa->count);
+    }
+    return strcmp(wa->word, wb->word);
 }
 
-/**
- * Visualise the hash table (for small tables)
- */
-void oht_visualise(OpenHashTable *ht) {
-    if (ht == NULL) return;
-    
-    printf("\nHash Table Contents:\n");
-    printf("┌─────┬────────────────────────────────────┐\n");
-    
-    for (int i = 0; i < ht->size && i < 20; i++) {
-        printf("│ %3d │", i);
-        
-        switch (ht->entries[i].state) {
-            case SLOT_EMPTY:
-                printf(" (empty)                           │\n");
-                break;
-            case SLOT_DELETED:
-                printf(" [TOMBSTONE]                       │\n");
-                break;
-            case SLOT_OCCUPIED:
-                printf(" %-20s  count: %4d  │\n",
-                       ht->entries[i].word, ht->entries[i].count);
-                break;
+static void oht_print_top_n(const OpenHashTable *ht, int n) {
+    if (ht == NULL || n <= 0) return;
+
+    WordFreq *arr = (WordFreq *)malloc((size_t)ht->count * sizeof(WordFreq));
+    if (arr == NULL) return;
+
+    int k = 0;
+    for (int i = 0; i < ht->size; i++) {
+        if (ht->entries[i].state == SLOT_OCCUPIED) {
+            arr[k].word = ht->entries[i].word;
+            arr[k].count = ht->entries[i].count;
+            k++;
         }
     }
-    
-    if (ht->size > 20) {
-        printf("│ ... │ (%d more entries)                  │\n", 
-               ht->size - 20);
+
+    qsort(arr, (size_t)k, sizeof(WordFreq), compare_wordfreq_desc);
+
+    int display = (n < k) ? n : k;
+
+    printf("\n--- Top %d Most Frequent Words ---\n", n);
+    printf("  Rank | Word           | Count\n");
+    printf("  ─────┼────────────────┼──────\n");
+
+    for (int i = 0; i < display; i++) {
+        printf("  %4d | %-14s | %d\n", i + 1, arr[i].word, arr[i].count);
     }
-    
-    printf("└─────┴────────────────────────────────────┘\n");
+
+    free(arr);
 }
 
 /* =============================================================================
@@ -425,193 +410,86 @@ void oht_visualise(OpenHashTable *ht) {
  * =============================================================================
  */
 
-/**
- * TODO 11: Process a text file and count word frequencies
- *
- * Steps:
- *   1. Open the file for reading
- *   2. Read the file character by character
- *   3. Build words from alphabetic characters (convert to lowercase)
- *   4. When a non-alphabetic character is encountered:
- *      - If we have a word, insert it into the hash table
- *      - Reset the word buffer
- *   5. Close the file
- *   6. Return the total number of words processed
- *
- * @param ht Pointer to the hash table
- * @param filename Path to the text file
- * @return Number of words processed, or -1 on error
- *
- * Hint: Use isalpha() and tolower() from <ctype.h>
- */
-int process_text_file(OpenHashTable *ht, const char *filename) {
+static int process_text_file(OpenHashTable *ht, const char *filename) {
     if (ht == NULL || filename == NULL) return -1;
-    
+
     FILE *file = fopen(filename, "r");
     if (file == NULL) {
         fprintf(stderr, "Error: Cannot open file '%s'\n", filename);
         return -1;
     }
-    
-    /* YOUR CODE HERE */
-    
-    fclose(file);
-    return 0;  /* Replace with word count */
-}
 
-/**
- * Process a string and count word frequencies
- */
-int process_text_string(OpenHashTable *ht, const char *text) {
-    if (ht == NULL || text == NULL) return 0;
-    
-    char word_buffer[MAX_WORD_LEN];
-    int word_len = 0;
+    char word[MAX_WORD_LEN];
+    int len = 0;
     int total_words = 0;
-    
-    for (const char *p = text; ; p++) {
-        if (isalpha((unsigned char)*p)) {
-            /* Add to current word (lowercase) */
-            if (word_len < MAX_WORD_LEN - 1) {
-                word_buffer[word_len++] = tolower((unsigned char)*p);
+
+    int ch;
+    while ((ch = fgetc(file)) != EOF) {
+        if (isalpha((unsigned char)ch)) {
+            if (len < MAX_WORD_LEN - 1) {
+                word[len++] = (char)tolower((unsigned char)ch);
+            } else {
+                /* Word too long: consume but truncate. */
             }
         } else {
-            /* End of word */
-            if (word_len > 0) {
-                word_buffer[word_len] = '\0';
-                oht_insert(ht, word_buffer);
+            if (len > 0) {
+                word[len] = '\0';
+                oht_insert(ht, word);
                 total_words++;
-                word_len = 0;
+                len = 0;
             }
-            
-            if (*p == '\0') break;
         }
     }
-    
+
+    if (len > 0) {
+        word[len] = '\0';
+        oht_insert(ht, word);
+        total_words++;
+    }
+
+    fclose(file);
     return total_words;
 }
 
 /* =============================================================================
- * MAIN PROGRAM
+ * MAIN PROGRAMME
  * =============================================================================
  */
 
 int main(int argc, char *argv[]) {
-    printf("\n");
     printf("╔═══════════════════════════════════════════════════════════════╗\n");
-    printf("║     EXERCISE 2: Open Addressing Word Frequency Counter        ║\n");
-    printf("╚═══════════════════════════════════════════════════════════════╝\n");
-    
-    /* Create hash table */
+    printf("║     EXERCISE 2: Word Frequency Counter (Open Addressing)      ║\n");
+    printf("╚═══════════════════════════════════════════════════════════════╝\n\n");
+
+    if (argc < 2) {
+        fprintf(stderr, "Usage: %s <filename>\n", argv[0]);
+        return 1;
+    }
+
+    printf("Processing file: %s\n\n", argv[1]);
+
     OpenHashTable *ht = oht_create(INITIAL_SIZE);
     if (ht == NULL) {
         fprintf(stderr, "Error: Failed to create hash table\n");
         return 1;
     }
-    
-    int words_processed = 0;
-    
-    /* Process file or use sample text */
-    if (argc > 1) {
-        printf("\nProcessing file: %s\n", argv[1]);
-        words_processed = process_text_file(ht, argv[1]);
-    } else {
-        /* Try default file location */
-        words_processed = process_text_file(ht, "data/text_sample.txt");
+
+    int total_words = process_text_file(ht, argv[1]);
+    if (total_words < 0) {
+        oht_destroy(ht);
+        return 1;
     }
-    
-    if (words_processed < 0) {
-        printf("\nUsing sample text instead...\n");
-        
-        const char *sample_text = 
-            "Hash tables are fundamental data structures in computer science. "
-            "A hash table uses a hash function to compute an index into an array "
-            "of buckets from which the desired value can be found. Hash tables "
-            "provide average constant time complexity for search insert and delete "
-            "operations. The efficiency of a hash table depends on the quality of "
-            "the hash function and the collision resolution strategy. Hash tables "
-            "are widely used in compilers databases caches and many applications. "
-            "The load factor of a hash table is the ratio of entries to buckets. "
-            "When the load factor becomes too high the table should be resized. "
-            "This process is called rehashing and involves creating a larger table "
-            "and reinserting all existing entries.";
-        
-        words_processed = process_text_string(ht, sample_text);
-    }
-    
-    printf("\nProcessed %d words.\n", words_processed);
-    
-    /* Display statistics */
+
     oht_print_stats(ht);
-    
-    /* Display top words */
-    oht_top_n_words(ht, 10);
-    
-    /* Search demonstration */
-    printf("\n--- Search Demonstration ---\n");
-    const char *search_words[] = {"hash", "table", "function", "xyz"};
-    int num_searches = 4;
-    
-    for (int i = 0; i < num_searches; i++) {
-        int probes;
-        Entry *result = oht_search(ht, search_words[i], &probes);
-        if (result != NULL) {
-            printf("  '%s': %d occurrences (%d probes)\n",
-                   search_words[i], result->count, probes);
-        } else {
-            printf("  '%s': not found (%d probes)\n",
-                   search_words[i], probes);
-        }
-    }
-    
-    /* Delete demonstration */
-    printf("\n--- Delete Demonstration ---\n");
-    printf("Deleting 'the'...\n");
-    bool deleted = oht_delete(ht, "the");
-    printf("  Deletion %s\n", deleted ? "successful" : "failed");
-    
-    printf("\nSearching for 'the' after deletion:\n");
-    int probes;
-    Entry *result = oht_search(ht, "the", &probes);
-    printf("  'the': %s (%d probes)\n",
-           result ? "still found (error!)" : "correctly not found", probes);
-    
-    /* Visualise (if table is small) */
-    if (ht->size <= 30) {
-        oht_visualise(ht);
-    }
-    
-    /* Cleanup */
+    oht_print_top_n(ht, 10);
+
+    printf("\nTotal unique words: %d\n", ht->count);
+    printf("Total word count: %d\n", total_words);
+
     oht_destroy(ht);
-    printf("\n[✓] Hash table destroyed. All memory freed.\n\n");
-    
+
+    printf("\nProgram completed successfully.\n");
+    printf("Memory freed.\n");
+
     return 0;
 }
-
-/* =============================================================================
- * BONUS CHALLENGES (Optional)
- * =============================================================================
- *
- * 1. Implement Robin Hood hashing:
- *    - When inserting, if the new key has probed further than the existing
- *      key at that slot, swap them and continue inserting the displaced key.
- *    - This reduces variance in probe lengths.
- *
- * 2. Track and display probe length distribution:
- *    - How many words required 0 probes? 1 probe? 2 probes? etc.
- *    - Visualise as a histogram.
- *
- * 3. Compare FNV-1a with djb2:
- *    - Run both hash functions on the same input
- *    - Compare collision rates and probe counts
- *
- * 4. Implement lazy deletion cleanup:
- *    - When too many tombstones accumulate, perform a cleanup pass
- *    - Rehash all entries to eliminate tombstones
- *
- * 5. Add support for phrase counting (n-grams):
- *    - Count bigrams (two-word sequences) or trigrams
- *    - Example: "hash table" as a single key
- *
- * =============================================================================
- */

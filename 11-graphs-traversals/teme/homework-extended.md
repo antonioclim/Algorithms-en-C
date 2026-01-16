@@ -1,337 +1,280 @@
-# Extended Challenges — Week 11: Hash Tables
+# Extended Challenges: Week 11 Hash Tables
 
-## 🚀 Advanced Challenges (Optional)
+## Rationale
 
-These challenges are designed for students who want to deepen their understanding of hash tables and explore advanced concepts. Each correctly solved challenge earns **+10 bonus points**.
+The core laboratory and homework focus on two canonical collision resolution strategies: separate chaining and open addressing with double hashing. In industrial systems these building blocks are often embedded within richer data structures that impose additional invariants such as recency ordering, eviction policies, concurrency requirements or worst-case lookup guarantees.
 
----
+The extended challenges below are optional. They are intended for students who want to explore these richer settings in a controlled way. Each challenge is specified so that a correct solution can be reasoned about formally. You are encouraged to write small proofs of invariants in comments or in a short accompanying report.
 
-## ⭐ Challenge 1: LRU Cache (Difficulty: Medium)
+Unless explicitly stated otherwise, assume ISO C11 and the same compilation flags as the laboratory.
 
-### Description
+## General requirements
 
-Implement a Least Recently Used (LRU) cache that combines a hash table with a doubly-linked list. The cache has a fixed capacity and evicts the least recently used item when full.
+1. Your solution must compile without warnings under -Wall -Wextra -std=c11.
+2. All dynamic memory must be freed. Ownership rules must be explicit.
+3. Every public operation must be total: it must behave deterministically for every valid input including empty strings and repeated updates.
+4. If an allocation fails, the programme must exit cleanly or return an error code without leaking previously allocated memory.
 
-### Requirements
+## Challenge 1: LRU cache using a hash table and a doubly linked list
 
-1. **Data structure:**
-   - Hash table for O(1) key lookup
-   - Doubly-linked list for O(1) eviction order management
-   - Each node appears in both structures
+### Problem statement
 
-2. **Operations (all O(1) time):**
-   ```c
-   LRUCache *lru_create(int capacity);
-   int lru_get(LRUCache *cache, const char *key);  // -1 if not found
-   void lru_put(LRUCache *cache, const char *key, int value);
-   void lru_destroy(LRUCache *cache);
-   ```
+Implement a fixed-capacity Least Recently Used cache. The cache stores key value pairs where keys are strings and values are integers. When the cache is full and a new key is inserted, the least recently accessed key must be evicted.
 
-3. **Behaviour:**
-   - `get()` moves accessed item to front of list
-   - `put()` adds new item to front; if capacity exceeded, remove tail
-   - `put()` updates existing key and moves to front
+### Required interface
 
-### Example
+Implement at least the following functions:
 
-```c
-LRUCache *cache = lru_create(3);
+- `LRUCache *lru_create(int capacity);`
+- `int lru_get(LRUCache *cache, const char *key);`  Returns -1 if absent
+- `void lru_put(LRUCache *cache, const char *key, int value);`
+- `void lru_destroy(LRUCache *cache);`
 
-lru_put(cache, "a", 1);  // Cache: [a]
-lru_put(cache, "b", 2);  // Cache: [b, a]
-lru_put(cache, "c", 3);  // Cache: [c, b, a]
+### Data structure design
 
-lru_get(cache, "a");     // Returns 1, Cache: [a, c, b]
+You must combine two components:
 
-lru_put(cache, "d", 4);  // Evicts "b", Cache: [d, a, c]
+1. A hash table mapping `key` to a pointer to a node
+2. A doubly linked list storing nodes ordered by recency
 
-lru_get(cache, "b");     // Returns -1 (evicted)
+Each node must be present in both structures. The list head represents the most recently used element and the list tail represents the least recently used element.
 
-lru_destroy(cache);
-```
+### Representation invariants
 
-### Bonus Points: +10
+At all times:
 
----
+- Every node in the list is reachable from the hash table and vice versa
+- The list contains no cycles and has consistent prev and next pointers
+- The cache size equals the number of nodes and does not exceed capacity
 
-## ⭐ Challenge 2: Consistent Hashing (Difficulty: Hard)
+### Algorithms
 
-### Description
+The key property is that both operations must be constant time on average:
 
-Implement consistent hashing, a technique used in distributed systems to minimise key redistribution when servers are added or removed.
+- `get` performs a hash lookup then moves the node to the head of the list
+- `put` either updates an existing node then moves it to head or inserts a new node at head and evicts the tail when required
 
-### Requirements
+Pseudocode for `get`:
 
-1. **Virtual nodes:**
-   - Each physical server maps to multiple virtual nodes on a ring
-   - Use at least 100 virtual nodes per server
+1. node <- hash_find(key)
+2. if node is null then return -1
+3. detach node from its current position
+4. insert node at head
+5. return node.value
 
-2. **Ring structure:**
-   - Hash ring with positions 0 to 2^32 - 1
-   - Keys assigned to the nearest server clockwise
+Pseudocode for `put`:
 
-3. **Operations:**
-   ```c
-   ConsistentHash *ch_create(void);
-   void ch_add_server(ConsistentHash *ch, const char *server_id);
-   void ch_remove_server(ConsistentHash *ch, const char *server_id);
-   const char *ch_get_server(ConsistentHash *ch, const char *key);
-   void ch_destroy(ConsistentHash *ch);
-   ```
+1. node <- hash_find(key)
+2. if node exists then
+   2.1 node.value <- value
+   2.2 move node to head
+   2.3 return
+3. if cache is full then
+   3.1 victim <- tail
+   3.2 remove victim from list
+   3.3 delete victim.key from hash table
+   3.4 free victim
+4. allocate new node and copy key
+5. insert new node at head
+6. insert key -> node into hash table
 
-4. **Analysis:**
-   - Measure key distribution across servers
-   - Show that adding/removing a server only affects ~1/n of keys
+### Testing guidance
 
-### Example
+Construct tests that:
 
-```c
-ConsistentHash *ch = ch_create();
+- Insert exactly capacity keys then insert one more and verify eviction
+- Access a middle key and verify it becomes most recent
+- Update an existing key and verify it is not duplicated
+- Alternate insert and get operations to exercise pointer manipulation
 
-ch_add_server(ch, "server1");
-ch_add_server(ch, "server2");
-ch_add_server(ch, "server3");
+## Challenge 2: Incremental rehashing to avoid latency spikes
 
-// Distribute 1000 keys
-for (int i = 0; i < 1000; i++) {
-    char key[20];
-    sprintf(key, "key_%d", i);
-    const char *server = ch_get_server(ch, key);
-    // Count assignments per server
-}
+### Motivation
 
-// Remove server2 - only ~1/3 of keys should move
-ch_remove_server(ch, "server2");
-```
+Classic resizing reinserts all elements in a single step, which has O(n) time cost. In interactive systems this causes latency spikes. Incremental rehashing spreads the work across many operations.
 
-### Bonus Points: +10
+### Specification
 
----
+Extend a chained hash table to support incremental resizing. Maintain two tables: an old table and a new table. When resizing begins, insertions occur into the new table and a bounded amount of work is performed to migrate a small number of buckets from the old table to the new table.
 
-## ⭐ Challenge 3: Bloom Filter (Difficulty: Medium)
+### Core invariant
 
-### Description
+At any time each key exists in exactly one of the two tables. A lookup must search both tables until migration completes.
 
-Implement a Bloom filter — a space-efficient probabilistic data structure for membership testing with no false negatives but possible false positives.
+### Suggested mechanism
 
-### Requirements
+Maintain an integer `rehash_index` that marks how many buckets have been migrated from the old table.
 
-1. **Parameters:**
-   - Configurable number of bits (m)
-   - Configurable number of hash functions (k)
-   - Calculate optimal k given m and expected n
+On each operation perform:
 
-2. **Hash functions:**
-   - Generate k hash functions using double hashing:
-     - h_i(x) = (h1(x) + i × h2(x)) mod m
+- the operation itself
+- then migrate K buckets (for example K equals 1 or 2) starting at `rehash_index`
 
-3. **Operations:**
-   ```c
-   BloomFilter *bf_create(int num_bits, int num_hashes);
-   BloomFilter *bf_create_optimal(int expected_items, float false_positive_rate);
-   void bf_add(BloomFilter *bf, const char *item);
-   bool bf_might_contain(BloomFilter *bf, const char *item);
-   float bf_false_positive_rate(BloomFilter *bf);
-   void bf_destroy(BloomFilter *bf);
-   ```
+When `rehash_index == old_size` the migration completes, the old table is freed and the new table becomes the active table.
 
-4. **Analysis:**
-   - Test actual vs theoretical false positive rate
-   - Compare memory usage with hash set for same data
+### Pseudocode for migration step
 
-### Example
+Input: old_table, new_table, rehash_index, K
 
-```c
-// Create filter for 1000 items with 1% false positive rate
-BloomFilter *bf = bf_create_optimal(1000, 0.01);
+for t in 1..K:
+  if rehash_index == old_size: stop
+  take the list at old_table[rehash_index]
+  set old_table[rehash_index] to null
+  for each node in that list:
+    insert node into new_table using new hash
+  rehash_index <- rehash_index + 1
 
-// Add items
-for (int i = 0; i < 1000; i++) {
-    char item[20];
-    sprintf(item, "item_%d", i);
-    bf_add(bf, item);
-}
+### Evaluation
 
-// Test membership
-bf_might_contain(bf, "item_500");  // true (definitely)
-bf_might_contain(bf, "item_9999"); // false or true (might be FP)
+A correct solution should show that no single user operation performs more than O(1 + alpha) expected work plus the bounded migration cost.
 
-// Measure actual FP rate
-int fp_count = 0;
-for (int i = 1000; i < 2000; i++) {
-    char item[20];
-    sprintf(item, "item_%d", i);
-    if (bf_might_contain(bf, item)) fp_count++;
-}
-float actual_fp_rate = (float)fp_count / 1000;
+## Challenge 3: Robin Hood hashing for open addressing
 
-bf_destroy(bf);
-```
+### Motivation
 
-### Bonus Points: +10
+In open addressing, performance is dominated not only by the average probe count but also by its variance. Robin Hood hashing reduces variance by equalising probe distances.
 
----
+### Rule
 
-## ⭐ Challenge 4: Cuckoo Hashing (Difficulty: Hard)
+On insertion, if the new key has probed further than the resident key in the current slot then the new key steals the slot and the displaced key continues probing.
 
-### Description
+### What you must implement
 
-Implement cuckoo hashing, which guarantees O(1) worst-case lookup time using two hash functions and two tables.
+1. Store probe distance metadata for each occupied slot or recompute it on demand.
+2. Implement insertion with the swap rule.
+3. Adjust deletion strategy. Backward shifting deletion is one option but tombstones are also possible.
+4. Record the distribution of probe distances before and after applying Robin Hood hashing.
+
+### Pseudocode sketch for insertion
+
+Let d(x) be the number of probes from x's home position to its current position.
+
+index <- home(new_key)
+dist <- 0
+while slot[index] is occupied:
+  if slot[index].key equals new_key then update and return
+  if d(slot[index].key) < dist then
+     swap(new_key, slot[index].key)
+     swap(payload)
+     dist <- d(slot[index].key)
+  index <- next(index)
+  dist <- dist + 1
+insert new_key at slot[index]
+
+## Challenge 4: Cuckoo hashing with two hash functions
+
+### Motivation
+
+Cuckoo hashing provides worst-case constant time lookups by ensuring each key is stored in one of two possible positions. Insertions may trigger a bounded relocation process.
 
 ### Requirements
 
-1. **Structure:**
-   - Two hash tables of equal size
-   - Two independent hash functions
+- Implement two independent hash functions h1 and h2
+- Each key may reside in position h1(k) or h2(k)
+- On insertion, if both slots are occupied, evict one key and relocate it to its alternate position, repeating for a bounded number of steps
+- If relocation exceeds a threshold, rebuild the table with new hash function seeds
 
-2. **Insert algorithm:**
-   - Try to insert in table 1 using h1
-   - If occupied, evict existing element and try to insert it in table 2
-   - Continue "cuckoo" displacement until empty slot found
-   - If cycle detected (max iterations), trigger rehash
+This challenge is algorithmically richer than the others because it requires careful reasoning about cycles and rehash triggers.
 
-3. **Operations:**
-   ```c
-   CuckooTable *cuckoo_create(int size);
-   bool cuckoo_insert(CuckooTable *ct, const char *key, int value);
-   int *cuckoo_search(CuckooTable *ct, const char *key);  // O(1) worst case
-   bool cuckoo_delete(CuckooTable *ct, const char *key);
-   void cuckoo_destroy(CuckooTable *ct);
-   ```
+## Challenge 5: A Bloom filter front end for membership queries
 
-4. **Rehashing:**
-   - Detect cycles during insertion
-   - Double table size and choose new hash functions
-   - Reinsert all elements
+### Motivation
 
-### Example
-
-```c
-CuckooTable *ct = cuckoo_create(16);
-
-cuckoo_insert(ct, "alice", 100);
-cuckoo_insert(ct, "bob", 200);
-cuckoo_insert(ct, "carol", 300);
-
-// Lookup is always O(1) - check at most 2 positions
-int *val = cuckoo_search(ct, "bob");  // *val = 200
-
-cuckoo_destroy(ct);
-```
-
-### Bonus Points: +10
-
----
-
-## ⭐ Challenge 5: Hash Table with Robin Hood Hashing (Difficulty: Medium)
-
-### Description
-
-Implement Robin Hood hashing, an open addressing variant that improves worst-case probe sequences by "stealing from the rich."
+A Bloom filter is a compact probabilistic structure that supports membership queries with false positives but no false negatives. It is often used as a front end to reduce the number of expensive hash table lookups.
 
 ### Requirements
 
-1. **Probe sequence distance (PSD):**
-   - Track how far each element is from its ideal position
-   - During insertion, swap with existing element if new element has higher PSD
+- Implement a bit array of size M
+- Choose k independent hash functions derived from two base hashes using the standard double-hashing technique
+- Support insert and query
+- Empirically estimate the false positive rate on random data and compare it to the theoretical approximation
 
-2. **Backward shift deletion:**
-   - When deleting, shift subsequent elements backward
-   - No tombstones needed
+## Deliverable expectations
 
-3. **Operations:**
-   ```c
-   RobinHoodTable *rh_create(int size);
-   int rh_insert(RobinHoodTable *rht, const char *key, int value);  // Returns probes
-   int *rh_search(RobinHoodTable *rht, const char *key);
-   bool rh_delete(RobinHoodTable *rht, const char *key);
-   void rh_destroy(RobinHoodTable *rht);
-   ```
+For any challenge you attempt provide:
 
-4. **Statistics:**
-   - Track maximum probe sequence distance
-   - Compare variance with standard linear probing
+1. Source code and a short driver programme demonstrating behaviour.
+2. A small test suite that targets edge cases.
+3. A short report describing invariants and complexity.
 
-### Example
+A strong submission will also include empirical measurements of probe counts, chain lengths or latency distributions.
 
-```c
-RobinHoodTable *rht = rh_create(16);
+## Challenge 4: Cuckoo hashing mini-study
 
-// Insert with Robin Hood: poor elements steal from rich
-rh_insert(rht, "alice", 1);  // Ideal slot
-rh_insert(rht, "bob", 2);    // Collision, probes to slot+1
-rh_insert(rht, "carol", 3);  // May swap with bob if carol's PSD > bob's PSD
+### Motivation
 
-// Maximum probe distance is minimised
-printf("Max PSD: %d\n", rht->max_psd);
+Open addressing with probing has excellent cache behaviour but probe lengths can vary, particularly when the load factor increases. Cuckoo hashing is an alternative that maintains worst-case constant lookup time by storing each key in one of a small number of possible locations. Insertions may relocate existing keys and can occasionally fail, requiring a table rebuild.
 
-rh_destroy(rht);
-```
+### Requirements
 
-### Bonus Points: +10
+1. Implement two independent hash functions h1 and h2 producing candidate positions.
+2. Store each key in either position h1(k) or h2(k) and guarantee that lookups check at most two locations.
+3. Implement insertion via bounded displacement. If the bound is exceeded, rebuild the table with a new size or new hash seeds.
+4. Provide instrumentation: number of displacements per insertion and number of rebuilds.
 
----
+### Suggested pseudocode
 
-## 📊 Bonus Point System
+InsertCuckoo(k, v):
 
-| Challenges Completed | Total Bonus |
-|---------------------|-------------|
-| 1 challenge | +10 points |
-| 2 challenges | +20 points |
-| 3 challenges | +30 points |
-| 4 challenges | +40 points |
-| All 5 challenges | +50 points + **"Hash Master"** badge 🏆 |
+1. for t from 1 to MAX_DISPLACEMENTS:
+   a. if slot h1(k) is empty then place (k, v) there and return success
+   b. if slot h2(k) is empty then place (k, v) there and return success
+   c. choose one of the two positions, swap (k, v) with the resident entry and set (k, v) to the displaced entry
+2. return failure
 
----
+A rebuild typically doubles the table size and reinserts all keys.
 
-## 📤 Submission Guidelines
+### Discussion
 
-1. **File naming:** `challenge1_lru_cache.c`, `challenge2_consistent_hash.c`, etc.
+This challenge is not expected to be perfect. The learning objective is to reason about termination, to make the displacement bound explicit and to measure empirically how load factor influences rebuild frequency.
 
-2. **Documentation:** Include comments explaining your approach
+## Challenge 5: Bloom filter adjunct for negative lookups
 
-3. **Testing:** Provide test cases demonstrating correctness
+### Motivation
 
-4. **Analysis:** Include a brief report (text file or comments) discussing:
-   - Time complexity analysis
-   - Space complexity analysis
-   - Comparison with standard approaches
+In large workloads many lookups are negative. A Bloom filter is a probabilistic structure that can answer "definitely not present" quickly and can be used as a pre-filter before a hash table. False positives are possible but false negatives are not.
 
----
+### Requirements
 
-## 💡 Implementation Tips
+1. Implement a bit array of size B bits and a family of k hash functions.
+2. Support operations add(key) and might_contain(key).
+3. Integrate the Bloom filter into a hash table so that negative lookups can be rejected without probing the table.
+4. Measure the false positive rate on a controlled dataset.
 
-### Challenge 1 (LRU Cache)
-- Use dummy head and tail nodes to simplify edge cases
-- The hash table stores pointers to list nodes
+### Suggested pseudocode
 
-### Challenge 2 (Consistent Hashing)
-- Store virtual nodes in a sorted array or balanced BST
-- Use binary search to find the next server
+AddToBloom(key):
 
-### Challenge 3 (Bloom Filter)
-- Optimal k ≈ (m/n) × ln(2)
-- Use bit array with bitwise operations
+1. for i from 1 to k:
+   a. p <- hi(key) mod B
+   b. set bit p
 
-### Challenge 4 (Cuckoo Hashing)
-- Limit displacement iterations (e.g., 500)
-- Use two completely different hash functions
+MightContain(key):
 
-### Challenge 5 (Robin Hood)
-- Swap during forward probing, shift during backward deletion
-- The variance of probe distances is minimised
+1. for i from 1 to k:
+   a. p <- hi(key) mod B
+   b. if bit p is 0 then return false
+2. return true
 
----
+## Challenge 6: String interning table
 
-## 📚 References
+### Motivation
 
-1. **LRU Cache:** LeetCode Problem #146
-2. **Consistent Hashing:** Karger et al., 1997
-3. **Bloom Filters:** Burton H. Bloom, 1970
-4. **Cuckoo Hashing:** Pagh & Rodler, 2004
-5. **Robin Hood Hashing:** Celis, 1986
+Compilers and interpreters often store each distinct identifier exactly once and represent subsequent occurrences by a pointer to the interned string. This reduces memory and accelerates comparisons.
 
----
+### Requirements
 
-*These challenges represent real-world techniques used in production systems.*
-*Completing them demonstrates deep understanding of hash table variants.*
+1. Implement intern(const char *s) returning a stable pointer to an interned copy of s.
+2. Guarantee that pointer equality corresponds to string equality for interned strings.
+3. Provide reference counting or a global destroy function.
+4. Demonstrate usage by tokenising a source-like input and interning each identifier.
+
+## Marking guidance for extended work
+
+If you submit any extended challenge, accompany it with a short EXTENDED.txt document describing:
+
+- The additional invariants introduced and how they are preserved
+- The empirical measurements you collected
+- Limitations and failure cases
+
+A strong submission is one that is honest about constraints and demonstrates careful testing.

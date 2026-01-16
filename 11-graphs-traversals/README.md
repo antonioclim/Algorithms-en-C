@@ -1,591 +1,732 @@
 # Week 11: Hash Tables
 
-## 🎯 Learning Objectives
+## Context and pedagogical intent
 
-Upon successful completion of this laboratory, students will be able to:
+This laboratory develops a disciplined understanding of hash tables as practical data structures and as probabilistic performance models. The aim is not merely to obtain a working programme but to build the capacity to justify design decisions under explicit assumptions about key distributions, memory constraints and adversarial inputs.
 
-1. **Remember** the fundamental terminology of hash tables including buckets, load factor, collision and hash function, recalling their definitions and standard implementations in C.
+The repository contains three complementary strands:
 
-2. **Understand** the mathematical principles underlying hash function design, explaining why certain functions distribute keys uniformly whilst others produce clustering.
+- **A complete worked example** (`src/example1.c`) that demonstrates multiple hashing strategies, collision resolution policies, rehashing and instrumentation.
+- **Exercise 1** (`src/exercise1.c`): a chained hash table for student records. The programme reads records from standard input and prints a deterministic transcript used by automated tests.
+- **Exercise 2** (`src/exercise2.c`): an open addressing hash table using double hashing to compute word frequencies from a text file. The programme records probe statistics to connect empirical behaviour to the underlying model.
 
-3. **Apply** chaining and open addressing collision resolution strategies to implement functional hash tables capable of insert, search and delete operations in O(1) average time.
+The code is written in ISO C11 and is intentionally explicit about memory ownership, failure modes and invariants. In C, correctness is frequently dominated by these concerns rather than by the high level algorithmic idea.
 
-4. **Analyse** the performance characteristics of different hash functions and collision resolution methods, determining load factor thresholds that trigger rehashing.
+## Learning outcomes
 
-5. **Evaluate** trade-offs between chaining and open addressing, selecting the appropriate collision resolution strategy based on memory constraints and expected access patterns.
+On successful completion a student should be able to:
 
-6. **Create** a complete hash table implementation featuring dynamic resizing, custom hash functions and efficient memory management suitable for production use.
+1. Define the hash table abstraction in terms of a key universe, a table domain and collision resolution semantics.
+2. Implement and compare non-cryptographic string hash functions (djb2 and FNV-1a) and explain their structural properties and limitations.
+3. Implement separate chaining and open addressing, stating representation invariants and describing how those invariants are preserved by each operation.
+4. Compute and interpret the load factor, justify a rehashing threshold under a stated cost model and explain why thresholds differ between chaining and open addressing.
+5. Relate theoretical expectations to empirical observations via probe statistics, chain-length distributions and controlled experiments.
+6. Demonstrate correct memory management for dynamically stored keys and nodes including defensive error handling and total deallocation.
 
----
+## File map
 
-## 📜 Historical Context
+- `src/example1.c`   A comprehensive demonstration programme.
+- `src/exercise1.c`  Chained hash table for student records.
+- `src/exercise2.c`  Open addressing word frequency counter.
+- `data/`            Input material used for demonstrations.
+- `tests/`           Deterministic input and expected output for automated checks.
+- `teme/`            Homework requirements and optional extended challenges.
 
-The concept of hashing emerged from the practical necessity of rapid data retrieval in computing systems of the 1950s. The fundamental insight—that arithmetic transformations could map arbitrary keys to array indices—revolutionised how programmers thought about data organisation. Unlike sequential or tree-based structures requiring logarithmic search times, hashing promised constant-time access, a property that seemed almost magical to early computer scientists.
+## Conceptual foundations
 
-The seminal contributions to hash table theory arrived from multiple directions simultaneously. Hans Peter Luhn at IBM developed chaining techniques around 1953 for his document indexing systems. Arnold Dumey published the first formal analysis of hash table performance in 1956, establishing the mathematical foundations that remain relevant today. The term "hashing" itself derives from the notion of "chopping" keys into smaller, more manageable pieces—a culinary metaphor that captured the essence of the transformation process.
+### 1. The abstract model
 
-The evolution of collision resolution strategies represents a fascinating chapter in algorithmic history. Linear probing, proposed by Amdahl, Boehme and Rochester in 1954 for IBM's assembly language, offered simplicity but suffered from primary clustering. Quadratic probing and double hashing emerged as refinements addressing these deficiencies. The theoretical breakthrough came with the development of universal hashing by Carter and Wegman in 1979, which provided probabilistic guarantees against adversarial inputs—a concern that has become increasingly relevant in the era of algorithmic complexity attacks.
+Let:
 
-### Key Figure: Hans Peter Luhn (1896–1964)
+- U be a universe of keys
+- m be the table size (number of buckets or slots)
+- h be a function mapping keys to indices in the range 0 to m minus 1
 
-Hans Peter Luhn, a German-American researcher at IBM, stands as one of the founding figures of information science. His contributions extend far beyond hashing to include the Luhn algorithm for checksum validation (still used in credit card verification), keyword in context (KWIC) indexing and early work on automatic abstracting.
+A hash table stores a finite set of key value associations and supports the operations:
 
-Luhn's approach to hashing emerged from his work on mechanised library systems. He recognised that the explosion of scientific literature demanded automated retrieval systems capable of locating documents within seconds rather than hours. His chained hash table implementation for the IBM 701 demonstrated that practical systems could achieve near-constant lookup times, fundamentally changing expectations for database performance.
+- insert(k, v)
+- find(k)
+- delete(k)
 
-> *"The acquisition of knowledge is not just a matter of volume but of accessibility. A fact unretrievable is a fact unknown."*
-> — Hans Peter Luhn
+The central difficulty is that h is not injective. Collisions are inevitable because the universe is large and the table is finite.
 
----
+The guiding question is therefore not whether collisions occur but how the implementation behaves when they do.
 
-## 📚 Theoretical Foundations
+### 2. Load factor and its role
 
-### 1. The Hash Function: Mathematical Foundation
+The load factor is the ratio:
 
-A hash function h: U → {0, 1, ..., m-1} maps keys from a universe U to indices in a table of size m. The ideal hash function exhibits three properties: determinism (identical keys always produce identical indices), uniformity (keys distribute evenly across buckets) and efficiency (computation requires constant time).
+- alpha = n / m
 
-```
-Universe of Keys (U)                    Hash Table (size m)
-┌─────────────────────┐                ┌───┬───────────────┐
-│  "apple"            │ ──h(k)──────►  │ 0 │               │
-│  "banana"           │ ──h(k)──────►  │ 1 │ → "banana"    │
-│  "cherry"           │ ──h(k)──────►  │ 2 │               │
-│  "date"             │ ──h(k)──┐      │ 3 │ → "apple"     │
-│  "elderberry"       │ ─────┐  │      │ 4 │ → "date"      │
-│  ...                │      │  └────► │ 5 │               │
-└─────────────────────┘      │         │ 6 │ → "cherry"    │
-                             └───────► │ 7 │ → "elderberry"│
-                                       └───┴───────────────┘
-```
+where n is the number of stored entries.
 
-The division method computes h(k) = k mod m, where selecting m as a prime number distant from powers of two minimises clustering. The multiplication method h(k) = ⌊m(kA mod 1)⌋, where A ≈ (√5 - 1)/2 ≈ 0.6180339887 (the golden ratio's fractional part), provides excellent distribution regardless of m.
+Alpha is not a mere diagnostic. It is the primary control parameter in the expected cost model. For a fixed hash function and collision policy, increasing alpha increases the probability that a lookup encounters collisions.
 
-**Common Hash Functions for Strings:**
+For separate chaining, alpha may exceed 1 and performance degrades gradually. For open addressing, alpha must remain strictly below 1 and the degradation as alpha approaches 1 is severe.
 
-```c
-/* Division method with polynomial accumulation */
-unsigned int hash_division(const char *key, int table_size) {
-    unsigned int hash = 0;
-    while (*key) {
-        hash = hash * 31 + *key++;  /* 31 is prime, good distribution */
-    }
-    return hash % table_size;
-}
+### 3. Hash functions as mixing processes
 
-/* djb2 by Daniel J. Bernstein - excellent empirical performance */
-unsigned int hash_djb2(const char *key) {
-    unsigned int hash = 5381;
-    int c;
-    while ((c = *key++)) {
-        hash = ((hash << 5) + hash) + c;  /* hash * 33 + c */
-    }
-    return hash;
-}
+A practical hash function for strings is typically a short recurrence that combines characters into an integer. In this laboratory two classic non-cryptographic functions are used:
 
-/* FNV-1a (Fowler-Noll-Vo) - fast and well-distributed */
-unsigned int hash_fnv1a(const char *key) {
-    unsigned int hash = 2166136261u;  /* FNV offset basis */
-    while (*key) {
-        hash ^= (unsigned char)*key++;
-        hash *= 16777619u;  /* FNV prime */
-    }
-    return hash;
-}
-```
+- djb2 (Daniel J Bernstein): a polynomial accumulator with multiplier 33.
+- FNV-1a (Fowler Noll Vo): xor then multiply by a prime.
 
-### 2. Collision Resolution: Chaining vs Open Addressing
+Both are designed for speed and acceptable distribution on typical text keys. Neither is cryptographic and neither provides protection against targeted collision attacks.
 
-When two keys k₁ ≠ k₂ satisfy h(k₁) = h(k₂), a collision occurs. Two fundamental strategies address this inevitability:
+When the table size is a power of two, the low bits of the hash dominate index selection if one uses index = hash mod m. In that regime hash functions with weak low-bit diffusion can produce clustering. Prime table sizes or additional mixing reduce this risk.
 
-**Chaining (Separate Chaining):**
-Each bucket contains a linked list of entries sharing that hash value. Operations traverse the list at the target bucket.
+## Collision resolution strategies
 
-```
-Hash Table with Chaining (m = 7)
-┌───┬──────────────────────────────────────────────┐
-│ 0 │ → NULL                                        │
-├───┼──────────────────────────────────────────────┤
-│ 1 │ → ["bob":42] → ["eve":28] → NULL             │
-├───┼──────────────────────────────────────────────┤
-│ 2 │ → ["alice":35] → NULL                        │
-├───┼──────────────────────────────────────────────┤
-│ 3 │ → NULL                                        │
-├───┼──────────────────────────────────────────────┤
-│ 4 │ → ["carol":19] → ["dave":51] → NULL          │
-├───┼──────────────────────────────────────────────┤
-│ 5 │ → NULL                                        │
-├───┼──────────────────────────────────────────────┤
-│ 6 │ → ["frank":44] → NULL                        │
-└───┴──────────────────────────────────────────────┘
-```
+### Strategy A: Separate chaining
 
-**Open Addressing:**
-All entries reside within the table itself. Upon collision, a probing sequence locates an alternative slot.
+**Representation.** Each bucket stores a pointer to the head of a linked list. Each node stores a key value pair and a pointer to the next node.
 
-- **Linear Probing:** h(k, i) = (h(k) + i) mod m — simple but causes primary clustering
-- **Quadratic Probing:** h(k, i) = (h(k) + c₁i + c₂i²) mod m — reduces clustering but may not probe all slots
-- **Double Hashing:** h(k, i) = (h₁(k) + i·h₂(k)) mod m — excellent distribution, h₂(k) must be coprime to m
+**Invariants.**
+
+1. Every node is reachable from exactly one bucket.
+2. Within a chain, each node belongs to keys whose hash index is that bucket.
+3. The global count equals the total number of nodes across all buckets.
+
+**Operational consequences.**
+
+- Insertion can be implemented as insertion at the head of the chain.
+- Successful search terminates as soon as the key is found.
+- Deletion requires tracking the predecessor pointer.
+
+Chaining is conceptually simple and has stable performance at moderately high load factors but it allocates per entry node overhead and it is sensitive to allocator behaviour and pointer chasing costs.
+
+### Strategy B: Open addressing
+
+**Representation.** All entries reside in a single array. A collision is resolved by probing alternative slots according to a probe sequence.
+
+A probe sequence must satisfy two requirements:
+
+1. It must be deterministic for a fixed key and table size.
+2. It must visit sufficiently many slots to guarantee termination if the table has free space.
+
+Open addressing requires careful deletion. If a key is removed and the slot is marked empty, probe chains for other keys may be broken and searches may become incorrect. The standard mitigation is to use tombstones: a deleted marker that indicates that probing must continue.
+
+Open addressing typically improves locality of reference because the table is a contiguous array. It also has lower memory overhead for small entries but its performance is highly sensitive to alpha.
+
+## Algorithms and pseudocode
+
+The pseudocode in this section is written to mirror the C implementations closely. The goal is to make the state transitions explicit.
+
+### 1. djb2 string hash
+
+Properties:
+
+- Simple recurrence
+- Very fast
+- Not cryptographic
+
+Pseudocode:
 
 ```
-Open Addressing with Linear Probing (m = 7)
-Insert sequence: "alice"(h=2), "bob"(h=1), "carol"(h=4), "dave"(h=2), "eve"(h=1)
-
-Step 1-3: Direct insertions
-┌───┬─────────┐
-│ 0 │  empty  │
-│ 1 │  "bob"  │
-│ 2 │ "alice" │
-│ 3 │  empty  │
-│ 4 │ "carol" │
-│ 5 │  empty  │
-│ 6 │  empty  │
-└───┴─────────┘
-
-Step 4: "dave" hashes to 2 (occupied) → probe to 3
-Step 5: "eve" hashes to 1 (occupied) → probe to 2 (occupied) → probe to 3 (occupied) → slot 5
-
-Final state:
-┌───┬─────────┐
-│ 0 │  empty  │
-│ 1 │  "bob"  │
-│ 2 │ "alice" │
-│ 3 │ "dave"  │  ← displaced from slot 2
-│ 4 │ "carol" │
-│ 5 │  "eve"  │  ← displaced from slots 1, 2, 3, 4
-│ 6 │  empty  │
-└───┴─────────┘
+function djb2(key):
+    hash <- 5381
+    for each byte c in key:
+        hash <- hash * 33 + c
+    return hash
 ```
 
-### 3. Performance Analysis and Load Factor
+In C, multiplication by 33 is often written as (hash shifted left by 5) plus hash because shifting is usually cheaper than multiplication.
 
-The load factor α = n/m (entries divided by table size) determines expected performance:
+### 2. FNV-1a string hash
 
-| Metric | Chaining | Open Addressing |
-|--------|----------|-----------------|
-| Successful search | 1 + α/2 | (1/α)·ln(1/(1-α)) |
-| Unsuccessful search | 1 + α | 1/(1-α) |
-| Insert | 1 + α | 1/(1-α) |
-| Space overhead | O(n) for pointers | None |
-| Maximum α | Any (degrades gracefully) | Must be < 1 |
-| Recommended α | 0.75–1.0 | 0.5–0.7 |
+Properties:
 
-**Rehashing** doubles the table size and reinserts all entries when α exceeds a threshold. This amortised O(n) operation maintains O(1) average performance.
+- Xor then multiply
+- Good diffusion for many practical strings
+- Widely used as a baseline
+
+Pseudocode:
 
 ```
-Load Factor Impact on Probe Count (Open Addressing)
-α     | Expected probes (unsuccessful)
-------+-------------------------------
-0.50  | 2.0
-0.70  | 3.3
-0.80  | 5.0
-0.90  | 10.0
-0.95  | 20.0
-0.99  | 100.0
+function fnv1a(key):
+    hash <- 2166136261
+    for each byte c in key:
+        hash <- hash xor c
+        hash <- hash * 16777619
+    return hash
 ```
 
----
+### 3. Separate chaining operations
 
-## 🏭 Industrial Applications
+#### Insert with update on duplicate key
 
-### 1. Database Indexing (PostgreSQL)
+```
+function chain_insert(table, key, value):
+    i <- hash(key) mod table.size
 
-PostgreSQL employs hash indexes for equality comparisons on large tables. The implementation uses extensible hashing with overflow pages.
+    node <- table.buckets[i]
+    while node is not null:
+        if node.key equals key:
+            node.value <- value
+            return i
+        node <- node.next
 
-```c
-/* Simplified PostgreSQL-style hash bucket structure */
-typedef struct HashBucket {
-    uint32_t      hashvalue;
-    ItemPointer   tuple_ptr;    /* Points to actual row in heap */
-    struct HashBucket *next;
-} HashBucket;
-
-/* Hash index lookup (simplified) */
-bool hash_index_search(HashIndex *index, Datum key, ItemPointer *result) {
-    uint32_t hashval = hash_any((unsigned char *)&key, sizeof(key));
-    uint32_t bucket_num = hashval & index->bucket_mask;
-    
-    HashBucket *bucket = index->buckets[bucket_num];
-    while (bucket != NULL) {
-        if (bucket->hashvalue == hashval) {
-            *result = bucket->tuple_ptr;
-            return true;
-        }
-        bucket = bucket->next;
-    }
-    return false;
-}
+    new <- allocate node
+    new.key <- copy key
+    new.value <- value
+    new.next <- table.buckets[i]
+    table.buckets[i] <- new
+    table.count <- table.count + 1
+    return i
 ```
 
-### 2. Symbol Tables in Compilers (GCC)
+#### Search
 
-The GNU Compiler Collection uses hash tables for symbol lookup during parsing and code generation.
-
-```c
-/* GCC-style identifier hash table entry */
-struct ident_hash_entry {
-    const char *name;
-    size_t length;
-    unsigned int hash;
-    struct tree_node *decl;     /* Declaration node */
-    struct ident_hash_entry *next;
-};
-
-/* Interning an identifier */
-struct ident_hash_entry *intern_identifier(const char *name, size_t len) {
-    unsigned int hash = hash_string(name, len);
-    unsigned int slot = hash % IDENT_HASH_SIZE;
-    
-    struct ident_hash_entry *entry = ident_hash_table[slot];
-    while (entry) {
-        if (entry->hash == hash && entry->length == len &&
-            memcmp(entry->name, name, len) == 0) {
-            return entry;  /* Already interned */
-        }
-        entry = entry->next;
-    }
-    
-    /* Create new entry */
-    entry = allocate_entry();
-    entry->name = intern_string(name, len);
-    entry->length = len;
-    entry->hash = hash;
-    entry->decl = NULL;
-    entry->next = ident_hash_table[slot];
-    ident_hash_table[slot] = entry;
-    return entry;
-}
+```
+function chain_find(table, key):
+    i <- hash(key) mod table.size
+    node <- table.buckets[i]
+    while node is not null:
+        if node.key equals key:
+            return node.value
+        node <- node.next
+    return not found
 ```
 
-### 3. Network Routing Tables (Linux Kernel)
+#### Delete
 
-The Linux kernel uses hash tables for efficient route lookup in the networking stack.
+```
+function chain_delete(table, key):
+    i <- hash(key) mod table.size
+    node <- table.buckets[i]
+    prev <- null
 
-```c
-/* Simplified Linux FIB (Forwarding Information Base) hash lookup */
-struct fib_table {
-    struct hlist_head *hash;
-    unsigned int       hash_mask;
-};
+    while node is not null:
+        if node.key equals key:
+            if prev is null:
+                table.buckets[i] <- node.next
+            else:
+                prev.next <- node.next
+            free node
+            table.count <- table.count - 1
+            return true
+        prev <- node
+        node <- node.next
 
-struct fib_node *fib_lookup(struct fib_table *table, uint32_t dest_ip) {
-    unsigned int hash = jhash_1word(dest_ip, 0) & table->hash_mask;
-    struct hlist_node *node;
-    struct fib_node *fib;
-    
-    hlist_for_each_entry(fib, node, &table->hash[hash], hlist) {
-        if (fib->prefix == (dest_ip & fib->mask)) {
-            return fib;
-        }
-    }
-    return NULL;  /* No route found */
-}
+    return false
 ```
 
-### 4. In-Memory Caching (Redis/Memcached Style)
+### 4. Open addressing with double hashing
 
-Modern caching systems rely heavily on hash tables for O(1) key-value access.
+A double hashing probe sequence is:
 
-```c
-/* Memcached-style cache entry */
-typedef struct cache_entry {
-    char                *key;
-    void                *value;
-    size_t               value_size;
-    time_t               expiry;
-    struct cache_entry  *next;
-} cache_entry_t;
+- index_0 = h1(key) mod m
+- step   = 1 + (h2(key) mod (m - 1))
+- index_i = (index_0 + i * step) mod m
 
-typedef struct {
-    cache_entry_t **buckets;
-    size_t          size;
-    size_t          count;
-    pthread_rwlock_t lock;
-} cache_t;
+If m is prime then any step in the range 1 to m minus 1 is coprime to m and the probe sequence visits the full table.
 
-/* Thread-safe cache retrieval */
-void *cache_get(cache_t *cache, const char *key) {
-    pthread_rwlock_rdlock(&cache->lock);
-    
-    unsigned int idx = hash_djb2(key) % cache->size;
-    cache_entry_t *entry = cache->buckets[idx];
-    
-    while (entry) {
-        if (strcmp(entry->key, key) == 0) {
-            if (entry->expiry > time(NULL)) {
-                void *result = entry->value;
-                pthread_rwlock_unlock(&cache->lock);
-                return result;
-            }
-            break;  /* Expired */
-        }
-        entry = entry->next;
-    }
-    
-    pthread_rwlock_unlock(&cache->lock);
-    return NULL;
-}
+#### Insert or increment
+
+This version includes tombstones and instrumentation via a probe counter.
+
+```
+function oa_insert(table, key):
+    if effective_load_factor(table) > threshold:
+        rehash(table)
+
+    index <- h1(key) mod table.size
+    step  <- secondary_step(key, table.size)
+
+    first_tombstone <- none
+    probes <- 0
+
+    loop:
+        probes <- probes + 1
+        slot <- table.entries[index]
+
+        if slot.state is EMPTY:
+            target <- if first_tombstone exists then first_tombstone else index
+            insert key into table.entries[target]
+            record probes
+            return probes
+
+        if slot.state is DELETED:
+            if first_tombstone does not exist:
+                first_tombstone <- index
+        else:
+            if slot.key equals key:
+                slot.count <- slot.count + 1
+                record probes
+                return probes
+
+        index <- (index + step) mod table.size
 ```
 
-### 5. Spell Checkers and Bloom Filters
+#### Search
 
-Hash tables underpin spell-checking algorithms, whilst Bloom filters (probabilistic hash structures) enable efficient membership testing.
+```
+function oa_search(table, key):
+    index <- h1(key) mod table.size
+    step  <- secondary_step(key, table.size)
+    probes <- 0
 
-```c
-/* Bloom filter using multiple hash functions */
-typedef struct {
-    uint8_t *bits;
-    size_t   size;        /* Number of bits */
-    int      num_hashes;  /* Number of hash functions */
-} bloom_filter_t;
+    while true:
+        probes <- probes + 1
+        slot <- table.entries[index]
 
-void bloom_add(bloom_filter_t *bf, const char *word) {
-    for (int i = 0; i < bf->num_hashes; i++) {
-        /* Different seed for each hash function */
-        unsigned int hash = hash_murmur(word, strlen(word), i);
-        size_t idx = hash % bf->size;
-        bf->bits[idx / 8] |= (1 << (idx % 8));
-    }
-}
+        if slot.state is EMPTY:
+            return not found
 
-bool bloom_might_contain(bloom_filter_t *bf, const char *word) {
-    for (int i = 0; i < bf->num_hashes; i++) {
-        unsigned int hash = hash_murmur(word, strlen(word), i);
-        size_t idx = hash % bf->size;
-        if (!(bf->bits[idx / 8] & (1 << (idx % 8)))) {
-            return false;  /* Definitely not present */
-        }
-    }
-    return true;  /* Possibly present (may be false positive) */
-}
+        if slot.state is OCCUPIED and slot.key equals key:
+            return slot
+
+        index <- (index + step) mod table.size
 ```
 
----
+#### Delete
 
-## 💻 Laboratory Exercises
-
-### Exercise 1: Chained Hash Table for Student Records
-
-Implement a hash table using separate chaining to store student records. The system must support insertion, searching by student ID and deletion operations.
-
-**Requirements:**
-1. Define a `Student` structure with fields: `id` (string), `name` (string), `grade` (float)
-2. Implement `hash_function()` using the djb2 algorithm
-3. Create functions: `ht_create()`, `ht_insert()`, `ht_search()`, `ht_delete()`, `ht_destroy()`
-4. Handle collisions using linked lists at each bucket
-5. Compute and display load factor after each modification
-6. Read student data from `data/students.txt`
-
-**Input Format (students.txt):**
 ```
-S001 Alice 9.5
-S002 Bob 7.8
-S003 Carol 8.2
-...
-```
+function oa_delete(table, key):
+    index <- h1(key) mod table.size
+    step  <- secondary_step(key, table.size)
 
-**Expected Operations:**
-```
-> insert S004 Dave 6.9
-Inserted: S004 at bucket 3 (chain length: 2)
-Load factor: 0.57
+    while true:
+        slot <- table.entries[index]
 
-> search S002
-Found: Bob (grade: 7.80) at bucket 1
+        if slot.state is EMPTY:
+            return false
 
-> delete S001
-Deleted: Alice from bucket 5
-Load factor: 0.43
+        if slot.state is OCCUPIED and slot.key equals key:
+            free slot.key
+            slot.state <- DELETED
+            table.count <- table.count - 1
+            table.tombstones <- table.tombstones + 1
+            return true
+
+        index <- (index + step) mod table.size
 ```
 
-### Exercise 2: Open Addressing with Double Hashing
+### 5. Rehashing and amortised cost
 
-Implement a hash table using open addressing with double hashing for a word frequency counter. The system must handle rehashing when the load factor exceeds 0.7.
+Rehashing replaces the existing table with a larger table and reinserts all occupied entries. The direct cost is linear in n because each entry is moved.
 
-**Requirements:**
-1. Implement primary hash using FNV-1a
-2. Implement secondary hash ensuring coprimality with table size
-3. Track probe counts for performance analysis
-4. Implement automatic rehashing when α > 0.7
-5. Handle deletion using tombstone markers
-6. Process text file and count word occurrences
-7. Display top 10 most frequent words
+Under the standard strategy of doubling the table size when alpha exceeds a constant threshold the amortised cost of insertion remains constant. Intuitively, the expensive linear rebuild occurs only after a linear number of successful inserts.
 
-**Input:** `data/text_sample.txt` (any English text)
+A practical caveat is that open addressing with tombstones benefits from rehashing even if alpha is not high because accumulated tombstones increase the effective load factor and thereby increase search cost.
 
-**Expected Output:**
-```
-Hash Table Statistics:
-  Table size: 127
-  Entries: 87
-  Load factor: 0.69
-  Total probes: 142
-  Average probes per insert: 1.63
+## Implementation notes for this repository
 
-Top 10 Words:
-  1. the     (45 occurrences)
-  2. and     (32 occurrences)
-  3. to      (28 occurrences)
-  ...
-```
+### 1. `src/example1.c`
 
----
+The example programme is designed as a reference implementation rather than as an assessment artefact. It includes:
 
-## 🔧 Compilation and Execution
+- multiple hash functions including djb2 and FNV-1a
+- separate chaining and open addressing
+- explicit load factor tracking
+- optional rehashing logic
+- basic performance measurement
+
+Students should treat it as a source of implementation patterns, particularly with respect to defensive allocation and clean deallocation.
+
+### 2. `src/exercise1.c` (chaining)
+
+The student record is stored as a fixed-size structure to keep the focus on pointer manipulation rather than on deep-copy string management.
+
+Key properties:
+
+- The table stores nodes allocated with `malloc`.
+- Each bucket is a singly linked list.
+- Duplicate IDs update in place.
+- The programme prints a deterministic transcript that can be diffed line by line.
+
+The function `ht_print_all_sorted` collects pointers to all stored students, sorts them by ID and prints them. This is not required for correctness but it decouples display order from bucket order which makes testing and manual inspection easier.
+
+### 3. `src/exercise2.c` (open addressing)
+
+The word frequency counter uses a conservative tokeniser: only contiguous alphabetic sequences are treated as words. Each word is lowercased and truncated to a fixed maximum length to protect against unbounded input sequences.
+
+Key properties:
+
+- Keys are heap-allocated strings owned by the table.
+- Deletion uses tombstones.
+- Rehashing is triggered by effective load factor, defined as (occupied + tombstones) / size.
+- Probe instrumentation records the number of slot inspections performed by each insert operation.
+
+The table is initialised to size 127, a prime that provides good behaviour for double hashing.
+
+## Building and testing
+
+From the repository root:
 
 ```bash
-# Build all targets
-make
-
-# Build specific exercise
-make exercise1
-make exercise2
-
-# Run complete example demonstration
-make run
-
-# Execute with test data
+make all
 make test
-
-# Check for memory leaks
-make valgrind
-
-# Clean build artefacts
-make clean
-
-# Display available targets
-make help
 ```
 
-**Manual Compilation:**
+Useful interactive targets:
+
 ```bash
-gcc -Wall -Wextra -std=c11 -g -o example1 src/example1.c
-gcc -Wall -Wextra -std=c11 -g -o exercise1 src/exercise1.c
-gcc -Wall -Wextra -std=c11 -g -o exercise2 src/exercise2.c
+make run-example
+make run-ex1
+make run-ex2
 ```
 
----
+For memory and undefined behaviour diagnostics on a development system that supports sanitizers:
 
-## 📁 Directory Structure
-
-```
-week-11-hash-tables/
-├── README.md                           # This documentation
-├── Makefile                            # Build automation
-│
-├── slides/
-│   ├── presentation-week11.html        # Main lecture (35 slides)
-│   └── presentation-comparativ.html    # Language comparison (12 slides)
-│
-├── src/
-│   ├── example1.c                      # Complete hash table demonstration
-│   ├── exercise1.c                     # Chained hash table exercise
-│   └── exercise2.c                     # Open addressing exercise
-│
-├── data/
-│   ├── students.txt                    # Student records for exercise 1
-│   └── text_sample.txt                 # Text corpus for exercise 2
-│
-├── tests/
-│   ├── test1_input.txt                 # Test commands for exercise 1
-│   ├── test1_expected.txt              # Expected output for exercise 1
-│   ├── test2_input.txt                 # Test commands for exercise 2
-│   └── test2_expected.txt              # Expected output for exercise 2
-│
-├── teme/
-│   ├── homework-requirements.md        # Homework assignments (100 points)
-│   └── homework-extended.md            # Bonus challenges (+50 points)
-│
-└── solution/
-    ├── exercise1_sol.c                 # Solution for exercise 1
-    ├── exercise2_sol.c                 # Solution for exercise 2
-    ├── homework1_sol.c                 # Solution for homework 1
-    └── homework2_sol.c                 # Solution for homework 2
+```bash
+gcc -std=c11 -Wall -Wextra -O1 -g -fsanitize=address,undefined -fno-omit-frame-pointer -o ex2 src/exercise2.c
+./ex2 tests/test2_input.txt
 ```
 
----
+## Practical guidance and typical errors
 
-## 📖 Recommended Reading
+1. **Key ownership**: a hash table that stores string keys must either copy keys or guarantee that the caller provides stable storage. In this repository open addressing copies keys into owned heap storage. Chaining in Exercise 1 stores fixed arrays inside nodes.
+2. **Do not free borrowed pointers**: if the table does not own a pointer it must not free it. Establish ownership rules before coding.
+3. **Deletion in open addressing**: marking a deleted slot as empty is a correctness bug because it may stop a search early. Use tombstones.
+4. **Secondary step must be non-zero**: if the step is 0 then the probe sequence never advances. The secondary hash must be mapped to the range 1 to m minus 1.
+5. **Probe statistics must have a definition**: decide whether a probe counts an inspected slot, an extra displacement beyond the first slot or something else. Record that definition alongside the numbers.
 
-### Essential References
+## Cross-language perspective
 
-1. **Cormen, T. H., Leiserson, C. E., Rivest, R. L., & Stein, C.** (2009). *Introduction to Algorithms* (3rd ed.). MIT Press. Chapter 11: Hash Tables.
+Hash tables are ubiquitous in high level languages. Connecting the C implementation details to those abstractions helps clarify what the language runtime is doing.
 
-2. **Sedgewick, R., & Wayne, K.** (2011). *Algorithms* (4th ed.). Addison-Wesley. Section 3.4: Hash Tables.
+- **Python** uses a dictionary type that employs open addressing with perturbation and resizing rules.
+- **Java** uses `HashMap` which historically used separate chaining and in modern versions may treeify buckets under heavy collision.
+- **C++** provides `unordered_map` with implementation-defined collision strategy.
 
-3. **Knuth, D. E.** (1998). *The Art of Computer Programming, Volume 3: Sorting and Searching* (2nd ed.). Addison-Wesley. Section 6.4: Hashing.
+In C, none of these policies are hidden. You decide them, you implement them and you therefore become responsible for their consequences.
 
-### Advanced Topics
+## Further reading
 
-4. **Pagh, R., & Rodler, F. F.** (2004). Cuckoo Hashing. *Journal of Algorithms*, 51(2), 122-144.
+The modern theory of hashing includes universal hashing, dynamic perfect hashing and defences against hash-flooding attacks. The implementations in this week are deliberately non-cryptographic because the focus is data structure mechanics. If a production system must be robust under adversarial input then the choice of hashing scheme becomes a security decision rather than a purely performance decision.
 
-5. **Dietzfelbinger, M., et al.** (1994). Dynamic Perfect Hashing: Upper and Lower Bounds. *SIAM Journal on Computing*, 23(4), 738-761.
+### 3. Hash functions as computable surjections
 
-6. **Carter, J. L., & Wegman, M. N.** (1979). Universal Classes of Hash Functions. *Journal of Computer and System Sciences*, 18(2), 143-154.
+A string hash function maps an arbitrarily long byte sequence to a fixed width integer. In C implementations this integer is usually an unsigned 32-bit quantity, either by explicit type choice or by overflow semantics. The table index is obtained by reduction modulo m or by a bit mask when m is a power of two.
 
-### Online Resources
+A useful pedagogical separation is:
 
-7. **Hash Functions** - https://www.partow.net/programming/hashfunctions/
-8. **SMHasher** (Hash function test suite) - https://github.com/rurban/smhasher
-9. **Bloom Filter Calculator** - https://hur.st/bloomfilter/
+1. A mixing stage that produces a machine-size hash value H(k)
+2. A reduction stage that maps H(k) to a table index i in 0..m-1
 
----
+Reduction by modulo has a clear mathematical meaning but its interaction with the low bits of H(k) matters. If m is a power of two then only the low log2(m) bits of H(k) contribute to the index. A hash function whose low bits are poorly mixed will then produce clustering. This is why many textbook discussions recommend either prime m or hash functions with demonstrably strong low-bit diffusion.
 
-## ✅ Self-Assessment Checklist
+The present week uses two widely deployed non-cryptographic hashes to illustrate these issues:
 
-Before submitting your laboratory work, verify:
+- djb2, a polynomial hash with multiplier 33
+- FNV-1a, a multiply XOR hash with a prime multiplier and an offset basis
 
-- [ ] I can explain the difference between a hash function and a hash table
-- [ ] I understand why prime table sizes improve distribution
-- [ ] I can implement chaining with proper memory management (no leaks)
-- [ ] I can implement open addressing with correct deletion handling
-- [ ] I understand the load factor's impact on performance
-- [ ] I can trigger and implement rehashing correctly
-- [ ] I can analyse collision patterns using probe counts
-- [ ] I know when to choose chaining versus open addressing
-- [ ] My code compiles without warnings using `-Wall -Wextra`
-- [ ] Valgrind reports no memory leaks or errors
+Neither is cryptographic. They are suitable for pedagogy and for benign workloads but they are not suitable as a defence against adversarially chosen keys.
 
----
+#### 3.1 djb2
 
-## 💼 Interview Preparation
+djb2 can be written as:
 
-**Question 1:** *What is the time complexity of hash table operations, and when might they degrade?*
+- initialise hash to 5381
+- for each byte c: hash = hash * 33 + c
 
-Operations achieve O(1) average case. Worst case degrades to O(n) when all keys collide (poor hash function or adversarial input). Universal hashing provides probabilistic guarantees against such attacks.
+Because multiplication by 33 is multiplication by 32 plus 1, an efficient implementation uses a shift and an addition.
 
-**Question 2:** *How would you design a hash function for a custom object type?*
+Pseudocode:
 
-Combine hash values of constituent fields using techniques like XOR with rotation or polynomial accumulation. Ensure all fields contributing to equality participate in hashing (consistency with equals()).
+```
+function DJB2(key_bytes):
+    h := 5381
+    for each byte c in key_bytes:
+        h := (h << 5) + h
+        h := h + c
+    return h
+```
 
-**Question 3:** *Explain the difference between open addressing and chaining. When would you choose each?*
+Key observations:
 
-Chaining handles high load factors gracefully and simplifies deletion. Open addressing offers better cache locality and avoids pointer overhead. Choose chaining for unknown or high n/m ratios; open addressing when memory is constrained and load factor remains below 0.7.
+- The function is fast because it uses simple integer operations.
+- It tends to perform well on common identifier-like strings.
+- It does not provide any security guarantees.
 
-**Question 4:** *What is the birthday problem, and how does it relate to hash collisions?*
+#### 3.2 FNV-1a
 
-The birthday paradox states that in a group of 23 people, there's a 50% probability two share a birthday. Similarly, with n insertions into m buckets, collisions become likely when n ≈ √(2m). This motivates proper table sizing.
+FNV-1a is constructed as repeated XOR and multiplication by a fixed prime.
 
-**Question 5:** *How does Python's dict handle hash collisions internally?*
+Pseudocode:
 
-CPython uses open addressing with pseudo-random probing (based on the hash value). It maintains a sparse table alongside a dense array of entries for iteration order (since 3.7). Rehashing occurs at 2/3 load factor.
+```
+function FNV1A(key_bytes):
+    h := 2166136261
+    for each byte c in key_bytes:
+        h := h XOR c
+        h := h * 16777619
+    return h
+```
 
----
+Compared to djb2, FNV-1a is often described as having good avalanche properties in practice for short strings although it remains non-cryptographic.
 
-## 🔗 Next Week Preview
+### 4. Collision resolution strategies
 
-**Week 12: Graphs — Representation and Basic Algorithms**
+The laboratory focuses on two collision resolution policies because they exhibit complementary trade-offs and because they force different invariants.
 
-Building upon our hash table foundations, we shall explore graph data structures—networks of vertices connected by edges. We shall implement both adjacency matrix and adjacency list representations, with the latter employing hash tables for efficient neighbour lookup in sparse graphs.
+#### 4.1 Separate chaining
 
-Key topics include:
-- Graph terminology: vertices, edges, paths, cycles, connectivity
-- Adjacency matrix versus adjacency list trade-offs
-- Depth-First Search (DFS) and its applications
-- Breadth-First Search (BFS) and shortest path in unweighted graphs
-- Topological sorting of directed acyclic graphs
+Representation:
 
-The transition from hash tables to graphs represents a natural progression: whilst hash tables excel at key-value associations, graphs model relationships between entities—social networks, road systems, dependency hierarchies and countless other real-world structures.
+- The table is an array of m pointers
+- Each pointer refers to a singly linked list of nodes
+- Each node stores one key value pair
 
----
+Invariant:
 
-*Algorithms and Programming Techniques — Week 11 Laboratory Materials*
-*Academy of Economic Studies, Bucharest — Computer Science Faculty*
+- For each occupied node x stored in bucket b, hash(x.key) reduced modulo m equals b
+
+Operations:
+
+Insertion pseudocode:
+
+```
+procedure CHAIN_INSERT(table, key, value):
+    b := REDUCE(HASH(key), table.size)
+    for node in table.bucket[b]:
+        if node.key == key:
+            node.value := value
+            return
+    new_node := allocate node
+    new_node.key := copy(key)
+    new_node.value := value
+    new_node.next := table.bucket[b]
+    table.bucket[b] := new_node
+    table.count := table.count + 1
+```
+
+Search pseudocode:
+
+```
+function CHAIN_FIND(table, key):
+    b := REDUCE(HASH(key), table.size)
+    node := table.bucket[b]
+    while node != null:
+        if node.key == key:
+            return node
+        node := node.next
+    return null
+```
+
+Deletion pseudocode:
+
+```
+function CHAIN_DELETE(table, key):
+    b := REDUCE(HASH(key), table.size)
+    prev := null
+    node := table.bucket[b]
+    while node != null:
+        if node.key == key:
+            if prev == null:
+                table.bucket[b] := node.next
+            else:
+                prev.next := node.next
+            free(node)
+            table.count := table.count - 1
+            return true
+        prev := node
+        node := node.next
+    return false
+```
+
+The key step in deletion is the maintenance of the singly linked list structure. The special case is deletion of the head element.
+
+Expected cost under a uniform hashing assumption:
+
+- Expected chain length is alpha
+- Successful search inspects about 1 plus alpha over 2 nodes
+- Unsuccessful search inspects about 1 plus alpha nodes
+
+These expressions follow by modelling the bucket occupancy as a balls-into-bins process.
+
+#### 4.2 Open addressing with double hashing
+
+Representation:
+
+- The table is an array of m slots
+- Each slot is in one of three states: EMPTY, OCCUPIED or DELETED
+- Each occupied slot stores one key value pair
+
+Core invariant:
+
+- If a key k is present then it appears somewhere along the probe sequence defined by k and the current table size
+
+The fundamental algorithmic idea is that a collision is resolved by moving to a different slot determined by a probing rule.
+
+Double hashing defines a probe sequence:
+
+- h1 is the primary hash reduced modulo m
+- h2 is the step size, constrained to be non-zero and to be coprime to m
+- the ith probe visits (h1 + i * h2) modulo m
+
+Pseudocode for search under tombstones:
+
+```
+function OA_FIND(table, key):
+    i := REDUCE(H1(key), table.size)
+    step := STEP(H2(key), table.size)
+    probes := 0
+    while true:
+        probes := probes + 1
+        slot := table[i]
+        if slot.state == EMPTY:
+            return (null, probes)
+        if slot.state == OCCUPIED and slot.key == key:
+            return (slot, probes)
+        i := (i + step) modulo table.size
+```
+
+Insertion must handle three cases: the key is already present, an empty slot is found or a tombstone is found.
+
+Pseudocode:
+
+```
+procedure OA_INSERT(table, key, value):
+    if EFFECTIVE_LOAD_FACTOR(table) > threshold:
+        REHASH(table)
+
+    i := REDUCE(H1(key), table.size)
+    step := STEP(H2(key), table.size)
+    first_tombstone := none
+    probes := 0
+
+    while true:
+        probes := probes + 1
+        slot := table[i]
+
+        if slot.state == EMPTY:
+            target := first_tombstone if defined else i
+            table[target] := (key, value, OCCUPIED)
+            table.count := table.count + 1
+            record probes
+            return
+
+        if slot.state == DELETED and first_tombstone is none:
+            first_tombstone := i
+
+        if slot.state == OCCUPIED and slot.key == key:
+            slot.value := UPDATE(slot.value, value)
+            record probes
+            return
+
+        i := (i + step) modulo table.size
+```
+
+Deletion sets state to DELETED rather than EMPTY. This preserves the search invariant: an element further along the probe chain must remain reachable.
+
+### 5. Rehashing and amortised analysis
+
+A rehash operation creates a new table, typically larger and reinserts all occupied entries. Its worst-case time is linear in n, the number of stored entries, because each entry must be moved. If the table size grows geometrically then this cost can be amortised over many insertions.
+
+A standard potential argument is:
+
+- Suppose the table doubles when the effective load factor exceeds a constant c less than 1
+- Between two rehash events, at least proportional to the new capacity insertions occur
+- Therefore the amortised insertion cost remains constant even though rehash is linear
+
+In practice, the constants matter. Open addressing becomes sharply inefficient as alpha approaches 1 because probe sequences lengthen rapidly. This is why the threshold for open addressing is typically around 0.65 to 0.75 whereas chaining can tolerate higher alpha, provided memory overhead is acceptable.
+
+## Implementation notes for this repository
+
+### 1. Worked example: src/example1.c
+
+The worked example is a demonstration programme rather than a test target. It contains several components that are useful as reference material when implementing the exercises and homework:
+
+- multiple string hash functions
+- a chained hash table with full CRUD
+- an open addressing table with double hashing
+- load factor monitoring and rehashing
+- empirical timing and statistics collection
+
+The file is intentionally long because it aims to show an end-to-end style that includes diagnostics and safe cleanup rather than only the core algorithm.
+
+### 2. Exercise 1: src/exercise1.c
+
+Exercise 1 implements separate chaining for student records.
+
+Data structures:
+
+- Student: fixed-size arrays for id and name together with a floating-point grade
+- HashNode: a node storing a Student and a next pointer
+- HashTable: an array of bucket heads together with size and count
+
+Design choices:
+
+- Fixed-size arrays avoid per-field allocation and simplify ownership.
+- Insertion updates an existing record if a duplicate id is encountered.
+- Printing of all records is performed in sorted order by id to produce a deterministic transcript independent of bucket placement.
+
+Input and output contract:
+
+- Input is read from standard input as lines of: id name grade
+- Output is a deterministic transcript used by the tests in tests/test1_expected.txt
+
+### 3. Exercise 2: src/exercise2.c
+
+Exercise 2 implements open addressing with double hashing for word frequency counting.
+
+Tokenisation:
+
+- Words are maximal contiguous sequences of alphabetic characters
+- Each alphabetic character is mapped to lowercase
+- The parser caps word length to MAX_WORD_LEN minus one characters
+
+The tokenisation strategy is character-driven rather than whitespace-driven because it gives predictable behaviour in the presence of punctuation.
+
+Probe statistics:
+
+- Each insert operation records the number of inspected slots including the first slot
+- Total probes is the sum over all processed word tokens
+- The average probes per operation is total probes divided by total operations
+
+This instrumentation is not part of the abstract specification of a hash table but it is essential when relating theoretical expectations to the behaviour observed on concrete key streams.
+
+## Building, running and testing
+
+The Makefile defines targets that mirror the intended workflow.
+
+- Build all targets:
+
+```
+make all
+```
+
+- Run Exercise 1 with the supplied dataset:
+
+```
+make run-ex1
+```
+
+- Run Exercise 2 with the supplied dataset:
+
+```
+make run-ex2
+```
+
+- Run the deterministic tests:
+
+```
+make test
+```
+
+The tests compare programme output against expected transcripts. If you change the printed transcript you must update the expected files accordingly. In production systems one would typically test semantic properties rather than exact formatting but transcript-based tests are useful for introductory laboratories because they make the control flow explicit.
+
+## Engineering checklist
+
+Before submitting coursework based on this repository, confirm the following.
+
+1. All allocations are checked for failure.
+2. All owned memory is freed exactly once.
+3. Keys stored in the table are owned by the table, not borrowed from temporary buffers.
+4. Deletion in open addressing uses tombstones, not clearing to empty.
+5. The secondary hash never yields a step of zero.
+6. Any rehash procedure transfers ownership safely and does not leak the previous key allocations.
+
+## Common implementation pitfalls
+
+1. Borrowed pointers: storing a pointer to a transient buffer as a key will eventually produce dangling references. In this repository keys are copied into owned storage.
+2. Incorrect deletion in open addressing: setting a deleted slot to EMPTY breaks probe chains. Tombstones are required.
+3. Step size equal to zero: in double hashing this yields an infinite loop. The step must be at least 1.
+4. Non-coprime step: probe sequences may not cover the full table. Prime table sizes or odd steps for power-of-two sizes are standard mitigations.
+5. Unbounded token growth: word parsers must cap buffer length and handle long sequences safely.
+
+## Further reading
+
+The wider theory of hashing includes universal hashing, dynamic perfect hashing and defences against algorithmic complexity attacks. The present week provides the conceptual tools required to read that literature critically.

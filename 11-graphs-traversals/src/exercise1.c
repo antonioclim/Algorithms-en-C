@@ -3,35 +3,35 @@
  * EXERCISE 1: Chained Hash Table for Student Records
  * =============================================================================
  *
- * OBJECTIVE:
- *   Implement a hash table using separate chaining to store and manage
- *   student records. The system must support insert, search, delete and
- *   display operations with proper memory management.
+ * OVERVIEW
+ *   This programme implements a hash table using separate chaining (linked
+ *   lists) to store and query student records.
  *
- * REQUIREMENTS:
- *   1. Implement the djb2 hash function
- *   2. Create a chained hash table with dynamic bucket allocation
- *   3. Support insertion with duplicate key updates
- *   4. Implement search returning a pointer to the value
- *   5. Implement deletion with proper memory cleanup
- *   6. Calculate and display load factor
- *   7. Read student data from input file
- *   8. Free all allocated memory before exit
+ *   The public interface is intentionally minimal:
+ *     - Insert (with in-place update on duplicate key)
+ *     - Search
+ *     - Delete
+ *     - Diagnostics: load factor and non-empty bucket count
  *
- * EXAMPLE INPUT (students.txt):
- *   S001 Alice 9.5
- *   S002 Bob 7.8
- *   S003 Carol 8.2
+ *   The main routine is transcript-driven: it reads records from standard input
+ *   and prints a deterministic report used by the automated test harness.
  *
- * EXPECTED OUTPUT:
- *   Loaded 3 students into hash table.
- *   Load factor: 0.43
- *   
- *   Search results:
- *   S002 -> Bob (grade: 7.80)
- *   S099 -> Not found
+ * DATA MODEL
+ *   Key:   student ID (string)
+ *   Value: {name, grade}
  *
- * COMPILATION: gcc -Wall -Wextra -std=c11 -o exercise1 exercise1.c
+ * COLLISION RESOLUTION
+ *   Buckets are singly linked lists. Each insertion places the node at the head
+ *   of the chain. Search and deletion are linear in the chain length.
+ *
+ * COMPLEXITY (n entries, m buckets, load factor alpha = n/m)
+ *   - Expected search:    O(1 + alpha) under uniform hashing assumptions
+ *   - Worst-case search:  O(n) if all keys collide
+ *   - Insert:             same as search plus O(1) pointer updates
+ *   - Delete:             same as search plus O(1) pointer updates
+ *
+ * BUILD
+ *   gcc -Wall -Wextra -std=c11 -O2 -o exercise1 exercise1.c
  *
  * =============================================================================
  */
@@ -42,64 +42,31 @@
 #include <stdbool.h>
 
 /* =============================================================================
- * CONSTANTS
+ * CONFIGURATION
  * =============================================================================
  */
 
-#define TABLE_SIZE 7
-#define MAX_ID_LEN 16
-#define MAX_NAME_LEN 64
+#define MAX_ID_LEN 20
+#define MAX_NAME_LEN 50
+#define TABLE_SIZE 16
 
 /* =============================================================================
  * TYPE DEFINITIONS
  * =============================================================================
  */
 
-/**
- * TODO 1: Define the Student structure
- *
- * The Student structure should contain:
- *   - id: a string for the student ID (e.g., "S001")
- *   - name: a string for the student's name
- *   - grade: a float for the student's grade
- *
- * Hint: Use char arrays or char pointers for strings.
- *       If using pointers, remember to allocate memory with strdup().
- */
 typedef struct {
-    /* YOUR CODE HERE */
     char id[MAX_ID_LEN];
     char name[MAX_NAME_LEN];
     float grade;
 } Student;
 
-/**
- * TODO 2: Define the HashNode structure for chaining
- *
- * Each node in the chain should contain:
- *   - data: a Student structure (or pointer to one)
- *   - next: pointer to the next node in the chain
- *
- * Hint: This is similar to a linked list node.
- */
 typedef struct HashNode {
-    /* YOUR CODE HERE */
-    Student data;
+    Student student;
     struct HashNode *next;
 } HashNode;
 
-/**
- * TODO 3: Define the HashTable structure
- *
- * The hash table should contain:
- *   - buckets: an array of pointers to HashNode (the chains)
- *   - size: the number of buckets
- *   - count: the number of entries currently stored
- *
- * Hint: buckets should be HashNode** (pointer to array of pointers)
- */
 typedef struct {
-    /* YOUR CODE HERE */
     HashNode **buckets;
     int size;
     int count;
@@ -111,27 +78,21 @@ typedef struct {
  */
 
 /**
- * TODO 4: Implement the djb2 hash function
+ * djb2 string hash attributed to Daniel J. Bernstein.
  *
- * The djb2 algorithm:
- *   1. Start with hash = 5381
- *   2. For each character c in the key:
- *      hash = hash * 33 + c
- *      (which can be written as: hash = ((hash << 5) + hash) + c)
- *   3. Return the final hash value
- *
- * @param key The string to hash
- * @return The hash value (unsigned int)
- *
- * Hint: Use a while loop that processes characters until '\0'
+ * This is a multiplicative-additive polynomial hash with multiplier 33.
+ * It is not cryptographic. Its value in teaching is that it is compact and
+ * empirically well behaved on many practical key distributions.
  */
-unsigned int hash_djb2(const char *key) {
-    /* YOUR CODE HERE */
-    unsigned int hash = 5381;
-    
-    /* Implement the djb2 algorithm here */
-    
-    return hash;  /* Replace with correct implementation */
+static unsigned int hash_djb2(const char *key) {
+    unsigned int hash = 5381u;
+    int c;
+
+    while ((c = (unsigned char)*key++) != 0) {
+        hash = ((hash << 5) + hash) + (unsigned int)c; /* hash * 33 + c */
+    }
+
+    return hash;
 }
 
 /* =============================================================================
@@ -139,200 +100,191 @@ unsigned int hash_djb2(const char *key) {
  * =============================================================================
  */
 
-/**
- * TODO 5: Implement hash table creation
- *
- * Steps:
- *   1. Allocate memory for the HashTable structure
- *   2. Set size to TABLE_SIZE
- *   3. Set count to 0
- *   4. Allocate memory for the buckets array (array of HashNode pointers)
- *   5. Initialise all bucket pointers to NULL
- *   6. Return the created hash table
- *
- * @return Pointer to the newly created hash table, or NULL on failure
- *
- * Hint: Use malloc() for the table and calloc() for buckets (auto-zeroes)
- */
-HashTable *ht_create(void) {
-    /* YOUR CODE HERE */
-    
-    return NULL;  /* Replace with correct implementation */
+static HashTable *ht_create(int size) {
+    if (size <= 0) return NULL;
+
+    HashTable *ht = (HashTable *)malloc(sizeof(*ht));
+    if (ht == NULL) return NULL;
+
+    ht->size = size;
+    ht->count = 0;
+    ht->buckets = (HashNode **)calloc((size_t)size, sizeof(HashNode *));
+
+    if (ht->buckets == NULL) {
+        free(ht);
+        return NULL;
+    }
+
+    return ht;
 }
 
-/**
- * TODO 6: Implement the insert operation
- *
- * Steps:
- *   1. Calculate the bucket index using: hash_djb2(student.id) % ht->size
- *   2. Check if a student with the same ID already exists in that bucket
- *      - If yes, update the existing record and return
- *   3. If not found, create a new HashNode
- *   4. Copy the student data into the new node
- *   5. Insert the new node at the HEAD of the bucket's chain
- *   6. Increment the count
- *
- * @param ht Pointer to the hash table
- * @param student The student record to insert
- *
- * Hint: Inserting at head is: new_node->next = bucket; bucket = new_node;
- */
-void ht_insert(HashTable *ht, Student student) {
-    if (ht == NULL) return;
-    
-    /* YOUR CODE HERE */
-}
-
-/**
- * TODO 7: Implement the search operation
- *
- * Steps:
- *   1. Calculate the bucket index using: hash_djb2(id) % ht->size
- *   2. Traverse the chain at that bucket
- *   3. For each node, compare the student ID with the search key
- *   4. If found, return a pointer to the Student structure
- *   5. If not found (reached end of chain), return NULL
- *
- * @param ht Pointer to the hash table
- * @param id The student ID to search for
- * @return Pointer to the Student if found, NULL otherwise
- *
- * Hint: Use strcmp() to compare strings (returns 0 if equal)
- */
-Student *ht_search(HashTable *ht, const char *id) {
-    if (ht == NULL || id == NULL) return NULL;
-    
-    /* YOUR CODE HERE */
-    
-    return NULL;  /* Replace with correct implementation */
-}
-
-/**
- * TODO 8: Implement the delete operation
- *
- * Steps:
- *   1. Calculate the bucket index
- *   2. Traverse the chain, keeping track of the previous node
- *   3. When found:
- *      - If it's the first node: bucket = node->next
- *      - Otherwise: prev->next = node->next
- *   4. Free the deleted node
- *   5. Decrement the count
- *   6. Return true if deleted, false if not found
- *
- * @param ht Pointer to the hash table
- * @param id The student ID to delete
- * @return true if deleted, false if not found
- *
- * Hint: Handle the special case where the node to delete is the first one
- */
-bool ht_delete(HashTable *ht, const char *id) {
-    if (ht == NULL || id == NULL) return false;
-    
-    /* YOUR CODE HERE */
-    
-    return false;  /* Replace with correct implementation */
-}
-
-/**
- * Calculate the load factor
- *
- * Load factor = number of entries / number of buckets
- */
-float ht_load_factor(HashTable *ht) {
+static float ht_load_factor(const HashTable *ht) {
     if (ht == NULL || ht->size == 0) return 0.0f;
-    return (float)ht->count / ht->size;
+    return (float)ht->count / (float)ht->size;
 }
 
 /**
- * Display all entries in the hash table
- */
-void ht_display(HashTable *ht) {
-    if (ht == NULL) return;
-    
-    printf("\nHash Table Contents:\n");
-    printf("┌─────┬────────────────────────────────────────────────┐\n");
-    
-    for (int i = 0; i < ht->size; i++) {
-        printf("│ %3d │", i);
-        
-        HashNode *current = ht->buckets[i];
-        if (current == NULL) {
-            printf(" (empty)                                       │\n");
-        } else {
-            int first = 1;
-            while (current != NULL) {
-                if (!first) printf("\n│     │");
-                printf(" [%s: %s, %.2f]", 
-                       current->data.id, 
-                       current->data.name, 
-                       current->data.grade);
-                first = 0;
-                current = current->next;
-            }
-            printf("\n");
-        }
-    }
-    
-    printf("└─────┴────────────────────────────────────────────────┘\n");
-    printf("\nStatistics:\n");
-    printf("  Entries: %d\n", ht->count);
-    printf("  Buckets: %d\n", ht->size);
-    printf("  Load factor: %.2f\n", ht_load_factor(ht));
-}
-
-/**
- * Destroy the hash table and free all memory
+ * Insert or update.
  *
- * This function is provided complete as an example of proper cleanup.
+ * Returns the bucket index on success, or -1 on allocation failure.
  */
-void ht_destroy(HashTable *ht) {
-    if (ht == NULL) return;
-    
-    /* Free all nodes in each bucket */
-    for (int i = 0; i < ht->size; i++) {
-        HashNode *current = ht->buckets[i];
-        while (current != NULL) {
-            HashNode *temp = current;
-            current = current->next;
-            free(temp);
+static int ht_insert(HashTable *ht, const Student *student) {
+    if (ht == NULL || student == NULL) return -1;
+
+    unsigned int index = hash_djb2(student->id) % (unsigned int)ht->size;
+
+    /* Update existing record if the key is present. */
+    for (HashNode *cur = ht->buckets[index]; cur != NULL; cur = cur->next) {
+        if (strcmp(cur->student.id, student->id) == 0) {
+            strncpy(cur->student.name, student->name, MAX_NAME_LEN - 1);
+            cur->student.name[MAX_NAME_LEN - 1] = '\0';
+            cur->student.grade = student->grade;
+            return (int)index;
         }
     }
-    
-    /* Free the buckets array and the table itself */
+
+    /* Allocate a new node and insert at the head of the chain. */
+    HashNode *node = (HashNode *)malloc(sizeof(*node));
+    if (node == NULL) return -1;
+
+    strncpy(node->student.id, student->id, MAX_ID_LEN - 1);
+    node->student.id[MAX_ID_LEN - 1] = '\0';
+
+    strncpy(node->student.name, student->name, MAX_NAME_LEN - 1);
+    node->student.name[MAX_NAME_LEN - 1] = '\0';
+
+    node->student.grade = student->grade;
+
+    node->next = ht->buckets[index];
+    ht->buckets[index] = node;
+    ht->count++;
+
+    return (int)index;
+}
+
+static Student *ht_search(HashTable *ht, const char *id) {
+    if (ht == NULL || id == NULL) return NULL;
+
+    unsigned int index = hash_djb2(id) % (unsigned int)ht->size;
+
+    for (HashNode *cur = ht->buckets[index]; cur != NULL; cur = cur->next) {
+        if (strcmp(cur->student.id, id) == 0) {
+            return &cur->student;
+        }
+    }
+
+    return NULL;
+}
+
+static bool ht_delete(HashTable *ht, const char *id) {
+    if (ht == NULL || id == NULL) return false;
+
+    unsigned int index = hash_djb2(id) % (unsigned int)ht->size;
+
+    HashNode *cur = ht->buckets[index];
+    HashNode *prev = NULL;
+
+    while (cur != NULL) {
+        if (strcmp(cur->student.id, id) == 0) {
+            if (prev == NULL) {
+                ht->buckets[index] = cur->next;
+            } else {
+                prev->next = cur->next;
+            }
+
+            free(cur);
+            ht->count--;
+            return true;
+        }
+
+        prev = cur;
+        cur = cur->next;
+    }
+
+    return false;
+}
+
+static int ht_non_empty_buckets(const HashTable *ht) {
+    if (ht == NULL) return 0;
+
+    int non_empty = 0;
+    for (int i = 0; i < ht->size; i++) {
+        if (ht->buckets[i] != NULL) non_empty++;
+    }
+    return non_empty;
+}
+
+static void ht_destroy(HashTable *ht) {
+    if (ht == NULL) return;
+
+    for (int i = 0; i < ht->size; i++) {
+        HashNode *cur = ht->buckets[i];
+        while (cur != NULL) {
+            HashNode *tmp = cur;
+            cur = cur->next;
+            free(tmp);
+        }
+    }
+
     free(ht->buckets);
     free(ht);
 }
 
 /* =============================================================================
- * FILE LOADING
+ * PRESENTATION UTILITIES
  * =============================================================================
  */
 
-/**
- * Load students from a file into the hash table
- *
- * File format: ID Name Grade (one per line)
- * Example: S001 Alice 9.5
- */
-int load_students_from_file(HashTable *ht, const char *filename) {
-    FILE *file = fopen(filename, "r");
-    if (file == NULL) {
-        fprintf(stderr, "Error: Cannot open file '%s'\n", filename);
-        return -1;
+static int cmp_student_ptr_by_id(const void *a, const void *b) {
+    const Student *sa = *(const Student * const *)a;
+    const Student *sb = *(const Student * const *)b;
+    return strcmp(sa->id, sb->id);
+}
+
+static void ht_print_stats(const HashTable *ht) {
+    printf("--- Hash Table Statistics ---\n");
+    printf("  Table size:        %d\n", ht->size);
+    printf("  Entries:           %d\n", ht->count);
+    printf("  Load factor:       %.2f\n", ht_load_factor(ht));
+    printf("  Non-empty buckets: %d\n", ht_non_empty_buckets(ht));
+}
+
+static void ht_print_all_sorted(const HashTable *ht) {
+    printf("\n--- All Student Records ---\n");
+
+    if (ht == NULL || ht->count == 0) return;
+
+    Student **items = (Student **)malloc((size_t)ht->count * sizeof(*items));
+    if (items == NULL) {
+        /* Deterministic fallback: print unsorted by bucket. */
+        for (int i = 0; i < ht->size; i++) {
+            for (HashNode *cur = ht->buckets[i]; cur != NULL; cur = cur->next) {
+                printf("  %s: %s, Grade: %.2f\n",
+                       cur->student.id,
+                       cur->student.name,
+                       cur->student.grade);
+            }
+        }
+        return;
     }
-    
-    Student student;
-    int loaded = 0;
-    
-    while (fscanf(file, "%15s %63s %f", 
-                  student.id, student.name, &student.grade) == 3) {
-        ht_insert(ht, student);
-        loaded++;
+
+    int idx = 0;
+    for (int i = 0; i < ht->size; i++) {
+        for (HashNode *cur = ht->buckets[i]; cur != NULL; cur = cur->next) {
+            items[idx++] = &cur->student;
+        }
     }
-    
-    fclose(file);
-    return loaded;
+
+    qsort(items, (size_t)idx, sizeof(*items), cmp_student_ptr_by_id);
+
+    for (int i = 0; i < idx; i++) {
+        printf("  %s: %s, Grade: %.2f\n",
+               items[i]->id,
+               items[i]->name,
+               items[i]->grade);
+    }
+
+    free(items);
 }
 
 /* =============================================================================
@@ -341,107 +293,63 @@ int load_students_from_file(HashTable *ht, const char *filename) {
  */
 
 int main(void) {
-    printf("\n");
     printf("╔═══════════════════════════════════════════════════════════════╗\n");
     printf("║     EXERCISE 1: Chained Hash Table for Student Records        ║\n");
-    printf("╚═══════════════════════════════════════════════════════════════╝\n");
-    
-    /* Create the hash table */
-    HashTable *ht = ht_create();
+    printf("╚═══════════════════════════════════════════════════════════════╝\n\n");
+
+    HashTable *ht = ht_create(TABLE_SIZE);
     if (ht == NULL) {
         fprintf(stderr, "Error: Failed to create hash table\n");
         return 1;
     }
-    
-    /* Try to load from file, or use sample data */
-    int loaded = load_students_from_file(ht, "data/students.txt");
-    
-    if (loaded < 0) {
-        printf("\nUsing sample data instead...\n");
-        
-        /* Sample data */
-        Student students[] = {
-            {"S001", "Alice", 9.5},
-            {"S002", "Bob", 7.8},
-            {"S003", "Carol", 8.2},
-            {"S004", "Dave", 6.9},
-            {"S005", "Eve", 9.1},
-            {"S006", "Frank", 7.5},
-            {"S007", "Grace", 8.8}
-        };
-        
-        int num_students = sizeof(students) / sizeof(students[0]);
-        
-        for (int i = 0; i < num_students; i++) {
-            ht_insert(ht, students[i]);
-            printf("Inserted: %s (%s) -> bucket %d\n", 
-                   students[i].id, students[i].name,
-                   hash_djb2(students[i].id) % ht->size);
+
+    printf("Loading student records from file...\n\n");
+
+    Student s;
+    while (scanf("%19s %49s %f", s.id, s.name, &s.grade) == 3) {
+        int bucket = ht_insert(ht, &s);
+        if (bucket < 0) {
+            fprintf(stderr, "Error: Insert failed (out of memory)\n");
+            ht_destroy(ht);
+            return 1;
         }
-        
-        loaded = num_students;
+        printf("Inserted: %s (%s) at bucket %d\n", s.id, s.name, bucket);
     }
-    
-    printf("\nLoaded %d students.\n", loaded);
-    
-    /* Display the hash table */
-    ht_display(ht);
-    
-    /* Search demonstration */
-    printf("\n--- Search Demonstration ---\n");
-    const char *search_ids[] = {"S002", "S005", "S099"};
-    int num_searches = 3;
-    
+
+    printf("\n");
+    ht_print_stats(ht);
+
+    ht_print_all_sorted(ht);
+
+    printf("\n--- Search Test ---\n");
+    const char *search_ids[] = {"S003", "S007", "S999"};
+    const int num_searches = (int)(sizeof(search_ids) / sizeof(search_ids[0]));
+
     for (int i = 0; i < num_searches; i++) {
-        Student *result = ht_search(ht, search_ids[i]);
-        if (result != NULL) {
-            printf("Found %s: %s (grade: %.2f)\n", 
-                   search_ids[i], result->name, result->grade);
+        Student *found = ht_search(ht, search_ids[i]);
+        if (found != NULL) {
+            printf("  Search %s: Found - %s, Grade: %.2f\n",
+                   search_ids[i], found->name, found->grade);
         } else {
-            printf("Not found: %s\n", search_ids[i]);
+            printf("  Search %s: Not found\n", search_ids[i]);
         }
     }
-    
-    /* Update demonstration */
-    printf("\n--- Update Demonstration ---\n");
-    Student updated = {"S002", "Bob", 9.9};
-    printf("Updating S002's grade to 9.9...\n");
-    ht_insert(ht, updated);
-    
-    Student *bob = ht_search(ht, "S002");
-    if (bob != NULL) {
-        printf("S002's new grade: %.2f\n", bob->grade);
+
+    printf("\n--- Delete Test ---\n");
+    printf("  Deleting S002...\n");
+
+    if (ht_delete(ht, "S002")) {
+        printf("  Delete successful.\n");
+        printf("  Entries after deletion: %d\n", ht->count);
+        printf("  Load factor: %.2f\n", ht_load_factor(ht));
+    } else {
+        printf("  Delete failed: S002 not found.\n");
     }
-    
-    /* Delete demonstration */
-    printf("\n--- Delete Demonstration ---\n");
-    printf("Deleting S003 (Carol)...\n");
-    bool deleted = ht_delete(ht, "S003");
-    printf("Deletion %s\n", deleted ? "successful" : "failed");
-    
-    /* Final display */
-    ht_display(ht);
-    
-    /* Cleanup */
+
     ht_destroy(ht);
-    printf("\n[✓] Hash table destroyed. All memory freed.\n\n");
-    
+
+    printf("\nProgram completed successfully.\n");
+    printf("Memory freed.\n");
+
     return 0;
 }
-
-/* =============================================================================
- * BONUS CHALLENGES (Optional)
- * =============================================================================
- *
- * 1. Implement automatic rehashing when load factor exceeds 0.75
- *
- * 2. Add a function to find all students with grades above a threshold
- *
- * 3. Implement an iterator to traverse all entries in the hash table
- *
- * 4. Add support for case-insensitive ID comparisons
- *
- * 5. Track and display collision statistics (chain lengths)
- *
- * =============================================================================
- */
