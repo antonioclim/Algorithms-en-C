@@ -62,8 +62,6 @@
  *
  * Example: The term 3x^4 has coefficient=3.0 and exponent=4
  */
-
-/* YOUR CODE HERE */
 typedef struct Term {
     double coefficient;
     int exponent;
@@ -105,6 +103,10 @@ void free_polynomial(Polynomial *poly);
 Polynomial* derivative(const Polynomial *poly, char result_name);
 bool is_zero_polynomial(const Polynomial *poly);
 
+/* Provided helpers, declared here so they can be used by the file-mode parser */
+Polynomial* parse_polynomial(const char *str, char name);
+bool polynomials_equal(const Polynomial *p1, const Polynomial *p2);
+
 /* =============================================================================
  * FUNCTIONS
  * =============================================================================
@@ -127,9 +129,21 @@ bool is_zero_polynomial(const Polynomial *poly);
  *   5. Return the pointer
  */
 Term* create_term(double coeff, int exp) {
-    /* YOUR CODE HERE */
-    
-    return NULL;  /* Replace this */
+    if (exp < 0) {
+        fprintf(stderr, "Error: Negative exponent not allowed\n");
+        return NULL;
+    }
+
+    Term *new_term = (Term*)malloc(sizeof(Term));
+    if (new_term == NULL) {
+        fprintf(stderr, "Error: Memory allocation failed\n");
+        return NULL;
+    }
+
+    new_term->coefficient = coeff;
+    new_term->exponent = exp;
+    new_term->next = NULL;
+    return new_term;
 }
 
 /**
@@ -141,9 +155,15 @@ Term* create_term(double coeff, int exp) {
  * @return Pointer to newly created polynomial, or NULL on error
  */
 Polynomial* create_polynomial(char name) {
-    /* YOUR CODE HERE */
-    
-    return NULL;  /* Replace this */
+    Polynomial *poly = (Polynomial*)malloc(sizeof(Polynomial));
+    if (poly == NULL) {
+        fprintf(stderr, "Error: Memory allocation failed\n");
+        return NULL;
+    }
+
+    poly->head = NULL;
+    poly->name = name;
+    return poly;
 }
 
 /**
@@ -171,9 +191,50 @@ void add_term(Polynomial *poly, double coeff, int exp) {
     if (poly == NULL || fabs(coeff) < EPSILON) {
         return;
     }
-    
-    /* YOUR CODE HERE */
-    
+
+    /* Case 1: empty polynomial or insertion before head */
+    if (poly->head == NULL || poly->head->exponent < exp) {
+        Term *new_term = create_term(coeff, exp);
+        if (new_term == NULL) {
+            return;
+        }
+        new_term->next = poly->head;
+        poly->head = new_term;
+        return;
+    }
+
+    /* Case 2: combine with head */
+    if (poly->head->exponent == exp) {
+        poly->head->coefficient += coeff;
+        if (fabs(poly->head->coefficient) < EPSILON) {
+            Term *temp = poly->head;
+            poly->head = poly->head->next;
+            free(temp);
+        }
+        return;
+    }
+
+    /* Case 3: find insertion point */
+    Term *current = poly->head;
+    while (current->next != NULL && current->next->exponent > exp) {
+        current = current->next;
+    }
+
+    if (current->next != NULL && current->next->exponent == exp) {
+        current->next->coefficient += coeff;
+        if (fabs(current->next->coefficient) < EPSILON) {
+            Term *temp = current->next;
+            current->next = temp->next;
+            free(temp);
+        }
+    } else {
+        Term *new_term = create_term(coeff, exp);
+        if (new_term == NULL) {
+            return;
+        }
+        new_term->next = current->next;
+        current->next = new_term;
+    }
 }
 
 /**
@@ -196,9 +257,24 @@ void add_term(Polynomial *poly, double coeff, int exp) {
  * Note: The add_term function handles combining like terms automatically!
  */
 Polynomial* add_polynomials(const Polynomial *p1, const Polynomial *p2, char result_name) {
-    /* YOUR CODE HERE */
-    
-    return NULL;  /* Replace this */
+    Polynomial *result = create_polynomial(result_name);
+    if (result == NULL) {
+        return NULL;
+    }
+
+    const Term *t1 = (p1 != NULL) ? p1->head : NULL;
+    while (t1 != NULL) {
+        add_term(result, t1->coefficient, t1->exponent);
+        t1 = t1->next;
+    }
+
+    const Term *t2 = (p2 != NULL) ? p2->head : NULL;
+    while (t2 != NULL) {
+        add_term(result, t2->coefficient, t2->exponent);
+        t2 = t2->next;
+    }
+
+    return result;
 }
 
 /**
@@ -224,9 +300,26 @@ Polynomial* add_polynomials(const Polynomial *p1, const Polynomial *p2, char res
  *   Result: 2x^2 + (-2x + 3x) + (-3) = 2x^2 + x - 3
  */
 Polynomial* multiply_polynomials(const Polynomial *p1, const Polynomial *p2, char result_name) {
-    /* YOUR CODE HERE */
-    
-    return NULL;  /* Replace this */
+    Polynomial *result = create_polynomial(result_name);
+    if (result == NULL) {
+        return NULL;
+    }
+
+    if (p1 == NULL || p2 == NULL || p1->head == NULL || p2->head == NULL) {
+        return result;
+    }
+
+    const Term *t1 = p1->head;
+    while (t1 != NULL) {
+        const Term *t2 = p2->head;
+        while (t2 != NULL) {
+            add_term(result, t1->coefficient * t2->coefficient, t1->exponent + t2->exponent);
+            t2 = t2->next;
+        }
+        t1 = t1->next;
+    }
+
+    return result;
 }
 
 /**
@@ -247,9 +340,18 @@ Polynomial* multiply_polynomials(const Polynomial *p1, const Polynomial *p2, cha
  * Hint: Use pow(x, exp) from <math.h> for exponentiation
  */
 double evaluate_polynomial(const Polynomial *poly, double x) {
-    /* YOUR CODE HERE */
-    
-    return 0.0;  /* Replace this */
+    if (poly == NULL || poly->head == NULL) {
+        return 0.0;
+    }
+
+    double result = 0.0;
+    const Term *current = poly->head;
+    while (current != NULL) {
+        result += current->coefficient * pow(x, current->exponent);
+        current = current->next;
+    }
+
+    return result;
 }
 
 /**
@@ -282,7 +384,49 @@ void display_polynomial(const Polynomial *poly) {
     
     printf("%c(x) = ", poly->name);
     
-    /* YOUR CODE HERE */
+    if (poly->head == NULL) {
+        printf("0");
+        return;
+    }
+
+    const Term *current = poly->head;
+    bool first = true;
+
+    while (current != NULL) {
+        double coeff = current->coefficient;
+        int exp = current->exponent;
+
+        if (!first) {
+            if (coeff >= 0) {
+                printf(" + ");
+            } else {
+                printf(" - ");
+                coeff = -coeff;
+            }
+        } else if (coeff < 0) {
+            printf("-");
+            coeff = -coeff;
+        }
+
+        if (exp == 0) {
+            printf("%.2g", coeff);
+        } else if (exp == 1) {
+            if (fabs(coeff - 1.0) < EPSILON) {
+                printf("x");
+            } else {
+                printf("%.2gx", coeff);
+            }
+        } else {
+            if (fabs(coeff - 1.0) < EPSILON) {
+                printf("x^%d", exp);
+            } else {
+                printf("%.2gx^%d", coeff, exp);
+            }
+        }
+
+        first = false;
+        current = current->next;
+    }
     
     printf("\n");
 }
@@ -296,9 +440,10 @@ void display_polynomial(const Polynomial *poly) {
  * @return Degree of the polynomial, or -1 for zero polynomial
  */
 int get_degree(const Polynomial *poly) {
-    /* YOUR CODE HERE */
-    
-    return -1;  /* Replace this */
+    if (poly == NULL || poly->head == NULL) {
+        return -1;
+    }
+    return poly->head->exponent;
 }
 
 /**
@@ -313,8 +458,18 @@ int get_degree(const Polynomial *poly) {
  *   2. Free the polynomial structure itself
  */
 void free_polynomial(Polynomial *poly) {
-    /* YOUR CODE HERE */
-    
+    if (poly == NULL) {
+        return;
+    }
+
+    Term *current = poly->head;
+    while (current != NULL) {
+        Term *next = current->next;
+        free(current);
+        current = next;
+    }
+
+    free(poly);
 }
 
 /**
@@ -333,9 +488,24 @@ void free_polynomial(Polynomial *poly) {
  * Example: d/dx (3x^4 + 2x^2 - 5x + 7) = 12x^3 + 4x - 5
  */
 Polynomial* derivative(const Polynomial *poly, char result_name) {
-    /* YOUR CODE HERE */
-    
-    return NULL;  /* Replace this */
+    Polynomial *result = create_polynomial(result_name);
+    if (result == NULL) {
+        return NULL;
+    }
+
+    if (poly == NULL) {
+        return result;
+    }
+
+    const Term *current = poly->head;
+    while (current != NULL) {
+        if (current->exponent > 0) {
+            add_term(result, current->coefficient * current->exponent, current->exponent - 1);
+        }
+        current = current->next;
+    }
+
+    return result;
 }
 
 /**
@@ -347,9 +517,175 @@ Polynomial* derivative(const Polynomial *poly, char result_name) {
  * @return true if zero polynomial, false otherwise
  */
 bool is_zero_polynomial(const Polynomial *poly) {
-    /* YOUR CODE HERE */
-    
-    return true;  /* Replace this */
+    return (poly == NULL || poly->head == NULL);
+}
+
+/* =============================================================================
+ * FILE PROCESSING HELPERS
+ * =============================================================================
+ */
+
+static void display_polynomial_expression(const Polynomial *poly) {
+    if (poly == NULL || poly->head == NULL) {
+        printf("0");
+        return;
+    }
+
+    const Term *current = poly->head;
+    bool first = true;
+
+    while (current != NULL) {
+        double coeff = current->coefficient;
+        int exp = current->exponent;
+
+        if (!first) {
+            if (coeff >= 0) {
+                printf(" + ");
+            } else {
+                printf(" - ");
+                coeff = -coeff;
+            }
+        } else if (coeff < 0) {
+            printf("-");
+            coeff = -coeff;
+        }
+
+        if (exp == 0) {
+            printf("%.2g", coeff);
+        } else if (exp == 1) {
+            if (fabs(coeff - 1.0) < EPSILON) {
+                printf("x");
+            } else {
+                printf("%.2gx", coeff);
+            }
+        } else {
+            if (fabs(coeff - 1.0) < EPSILON) {
+                printf("x^%d", exp);
+            } else {
+                printf("%.2gx^%d", coeff, exp);
+            }
+        }
+
+        first = false;
+        current = current->next;
+    }
+}
+
+static int polynomial_slot(char name) {
+    if (name >= 'a' && name <= 'z') {
+        name = (char)(name - 'a' + 'A');
+    }
+    if (name < 'A' || name > 'Z') {
+        return -1;
+    }
+    return (int)(name - 'A');
+}
+
+static void process_polynomial_file(const char *filename) {
+    FILE *file = fopen(filename, "r");
+    if (file == NULL) {
+        fprintf(stderr, "Error: Cannot open file '%s'\n", filename);
+        return;
+    }
+
+    Polynomial *polys[26] = {0};
+
+    char line[MAX_LINE_LENGTH];
+    while (fgets(line, sizeof(line), file) != NULL) {
+        line[strcspn(line, "\n")] = '\0';
+
+        if (line[0] == '\0' || line[0] == '#') {
+            continue;
+        }
+
+        /* POLY X: <pairs> */
+        if (strncmp(line, "POLY", 4) == 0) {
+            char name = 0;
+            char rest[MAX_LINE_LENGTH] = {0};
+            if (sscanf(line, "POLY %c: %511[^\n]", &name, rest) == 2) {
+                int idx = polynomial_slot(name);
+                if (idx >= 0) {
+                    if (polys[idx] != NULL) {
+                        free_polynomial(polys[idx]);
+                    }
+                    polys[idx] = parse_polynomial(rest, (idx + 'A'));
+                }
+            }
+            continue;
+        }
+
+        /* DISPLAY X */
+        if (strncmp(line, "DISPLAY", 7) == 0) {
+            char name = 0;
+            if (sscanf(line, "DISPLAY %c", &name) == 1) {
+                int idx = polynomial_slot(name);
+                if (idx >= 0 && polys[idx] != NULL) {
+                    display_polynomial(polys[idx]);
+                }
+            }
+            continue;
+        }
+
+        /* ADD A B */
+        if (strncmp(line, "ADD", 3) == 0) {
+            char a = 0;
+            char b = 0;
+            if (sscanf(line, "ADD %c %c", &a, &b) == 2) {
+                int ia = polynomial_slot(a);
+                int ib = polynomial_slot(b);
+                if (ia >= 0 && ib >= 0 && polys[ia] != NULL && polys[ib] != NULL) {
+                    Polynomial *sum = add_polynomials(polys[ia], polys[ib], 'R');
+                    printf("%c(x) + %c(x) = ", polys[ia]->name, polys[ib]->name);
+                    display_polynomial_expression(sum);
+                    printf("\n");
+                    free_polynomial(sum);
+                }
+            }
+            continue;
+        }
+
+        /* MULTIPLY A B */
+        if (strncmp(line, "MULTIPLY", 8) == 0) {
+            char a = 0;
+            char b = 0;
+            if (sscanf(line, "MULTIPLY %c %c", &a, &b) == 2) {
+                int ia = polynomial_slot(a);
+                int ib = polynomial_slot(b);
+                if (ia >= 0 && ib >= 0 && polys[ia] != NULL && polys[ib] != NULL) {
+                    Polynomial *prod = multiply_polynomials(polys[ia], polys[ib], 'R');
+                    printf("%c(x) * %c(x) = ", polys[ia]->name, polys[ib]->name);
+                    display_polynomial_expression(prod);
+                    printf("\n");
+                    free_polynomial(prod);
+                }
+            }
+            continue;
+        }
+
+        /* EVAL A x */
+        if (strncmp(line, "EVAL", 4) == 0) {
+            char a = 0;
+            double x = 0.0;
+            if (sscanf(line, "EVAL %c %lf", &a, &x) == 2) {
+                int ia = polynomial_slot(a);
+                if (ia >= 0 && polys[ia] != NULL) {
+                    double val = evaluate_polynomial(polys[ia], x);
+                    if (fabs(x - round(x)) < EPSILON) {
+                        printf("%c(%.0f) = %.2f\n", polys[ia]->name, x, val);
+                    } else {
+                        printf("%c(%.2f) = %.2f\n", polys[ia]->name, x, val);
+                    }
+                }
+            }
+            continue;
+        }
+    }
+
+    fclose(file);
+
+    for (int i = 0; i < 26; i++) {
+        free_polynomial(polys[i]);
+    }
 }
 
 /* =============================================================================
@@ -422,8 +758,15 @@ int main(int argc, char *argv[]) {
      */
     
     if (argc > 1) {
-        printf("\nFile processing mode not yet implemented.\n");
-        printf("Usage: %s <polynomial_file>\n", argv[0]);
+        /*
+         * In file mode we do not run the demo. Instead we parse the command
+         * file and emit results deterministically which makes automated
+         * regression testing feasible.
+         */
+        printf("\n");
+        process_polynomial_file(argv[1]);
+        printf("\n--- Program finished ---\n\n");
+        return 0;
     }
     
     /* Demo mode */
@@ -483,7 +826,11 @@ int main(int argc, char *argv[]) {
      * Don't forget to free all polynomials created!
      */
     
-    /* YOUR CODE HERE */
+    free_polynomial(P);
+    free_polynomial(Q);
+    free_polynomial(sum);
+    free_polynomial(product);
+    free_polynomial(dP);
     
     printf("\n--- Program finished ---\n\n");
     

@@ -1,210 +1,387 @@
-# Week 04 Homework: Linked Lists
+# Week 04 Homework: Linked Structures in C
 
-## 📋 General Information
+## Administrative parameters
 
-- **Deadline:** End of Week 05
-- **Points:** 100 (10% of final grade)
-- **Language:** C (C11 standard)
-- **Compiler:** GCC with `-Wall -Wextra -std=c11`
+- **Deadline**: end of Week 05
+- **Weight**: 100 points (10% of the final grade)
+- **Language and standard**: C (C11)
+- **Compilation contract**: `gcc -Wall -Wextra -std=c11` for all targets and `-lm` where `<math.h>` is required
 
----
+The homework is designed to make you demonstrate that you can reason about pointer based invariants, implement them safely and communicate the design choices. Your primary deliverable is working code whose behaviour matches the specification. Your secondary deliverable is a concise technical note that explains the invariants you maintain, the algorithms you chose and the tests you ran.
 
-## 📝 Homework 1: Music Playlist Manager (50 points)
+## Submission artefacts
 
-### Description
+Submit the following source files:
 
-Implement a **doubly linked list** to manage a music playlist with support for playback operations. The playlist should support adding, removing and rearranging songs, as well as simulating playback with next/previous functionality.
+1. `homework1_playlist.c`
+2. `homework2_sparse.c`
 
-### Requirements
+Also include a short `README.txt` (plain text) that covers:
 
-1. **Song Structure** (5 points)
-   - Define a `Song` structure with fields: `title` (char[100]), `artist` (char[50]), `duration_seconds` (int), `prev` and `next` pointers
-   - Define a `Playlist` structure with: `head`, `tail`, `current` (currently playing), `name`, `total_songs`
+- how to compile and run your code
+- a description of your representation invariants
+- a brief complexity discussion for the main operations
+- a list of additional tests beyond the provided examples
 
-2. **Core Operations** (20 points)
-   - `add_song_end(playlist, title, artist, duration)` - Add song at end (4p)
-   - `add_song_beginning(playlist, title, artist, duration)` - Add song at start (4p)
-   - `insert_song_after(playlist, existing_title, new_title, artist, duration)` - Insert after specific song (4p)
-   - `remove_song(playlist, title)` - Remove song by title (4p)
-   - `find_song(playlist, title)` - Search for song, return pointer (4p)
+## Global programming contract
 
-3. **Playback Operations** (15 points)
-   - `play_next(playlist)` - Move to next song, wrap to beginning if at end (3p)
-   - `play_previous(playlist)` - Move to previous song, wrap to end if at beginning (3p)
-   - `shuffle_playlist(playlist)` - Randomly reorder songs (5p)
-   - `reverse_playlist(playlist)` - Reverse the order of songs (4p)
+### Memory ownership and lifetime
 
-4. **Display and Utility** (10 points)
-   - `display_playlist(playlist)` - Show all songs with their position and duration (3p)
-   - `display_current(playlist)` - Show currently playing song with "▶" indicator (2p)
-   - `total_duration(playlist)` - Calculate total playlist duration in HH:MM:SS format (2p)
-   - `free_playlist(playlist)` - Free all memory (3p)
+- Every node that you allocate with `malloc` must be freed exactly once.
+- After freeing a node you must not access any field of that node.
+- Functions that return pointers must document whether ownership is transferred to the caller.
 
-### Example Usage
+### Numerical comparisons
 
-```c
-Playlist *my_playlist = create_playlist("My Favourites");
+Where floating point values are involved, treat values with absolute magnitude smaller than a small threshold `EPSILON` as zero. You must define and use a single `EPSILON` constant consistently.
 
-add_song_end(my_playlist, "Bohemian Rhapsody", "Queen", 354);
-add_song_end(my_playlist, "Stairway to Heaven", "Led Zeppelin", 482);
-add_song_end(my_playlist, "Hotel California", "Eagles", 391);
+### Determinism and randomness
 
-display_playlist(my_playlist);
-/*
-My Favourites (3 songs, 20:27)
-1. Bohemian Rhapsody - Queen (5:54)
-2. Stairway to Heaven - Led Zeppelin (8:02)
-3. Hotel California - Eagles (6:31)
-*/
+If you introduce randomised behaviour (for example in playlist shuffling) you must document how you seed the pseudo random number generator. For testing you should be able to force deterministic behaviour by using a fixed seed.
 
-play_next(my_playlist);
-play_next(my_playlist);
-display_current(my_playlist);
-/* ▶ Now playing: Stairway to Heaven - Led Zeppelin */
+### Output formatting
 
-reverse_playlist(my_playlist);
-display_playlist(my_playlist);
-/* Order reversed */
-```
+Output does not need to match a specific aesthetic style but it must be:
 
-### File: `homework1_playlist.c`
+- unambiguous
+- stable across runs for deterministic modes
+- sufficiently documented that an assessor can interpret it without reading the source code
 
----
+## Homework 1: Music Playlist Manager (50 points)
 
-## 📝 Homework 2: Sparse Matrix Operations (50 points)
+### Problem statement
 
-### Description
+Implement a playlist manager backed by a **doubly linked list**. The list represents a sequence of songs and the programme maintains a *current* pointer that models the song that is currently playing.
 
-Implement a **sparse matrix** representation using linked lists. A sparse matrix is one where most elements are zero, making it inefficient to store as a traditional 2D array. Instead, only non-zero elements are stored.
+The playlist must support:
 
-### Requirements
+- insertion at both ends
+- insertion after a named song
+- removal by title
+- sequential navigation with wrap around
+- reversing the list
+- shuffling the list
+- formatted display of the full playlist and the current song
 
-1. **Data Structures** (5 points)
-   - Define `MatrixNode` with: `row`, `col`, `value` (double), `next_in_row`, `next_in_col`
-   - Define `SparseMatrix` with: `rows`, `cols`, row head array, column head array
+### Data structures
 
-2. **Matrix Creation** (15 points)
-   - `create_sparse_matrix(rows, cols)` - Create empty sparse matrix (3p)
-   - `set_element(matrix, row, col, value)` - Set/update element (if value ≈ 0, remove) (6p)
-   - `get_element(matrix, row, col)` - Get element value (return 0 if not stored) (3p)
-   - `load_from_file(filename)` - Load matrix from file (3p)
-
-3. **Matrix Operations** (20 points)
-   - `add_matrices(A, B)` - Add two sparse matrices, return new matrix (5p)
-   - `multiply_matrices(A, B)` - Multiply two sparse matrices (7p)
-   - `transpose(matrix)` - Return transposed matrix (4p)
-   - `scalar_multiply(matrix, scalar)` - Multiply all elements by scalar (4p)
-
-4. **Display and Analysis** (10 points)
-   - `display_sparse(matrix)` - Show non-zero elements list: (row, col) = value (2p)
-   - `display_dense(matrix)` - Show full matrix format (for small matrices) (3p)
-   - `count_nonzero(matrix)` - Count non-zero elements (1p)
-   - `sparsity_ratio(matrix)` - Calculate percentage of zero elements (2p)
-   - `free_sparse_matrix(matrix)` - Free all memory (2p)
-
-### Example Usage
+You must implement at least the following structures.
 
 ```c
-SparseMatrix *A = create_sparse_matrix(4, 4);
+#define MAX_TITLE  100
+#define MAX_ARTIST 50
 
-set_element(A, 0, 0, 5.0);
-set_element(A, 0, 2, 3.0);
-set_element(A, 1, 1, 8.0);
-set_element(A, 2, 3, 6.0);
-set_element(A, 3, 0, 2.0);
+typedef struct Song {
+    char title[MAX_TITLE];
+    char artist[MAX_ARTIST];
+    int duration_seconds;
+    struct Song *prev;
+    struct Song *next;
+} Song;
 
-display_sparse(A);
-/*
-Sparse Matrix (4x4), 5 non-zero elements:
-(0, 0) = 5.00
-(0, 2) = 3.00
-(1, 1) = 8.00
-(2, 3) = 6.00
-(3, 0) = 2.00
-*/
-
-display_dense(A);
-/*
- 5.00  0.00  3.00  0.00
- 0.00  8.00  0.00  0.00
- 0.00  0.00  0.00  6.00
- 2.00  0.00  0.00  0.00
-*/
-
-printf("Sparsity: %.1f%%\n", sparsity_ratio(A));
-/* Sparsity: 68.8% */
+typedef struct Playlist {
+    Song *head;
+    Song *tail;
+    Song *current;
+    char name[MAX_TITLE];
+    int total_songs;
+} Playlist;
 ```
 
-### Matrix File Format
+### Representation invariants
+
+You are expected to state these invariants in comments and preserve them in every operation.
+
+1. If the playlist is empty then `head == NULL`, `tail == NULL`, `current == NULL` and `total_songs == 0`.
+2. If the playlist is non empty then `head->prev == NULL` and `tail->next == NULL`.
+3. For any node `u`, if `u->next == v` then `v->prev == u`.
+4. `total_songs` equals the number of reachable nodes when traversing from `head` by repeated `next` pointers.
+5. `current` is either `NULL` (empty playlist) or points to a node that is reachable from `head`.
+
+### Required operations and semantics
+
+#### 1. Node construction
+
+- `Song* create_song(const char *title, const char *artist, int duration_seconds)`
+
+Requirements:
+
+- allocate a node and copy bounded strings
+- reject invalid durations (non positive values)
+
+Pseudocode:
 
 ```
-4 4
-0 0 5.0
-0 2 3.0
-1 1 8.0
-2 3 6.0
-3 0 2.0
+create_song(title, artist, duration):
+    if duration <= 0: return NULL
+    s <- malloc(sizeof(Song))
+    if s == NULL: return NULL
+    copy title and artist with explicit null termination
+    s.prev <- NULL
+    s.next <- NULL
+    s.duration_seconds <- duration
+    return s
 ```
 
-### File: `homework2_sparse.c`
+#### 2. Insertions
 
----
+- `add_song_end`
+- `add_song_beginning`
+- `insert_song_after`
 
-## 📊 Evaluation Criteria
+Asymptotic expectations:
 
-| Criterion | Points |
-|-----------|--------|
-| Functional correctness | 40 |
-| Proper use of linked list concepts | 25 |
-| Edge case handling | 15 |
-| Code quality and documentation | 10 |
-| No compiler warnings | 10 |
+- insertion at ends should be `O(1)` because you maintain both `head` and `tail`
+- insertion after a given title is `O(n)` because it requires a search
 
-### Penalties
+Edge cases you must handle:
 
-- **-10 points:** Compiler warnings
-- **-20 points:** Memory leaks (verified with Valgrind)
-- **-30 points:** Crashes on valid input
-- **-50 points:** Plagiarism (automatic fail)
+- inserting into an empty playlist must set `head`, `tail` and `current`
+- inserting after the tail must update `tail`
 
-### Bonus Points
+#### 3. Removal
 
-- **+5 points:** Particularly elegant or efficient solution
-- **+5 points:** Comprehensive error handling
-- **+5 points:** Additional useful features
+- `remove_song(playlist, title)`
 
----
+The operation must:
 
-## 📤 Submission
+- remove exactly one matching song (the first match is sufficient)
+- update `head` and `tail` when removing boundary nodes
+- update `current` when the removed song is the current song
 
-1. Submit source files: `homework1_playlist.c` and `homework2_sparse.c`
-2. Include a `README.txt` explaining your implementation choices
-3. Submit via the course portal before the deadline
-4. Ensure your code compiles without warnings using:
-   ```bash
-   gcc -Wall -Wextra -std=c11 -o homework1 homework1_playlist.c
-   gcc -Wall -Wextra -std=c11 -lm -o homework2 homework2_sparse.c
-   ```
+Pseudocode (schematic):
 
----
+```
+remove_song(list, title):
+    u <- find node with given title
+    if u == NULL: return false
+    if u == head: head <- u.next
+    if u == tail: tail <- u.prev
+    if u.prev != NULL: u.prev.next <- u.next
+    if u.next != NULL: u.next.prev <- u.prev
+    if current == u: current <- (u.next != NULL ? u.next : u.prev)
+    free(u)
+    total_songs--
+    if total_songs == 0: current <- NULL
+    return true
+```
 
-## 💡 Tips
+#### 4. Playback navigation
 
-1. **Start with the data structures** - Define your structures clearly before implementing functions
+- `play_next` moves `current` to `current->next` and wraps to `head` when at the tail.
+- `play_previous` moves `current` to `current->prev` and wraps to `tail` when at the head.
 
-2. **Test incrementally** - Write and test one function at a time
+These operations must be `O(1)`.
 
-3. **Draw diagrams** - Visualise your linked list operations before coding them
+#### 5. Reverse
 
-4. **Handle edge cases first** - Empty list, single element, head/tail operations
+- `reverse_playlist`
 
-5. **Use Valgrind early** - Check for memory leaks after implementing each function:
-   ```bash
-   valgrind --leak-check=full ./homework1
-   ```
+Reversal must be done in place by swapping `prev` and `next` for every node and then swapping the `head` and `tail` pointers.
 
-6. **Comment your pointer manipulations** - Complex pointer operations benefit from explanatory comments
+Pseudocode:
 
----
+```
+reverse(list):
+    u <- head
+    while u != NULL:
+        swap(u.prev, u.next)
+        u <- u.prev   # because prev was next before the swap
+    swap(head, tail)
+```
 
-*Good luck! Remember: linked lists are fundamental to many advanced data structures. Mastering them now will help you throughout your programming career.*
+#### 6. Shuffle
+
+- `shuffle_playlist`
+
+A robust approach is to extract pointers to nodes into an array, apply the Durstenfeld variant of Fisher Yates in place and then rebuild the links. The asymptotic cost is `O(n)` time and `O(n)` additional memory.
+
+Pseudocode:
+
+```
+shuffle(list):
+    if n < 2: return
+    A <- array of Song* of length n
+    fill A by traversal
+    for i from n-1 down to 1:
+        j <- random integer in [0, i]
+        swap(A[i], A[j])
+    rebuild prev/next links in the order of A
+    head <- A[0]
+    tail <- A[n-1]
+```
+
+### Marking scheme (50 points)
+
+- Data structures and invariants: 10
+- Core operations (insert, remove, find): 20
+- Playback operations, reverse and shuffle: 15
+- Display, formatting and memory hygiene: 5
+
+## Homework 2: Sparse Matrix Operations (50 points)
+
+### Problem statement
+
+Implement a sparse matrix representation using linked structures so that matrices with many zeros are stored efficiently. You will represent only non zero elements and you must support basic linear algebra operations.
+
+### Required representation
+
+You must implement a sparse matrix with row and column access, typically via cross linked lists:
+
+```c
+typedef struct MatrixNode {
+    int row;
+    int col;
+    double value;
+    struct MatrixNode *next_in_row;
+    struct MatrixNode *next_in_col;
+} MatrixNode;
+
+typedef struct SparseMatrix {
+    int rows;
+    int cols;
+    MatrixNode **row_heads;
+    MatrixNode **col_heads;
+    int nonzero_count;
+} SparseMatrix;
+```
+
+### Representation invariants
+
+1. For each row `r`, `row_heads[r]` points to a list sorted by increasing column index.
+2. For each column `c`, `col_heads[c]` points to a list sorted by increasing row index.
+3. Every stored node appears in exactly one row list and exactly one column list.
+4. `nonzero_count` equals the total number of stored nodes.
+
+These invariants are the sparse matrix analogue of sortedness in `exercise1` and normal form in `exercise2`.
+
+### Core operations
+
+#### 1. Creation
+
+- `create_sparse_matrix(rows, cols)` allocates the structure and initialises the row and column head arrays.
+
+Complexity: `O(rows + cols)` for initialisation.
+
+#### 2. Element update
+
+- `set_element(matrix, row, col, value)` inserts or updates a node.
+
+Semantics:
+
+- if `abs(value) < EPSILON`, the element is treated as zero and any existing node at that position must be removed
+- otherwise, if a node exists, update its value
+- otherwise, create a new node and insert it into both the row list and the column list while preserving sortedness
+
+The critical engineering detail is that insertion and removal must update *both* linked dimensions.
+
+Pseudocode (schematic):
+
+```
+set_element(M, r, c, v):
+    if abs(v) < EPSILON:
+        remove node (r,c) from row r list and column c list if present
+        return
+    if node (r,c) exists:
+        node.value <- v
+        return
+    node <- allocate
+    insert node into row list r in sorted position by col
+    insert node into col list c in sorted position by row
+    nonzero_count++
+```
+
+#### 3. Query
+
+- `get_element(matrix, row, col)` should return 0 when no node is stored.
+
+A straightforward approach is to traverse the row list `row_heads[row]` until the column index matches or exceeds the target.
+
+#### 4. Loading from file
+
+Matrix file format:
+
+```text
+<rows> <cols>
+<r0> <c0> <v0>
+<r1> <c1> <v1>
+...
+```
+
+Each triplet defines a non zero element. You must validate bounds and you must either reject duplicates or treat them as updates.
+
+### Matrix operations
+
+You must implement at least:
+
+- addition `C = A + B`
+- multiplication `C = A * B`
+- transpose
+- scalar multiplication
+
+#### Addition
+
+A safe pattern is to create `C` empty, then insert all terms of `A` and then insert all terms of `B` using `set_element` with update semantics.
+
+Complexity depends on traversal order and on the cost of insertion into the result, but for matrices with `k` total non zero elements the overall time is typically `O(k * alpha)` where `alpha` is the average insertion traversal length in the affected row.
+
+#### Multiplication
+
+A sparse multiplication strategy should exploit sparsity:
+
+- for each row `i` in `A`, traverse its non zero elements `(i, k, a_ik)`
+- for each such element, traverse column `k` in `B` or row `k` in `B` depending on how you organise access
+- accumulate contributions into the result
+
+A simple approach that remains linked list based is:
+
+```
+for each row i in A:
+    for each node a in row i:
+        for each node b in row a.col in B:
+            C[i, b.col] += a.value * b.value
+```
+
+This is not asymptotically optimal in all cases but it illustrates the key idea: iterate only over non zero entries.
+
+### Display and analysis utilities
+
+You must provide:
+
+- `display_sparse` that prints only stored elements in `(row, col) = value` form
+- `display_dense` for small matrices (print all entries)
+- `sparsity_ratio` defined as the percentage of entries that are zero
+
+### Marking scheme (50 points)
+
+- Data structures and invariants: 10
+- Correctness of update and query operations: 15
+- Correctness of matrix operations: 15
+- Display functions and analysis utilities: 5
+- Memory safety and robustness: 5
+
+## Penalties
+
+- Compiler warnings: minus 10 points
+- Memory leaks or invalid memory accesses: minus 20 points
+- Crashes on valid input: minus 30 points
+- Plagiarism: automatic fail
+
+## Suggested test plan
+
+A minimal but adequate test plan should include:
+
+1. empty structures (no songs, no non zero entries)
+2. singleton structures
+3. head and tail operations
+4. removal of the currently playing song
+5. repeated insert update cycles for the same matrix position
+6. algebraic identities such as `A + 0 = A` and `A * I = A` for small matrices
+
+## References
+
+| Topic | Reference (APA 7th ed) | DOI |
+|---|---|---|
+| Random permutation algorithm | Durstenfeld, R. (1964). Algorithm 235: Random permutation. *Communications of the ACM, 7*(7), 420. | https://doi.org/10.1145/364520.364540 |
+| Sparse matrix benchmark collection | Davis, T. A. and Hu, Y. (2011). The University of Florida sparse matrix collection. *ACM Transactions on Mathematical Software, 38*(1), Article 1. | https://doi.org/10.1145/2049662.2049663 |
+

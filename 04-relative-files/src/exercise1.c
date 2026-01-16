@@ -117,9 +117,21 @@ void process_commands(StudentNode **head_ref, const char *filename);
  *       Always ensure the string is null-terminated
  */
 StudentNode* create_student(int id, const char *name, float gpa) {
-    /* YOUR CODE HERE */
-    
-    return NULL;  /* Replace this */
+    StudentNode *new_node = (StudentNode*)malloc(sizeof(StudentNode));
+
+    if (new_node == NULL) {
+        fprintf(stderr, "Error: Memory allocation failed\n");
+        return NULL;
+    }
+
+    new_node->id = id;
+    new_node->gpa = gpa;
+
+    strncpy(new_node->name, name, MAX_NAME_LENGTH - 1);
+    new_node->name[MAX_NAME_LENGTH - 1] = '\0';
+
+    new_node->next = NULL;
+    return new_node;
 }
 
 /**
@@ -145,9 +157,39 @@ StudentNode* create_student(int id, const char *name, float gpa) {
  * Hint: You need to keep track of the previous node during traversal
  */
 bool insert_sorted(StudentNode **head_ref, int id, const char *name, float gpa) {
-    /* YOUR CODE HERE */
-    
-    return false;  /* Replace this */
+    StudentNode *new_node = create_student(id, name, gpa);
+    if (new_node == NULL) {
+        return false;
+    }
+
+    /* Case 1: empty list or insertion before head */
+    if (*head_ref == NULL || (*head_ref)->id > id) {
+        new_node->next = *head_ref;
+        *head_ref = new_node;
+        return true;
+    }
+
+    /* Duplicate at head */
+    if ((*head_ref)->id == id) {
+        free(new_node);
+        return false;
+    }
+
+    /* Find insertion point */
+    StudentNode *current = *head_ref;
+    while (current->next != NULL && current->next->id < id) {
+        current = current->next;
+    }
+
+    /* Duplicate at insertion point */
+    if (current->next != NULL && current->next->id == id) {
+        free(new_node);
+        return false;
+    }
+
+    new_node->next = current->next;
+    current->next = new_node;
+    return true;
 }
 
 /**
@@ -167,9 +209,20 @@ bool insert_sorted(StudentNode **head_ref, int id, const char *name, float gpa) 
  *   5. Return NULL if not found
  */
 StudentNode* find_student(StudentNode *head, int id) {
-    /* YOUR CODE HERE */
-    
-    return NULL;  /* Replace this */
+    StudentNode *current = head;
+
+    while (current != NULL) {
+        if (current->id == id) {
+            return current;
+        }
+        /* The list is maintained in ascending order so we can stop early */
+        if (current->id > id) {
+            return NULL;
+        }
+        current = current->next;
+    }
+
+    return NULL;
 }
 
 /**
@@ -191,9 +244,32 @@ StudentNode* find_student(StudentNode *head, int id) {
  * Hint: You need the previous node to unlink the target
  */
 bool delete_student(StudentNode **head_ref, int id) {
-    /* YOUR CODE HERE */
-    
-    return false;  /* Replace this */
+    if (head_ref == NULL || *head_ref == NULL) {
+        return false;
+    }
+
+    /* Case 1: delete head */
+    if ((*head_ref)->id == id) {
+        StudentNode *temp = *head_ref;
+        *head_ref = (*head_ref)->next;
+        free(temp);
+        return true;
+    }
+
+    /* Case 2: locate node before the one to delete */
+    StudentNode *current = *head_ref;
+    while (current->next != NULL && current->next->id < id) {
+        current = current->next;
+    }
+
+    if (current->next != NULL && current->next->id == id) {
+        StudentNode *temp = current->next;
+        current->next = temp->next;
+        free(temp);
+        return true;
+    }
+
+    return false;
 }
 
 /**
@@ -222,8 +298,22 @@ bool delete_student(StudentNode **head_ref, int id) {
  *       %-16s = left-aligned, width 16
  */
 void display_all(const StudentNode *head) {
-    /* YOUR CODE HERE */
-    
+    printf("+------+------------------+------+\n");
+    printf("|  ID  |       Name       | GPA  |\n");
+    printf("+------+------------------+------+\n");
+
+    if (head == NULL) {
+        printf("|         (empty list)         |\n");
+    } else {
+        const StudentNode *current = head;
+        while (current != NULL) {
+            printf("| %4d | %-16s | %.2f |\n",
+                   current->id, current->name, current->gpa);
+            current = current->next;
+        }
+    }
+
+    printf("+------+------------------+------+\n");
 }
 
 /**
@@ -235,9 +325,15 @@ void display_all(const StudentNode *head) {
  * @return Number of students
  */
 int count_students(const StudentNode *head) {
-    /* YOUR CODE HERE */
-    
-    return 0;  /* Replace this */
+    int count = 0;
+    const StudentNode *current = head;
+
+    while (current != NULL) {
+        count++;
+        current = current->next;
+    }
+
+    return count;
 }
 
 /**
@@ -257,8 +353,18 @@ int count_students(const StudentNode *head) {
  * WARNING: Do NOT access current->next after free(current)!
  */
 void free_all_students(StudentNode **head_ref) {
-    /* YOUR CODE HERE */
-    
+    if (head_ref == NULL) {
+        return;
+    }
+
+    StudentNode *current = *head_ref;
+    while (current != NULL) {
+        StudentNode *next = current->next;
+        free(current);
+        current = next;
+    }
+
+    *head_ref = NULL;
 }
 
 /**
@@ -319,7 +425,48 @@ void process_commands(StudentNode **head_ref, const char *filename) {
          * Print appropriate messages for success/failure of each operation.
          */
         
-        /* YOUR CODE HERE */
+        if (sscanf(line, "%19s", command) != 1) {
+            continue;
+        }
+
+        if (strcmp(command, "ADD") == 0) {
+            if (sscanf(line, "%*s %d %49s %f", &id, name, &gpa) == 3) {
+                if (insert_sorted(head_ref, id, name, gpa)) {
+                    printf("Added: %s (ID: %d, GPA: %.2f)\n", name, id, gpa);
+                } else {
+                    printf("Failed to add: ID %d already exists\n", id);
+                }
+            }
+        } else if (strcmp(command, "FIND") == 0) {
+            if (sscanf(line, "%*s %d", &id) == 1) {
+                StudentNode *found = find_student(*head_ref, id);
+                if (found != NULL) {
+                    printf("Found: %s (ID: %d, GPA: %.2f)\n",
+                           found->name, found->id, found->gpa);
+                } else {
+                    printf("Not found: ID %d\n", id);
+                }
+            }
+        } else if (strcmp(command, "DELETE") == 0) {
+            if (sscanf(line, "%*s %d", &id) == 1) {
+                StudentNode *student = find_student(*head_ref, id);
+                if (student != NULL) {
+                    char deleted_name[MAX_NAME_LENGTH];
+                    strncpy(deleted_name, student->name, MAX_NAME_LENGTH - 1);
+                    deleted_name[MAX_NAME_LENGTH - 1] = '\0';
+
+                    if (delete_student(head_ref, id)) {
+                        printf("Deleted: %s (ID: %d)\n", deleted_name, id);
+                    }
+                } else {
+                    printf("Cannot delete: ID %d not found\n", id);
+                }
+            }
+        } else if (strcmp(command, "DISPLAY") == 0) {
+            display_all(*head_ref);
+        } else if (strcmp(command, "COUNT") == 0) {
+            printf("Total students: %d\n", count_students(*head_ref));
+        }
         
     }
     
@@ -414,7 +561,7 @@ int main(int argc, char *argv[]) {
      * This is CRITICAL to prevent memory leaks!
      */
     
-    /* YOUR CODE HERE */
+    free_all_students(&head);
     
     printf("\n--- Program finished ---\n\n");
     

@@ -41,7 +41,7 @@ SOLUTIONS = exercise1_sol exercise2_sol homework1_sol homework2_sol
 # PHONY TARGETS
 # =============================================================================
 
-.PHONY: all clean run test valgrind solutions help check
+.PHONY: all clean run test test-solutions valgrind solutions help check
 
 # =============================================================================
 # DEFAULT TARGET
@@ -54,8 +54,8 @@ all: $(TARGETS)
 	@echo ""
 	@echo "Available executables:"
 	@echo "  $(CYAN)./example1$(NC)   - Complete demonstration of linked list operations"
-	@echo "  $(CYAN)./exercise1$(NC)  - Student records exercise (has TODOs)"
-	@echo "  $(CYAN)./exercise2$(NC)  - Polynomial calculator exercise (has TODOs)"
+	@echo "  $(CYAN)./exercise1$(NC)  - Student records exercise (complete)"
+	@echo "  $(CYAN)./exercise2$(NC)  - Polynomial calculator exercise (complete)"
 	@echo ""
 	@echo "Run '$(YELLOW)make help$(NC)' for more options."
 
@@ -154,14 +154,14 @@ run-solutions: solutions
 # TEST TARGETS
 # =============================================================================
 
-test: exercise1_sol exercise2_sol
+test: exercise1 exercise2
 	@echo ""
 	@echo "$(YELLOW)═══════════════════════════════════════════════════════════════$(NC)"
 	@echo "$(YELLOW)Running automated tests...$(NC)"
 	@echo "$(YELLOW)═══════════════════════════════════════════════════════════════$(NC)"
 	@echo ""
 	@echo "$(CYAN)Test 1: Student Records$(NC)"
-	@./exercise1_sol $(TEST_DIR)/test1_input.txt > /tmp/test1_output.txt 2>&1
+	@./exercise1 $(TEST_DIR)/test1_input.txt > /tmp/test1_output.txt 2>&1
 	@if diff -q /tmp/test1_output.txt $(TEST_DIR)/test1_expected.txt > /dev/null 2>&1; then \
 		echo "$(GREEN)✓ Test 1 PASSED$(NC)"; \
 	else \
@@ -170,10 +170,29 @@ test: exercise1_sol exercise2_sol
 	fi
 	@echo ""
 	@echo "$(CYAN)Test 2: Polynomial Calculator$(NC)"
-	@./exercise2_sol > /tmp/test2_output.txt 2>&1
-	@echo "$(GREEN)✓ Test 2 executed (manual verification required)$(NC)"
+	@./exercise2 $(TEST_DIR)/test2_input.txt > /tmp/test2_output.txt 2>&1
+	@if diff -q /tmp/test2_output.txt $(TEST_DIR)/test2_expected.txt > /dev/null 2>&1; then \
+		echo "$(GREEN)✓ Test 2 PASSED$(NC)"; \
+	else \
+		echo "$(RED)✗ Test 2 FAILED$(NC)"; \
+		echo "  Expected output differs from actual output"; \
+	fi
 	@echo ""
 	@echo "$(GREEN)Testing complete.$(NC)"
+
+test-solutions: exercise1_sol exercise2_sol
+	@echo ""
+	@echo "$(YELLOW)═══════════════════════════════════════════════════════════════$(NC)"
+	@echo "$(YELLOW)Running solution smoke tests...$(NC)"
+	@echo "$(YELLOW)═══════════════════════════════════════════════════════════════$(NC)"
+	@echo ""
+	@echo "$(CYAN)Solution 1: Student Records$(NC)"
+	@./exercise1_sol $(TEST_DIR)/test1_input.txt > /tmp/test1_sol_output.txt 2>&1
+	@echo "$(GREEN)✓ Executed$(NC)"
+	@echo ""
+	@echo "$(CYAN)Solution 2: Polynomial Calculator$(NC)"
+	@./exercise2_sol > /tmp/test2_sol_output.txt 2>&1
+	@echo "$(GREEN)✓ Executed$(NC)"
 
 # =============================================================================
 # MEMORY CHECK TARGETS
@@ -254,12 +273,13 @@ help:
 	@echo "  $(MAGENTA)make solutions$(NC)    - Build all solution files"
 	@echo "  $(MAGENTA)make run-solutions$(NC) - Run all solution demonstrations"
 	@echo "  $(MAGENTA)make test$(NC)         - Run automated tests"
+	@echo "  $(MAGENTA)make test-solutions$(NC) - Run solution smoke tests"
 	@echo "  $(MAGENTA)make valgrind-solutions$(NC) - Memory check all solutions"
 	@echo ""
 	@echo "$(YELLOW)Source Files:$(NC)"
 	@echo "  $(SRC_DIR)/example1.c   - Complete working demonstration"
-	@echo "  $(SRC_DIR)/exercise1.c  - Student records (12 TODOs)"
-	@echo "  $(SRC_DIR)/exercise2.c  - Polynomial calculator (15 TODOs)"
+	@echo "  $(SRC_DIR)/exercise1.c  - Student records (complete implementation)"
+	@echo "  $(SRC_DIR)/exercise2.c  - Polynomial calculator (complete implementation)"
 	@echo ""
 	@echo "$(YELLOW)Data Files:$(NC)"
 	@echo "  $(DATA_DIR)/students.txt     - Sample student data"
