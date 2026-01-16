@@ -713,7 +713,7 @@ Common interview questions on these topics:
 
 ## 🔗 Course Conclusion
 
-This laboratory concludes the **Programming Techniques and Algorithms** course. Over 16 weeks, you have progressed from fundamental concepts to sophisticated algorithmic paradigms:
+This laboratory concludes the **Algorithms & Data Structures using C** course. Over 16 weeks, you have progressed from fundamental concepts to sophisticated algorithmic paradigms:
 
 **Weeks 1-7:** Programming foundations, data structures
 **Weeks 8-11:** Sorting, searching, linear data structures
@@ -741,5 +741,5 @@ The techniques learned—recursion, divide and conquer, dynamic programming, gre
 
 ---
 
-*Laboratory materials prepared for ATP Course, Academy of Economic Studies - CSIE Bucharest*
-*Final Week — Course Conclusion*
+*Laboratory materials prepared for ADSC Course, Academy of Economic Studies - CSIE Bucharest*
+*Final Week — Course Conclusion ...the END is not here*
