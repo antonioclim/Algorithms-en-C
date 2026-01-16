@@ -598,6 +598,6 @@ Probabilistic data structures are particularly valuable on resource-constrained 
 
 ---
 
-*Laboratory materials prepared for ATP Course*
+*Laboratory materials prepared for ADSC Course*
 *Academy of Economic Studies — CSIE Bucharest*
 *Alternative learning kit for non-formal education*
