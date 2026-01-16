@@ -141,33 +141,68 @@ run-all: all solutions
 	@./$(EXERCISE2_SOL)
 
 # =============================================================================
+# =============================================================================
 # TEST TARGETS
 # =============================================================================
 
-test: $(EXERCISE1_SOL) $(EXERCISE2_SOL)
-	@echo "$(YELLOW)━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━$(NC)"
-	@echo "$(YELLOW)Running automated tests...$(NC)"
-	@echo "$(YELLOW)━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━$(NC)"
-	@echo ""
-	@echo "$(CYAN)Testing Exercise 1 Solution:$(NC)"
-	@./$(EXERCISE1_SOL) > /tmp/ex1_output.txt 2>&1
-	@if grep -q "All Tests Passed" /tmp/ex1_output.txt; then \
-		echo "$(GREEN)  ✓ Exercise 1 tests passed$(NC)"; \
-	else \
-		echo "$(RED)  ✗ Exercise 1 tests failed$(NC)"; \
-	fi
-	@echo ""
-	@echo "$(CYAN)Testing Exercise 2 Solution:$(NC)"
-	@./$(EXERCISE2_SOL) > /tmp/ex2_output.txt 2>&1
-	@if grep -q "All Tests Passed" /tmp/ex2_output.txt; then \
-		echo "$(GREEN)  ✓ Exercise 2 tests passed$(NC)"; \
-	else \
-		echo "$(RED)  ✗ Exercise 2 tests failed$(NC)"; \
-	fi
-	@echo ""
-	@echo "$(GREEN)Testing complete.$(NC)"
+.PHONY: test test-student test-solutions
 
-# =============================================================================
+# Default test target runs the student transcript-based tests.
+# These are strict byte-for-byte comparisons against golden outputs.
+
+test: test-student
+
+test-student: $(EXERCISE1) $(EXERCISE2)
+	@echo "$(YELLOW)━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━$(NC)"
+	@echo "$(YELLOW)Running automated tests (student versions)...$(NC)"
+	@echo "$(YELLOW)━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━$(NC)"
+	@echo ""
+	@echo "$(CYAN)Exercise 1: transcript test$(NC)"
+	@./$(EXERCISE1) < $(TEST_DIR)/test1_input.txt > /tmp/ex1_output.txt 2>&1
+	@if diff -u $(TEST_DIR)/test1_expected.txt /tmp/ex1_output.txt > /tmp/ex1_diff.txt; then \
+		echo "$(GREEN)  ✓ Exercise 1 passed$(NC)"; \
+	else \
+		echo "$(RED)  ✗ Exercise 1 failed$(NC)"; \
+		echo "$(RED)--- Diff (expected vs actual) ---$(NC)"; \
+		cat /tmp/ex1_diff.txt; \
+		exit 1; \
+	fi
+	@echo ""
+	@echo "$(CYAN)Exercise 2: transcript test$(NC)"
+	@./$(EXERCISE2) < $(TEST_DIR)/test2_input.txt > /tmp/ex2_output.txt 2>&1
+	@if diff -u $(TEST_DIR)/test2_expected.txt /tmp/ex2_output.txt > /tmp/ex2_diff.txt; then \
+		echo "$(GREEN)  ✓ Exercise 2 passed$(NC)"; \
+	else \
+		echo "$(RED)  ✗ Exercise 2 failed$(NC)"; \
+		echo "$(RED)--- Diff (expected vs actual) ---$(NC)"; \
+		cat /tmp/ex2_diff.txt; \
+		exit 1; \
+	fi
+	@echo ""
+	@echo "$(GREEN)All student tests passed.$(NC)"
+
+# The solution programmes include their own internal demonstrations.
+# This target keeps the original behaviour as a lightweight smoke test.
+
+test-solutions: $(EXERCISE1_SOL) $(EXERCISE2_SOL)
+	@echo "$(YELLOW)━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━$(NC)"
+	@echo "$(YELLOW)Running solution smoke tests...$(NC)"
+	@echo "$(YELLOW)━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━$(NC)"
+	@./$(EXERCISE1_SOL) > /tmp/ex1_sol_output.txt 2>&1
+	@if grep -q "All Tests Passed" /tmp/ex1_sol_output.txt; then \
+		echo "$(GREEN)  ✓ Exercise 1 solution self-test passed$(NC)"; \
+	else \
+		echo "$(RED)  ✗ Exercise 1 solution self-test failed$(NC)"; \
+		exit 1; \
+	fi
+	@./$(EXERCISE2_SOL) > /tmp/ex2_sol_output.txt 2>&1
+	@if grep -q "All Tests Passed" /tmp/ex2_sol_output.txt; then \
+		echo "$(GREEN)  ✓ Exercise 2 solution self-test passed$(NC)"; \
+	else \
+		echo "$(RED)  ✗ Exercise 2 solution self-test failed$(NC)"; \
+		exit 1; \
+	fi
+	@echo "$(GREEN)Solution smoke tests passed.$(NC)"
 # MEMORY CHECK
 # =============================================================================
 
@@ -197,7 +232,7 @@ clean:
 	@echo "$(YELLOW)Cleaning build artifacts...$(NC)"
 	@rm -f $(TARGETS) $(SOLUTIONS)
 	@rm -f *.o
-	@rm -f /tmp/ex1_output.txt /tmp/ex2_output.txt
+	@rm -f /tmp/ex1_output.txt /tmp/ex2_output.txt /tmp/ex1_diff.txt /tmp/ex2_diff.txt /tmp/ex1_sol_output.txt /tmp/ex2_sol_output.txt
 	@echo "$(GREEN)  ✓ Clean complete$(NC)"
 
 # =============================================================================

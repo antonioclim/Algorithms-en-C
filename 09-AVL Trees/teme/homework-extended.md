@@ -1,28 +1,34 @@
-# Extended Challenges - Week 09: AVL Trees
+# Extended Challenges: AVL Trees
 
-## 🚀 Advanced Challenges (Optional)
+## Orientation
 
-Each correctly solved challenge: **+10 bonus points**
+The following challenges are optional and are intended for students who wish to deepen both their implementational competence and their analytical fluency with balanced search trees.
 
-These challenges extend beyond the basic homework requirements and are designed for students who want to deepen their understanding of AVL trees and self-balancing data structures.
+Unless your course handbook states otherwise, each challenge is assessed independently and yields up to **+10 bonus points**. Partial credit is possible when you can demonstrate a correct invariant set, clean memory management and a coherent test methodology.
+
+### General standards (apply to every challenge)
+
+Your submission must:
+
+- compile under ISO C11 with `-Wall -Wextra` and without warnings
+- be memory safe (no leaks and no invalid accesses)
+- expose deterministic output suitable for transcript-based testing
+- include a brief write-up of invariants, algorithms and complexity
+
+Where you modify the base AVL implementation, state explicitly which height convention you adopt and how you validate that stored heights remain correct.
 
 ---
 
-## ⭐ Challenge 1: AVL Tree with Parent Pointers (Difficulty: Medium)
+## Challenge 1: Parent pointers and inorder iterators
 
-### Description
+### Motivation
 
-Modify the AVL tree implementation to include parent pointers. This enables efficient successor/predecessor operations without recursion and simplifies certain algorithms.
+A conventional binary search tree node stores child pointers only. Successor and predecessor queries are then typically implemented by descending into a subtree and possibly climbing back up via recursion. Adding an explicit `parent` pointer makes upward traversal explicit. This permits:
 
-### Requirements
+- iterative inorder traversal without an auxiliary stack
+- iterator-like `next` and `prev` operations that run in `O(h)` time where `h` is the tree height
 
-1. Add a `parent` pointer to each node
-2. Maintain parent pointers during insertion and deletion
-3. Update parent pointers correctly during rotations
-4. Implement iterative (non-recursive) inorder traversal using parent pointers
-5. Implement `next()` and `prev()` iterator functions
-
-### Interface
+### Data model
 
 ```c
 typedef struct AVLNodeP {
@@ -32,278 +38,235 @@ typedef struct AVLNodeP {
     struct AVLNodeP *right;
     struct AVLNodeP *parent;
 } AVLNodeP;
-
-AVLNodeP *avl_insert_p(AVLNodeP *root, int key);
-AVLNodeP *avl_delete_p(AVLNodeP *root, int key);
-AVLNodeP *avl_next(AVLNodeP *node);     /* Inorder successor */
-AVLNodeP *avl_prev(AVLNodeP *node);     /* Inorder predecessor */
-void avl_iterate(AVLNodeP *root);        /* Iterative inorder */
 ```
 
-### Testing
+### Invariants
 
-```c
-/* Should print 1 2 3 4 5 in order without recursion */
-AVLNodeP *min = avl_find_min(root);
-for (AVLNodeP *n = min; n != NULL; n = avl_next(n)) {
-    printf("%d ", n->key);
-}
+In addition to the standard AVL invariants, you must maintain:
+
+- for any non-null node `v`, if `v->left` is non-null then `v->left->parent == v`
+- for any non-null node `v`, if `v->right` is non-null then `v->right->parent == v`
+- the root satisfies `root->parent == NULL`
+
+Rotations are the critical stress point: a single missed parent update introduces aliasing bugs that can remain latent until a long traversal triggers a cycle.
+
+### Algorithms
+
+#### Successor via parent pointers
+
+If `x` has a right subtree, the successor is the minimum node in that right subtree. Otherwise, climb to the first ancestor for which `x` lies in its left subtree.
+
+Pseudocode:
+
+```
+SUCCESSOR(x):
+  if x.right != NIL:
+    return MINIMUM(x.right)
+  y := x.parent
+  while y != NIL and x == y.right:
+    x := y
+    y := y.parent
+  return y
 ```
 
-### Bonus Points: +10
+The predecessor is symmetric.
+
+### Testing expectations
+
+A minimal iterator test is:
+
+1. insert a known set of keys
+2. compute `min = MINIMUM(root)`
+3. repeatedly apply `NEXT(min)` until `NULL`
+4. verify the printed sequence is strictly increasing and has the correct cardinality
 
 ---
 
-## ⭐ Challenge 2: AVL Tree Serialisation (Difficulty: Medium)
+## Challenge 2: Serialisation and deserialisation
 
-### Description
+### Motivation
 
-Implement functions to serialise an AVL tree to a file and deserialise it back. The tree structure must be preserved exactly.
+Serialisation forces you to distinguish *tree content* (the key set) from *tree shape* (the structure induced by balancing and insertion order). A content-only dump is trivial but does not preserve shape. This challenge requires shape preservation.
 
-### Requirements
+### Required behaviour
 
-1. Serialise tree to binary file (compact format)
-2. Deserialise tree from binary file
-3. Handle empty trees
-4. Verify tree is valid AVL after deserialisation
-5. Support trees up to 1 million nodes
+Implement:
 
-### File Format
+- `avl_serialize(root, FILE *out)`
+- `avl_deserialize(FILE *in)`
+
+such that deserialising immediately after serialising yields a tree that is isomorphic to the original one, including identical keys and identical structure.
+
+### Proposed binary format
+
+One workable representation is a preorder stream augmented with child-existence flags:
 
 ```
-[4 bytes: node count]
-[For each node in preorder:]
-  [4 bytes: key]
-  [1 byte: flags (has_left, has_right)]
+uint32_t node_count
+repeat node_count times:
+  int32_t key
+  uint8_t flags   // bit0: has_left, bit1: has_right
 ```
 
-### Interface
+The preorder order ensures that, when you read a node, you can recursively decide whether to read a left child and whether to read a right child.
 
-```c
-int avl_save(AVLNode *root, const char *filename);
-AVLNode *avl_load(const char *filename);
+### Pseudocode
+
+```
+SERIALISE(v):
+  if v == NIL: return
+  write(v.key)
+  flags := (v.left != NIL) + 2*(v.right != NIL)
+  write(flags)
+  SERIALISE(v.left)
+  SERIALISE(v.right)
+
+DESERIALISE():
+  if stream exhausted: error
+  key := read_int
+  flags := read_byte
+  v := new_node(key)
+  if flags bit0 set: v.left  := DESERIALISE(); v.left.parent := v
+  if flags bit1 set: v.right := DESERIALISE(); v.right.parent := v
+  update_height(v)
+  return v
 ```
 
-### Testing
+### Complexity
 
-```c
-AVLNode *original = /* build tree */;
-avl_save(original, "tree.dat");
-AVLNode *loaded = avl_load("tree.dat");
-assert(trees_equal(original, loaded));
-```
-
-### Bonus Points: +10
+Both procedures are linear in the number of nodes and in the output size. The principal engineering challenge is robust error handling: unexpected EOF, corrupt flags and memory allocation failure.
 
 ---
 
-## ⭐ Challenge 3: Augmented AVL Tree - Order Statistics (Difficulty: Hard)
+### Portability and reproducibility notes
 
-### Description
+When you serialise to a binary stream, you implicitly choose a representation for integers. To prevent accidental non-portability, you should:
 
-Augment the AVL tree to support order statistics queries in O(log n) time. This enables finding the kth smallest element and determining the rank of any element.
+- use fixed-width types (`uint32_t`, `int32_t`) and document the intended byte order
+- define a small header, for example a 4-byte magic string and a 16-bit format version, so that future changes are detectable
+- validate `node_count` against reasonable limits before allocating memory or recursing
 
-### Requirements
+A disciplined strategy is to treat the binary format as an API: state preconditions, postconditions and failure modes.
 
-1. Add a `size` field to each node (number of nodes in subtree)
-2. Maintain size during insertion and deletion
-3. Update size correctly during rotations
-4. Implement `select(k)` - find kth smallest element
-5. Implement `rank(key)` - count elements less than key
+### Minimal validation suite
 
-### Interface
+A robust serialisation implementation is easy to test mechanically:
+
+1. build a tree from a known key set
+2. serialise to a file and then deserialise from that file
+3. validate AVL invariants and then serialise again
+4. compare the two byte streams for equality
+
+If you wish to test structural isomorphism directly, print a preorder traversal that includes explicit `NIL` markers and compare the resulting strings.
+
+---
+
+## Challenge 3: Order statistics
+
+### Motivation
+
+Order statistics extend a balanced BST with two operations:
+
+- `SELECT(i)`: return the i-th smallest key (1-indexed)
+- `RANK(x)`: return the number of keys strictly smaller than `x`
+
+### Augmentation
+
+Add a field `size` storing the cardinality of the subtree rooted at the node:
 
 ```c
 typedef struct AVLNodeOS {
     int key;
     int height;
-    int size;       /* Number of nodes in subtree */
+    int size;
     struct AVLNodeOS *left;
     struct AVLNodeOS *right;
 } AVLNodeOS;
-
-AVLNodeOS *avl_select(AVLNodeOS *root, int k);   /* k is 1-indexed */
-int avl_rank(AVLNodeOS *root, int key);
 ```
 
-### Example
-
-```c
-/* Tree contains: 10, 20, 30, 40, 50 */
-avl_select(root, 1)->key;   /* Returns 10 (1st smallest) */
-avl_select(root, 3)->key;   /* Returns 30 (3rd smallest) */
-avl_rank(root, 35);         /* Returns 3 (three elements < 35) */
-```
-
-### Bonus Points: +10
-
----
-
-## ⭐ Challenge 4: AVL Tree Merge and Split (Difficulty: Hard)
-
-### Description
-
-Implement efficient merge and split operations for AVL trees. These are fundamental operations for implementing more advanced data structures like ropes and persistent trees.
-
-### Requirements
-
-1. **Split**: Given a tree and a key k, split into two trees:
-   - Left tree contains all keys < k
-   - Right tree contains all keys >= k
-   
-2. **Merge**: Given two trees where all keys in T1 < all keys in T2, merge into one balanced tree
-
-3. Both operations should be O(log n)
-
-### Interface
-
-```c
-typedef struct SplitResult {
-    AVLNode *left;
-    AVLNode *right;
-} SplitResult;
-
-SplitResult avl_split(AVLNode *root, int key);
-AVLNode *avl_merge(AVLNode *left, AVLNode *right);
-```
-
-### Testing
-
-```c
-/* Original: 1, 2, 3, 4, 5, 6, 7 */
-SplitResult sr = avl_split(root, 4);
-/* sr.left: 1, 2, 3 */
-/* sr.right: 4, 5, 6, 7 */
-
-AVLNode *merged = avl_merge(sr.left, sr.right);
-/* merged: 1, 2, 3, 4, 5, 6, 7 */
-```
-
-### Bonus Points: +10
-
----
-
-## ⭐ Challenge 5: AVL Tree vs Red-Black Tree Benchmark (Difficulty: Medium)
-
-### Description
-
-Implement a Red-Black tree and conduct a comprehensive performance comparison with AVL trees. This provides insight into why different libraries choose different self-balancing trees.
-
-### Requirements
-
-1. Implement a basic Red-Black tree (insert, delete, search)
-2. Create a benchmarking framework
-3. Test with various workloads:
-   - Random insertions
-   - Sorted insertions
-   - Mixed insert/delete/search
-   - Read-heavy workload
-   - Write-heavy workload
-4. Measure:
-   - Number of rotations
-   - Total comparisons
-   - Wall-clock time
-5. Generate a comparison report
-
-### Output Format
+Maintain `size` under insertion, deletion and rotations:
 
 ```
-=== AVL vs Red-Black Tree Benchmark ===
-
-Test: 100,000 random insertions
-                    AVL         Red-Black
-  Rotations:        45,231      31,456
-  Comparisons:      1,723,456   1,834,212
-  Time (ms):        45          42
-  Final Height:     17          19
-
-Test: 100,000 sorted insertions
-  ...
-
-Test: 80% search, 10% insert, 10% delete
-  ...
-
-Conclusion:
-  AVL performs better for: read-heavy workloads
-  Red-Black performs better for: write-heavy workloads
+size(v) = 1 + size(v.left) + size(v.right)
 ```
 
-### Bonus Points: +10
+### Algorithms
+
+#### Select
+
+```
+SELECT(v, i):
+  if v == NIL: return NIL
+  L := size(v.left)
+  if i == L + 1: return v
+  if i <= L:     return SELECT(v.left, i)
+  else:          return SELECT(v.right, i - L - 1)
+```
+
+#### Rank
+
+```
+RANK(v, x):
+  if v == NIL: return 0
+  if x <= v.key: return RANK(v.left, x)
+  else: return size(v.left) + 1 + RANK(v.right, x)
+```
+
+Both run in `O(h)` time and therefore in `O(log n)` worst case for AVL trees.
+
+### Validation
+
+Extend your validation routine to check that every stored `size` equals the computed subtree size. This catches the common rotation bug where heights are updated but sizes are not.
 
 ---
 
-## 📊 Bonus Point System
+## Challenge 4: Join and split
 
-| Challenges Completed | Total Bonus |
-|---------------------|-------------|
-| 1 | +10 points |
-| 2 | +20 points |
-| 3 | +30 points |
-| 4 | +40 points |
-| All 5 | +50 points + "AVL Master" badge 🏆 |
+### Motivation
 
----
+Set operations over ordered dictionaries are more efficient when you can combine and separate balanced trees without inserting elements one by one.
 
-## 📝 Submission Guidelines
+Define:
 
-1. Create separate files for each challenge:
-   - `challenge1_parent.c`
-   - `challenge2_serialise.c`
-   - `challenge3_orderstats.c`
-   - `challenge4_mergesplit.c`
-   - `challenge5_benchmark.c`
+- `JOIN(T1, k, T2)` where all keys in `T1` are `< k` and all keys in `T2` are `> k`
+- `SPLIT(T, k)` returning two trees `(L, R)` where all keys in `L` are `< k` and all keys in `R` are `> k` (you may also return whether `k` existed)
 
-2. Include a `CHALLENGES.md` file explaining:
-   - Which challenges you attempted
-   - Your approach for each
-   - Any known limitations
+### High-level approach
 
-3. All code must compile without warnings
+A standard join strategy is:
 
-4. Include test cases demonstrating functionality
+1. if `height(T1) > height(T2) + 1`, recurse into `T1.right` and join there
+2. if `height(T2) > height(T1) + 1`, recurse into `T2.left` and join there
+3. otherwise create a new root with key `k`, attach `T1` and `T2` as children and rebalance
+
+This yields `O(|height(T1) − height(T2)|)` rebalancing cost.
 
 ---
 
-## 💡 Hints
+## Challenge 5: Empirical study of update costs
 
-### Challenge 1 (Parent Pointers)
-- The tricky part is updating parents during rotations
-- Draw diagrams showing before/after pointer states
-- Test with single rotations before double rotations
+### Aim
 
-### Challenge 2 (Serialisation)
-- Preorder traversal preserves structure when deserialising
-- Be careful with endianness if targeting multiple platforms
-- Consider using a text format first, then optimise to binary
+Design a small experimental study that measures:
 
-### Challenge 3 (Order Statistics)
-- The size of a node = 1 + size(left) + size(right)
-- For select(k): compare k with size(left)+1
-- For rank: sum sizes of all left subtrees along the search path
+- height evolution under different insertion sequences
+- number of rotations per update
+- amortised behaviour under mixed insertions and deletions
 
-### Challenge 4 (Merge/Split)
-- Split is recursive: split left or right based on key
-- Merge uses the "join" operation with the smaller tree's root
-- AVL join is O(|height difference|)
+You may compare your AVL implementation against:
 
-### Challenge 5 (Benchmark)
-- Use `clock()` or `gettimeofday()` for timing
-- Run each test multiple times and average
-- Control for system load (close other applications)
+- an unbalanced BST
+- a red-black tree implementation (if you have one)
+
+The emphasis is methodological: describe the workload distributions, justify metrics and report results with clear plots or tables.
 
 ---
 
-## 📚 References
+## References
 
-For those attempting the advanced challenges, these resources may be helpful:
-
-1. **Order Statistics Trees**: CLRS Chapter 14.1
-2. **Red-Black Trees**: CLRS Chapter 13
-3. **Tree Merge/Split**: "Purely Functional Data Structures" by Okasaki
-4. **Benchmarking Methodology**: "The Art of Computer Programming" Vol 3
-
----
-
-*"The expert in anything was once a beginner." — Helen Hayes*
-
-*Good luck with the challenges! 🚀*
+| Reference (APA 7th) | DOI |
+|---|---|
+| Amani, M., Lai, K. A., & Tarjan, R. E. (2016). *Amortized rotation cost in AVL trees*. *Information Processing Letters, 116*(5), 327–330. | https://doi.org/10.1016/j.ipl.2015.12.009 |
+| Driscoll, J. R., Sarnak, N., Sleator, D. D., & Tarjan, R. E. (1989). Making data structures persistent. *Journal of Computer and System Sciences, 38*(1), 86–124. | https://doi.org/10.1016/0022-0000(89)90034-2 |
+| Guibas, L. J., & Sedgewick, R. (1978). *A dichromatic framework for balanced trees* (FOCS 1978, pp. 8–21). IEEE. | https://doi.org/10.1109/SFCS.1978.3 |
+| Tarjan, R. E. (1983). Updating a balanced search tree in O(1) rotations. *Information Processing Letters, 16*(5), 253–257. | https://doi.org/10.1016/0020-0190(83)90099-6 |

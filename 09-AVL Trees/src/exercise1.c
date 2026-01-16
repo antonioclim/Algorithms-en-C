@@ -3,120 +3,82 @@
  * EXERCISE 1: AVL Tree Foundation
  * =============================================================================
  *
- * OBJECTIVE:
- *   Implement a basic AVL tree with insertion and all four rotation types.
- *   This exercise focuses on understanding the core balancing mechanism.
+ * This programme is intentionally minimalist in its public interface and
+ * intentionally rigorous in its internal invariants.
  *
- * REQUIREMENTS:
- *   1. Complete the AVLNode structure definition
- *   2. Implement height() and balance_factor() utility functions
- *   3. Implement right rotation (rotate_right)
- *   4. Implement left rotation (rotate_left)
- *   5. Implement the rebalance() function
- *   6. Implement avl_insert() with automatic rebalancing
- *   7. Implement inorder traversal to verify BST property
- *   8. Test with sequences that trigger all four rotation cases
+ * The implementation provides:
+ *   - AVL insertion with single and double rotations (LL, RR, LR, RL)
+ *   - structural validation (BST ordering, AVL balance and stored heights)
+ *   - an in-order traversal printer used as an observational oracle
  *
- * EXAMPLE INPUT:
- *   Insert sequence: 30, 20, 10 (triggers LL case)
- *   Insert sequence: 10, 20, 30 (triggers RR case)
- *   Insert sequence: 30, 10, 20 (triggers LR case)
- *   Insert sequence: 10, 30, 20 (triggers RL case)
+ * The repository's automated tests supply the input on standard input.
+ * The required output format is a deterministic transcript that is compared
+ * byte-for-byte against a golden file.
  *
- * EXPECTED OUTPUT:
- *   After each insertion sequence, tree should be balanced with:
- *   - All balance factors in {-1, 0, +1}
- *   - Inorder traversal produces sorted output
+ * Input format (per test case):
+ *   <LABEL>\n
+ *   <SPACE-SEPARATED-INTEGERS>\n
  *
- * COMPILATION: gcc -Wall -Wextra -std=c11 -o exercise1 exercise1.c
+ * Example:
+ *   LL
+ *   30 20 10
+ *
+ * Compilation:
+ *   gcc -Wall -Wextra -std=c11 -o exercise1 exercise1.c
  *
  * =============================================================================
  */
 
+#include <ctype.h>
+#include <limits.h>
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <stdbool.h>
+#include <string.h>
 
 /* =============================================================================
  * TYPE DEFINITIONS
  * =============================================================================
  */
 
-/**
- * TODO 1: Complete the AVLNode structure
- *
- * An AVL node should contain:
- * - An integer key
- * - An integer height (height of subtree rooted at this node)
- * - A pointer to the left child
- * - A pointer to the right child
- *
- * Hint: Use 'struct AVLNode *' for the child pointers
- */
 typedef struct AVLNode {
-    /* YOUR CODE HERE */
-    
+    int key;
+    int height; /* height of subtree rooted at this node; height(NULL) = -1 */
+    struct AVLNode *left;
+    struct AVLNode *right;
 } AVLNode;
+
+/* Optional instrumentation. Kept silent by default because the transcript-based
+ * test harness treats any extra output as a failure.
+ */
+static bool g_verbose = false;
+static unsigned long long g_rotation_count = 0ULL;
 
 /* =============================================================================
  * UTILITY FUNCTIONS
  * =============================================================================
  */
 
-/**
- * TODO 2: Implement the height function
- *
- * Returns the height of the given node.
- * Convention: height(NULL) = -1, height(leaf) = 0
- *
- * @param node Pointer to the node (may be NULL)
- * @return Height of the node, or -1 if NULL
- *
- * Hint: This is a simple function - just handle the NULL case
- *       and return the stored height otherwise.
- */
-int height(AVLNode *node) {
-    /* YOUR CODE HERE */
-    return 0;  /* Replace this */
+static int avl_height(const AVLNode *node) {
+    return (node == NULL) ? -1 : node->height;
 }
 
-/**
- * TODO 3: Implement the balance_factor function
- *
- * Calculates the balance factor of a node.
- * balance_factor = height(left) - height(right)
- *
- * @param node Pointer to the node (may be NULL)
- * @return Balance factor, or 0 if NULL
- *
- * Valid AVL balance factors: {-1, 0, +1}
- * +2 means left-heavy (needs right rotation)
- * -2 means right-heavy (needs left rotation)
- */
-int balance_factor(AVLNode *node) {
-    /* YOUR CODE HERE */
-    return 0;  /* Replace this */
+static int avl_balance_factor(const AVLNode *node) {
+    if (node == NULL) return 0;
+    return avl_height(node->left) - avl_height(node->right);
 }
 
-/**
- * Helper function to update the height of a node
- * (Provided for you)
- */
-void update_height(AVLNode *node) {
+static void avl_update_height(AVLNode *node) {
     if (node == NULL) return;
-    int left_h = height(node->left);
-    int right_h = height(node->right);
-    node->height = 1 + (left_h > right_h ? left_h : right_h);
+    int lh = avl_height(node->left);
+    int rh = avl_height(node->right);
+    node->height = 1 + (lh > rh ? lh : rh);
 }
 
-/**
- * Helper function to create a new node
- * (Provided for you)
- */
-AVLNode *create_node(int key) {
-    AVLNode *node = (AVLNode *)malloc(sizeof(AVLNode));
+static AVLNode *avl_create_node(int key) {
+    AVLNode *node = (AVLNode *)malloc(sizeof(*node));
     if (node == NULL) {
-        fprintf(stderr, "Memory allocation failed\n");
+        fprintf(stderr, "Error: memory allocation failed\n");
         exit(EXIT_FAILURE);
     }
     node->key = key;
@@ -131,102 +93,68 @@ AVLNode *create_node(int key) {
  * =============================================================================
  */
 
-/**
- * TODO 4: Implement right rotation (for LL case)
- *
- * Performs a right rotation on the given node.
- * 
- *       y                x
- *      / \              / \
- *     x   C    --->    A   y
- *    / \                  / \
- *   A   B                B   C
- *
- * @param y The node to rotate (becomes right child)
- * @return The new root of the subtree (x)
- *
- * Steps:
- *   1. Save y's left child as x (x will become new root)
- *   2. Save x's right child as B (B will move)
- *   3. Make y the right child of x
- *   4. Make B the left child of y
- *   5. Update heights (y first, then x - order matters!)
- *   6. Return x (new root)
- */
-AVLNode *rotate_right(AVLNode *y) {
-    printf("  Performing RIGHT rotation on %d\n", y->key);
-    
-    /* YOUR CODE HERE */
-    
-    return NULL;  /* Replace with new root */
+static AVLNode *avl_rotate_right(AVLNode *y) {
+    if (g_verbose) {
+        printf("  Performing RIGHT rotation on %d\n", y->key);
+    }
+    g_rotation_count++;
+
+    AVLNode *x = y->left;
+    AVLNode *B = x->right;
+
+    x->right = y;
+    y->left = B;
+
+    /* Heights must be updated bottom-up: first the demoted node then the new root. */
+    avl_update_height(y);
+    avl_update_height(x);
+
+    return x;
 }
 
-/**
- * TODO 5: Implement left rotation (for RR case)
- *
- * Performs a left rotation on the given node.
- *
- *     x                    y
- *    / \                  / \
- *   A   y      --->      x   C
- *      / \              / \
- *     B   C            A   B
- *
- * @param x The node to rotate (becomes left child)
- * @return The new root of the subtree (y)
- *
- * Steps:
- *   1. Save x's right child as y (y will become new root)
- *   2. Save y's left child as B (B will move)
- *   3. Make x the left child of y
- *   4. Make B the right child of x
- *   5. Update heights (x first, then y - order matters!)
- *   6. Return y (new root)
- */
-AVLNode *rotate_left(AVLNode *x) {
-    printf("  Performing LEFT rotation on %d\n", x->key);
-    
-    /* YOUR CODE HERE */
-    
-    return NULL;  /* Replace with new root */
+static AVLNode *avl_rotate_left(AVLNode *x) {
+    if (g_verbose) {
+        printf("  Performing LEFT rotation on %d\n", x->key);
+    }
+    g_rotation_count++;
+
+    AVLNode *y = x->right;
+    AVLNode *B = y->left;
+
+    y->left = x;
+    x->right = B;
+
+    avl_update_height(x);
+    avl_update_height(y);
+
+    return y;
 }
 
-/* =============================================================================
- * REBALANCING
- * =============================================================================
- */
+static AVLNode *avl_rebalance(AVLNode *node) {
+    if (node == NULL) return NULL;
 
-/**
- * TODO 6: Implement the rebalance function
- *
- * Checks if a node is unbalanced and performs the appropriate rotation(s).
- *
- * @param node The node to check and potentially rebalance
- * @return The root of the (potentially rotated) subtree
- *
- * Cases:
- *   - bf > 1 (left-heavy):
- *       - If left child bf < 0: LR case (left rotate left child first)
- *       - Otherwise: LL case
- *       - Then right rotate the node
- *
- *   - bf < -1 (right-heavy):
- *       - If right child bf > 0: RL case (right rotate right child first)
- *       - Otherwise: RR case
- *       - Then left rotate the node
- *
- * Steps:
- *   1. Handle NULL case
- *   2. Update height of current node
- *   3. Calculate balance factor
- *   4. If bf > 1: handle left-heavy case
- *   5. If bf < -1: handle right-heavy case
- *   6. Return node (possibly rotated)
- */
-AVLNode *rebalance(AVLNode *node) {
-    /* YOUR CODE HERE */
-    
-    return node;  /* Replace with proper implementation */
+    avl_update_height(node);
+    int bf = avl_balance_factor(node);
+
+    if (bf > 1) {
+        /* Left-heavy: LL or LR. */
+        if (avl_balance_factor(node->left) < 0) {
+            /* LR: rotate left at child then right at node. */
+            node->left = avl_rotate_left(node->left);
+        }
+        return avl_rotate_right(node);
+    }
+
+    if (bf < -1) {
+        /* Right-heavy: RR or RL. */
+        if (avl_balance_factor(node->right) > 0) {
+            /* RL: rotate right at child then left at node. */
+            node->right = avl_rotate_right(node->right);
+        }
+        return avl_rotate_left(node);
+    }
+
+    return node;
 }
 
 /* =============================================================================
@@ -234,231 +162,210 @@ AVLNode *rebalance(AVLNode *node) {
  * =============================================================================
  */
 
-/**
- * TODO 7: Implement AVL insertion
- *
- * Inserts a key into the AVL tree, maintaining balance.
- *
- * @param node Current root of subtree
- * @param key Key to insert
- * @return New root of subtree (may change due to rotations)
- *
- * Steps:
- *   1. If node is NULL, create and return new node
- *   2. If key < node->key, recursively insert into left subtree
- *   3. If key > node->key, recursively insert into right subtree
- *   4. If key == node->key, it's a duplicate - just return node
- *   5. Rebalance and return
- *
- * IMPORTANT: Always capture the return value when recursing!
- *   node->left = avl_insert(node->left, key);  // Correct
- *   avl_insert(node->left, key);               // WRONG!
- */
-AVLNode *avl_insert(AVLNode *node, int key) {
-    /* YOUR CODE HERE */
-    
-    return NULL;  /* Replace with proper implementation */
-}
-
-/* =============================================================================
- * TRAVERSAL
- * =============================================================================
- */
-
-/**
- * TODO 8: Implement inorder traversal
- *
- * Prints all keys in sorted order (Left, Root, Right)
- *
- * @param node Root of subtree to traverse
- *
- * Hint: Recursively traverse left, print current, traverse right
- */
-void avl_inorder(AVLNode *node) {
-    /* YOUR CODE HERE */
-}
-
-/* =============================================================================
- * HELPER FUNCTIONS (PROVIDED)
- * =============================================================================
- */
-
-/**
- * Print tree structure for debugging
- */
-void print_tree_helper(AVLNode *node, int depth, char prefix) {
-    if (node == NULL) return;
-    
-    print_tree_helper(node->right, depth + 1, '/');
-    
-    for (int i = 0; i < depth; i++) printf("    ");
-    printf("%c--[%d](h=%d,bf=%d)\n", 
-           prefix, node->key, node->height, balance_factor(node));
-    
-    print_tree_helper(node->left, depth + 1, '\\');
-}
-
-void print_tree(AVLNode *root) {
-    printf("\nTree structure:\n");
-    if (root == NULL) {
-        printf("  (empty)\n");
-    } else {
-        print_tree_helper(root, 0, '-');
+static AVLNode *avl_insert(AVLNode *node, int key) {
+    if (node == NULL) {
+        return avl_create_node(key);
     }
+
+    if (key < node->key) {
+        node->left = avl_insert(node->left, key);
+    } else if (key > node->key) {
+        node->right = avl_insert(node->right, key);
+    } else {
+        /* Duplicate policy: ignore insertion to preserve strict BST ordering. */
+        return node;
+    }
+
+    return avl_rebalance(node);
+}
+
+/* =============================================================================
+ * OUTPUT HELPERS
+ * =============================================================================
+ */
+
+static void avl_inorder_compact(const AVLNode *node, bool *first) {
+    if (node == NULL) return;
+    avl_inorder_compact(node->left, first);
+    if (*first) {
+        printf("%d", node->key);
+        *first = false;
+    } else {
+        printf(" %d", node->key);
+    }
+    avl_inorder_compact(node->right, first);
+}
+
+static void avl_print_inorder_line(const AVLNode *root) {
+    printf("Inorder: ");
+    bool first = true;
+    avl_inorder_compact(root, &first);
     printf("\n");
 }
 
-/**
- * Free all nodes in the tree
+/* =============================================================================
+ * MEMORY MANAGEMENT
+ * =============================================================================
  */
-void avl_destroy(AVLNode *node) {
+
+static void avl_destroy(AVLNode *node) {
     if (node == NULL) return;
     avl_destroy(node->left);
     avl_destroy(node->right);
     free(node);
 }
 
-/**
- * Validate AVL properties
- */
-bool validate_avl(AVLNode *node) {
-    if (node == NULL) return true;
-    
-    int bf = balance_factor(node);
-    if (bf < -1 || bf > 1) {
-        printf("ERROR: Node %d has invalid balance factor %d\n", node->key, bf);
-        return false;
-    }
-    
-    if (node->left && node->left->key >= node->key) {
-        printf("ERROR: BST property violated at node %d\n", node->key);
-        return false;
-    }
-    
-    if (node->right && node->right->key <= node->key) {
-        printf("ERROR: BST property violated at node %d\n", node->key);
-        return false;
-    }
-    
-    return validate_avl(node->left) && validate_avl(node->right);
-}
-
 /* =============================================================================
- * MAIN PROGRAM - TEST CASES
+ * VALIDATION
  * =============================================================================
  */
 
-int main(void) {
-    printf("╔═══════════════════════════════════════════════════════════════╗\n");
-    printf("║           EXERCISE 1: AVL Tree Foundation                     ║\n");
-    printf("╚═══════════════════════════════════════════════════════════════╝\n\n");
-    
-    AVLNode *root = NULL;
-    
-    /* Test Case 1: LL Case (Right Rotation) */
-    printf("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n");
-    printf("TEST 1: LL Case - Insert 30, 20, 10\n");
-    printf("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n");
-    
-    root = NULL;
-    root = avl_insert(root, 30);
-    root = avl_insert(root, 20);
-    root = avl_insert(root, 10);
-    
-    print_tree(root);
-    printf("Inorder: ");
-    avl_inorder(root);
-    printf("\nValid AVL: %s\n", validate_avl(root) ? "YES" : "NO");
-    avl_destroy(root);
-    
-    /* Test Case 2: RR Case (Left Rotation) */
-    printf("\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n");
-    printf("TEST 2: RR Case - Insert 10, 20, 30\n");
-    printf("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n");
-    
-    root = NULL;
-    root = avl_insert(root, 10);
-    root = avl_insert(root, 20);
-    root = avl_insert(root, 30);
-    
-    print_tree(root);
-    printf("Inorder: ");
-    avl_inorder(root);
-    printf("\nValid AVL: %s\n", validate_avl(root) ? "YES" : "NO");
-    avl_destroy(root);
-    
-    /* Test Case 3: LR Case (Left-Right Double Rotation) */
-    printf("\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n");
-    printf("TEST 3: LR Case - Insert 30, 10, 20\n");
-    printf("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n");
-    
-    root = NULL;
-    root = avl_insert(root, 30);
-    root = avl_insert(root, 10);
-    root = avl_insert(root, 20);
-    
-    print_tree(root);
-    printf("Inorder: ");
-    avl_inorder(root);
-    printf("\nValid AVL: %s\n", validate_avl(root) ? "YES" : "NO");
-    avl_destroy(root);
-    
-    /* Test Case 4: RL Case (Right-Left Double Rotation) */
-    printf("\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n");
-    printf("TEST 4: RL Case - Insert 10, 30, 20\n");
-    printf("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n");
-    
-    root = NULL;
-    root = avl_insert(root, 10);
-    root = avl_insert(root, 30);
-    root = avl_insert(root, 20);
-    
-    print_tree(root);
-    printf("Inorder: ");
-    avl_inorder(root);
-    printf("\nValid AVL: %s\n", validate_avl(root) ? "YES" : "NO");
-    avl_destroy(root);
-    
-    /* Test Case 5: Larger tree */
-    printf("\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n");
-    printf("TEST 5: Larger tree - Insert 50, 30, 70, 20, 40, 60, 80\n");
-    printf("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n");
-    
-    root = NULL;
-    int values[] = {50, 30, 70, 20, 40, 60, 80};
-    int n = sizeof(values) / sizeof(values[0]);
-    
-    for (int i = 0; i < n; i++) {
-        printf("Inserting %d...\n", values[i]);
-        root = avl_insert(root, values[i]);
+static int avl_validate_rec(const AVLNode *node, long long min_key, long long max_key, bool *ok) {
+    if (node == NULL) return -1;
+
+    if (!(*ok)) return -1; /* fast-fail once invalid */
+
+    if ((long long)node->key <= min_key || (long long)node->key >= max_key) {
+        *ok = false;
+        return -1;
     }
-    
-    print_tree(root);
-    printf("Inorder: ");
-    avl_inorder(root);
-    printf("\nValid AVL: %s\n", validate_avl(root) ? "YES" : "NO");
-    avl_destroy(root);
-    
-    printf("\n╔═══════════════════════════════════════════════════════════════╗\n");
-    printf("║                    Exercise Complete                          ║\n");
-    printf("╚═══════════════════════════════════════════════════════════════╝\n");
-    
+
+    int lh = avl_validate_rec(node->left, min_key, node->key, ok);
+    int rh = avl_validate_rec(node->right, node->key, max_key, ok);
+
+    int bf = lh - rh;
+    if (bf < -1 || bf > 1) {
+        *ok = false;
+        return -1;
+    }
+
+    int expected_h = 1 + (lh > rh ? lh : rh);
+    if (node->height != expected_h) {
+        *ok = false;
+        return -1;
+    }
+
+    return expected_h;
+}
+
+static bool avl_is_valid(const AVLNode *root) {
+    bool ok = true;
+    (void)avl_validate_rec(root, LLONG_MIN, LLONG_MAX, &ok);
+    return ok;
+}
+
+/* =============================================================================
+ * PARSING HELPERS
+ * =============================================================================
+ */
+
+static void trim_in_place(char *s) {
+    if (s == NULL) return;
+
+    /* Left trim */
+    size_t i = 0;
+    while (s[i] != '\0' && isspace((unsigned char)s[i])) i++;
+    if (i > 0) {
+        memmove(s, s + i, strlen(s + i) + 1);
+    }
+
+    /* Right trim */
+    size_t n = strlen(s);
+    while (n > 0 && isspace((unsigned char)s[n - 1])) {
+        s[n - 1] = '\0';
+        n--;
+    }
+}
+
+static size_t parse_ints_from_line(const char *line, int *out, size_t cap) {
+    if (line == NULL || out == NULL || cap == 0) return 0;
+
+    char buf[1024];
+    snprintf(buf, sizeof(buf), "%s", line);
+
+    size_t count = 0;
+    for (char *tok = strtok(buf, " \t"); tok != NULL; tok = strtok(NULL, " \t")) {
+        if (count >= cap) break;
+        char *endptr = NULL;
+        long v = strtol(tok, &endptr, 10);
+        if (endptr == tok || *endptr != '\0') continue;
+        out[count++] = (int)v;
+    }
+
+    return count;
+}
+
+static void print_values_commas(const int *values, size_t n) {
+    for (size_t i = 0; i < n; i++) {
+        if (i > 0) printf(", ");
+        printf("%d", values[i]);
+    }
+}
+
+/* =============================================================================
+ * MAIN PROGRAM
+ * =============================================================================
+ */
+
+int main(int argc, char **argv) {
+    /* Optional flags:
+     *   --verbose enables rotation logging.
+     */
+    for (int i = 1; i < argc; i++) {
+        if (strcmp(argv[i], "--verbose") == 0) {
+            g_verbose = true;
+        }
+    }
+
+    char label[128];
+    char numbers_line[1024];
+
+    int test_index = 1;
+
+    while (fgets(label, sizeof(label), stdin) != NULL) {
+        trim_in_place(label);
+        if (label[0] == '\0') continue;
+
+        if (fgets(numbers_line, sizeof(numbers_line), stdin) == NULL) {
+            break;
+        }
+        trim_in_place(numbers_line);
+
+        int values[512];
+        size_t n = parse_ints_from_line(numbers_line, values, sizeof(values) / sizeof(values[0]));
+
+        AVLNode *root = NULL;
+        g_rotation_count = 0ULL;
+
+        for (size_t i = 0; i < n; i++) {
+            root = avl_insert(root, values[i]);
+        }
+
+        if (test_index >= 1 && test_index <= 4) {
+            printf("TEST %d: %s Case - Insert ", test_index, label);
+            print_values_commas(values, n);
+            printf("\n");
+
+            avl_print_inorder_line(root);
+            printf("Valid AVL: %s\n", avl_is_valid(root) ? "YES" : "NO");
+            printf("Root: %d, Height: %d\n", root ? root->key : 0, avl_height(root));
+            printf("\n");
+        } else if (test_index == 5) {
+            printf("TEST 5: Larger tree\n");
+            avl_print_inorder_line(root);
+            printf("Valid AVL: %s\n", avl_is_valid(root) ? "YES" : "NO");
+            printf("Height: %d\n", avl_height(root));
+        } else {
+            /* Generic fallback in case additional test cases are appended. */
+            printf("TEST %d: %s\n", test_index, label);
+            avl_print_inorder_line(root);
+            printf("Valid AVL: %s\n", avl_is_valid(root) ? "YES" : "NO");
+            printf("Height: %d\n", avl_height(root));
+        }
+
+        avl_destroy(root);
+        test_index++;
+    }
+
     return 0;
 }
-
-/* =============================================================================
- * BONUS CHALLENGES (Optional)
- * =============================================================================
- *
- * 1. Add a counter to track the number of rotations performed
- *
- * 2. Implement a function to check if a specific key exists in the tree
- *
- * 3. Implement level-order (BFS) traversal using a queue
- *
- * 4. Add support for storing additional data with each key (key-value pairs)
- *
- * 5. Implement a function to find the kth smallest element
- *
- * =============================================================================
- */

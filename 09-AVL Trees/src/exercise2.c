@@ -3,74 +3,70 @@
  * EXERCISE 2: AVL Tree Advanced Operations
  * =============================================================================
  *
- * OBJECTIVE:
- *   Extend your AVL tree implementation with deletion, search operations
- *   and range queries. This exercise focuses on more complex tree manipulation.
+ * This programme extends the Week 09 AVL implementation with deletion and
+ * order-aware queries (successor, predecessor and range enumeration).
  *
- * REQUIREMENTS:
- *   1. Implement avl_find_min() and avl_find_max()
- *   2. Implement avl_search() for key lookup
- *   3. Implement avl_delete() with proper rebalancing
- *   4. Implement avl_predecessor() and avl_successor()
- *   5. Implement avl_range_query() to find keys in [low, high]
- *   6. Implement avl_count_nodes() and avl_get_height()
- *   7. Implement avl_destroy() for memory cleanup
- *   8. Add validation to verify AVL property after operations
+ * The implementation is designed to be assessed through deterministic
+ * transcript testing: a command script is supplied on standard input and the
+ * programme prints an exact textual contract.
  *
- * EXAMPLE INPUT:
- *   Build tree: 50, 30, 70, 20, 40, 60, 80, 10, 25, 35, 45
- *   Delete: 70, then 50
- *   Range query: [25, 60]
+ * Supported commands (as used by tests/test2_input.txt):
+ *   BUILD\n<space-separated keys>\n
+ *   SEARCH\n<key>\n
+ *   MIN\n
+ *   MAX\n
+ *   SUCCESSOR\n<key>\n
+ *   PREDECESSOR\n<key>\n
+ *   RANGE\n<low high>\n
+ *   DELETE\n<key>\n
  *
- * EXPECTED OUTPUT:
- *   Tree remains balanced after each deletion
- *   Range query returns: 25, 30, 35, 40, 45, 50, 60
- *
- * COMPILATION: gcc -Wall -Wextra -std=c11 -o exercise2 exercise2.c
+ * Compilation:
+ *   gcc -Wall -Wextra -std=c11 -o exercise2 exercise2.c
  *
  * =============================================================================
  */
 
+#include <ctype.h>
+#include <limits.h>
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <stdbool.h>
+#include <string.h>
 
 /* =============================================================================
- * TYPE DEFINITIONS (PROVIDED)
+ * DATA STRUCTURE
  * =============================================================================
  */
 
 typedef struct AVLNode {
     int key;
-    int height;
+    int height; /* height of subtree rooted at this node, where height(NULL) = -1 */
     struct AVLNode *left;
     struct AVLNode *right;
 } AVLNode;
 
 /* =============================================================================
- * UTILITY FUNCTIONS (PROVIDED)
+ * CORE UTILITIES
  * =============================================================================
  */
 
-int height(AVLNode *node) {
-    if (node == NULL) return -1;
-    return node->height;
+static int avl_height(const AVLNode *node) {
+    return (node == NULL) ? -1 : node->height;
 }
 
-int balance_factor(AVLNode *node) {
-    if (node == NULL) return 0;
-    return height(node->left) - height(node->right);
+static int avl_balance_factor(const AVLNode *node) {
+    return (node == NULL) ? 0 : (avl_height(node->left) - avl_height(node->right));
 }
 
-void update_height(AVLNode *node) {
+static void avl_update_height(AVLNode *node) {
     if (node == NULL) return;
-    int left_h = height(node->left);
-    int right_h = height(node->right);
-    node->height = 1 + (left_h > right_h ? left_h : right_h);
+    int lh = avl_height(node->left);
+    int rh = avl_height(node->right);
+    node->height = 1 + (lh > rh ? lh : rh);
 }
 
-AVLNode *create_node(int key) {
-    AVLNode *node = (AVLNode *)malloc(sizeof(AVLNode));
+static AVLNode *avl_create_node(int key) {
+    AVLNode *node = (AVLNode *)malloc(sizeof(*node));
     if (node == NULL) {
         fprintf(stderr, "Memory allocation failed\n");
         exit(EXIT_FAILURE);
@@ -83,73 +79,71 @@ AVLNode *create_node(int key) {
 }
 
 /* =============================================================================
- * ROTATIONS (PROVIDED)
+ * ROTATIONS AND REBALANCING
  * =============================================================================
  */
 
-AVLNode *rotate_right(AVLNode *y) {
+static AVLNode *avl_rotate_right(AVLNode *y) {
     AVLNode *x = y->left;
     AVLNode *B = x->right;
-    
+
     x->right = y;
     y->left = B;
-    
-    update_height(y);
-    update_height(x);
-    
+
+    avl_update_height(y);
+    avl_update_height(x);
+
     return x;
 }
 
-AVLNode *rotate_left(AVLNode *x) {
+static AVLNode *avl_rotate_left(AVLNode *x) {
     AVLNode *y = x->right;
     AVLNode *B = y->left;
-    
+
     y->left = x;
     x->right = B;
-    
-    update_height(x);
-    update_height(y);
-    
+
+    avl_update_height(x);
+    avl_update_height(y);
+
     return y;
 }
 
-AVLNode *rebalance(AVLNode *node) {
+static AVLNode *avl_rebalance(AVLNode *node) {
     if (node == NULL) return NULL;
-    
-    update_height(node);
-    int bf = balance_factor(node);
-    
+
+    avl_update_height(node);
+    int bf = avl_balance_factor(node);
+
     if (bf > 1) {
-        if (balance_factor(node->left) < 0) {
-            node->left = rotate_left(node->left);
+        if (avl_balance_factor(node->left) < 0) {
+            node->left = avl_rotate_left(node->left);
         }
-        return rotate_right(node);
+        return avl_rotate_right(node);
     }
-    
+
     if (bf < -1) {
-        if (balance_factor(node->right) > 0) {
-            node->right = rotate_right(node->right);
+        if (avl_balance_factor(node->right) > 0) {
+            node->right = avl_rotate_right(node->right);
         }
-        return rotate_left(node);
+        return avl_rotate_left(node);
     }
-    
+
     return node;
 }
 
-AVLNode *avl_insert(AVLNode *node, int key) {
-    if (node == NULL) {
-        return create_node(key);
-    }
-    
+static AVLNode *avl_insert(AVLNode *node, int key) {
+    if (node == NULL) return avl_create_node(key);
+
     if (key < node->key) {
         node->left = avl_insert(node->left, key);
     } else if (key > node->key) {
         node->right = avl_insert(node->right, key);
     } else {
-        return node;  /* Duplicate */
+        return node; /* duplicate policy: ignore */
     }
-    
-    return rebalance(node);
+
+    return avl_rebalance(node);
 }
 
 /* =============================================================================
@@ -157,75 +151,28 @@ AVLNode *avl_insert(AVLNode *node, int key) {
  * =============================================================================
  */
 
-/**
- * TODO 1: Implement avl_find_min
- *
- * Finds the node with the minimum key in the subtree.
- *
- * @param node Root of the subtree
- * @return Pointer to the node with minimum key, or NULL if tree is empty
- *
- * Hint: The minimum is always in the leftmost node.
- *       Keep going left until you can't go left anymore.
- */
-AVLNode *avl_find_min(AVLNode *node) {
-    /* YOUR CODE HERE */
-    
-    return NULL;  /* Replace this */
+static AVLNode *avl_find_min(AVLNode *node) {
+    if (node == NULL) return NULL;
+    while (node->left != NULL) node = node->left;
+    return node;
 }
 
-/**
- * TODO 2: Implement avl_find_max
- *
- * Finds the node with the maximum key in the subtree.
- *
- * @param node Root of the subtree
- * @return Pointer to the node with maximum key, or NULL if tree is empty
- *
- * Hint: The maximum is always in the rightmost node.
- */
-AVLNode *avl_find_max(AVLNode *node) {
-    /* YOUR CODE HERE */
-    
-    return NULL;  /* Replace this */
+static AVLNode *avl_find_max(AVLNode *node) {
+    if (node == NULL) return NULL;
+    while (node->right != NULL) node = node->right;
+    return node;
 }
 
-/**
- * TODO 3: Implement avl_search
- *
- * Searches for a key in the AVL tree.
- *
- * @param node Root of the tree
- * @param key Key to search for
- * @return Pointer to the node if found, NULL otherwise
- *
- * Steps:
- *   1. If node is NULL, return NULL (not found)
- *   2. If key equals node's key, return node (found)
- *   3. If key < node's key, search left subtree
- *   4. If key > node's key, search right subtree
- */
-AVLNode *avl_search(AVLNode *node, int key) {
-    /* YOUR CODE HERE */
-    
-    return NULL;  /* Replace this */
+static AVLNode *avl_search(AVLNode *node, int key) {
+    while (node != NULL) {
+        if (key == node->key) return node;
+        node = (key < node->key) ? node->left : node->right;
+    }
+    return NULL;
 }
 
-/**
- * TODO 4: Implement avl_contains
- *
- * Checks if a key exists in the tree.
- *
- * @param node Root of the tree
- * @param key Key to check
- * @return true if key exists, false otherwise
- *
- * Hint: Use avl_search
- */
-bool avl_contains(AVLNode *node, int key) {
-    /* YOUR CODE HERE */
-    
-    return false;  /* Replace this */
+static bool avl_contains(AVLNode *node, int key) {
+    return avl_search(node, key) != NULL;
 }
 
 /* =============================================================================
@@ -233,205 +180,147 @@ bool avl_contains(AVLNode *node, int key) {
  * =============================================================================
  */
 
-/**
- * TODO 5: Implement avl_delete
- *
- * Deletes a key from the AVL tree, maintaining balance.
- *
- * @param node Root of the subtree
- * @param key Key to delete
- * @return New root of the subtree (may change due to deletion/rotation)
- *
- * Cases:
- *   1. Node not found: return NULL
- *   2. Leaf node (no children): free and return NULL
- *   3. One child: free node and return the child
- *   4. Two children: 
- *      a. Find inorder successor (min in right subtree)
- *      b. Copy successor's key to current node
- *      c. Delete successor from right subtree
- *
- * IMPORTANT: 
- *   - Always rebalance before returning
- *   - Free memory for deleted nodes
- *   - Handle the two-children case carefully
- *
- * Steps:
- *   1. Standard BST search for the key
- *   2. When found, handle the three cases above
- *   3. Rebalance and return
- */
-AVLNode *avl_delete(AVLNode *node, int key) {
-    /* Base case: node not found */
-    if (node == NULL) {
-        return NULL;
-    }
-    
-    /* Search for the node */
+static AVLNode *avl_delete(AVLNode *node, int key) {
+    if (node == NULL) return NULL;
+
     if (key < node->key) {
-        /* TODO 5a: Recursively delete from left subtree */
-        /* YOUR CODE HERE */
-        
-    } else if (key > node->key) {
-        /* TODO 5b: Recursively delete from right subtree */
-        /* YOUR CODE HERE */
-        
-    } else {
-        /* Found the node to delete */
-        
-        /* TODO 5c: Handle case with 0 or 1 child */
-        if (node->left == NULL || node->right == NULL) {
-            /* YOUR CODE HERE */
-            
-        }
-        
-        /* TODO 5d: Handle case with 2 children */
-        /* Find inorder successor, copy key, delete successor */
-        /* YOUR CODE HERE */
-        
+        node->left = avl_delete(node->left, key);
+        return avl_rebalance(node);
     }
-    
-    /* TODO 5e: Rebalance and return */
-    /* YOUR CODE HERE */
-    
-    return node;  /* Replace with proper return */
+
+    if (key > node->key) {
+        node->right = avl_delete(node->right, key);
+        return avl_rebalance(node);
+    }
+
+    /* key == node->key: delete this node */
+    if (node->left == NULL || node->right == NULL) {
+        AVLNode *child = (node->left != NULL) ? node->left : node->right;
+        free(node);
+        return child;
+    }
+
+    /* Two children: replace by inorder successor */
+    AVLNode *succ = avl_find_min(node->right);
+    node->key = succ->key;
+    node->right = avl_delete(node->right, succ->key);
+    return avl_rebalance(node);
 }
 
 /* =============================================================================
- * PREDECESSOR AND SUCCESSOR
+ * SUCCESSOR AND PREDECESSOR
  * =============================================================================
  */
 
-/**
- * TODO 6: Implement avl_successor
- *
- * Finds the inorder successor of the given key.
- * The successor is the smallest key greater than the given key.
- *
- * @param node Root of the tree
- * @param key The key to find successor for
- * @return Pointer to successor node, or NULL if no successor exists
- *
- * Algorithm:
- *   1. Search for the key, keeping track of the last node where we went left
- *   2. If found and has right child, successor is min of right subtree
- *   3. Otherwise, successor is the ancestor where we last went left
- *
- * Hint: Think about two cases:
- *   - Key has right subtree: successor is min of right subtree
- *   - Key has no right subtree: successor is nearest ancestor for which
- *     the key is in the left subtree
- */
-AVLNode *avl_successor(AVLNode *root, int key) {
-    AVLNode *successor = NULL;
-    AVLNode *current = root;
-    
-    /* YOUR CODE HERE */
-    
-    return successor;
+static AVLNode *avl_successor(AVLNode *root, int key) {
+    AVLNode *succ = NULL;
+    AVLNode *cur = root;
+
+    while (cur != NULL) {
+        if (key < cur->key) {
+            succ = cur;
+            cur = cur->left;
+        } else if (key > cur->key) {
+            cur = cur->right;
+        } else {
+            if (cur->right != NULL) {
+                return avl_find_min(cur->right);
+            }
+            break;
+        }
+    }
+
+    return succ;
 }
 
-/**
- * TODO 7: Implement avl_predecessor
- *
- * Finds the inorder predecessor of the given key.
- * The predecessor is the largest key smaller than the given key.
- *
- * @param node Root of the tree
- * @param key The key to find predecessor for
- * @return Pointer to predecessor node, or NULL if no predecessor exists
- *
- * Hint: Mirror of successor logic
- */
-AVLNode *avl_predecessor(AVLNode *root, int key) {
-    AVLNode *predecessor = NULL;
-    AVLNode *current = root;
-    
-    /* YOUR CODE HERE */
-    
-    return predecessor;
+static AVLNode *avl_predecessor(AVLNode *root, int key) {
+    AVLNode *pred = NULL;
+    AVLNode *cur = root;
+
+    while (cur != NULL) {
+        if (key > cur->key) {
+            pred = cur;
+            cur = cur->right;
+        } else if (key < cur->key) {
+            cur = cur->left;
+        } else {
+            if (cur->left != NULL) {
+                return avl_find_max(cur->left);
+            }
+            break;
+        }
+    }
+
+    return pred;
 }
 
 /* =============================================================================
- * RANGE QUERY
+ * RANGE QUERY AND ORDERED PRINTING
  * =============================================================================
  */
 
-/**
- * TODO 8: Implement avl_range_query
- *
- * Finds all keys in the range [low, high] (inclusive).
- * Prints them in sorted order.
- *
- * @param node Root of the tree
- * @param low Lower bound of range
- * @param high Upper bound of range
- *
- * Algorithm (modified inorder traversal):
- *   1. If current key > low, recursively search left subtree
- *   2. If current key is in range [low, high], print it
- *   3. If current key < high, recursively search right subtree
- *
- * This is more efficient than full traversal + filtering!
- */
-void avl_range_query(AVLNode *node, int low, int high) {
-    /* YOUR CODE HERE */
+static void avl_inorder_compact(const AVLNode *node, bool *first) {
+    if (node == NULL) return;
+    avl_inorder_compact(node->left, first);
+    if (*first) {
+        printf("%d", node->key);
+        *first = false;
+    } else {
+        printf(" %d", node->key);
+    }
+    avl_inorder_compact(node->right, first);
+}
+
+static void avl_print_inorder_line(const AVLNode *root) {
+    printf("Inorder: ");
+    bool first = true;
+    avl_inorder_compact(root, &first);
+    printf("\n");
+}
+
+static void avl_range_compact(const AVLNode *node, int low, int high, bool *first) {
+    if (node == NULL) return;
+
+    if (node->key > low) {
+        avl_range_compact(node->left, low, high, first);
+    }
+
+    if (node->key >= low && node->key <= high) {
+        if (*first) {
+            printf("%d", node->key);
+            *first = false;
+        } else {
+            printf(" %d", node->key);
+        }
+    }
+
+    if (node->key < high) {
+        avl_range_compact(node->right, low, high, first);
+    }
+}
+
+static void avl_print_range_line(const AVLNode *root, int low, int high) {
+    printf("RANGE [%d, %d]: ", low, high);
+    bool first = true;
+    avl_range_compact(root, low, high, &first);
+    printf("\n");
 }
 
 /* =============================================================================
- * TREE STATISTICS
+ * STATISTICS AND MEMORY MANAGEMENT
  * =============================================================================
  */
 
-/**
- * TODO 9: Implement avl_count_nodes
- *
- * Counts the total number of nodes in the tree.
- *
- * @param node Root of the tree
- * @return Number of nodes
- */
-int avl_count_nodes(AVLNode *node) {
-    /* YOUR CODE HERE */
-    
-    return 0;  /* Replace this */
+static int avl_count_nodes(const AVLNode *node) {
+    if (node == NULL) return 0;
+    return 1 + avl_count_nodes(node->left) + avl_count_nodes(node->right);
 }
 
-/**
- * TODO 10: Implement avl_get_height
- *
- * Returns the height of the tree.
- *
- * @param node Root of the tree
- * @return Height of tree (-1 for empty tree)
- */
-int avl_get_height(AVLNode *node) {
-    /* YOUR CODE HERE */
-    
-    return -1;  /* Replace this */
-}
-
-/* =============================================================================
- * MEMORY MANAGEMENT
- * =============================================================================
- */
-
-/**
- * TODO 11: Implement avl_destroy
- *
- * Frees all memory used by the tree.
- * Use postorder traversal: delete children before parent.
- *
- * @param node Root of the tree
- *
- * Steps:
- *   1. If node is NULL, return
- *   2. Recursively destroy left subtree
- *   3. Recursively destroy right subtree
- *   4. Free current node
- */
-void avl_destroy(AVLNode *node) {
-    /* YOUR CODE HERE */
+static void avl_destroy(AVLNode *node) {
+    if (node == NULL) return;
+    avl_destroy(node->left);
+    avl_destroy(node->right);
+    free(node);
 }
 
 /* =============================================================================
@@ -439,203 +328,219 @@ void avl_destroy(AVLNode *node) {
  * =============================================================================
  */
 
-/**
- * TODO 12: Implement avl_validate
- *
- * Validates that the tree satisfies both BST and AVL properties.
- *
- * @param node Root of the tree
- * @return true if valid AVL tree, false otherwise
- *
- * Checks:
- *   1. BST property: left < node < right
- *   2. AVL property: |balance factor| <= 1 for all nodes
- *   3. Height values are correct
- */
-bool avl_validate(AVLNode *node) {
-    if (node == NULL) return true;
-    
-    /* Check balance factor */
-    int bf = balance_factor(node);
+static int avl_validate_rec(const AVLNode *node, long long min_key, long long max_key, bool *ok) {
+    if (node == NULL) return -1;
+    if (!(*ok)) return -1;
+
+    if ((long long)node->key <= min_key || (long long)node->key >= max_key) {
+        *ok = false;
+        return -1;
+    }
+
+    int lh = avl_validate_rec(node->left, min_key, node->key, ok);
+    int rh = avl_validate_rec(node->right, node->key, max_key, ok);
+
+    int bf = lh - rh;
     if (bf < -1 || bf > 1) {
-        printf("AVL violation at node %d: bf = %d\n", node->key, bf);
-        return false;
+        *ok = false;
+        return -1;
     }
-    
-    /* Check BST property */
-    if (node->left && node->left->key >= node->key) {
-        printf("BST violation: %d >= %d\n", node->left->key, node->key);
-        return false;
+
+    int expected_h = 1 + (lh > rh ? lh : rh);
+    if (node->height != expected_h) {
+        *ok = false;
+        return -1;
     }
-    if (node->right && node->right->key <= node->key) {
-        printf("BST violation: %d <= %d\n", node->right->key, node->key);
-        return false;
-    }
-    
-    /* Recursively validate subtrees */
-    return avl_validate(node->left) && avl_validate(node->right);
+
+    return expected_h;
+}
+
+static bool avl_is_valid(const AVLNode *root) {
+    bool ok = true;
+    (void)avl_validate_rec(root, LLONG_MIN, LLONG_MAX, &ok);
+    return ok;
 }
 
 /* =============================================================================
- * HELPER FUNCTIONS (PROVIDED)
+ * SCRIPT PARSING
  * =============================================================================
  */
 
-void avl_inorder(AVLNode *node) {
-    if (node == NULL) return;
-    avl_inorder(node->left);
-    printf("%d ", node->key);
-    avl_inorder(node->right);
-}
+typedef enum {
+    GROUP_NONE = 0,
+    GROUP_BUILD,
+    GROUP_SEARCH,
+    GROUP_MINMAX,
+    GROUP_SUCCPRED,
+    GROUP_RANGE,
+    GROUP_DELETE
+} OutputGroup;
 
-void print_tree_helper(AVLNode *node, int depth, char prefix) {
-    if (node == NULL) return;
-    print_tree_helper(node->right, depth + 1, '/');
-    for (int i = 0; i < depth; i++) printf("    ");
-    printf("%c--[%d](h=%d,bf=%d)\n", prefix, node->key, node->height, balance_factor(node));
-    print_tree_helper(node->left, depth + 1, '\\');
-}
+static void trim_in_place(char *s) {
+    if (s == NULL) return;
 
-void print_tree(AVLNode *root) {
-    printf("\nTree structure:\n");
-    if (root == NULL) {
-        printf("  (empty)\n");
-    } else {
-        print_tree_helper(root, 0, '-');
+    /* left trim */
+    size_t i = 0;
+    while (s[i] != '\0' && isspace((unsigned char)s[i])) i++;
+    if (i > 0) memmove(s, s + i, strlen(s + i) + 1);
+
+    /* right trim */
+    size_t n = strlen(s);
+    while (n > 0 && isspace((unsigned char)s[n - 1])) {
+        s[n - 1] = '\0';
+        n--;
     }
-    printf("\n");
+}
+
+static bool read_next_nonempty_line(char *buf, size_t cap) {
+    while (fgets(buf, (int)cap, stdin) != NULL) {
+        trim_in_place(buf);
+        if (buf[0] != '\0') return true;
+    }
+    return false;
+}
+
+static OutputGroup classify_group(const char *cmd) {
+    if (strcmp(cmd, "BUILD") == 0) return GROUP_BUILD;
+    if (strcmp(cmd, "SEARCH") == 0) return GROUP_SEARCH;
+    if (strcmp(cmd, "MIN") == 0 || strcmp(cmd, "MAX") == 0) return GROUP_MINMAX;
+    if (strcmp(cmd, "SUCCESSOR") == 0 || strcmp(cmd, "PREDECESSOR") == 0) return GROUP_SUCCPRED;
+    if (strcmp(cmd, "RANGE") == 0) return GROUP_RANGE;
+    if (strcmp(cmd, "DELETE") == 0) return GROUP_DELETE;
+    return GROUP_NONE;
+}
+
+static size_t parse_ints_from_line(const char *line, int *out, size_t cap) {
+    if (line == NULL) return 0;
+
+    char tmp[2048];
+    strncpy(tmp, line, sizeof(tmp) - 1);
+    tmp[sizeof(tmp) - 1] = '\0';
+
+    size_t n = 0;
+    for (char *tok = strtok(tmp, " \t"); tok != NULL; tok = strtok(NULL, " \t")) {
+        if (n >= cap) break;
+        int v;
+        if (sscanf(tok, "%d", &v) == 1) {
+            out[n++] = v;
+        }
+    }
+
+    return n;
 }
 
 /* =============================================================================
- * MAIN PROGRAM - TEST CASES
+ * MAIN
  * =============================================================================
  */
 
 int main(void) {
-    printf("╔═══════════════════════════════════════════════════════════════╗\n");
-    printf("║         EXERCISE 2: AVL Tree Advanced Operations              ║\n");
-    printf("╚═══════════════════════════════════════════════════════════════╝\n\n");
-    
     AVLNode *root = NULL;
-    
-    /* Build initial tree */
-    printf("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n");
-    printf("Building tree: 50, 30, 70, 20, 40, 60, 80, 10, 25, 35, 45\n");
-    printf("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n");
-    
-    int values[] = {50, 30, 70, 20, 40, 60, 80, 10, 25, 35, 45};
-    int n = sizeof(values) / sizeof(values[0]);
-    
-    for (int i = 0; i < n; i++) {
-        root = avl_insert(root, values[i]);
+
+    OutputGroup last_group = GROUP_NONE;
+
+    char cmd[128];
+    while (read_next_nonempty_line(cmd, sizeof(cmd))) {
+        OutputGroup group = classify_group(cmd);
+
+        if (group == GROUP_NONE) {
+            /* Unknown line: ignore to remain robust to comments or stray text. */
+            continue;
+        }
+
+        /* Insert a blank line between logical output sections.
+           DELETE blocks print their own trailing blank line, hence the guard. */
+        if (group != last_group && last_group != GROUP_NONE && last_group != GROUP_DELETE) {
+            printf("\n");
+        }
+        last_group = group;
+
+        if (strcmp(cmd, "BUILD") == 0) {
+            char keys_line[2048];
+            if (!read_next_nonempty_line(keys_line, sizeof(keys_line))) break;
+
+            printf("BUILD: %s\n", keys_line);
+
+            int values[2048];
+            size_t n = parse_ints_from_line(keys_line, values, sizeof(values) / sizeof(values[0]));
+
+            for (size_t i = 0; i < n; i++) {
+                root = avl_insert(root, values[i]);
+            }
+
+            avl_print_inorder_line(root);
+            printf("Valid AVL: %s\n", avl_is_valid(root) ? "YES" : "NO");
+            continue;
+        }
+
+        if (strcmp(cmd, "SEARCH") == 0) {
+            char key_line[128];
+            if (!read_next_nonempty_line(key_line, sizeof(key_line))) break;
+            int key;
+            if (sscanf(key_line, "%d", &key) != 1) continue;
+            printf("SEARCH %d: %s\n", key, avl_contains(root, key) ? "FOUND" : "NOT FOUND");
+            continue;
+        }
+
+        if (strcmp(cmd, "MIN") == 0) {
+            AVLNode *mn = avl_find_min(root);
+            printf("MIN: %d\n", mn ? mn->key : 0);
+            continue;
+        }
+
+        if (strcmp(cmd, "MAX") == 0) {
+            AVLNode *mx = avl_find_max(root);
+            printf("MAX: %d\n", mx ? mx->key : 0);
+            continue;
+        }
+
+        if (strcmp(cmd, "SUCCESSOR") == 0) {
+            char key_line[128];
+            if (!read_next_nonempty_line(key_line, sizeof(key_line))) break;
+            int key;
+            if (sscanf(key_line, "%d", &key) != 1) continue;
+            AVLNode *succ = avl_successor(root, key);
+            printf("SUCCESSOR of %d: %d\n", key, succ ? succ->key : 0);
+            continue;
+        }
+
+        if (strcmp(cmd, "PREDECESSOR") == 0) {
+            char key_line[128];
+            if (!read_next_nonempty_line(key_line, sizeof(key_line))) break;
+            int key;
+            if (sscanf(key_line, "%d", &key) != 1) continue;
+            AVLNode *pred = avl_predecessor(root, key);
+            printf("PREDECESSOR of %d: %d\n", key, pred ? pred->key : 0);
+            continue;
+        }
+
+        if (strcmp(cmd, "RANGE") == 0) {
+            char bounds_line[128];
+            if (!read_next_nonempty_line(bounds_line, sizeof(bounds_line))) break;
+            int low, high;
+            if (sscanf(bounds_line, "%d %d", &low, &high) != 2) continue;
+            avl_print_range_line(root, low, high);
+            continue;
+        }
+
+        if (strcmp(cmd, "DELETE") == 0) {
+            char key_line[128];
+            if (!read_next_nonempty_line(key_line, sizeof(key_line))) break;
+            int key;
+            if (sscanf(key_line, "%d", &key) != 1) continue;
+
+            printf("DELETE %d:\n", key);
+            root = avl_delete(root, key);
+            printf("Valid AVL: %s\n", avl_is_valid(root) ? "YES" : "NO");
+            avl_print_inorder_line(root);
+            printf("\n");
+            continue;
+        }
     }
-    
-    print_tree(root);
-    printf("Inorder: ");
-    avl_inorder(root);
-    printf("\n");
-    
-    /* Test min/max */
-    printf("\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n");
-    printf("TEST 1: Find Min/Max\n");
-    printf("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n");
-    
-    AVLNode *min_node = avl_find_min(root);
-    AVLNode *max_node = avl_find_max(root);
-    printf("Minimum: %s\n", min_node ? (char[20]){0} : "NULL");
-    if (min_node) printf("Minimum: %d\n", min_node->key);
-    printf("Maximum: %s\n", max_node ? (char[20]){0} : "NULL");
-    if (max_node) printf("Maximum: %d\n", max_node->key);
-    
-    /* Test search */
-    printf("\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n");
-    printf("TEST 2: Search Operations\n");
-    printf("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n");
-    
-    int search_keys[] = {35, 45, 100};
-    for (int i = 0; i < 3; i++) {
-        bool found = avl_contains(root, search_keys[i]);
-        printf("Contains %d: %s\n", search_keys[i], found ? "YES" : "NO");
-    }
-    
-    /* Test successor/predecessor */
-    printf("\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n");
-    printf("TEST 3: Successor and Predecessor\n");
-    printf("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n");
-    
-    int test_key = 40;
-    AVLNode *succ = avl_successor(root, test_key);
-    AVLNode *pred = avl_predecessor(root, test_key);
-    printf("Key: %d\n", test_key);
-    printf("  Successor: %s\n", succ ? (char[20]){0} : "NULL");
-    if (succ) printf("  Successor: %d\n", succ->key);
-    printf("  Predecessor: %s\n", pred ? (char[20]){0} : "NULL");
-    if (pred) printf("  Predecessor: %d\n", pred->key);
-    
-    /* Test range query */
-    printf("\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n");
-    printf("TEST 4: Range Query [25, 60]\n");
-    printf("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n");
-    
-    printf("Keys in range: ");
-    avl_range_query(root, 25, 60);
-    printf("\n");
-    
-    /* Test deletion */
-    printf("\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n");
-    printf("TEST 5: Deletion\n");
-    printf("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n");
-    
-    printf("\nDeleting 70 (leaf node):\n");
-    root = avl_delete(root, 70);
-    print_tree(root);
-    printf("Valid: %s\n", avl_validate(root) ? "YES" : "NO");
-    
-    printf("\nDeleting 30 (node with two children):\n");
-    root = avl_delete(root, 30);
-    print_tree(root);
-    printf("Valid: %s\n", avl_validate(root) ? "YES" : "NO");
-    
-    printf("\nDeleting 50 (root with two children):\n");
-    root = avl_delete(root, 50);
-    print_tree(root);
-    printf("Valid: %s\n", avl_validate(root) ? "YES" : "NO");
-    
-    /* Test statistics */
-    printf("\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n");
-    printf("TEST 6: Tree Statistics\n");
-    printf("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n");
-    
-    printf("Node count: %d\n", avl_count_nodes(root));
-    printf("Tree height: %d\n", avl_get_height(root));
-    
-    /* Cleanup */
-    printf("\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n");
-    printf("Cleaning up...\n");
-    printf("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n");
+
+    printf("Final node count: %d\n", avl_count_nodes(root));
+    printf("Final height: %d\n", avl_height(root));
+
     avl_destroy(root);
-    printf("Memory freed successfully.\n");
-    
-    printf("\n╔═══════════════════════════════════════════════════════════════╗\n");
-    printf("║                    Exercise Complete                          ║\n");
-    printf("╚═══════════════════════════════════════════════════════════════╝\n");
-    
     return 0;
 }
-
-/* =============================================================================
- * BONUS CHALLENGES (Optional)
- * =============================================================================
- *
- * 1. Implement avl_floor(key) - largest key <= given key
- *
- * 2. Implement avl_ceiling(key) - smallest key >= given key
- *
- * 3. Implement avl_rank(key) - number of keys less than given key
- *
- * 4. Implement avl_select(k) - kth smallest key
- *
- * 5. Implement avl_range_count(low, high) - count keys in range
- *
- * =============================================================================
- */

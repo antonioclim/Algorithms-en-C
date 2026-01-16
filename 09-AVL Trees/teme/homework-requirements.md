@@ -1,254 +1,264 @@
 # Week 09 Homework: AVL Trees
 
-## 📋 General Information
+## 1. Administrative parameters
 
-- **Deadline:** End of Week 10
-- **Points:** 100 (10% of final grade)
-- **Language:** C (C11 standard)
-- **Compiler:** GCC with `-Wall -Wextra -std=c11`
-- **Memory:** No memory leaks (verified with Valgrind)
+- **Submission deadline**: end of Week 10 (local course time)
+- **Maximum score**: 100 points (10% of the final module grade)
+- **Implementation language**: C (ISO C11)
+- **Toolchain**: GCC or Clang with warnings enabled (`-Wall -Wextra -std=c11`)
+- **Runtime requirements**: no crashes on valid input and no memory leaks on representative test suites
 
----
+The assessment is designed to reward correctness, robustness, clarity and disciplined engineering practice. Programmes that compile with warnings are considered defect-prone and will be penalised.
 
-## 📝 Homework 1: AVL Tree Dictionary (50 points)
+## 2. Learning objectives
 
-### Description
+On completion of the homework you should be able to:
 
-Implement a dictionary (key-value store) using an AVL tree where keys are strings and values are integers. This simulates a word frequency counter or a simple database index.
+1. implement a height-balanced binary search tree that maintains both ordering and balance invariants under insertion and deletion
+2. reason precisely about algorithmic complexity, especially the relationship between height bounds and operation cost
+3. design deterministic testable command-line programmes that separate core data structure logic from input parsing and output formatting
+4. apply memory safety discipline in C, including ownership, allocation, deallocation and failure handling
 
-### Requirements
+## 3. Homework 1: AVL dictionary with string keys (50 points)
 
-1. **Node Structure** (5 points)
-   - Store a string key (dynamically allocated)
-   - Store an integer value
-   - Maintain AVL tree structure (height, children)
+### 3.1 Problem statement
 
-2. **String Comparison** (5 points)
-   - Use `strcmp()` for key ordering
-   - Handle case sensitivity correctly
+Implement a dictionary (key–value store) backed by an AVL tree, where:
 
-3. **Insertion** (15 points)
-   - Insert new key-value pairs
-   - If key exists, update the value
-   - Maintain AVL balance after insertion
+- keys are null-terminated strings
+- values are integers
+- the ordering relation is lexicographic order induced by `strcmp`
 
-4. **Search** (10 points)
-   - Look up value by key
-   - Return -1 if key not found
-   - Efficient O(log n) lookup
+The data structure shall support insertion, lookup and deletion in `O(log n)` worst-case time measured in the number of comparisons, where `n` is the number of stored key–value pairs.
 
-5. **Deletion** (10 points)
-   - Remove entries by key
-   - Free string memory
-   - Maintain AVL balance after deletion
+### 3.2 Functional specification
 
-6. **Memory Management** (5 points)
-   - No memory leaks
-   - Proper cleanup of all strings
-   - Pass Valgrind check
+#### 3.2.1 Node representation
 
-### Interface
+Each node stores:
+
+- an owning pointer to a dynamically allocated copy of the key
+- the integer value
+- the node height under the same convention used in the weekly exercises (empty tree height `-1`)
+- two child pointers
 
 ```c
 typedef struct DictNode {
-    char *key;
+    char *key;                 /* owning pointer */
     int value;
     int height;
     struct DictNode *left;
     struct DictNode *right;
 } DictNode;
-
-DictNode *dict_insert(DictNode *root, const char *key, int value);
-int dict_get(DictNode *root, const char *key);
-DictNode *dict_delete(DictNode *root, const char *key);
-void dict_destroy(DictNode *root);
-void dict_print(DictNode *root);  /* Inorder traversal */
 ```
 
-### Example Usage
+#### 3.2.2 Public interface
+
+Your submission must implement at least the following functions:
 
 ```c
-DictNode *dict = NULL;
-
-dict = dict_insert(dict, "apple", 5);
-dict = dict_insert(dict, "banana", 3);
-dict = dict_insert(dict, "cherry", 8);
-
-printf("%d\n", dict_get(dict, "banana"));  /* Output: 3 */
-printf("%d\n", dict_get(dict, "grape"));   /* Output: -1 */
-
-dict = dict_delete(dict, "banana");
-printf("%d\n", dict_get(dict, "banana"));  /* Output: -1 */
-
-dict_destroy(dict);
+DictNode *dict_insert(DictNode *root, const char *key, int value);
+int       dict_get(const DictNode *root, const char *key);
+DictNode *dict_delete(DictNode *root, const char *key);
+void      dict_destroy(DictNode *root);
+void      dict_print_inorder(const DictNode *root);
 ```
 
-### File: `homework1_dictionary.c`
+**Semantics**:
 
----
+- `dict_insert` inserts the pair `(key, value)`.
+  - If `key` is absent, allocate a new node with a deep copy of `key`.
+  - If `key` already exists, update the stored value and do not allocate a new key.
+  - Rebalancing must be applied on the search path back to the root.
+- `dict_get` returns the value associated with `key` or `-1` if absent.
+- `dict_delete` removes `key` if present and returns the (possibly new) root.
+  - The key string must be freed when its node is removed.
+  - The tree must remain AVL-balanced.
+- `dict_destroy` frees the entire tree including all key strings.
+- `dict_print_inorder` prints keys in sorted order and may include values.
 
-## 📝 Homework 2: AVL Tree Visualiser (50 points)
+### 3.3 Algorithmic requirements
 
-### Description
+You are expected to reuse the AVL logic from `src/exercise1.c` and `src/exercise2.c` but adapt comparisons to `strcmp`. The rotation patterns are identical. Only the ordering primitive changes.
 
-Create a programme that reads operations from a file, executes them on an AVL tree and produces a visual representation of the tree after each operation.
-
-### Requirements
-
-1. **File Parsing** (10 points)
-   - Read operations from input file
-   - Support: INSERT, DELETE, SEARCH, PRINT, CLEAR
-   - Handle malformed input gracefully
-
-2. **Operation Execution** (15 points)
-   - Execute each operation correctly
-   - Print operation result
-   - Show tree state after modifications
-
-3. **Visual Output** (15 points)
-   - Display tree structure with ASCII art
-   - Show balance factors at each node
-   - Indicate rotations when they occur
-
-4. **Statistics** (5 points)
-   - Track number of rotations
-   - Track number of comparisons
-   - Display final statistics
-
-5. **Error Handling** (5 points)
-   - Handle file not found
-   - Handle invalid operations
-   - Handle memory allocation failures
-
-### Input File Format
+#### 3.3.1 Pseudocode: lexicographic insertion
 
 ```
-INSERT 50
-INSERT 30
-INSERT 70
-PRINT
-INSERT 20
-INSERT 10
-PRINT
-DELETE 30
-PRINT
-SEARCH 50
-SEARCH 99
-CLEAR
+function DICT_INSERT(node, key, value):
+    if node = NULL:
+        return NEW_NODE(strdup(key), value)
+
+    cmp ← strcmp(key, node.key)
+
+    if cmp < 0:
+        node.left  ← DICT_INSERT(node.left,  key, value)
+    else if cmp > 0:
+        node.right ← DICT_INSERT(node.right, key, value)
+    else:
+        node.value ← value
+        return node
+
+    UPDATE_HEIGHT(node)
+    return REBALANCE(node)
 ```
 
-### Expected Output Format
+The only subtlety is ownership: if you call `strdup` eagerly then discover an existing key you will leak memory. Allocate the copy only when you actually create a new node.
+
+#### 3.3.2 Pseudocode: deletion with two children
+
+```
+function DICT_DELETE(node, key):
+    if node = NULL:
+        return NULL
+
+    cmp ← strcmp(key, node.key)
+
+    if cmp < 0:
+        node.left  ← DICT_DELETE(node.left,  key)
+    else if cmp > 0:
+        node.right ← DICT_DELETE(node.right, key)
+    else:
+        if node.left = NULL or node.right = NULL:
+            child ← (node.left ≠ NULL) ? node.left : node.right
+            FREE(node.key)
+            FREE(node)
+            return child
+        else:
+            succ ← MIN_NODE(node.right)
+            SWAP(node.key,   succ.key)
+            SWAP(node.value, succ.value)
+            node.right ← DICT_DELETE(node.right, key)   // key now stored in succ
+
+    UPDATE_HEIGHT(node)
+    return REBALANCE(node)
+```
+
+The swap-based strategy avoids deep-copying strings during deletion but requires careful pointer ownership: after swapping, each key pointer is still freed exactly once.
+
+### 3.4 Assessment criteria (Homework 1)
+
+| Criterion | Points | Typical evidence |
+|---|---:|---|
+| Correct AVL invariants under insertion | 15 | sorted inorder output and successful validation on adversarial sequences |
+| Correct AVL invariants under deletion | 15 | correct handling of 0-child, 1-child and 2-child cases with rebalancing |
+| Correct string ownership and memory safety | 10 | Valgrind or sanitiser reports are clean on representative tests |
+| Clean API design and code quality | 10 | decomposition, comments, consistent conventions, no undefined behaviour |
+
+## 4. Homework 2: command-driven AVL visualiser (50 points)
+
+### 4.1 Problem statement
+
+Implement a command-line programme that reads a script of operations from a file, applies them to an AVL tree and prints a human-readable structural depiction of the tree after each modifying operation.
+
+The aim is to consolidate understanding of how rotations localise structural repair and how balance factors evolve.
+
+### 4.2 Input language
+
+The input file is a sequence of lines. Each non-empty line begins with a command token:
+
+- `INSERT <int>`
+- `DELETE <int>`
+- `SEARCH <int>`
+- `PRINT`
+- `CLEAR`
+
+Whitespace is insignificant except as a separator. Malformed lines must not crash the programme. The recommended behaviour is to report an error on `stderr` and continue.
+
+### 4.3 Output requirements
+
+Your output must be deterministic. You may choose an ASCII tree layout of your own design but it must satisfy the following:
+
+- each node must display its key and height
+- each node must display its balance factor
+- whenever a rotation occurs, print a line that identifies its type (LL, RR, LR or RL) and the pivot key
+
+A minimal example is:
 
 ```
 > INSERT 50
-  Created node 50
-  Tree:
-  ---[50](h=0,bf=0)
+Tree:
+---[50](h=0,bf=0)
 
 > INSERT 30
-  Created node 30
-  Tree:
-      /--[50](h=1,bf=1)
-  ---[30](h=0,bf=0)
-
-> INSERT 20
-  LL Case detected at 50
-  Performing RIGHT rotation on 50
-  Tree:
-      /--[50](h=0,bf=0)
-  ---[30](h=1,bf=0)
-      \--[20](h=0,bf=0)
-
-...
-
-Statistics:
-  Total operations: 12
-  Insertions: 5
-  Deletions: 1
-  Rotations: 2
-  Comparisons: 18
+Tree:
+    /--[50](h=1,bf=1)
+---[30](h=0,bf=0)
 ```
 
-### File: `homework2_visualiser.c`
+### 4.4 Statistics
 
----
+Maintain counters for:
 
-## 📊 Evaluation Criteria
+- total operations
+- successful insertions and deletions
+- key comparisons
+- rotations (count single rotations and each constituent rotation in a double rotation)
 
-| Criterion | Points |
-|-----------|--------|
-| **Homework 1** | |
-| Correct AVL implementation | 20 |
-| String handling | 10 |
-| Memory management | 10 |
-| Code quality | 10 |
-| **Homework 2** | |
-| File parsing | 10 |
-| Operation execution | 15 |
-| Visual output | 15 |
-| Statistics and error handling | 10 |
-| **Total** | **100** |
+At end of file print a summary block.
 
-### Penalties
+### 4.5 Suggested architecture
 
-| Issue | Penalty |
-|-------|---------|
-| Compiler warnings | -10 points |
-| Memory leaks (Valgrind) | -20 points |
-| Crashes on valid input | -30 points |
-| Late submission (per day) | -10 points |
-| Plagiarism | -100 points + disciplinary action |
+A maintainable design separates concerns:
 
----
+1. **data structure module**: insertion, deletion, rotation, traversal
+2. **parsing module**: line tokenisation and argument validation
+3. **presentation module**: deterministic tree printing and statistics formatting
 
-## 📤 Submission
+This separation reduces the risk that a formatting change accidentally changes the tree logic.
 
-1. Create a ZIP archive named `ATP_Week09_[YourName].zip`
-2. Include:
-   - `homework1_dictionary.c`
-   - `homework2_visualiser.c`
-   - `README.txt` (brief description of your approach)
-3. Submit via the course portal before the deadline
-4. Ensure both files compile without warnings
+### 4.6 Assessment criteria (Homework 2)
 
----
+| Criterion | Points | Typical evidence |
+|---|---:|---|
+| Correct command parsing and error handling | 10 | robustness to blank lines, malformed tokens and missing files |
+| Correct execution semantics | 15 | search reports are correct and tree state matches operations |
+| Clear and informative visual output | 15 | readable layout and correct balance factor display |
+| Correct statistics with sensible definitions | 10 | counters match observable behaviour on supplied scripts |
 
-## 💡 Tips
+## 5. Penalties and academic integrity
 
-1. **Start with the provided exercise solutions** — they contain all the AVL logic you need
+### 5.1 Technical penalties
 
-2. **Test with edge cases:**
-   - Empty tree operations
-   - Single node tree
-   - Sorted input (worst case for BST)
-   - Duplicate keys
+- **Compiler warnings**: −10 points (aggregate) unless justified and documented
+- **Memory leaks**: up to −20 points depending on severity and frequency
+- **Crashes on valid input**: up to −30 points
+- **Undefined behaviour**: substantial penalty even if output appears correct
 
-3. **Use Valgrind early and often:**
-   ```bash
-   valgrind --leak-check=full --show-leak-kinds=all ./homework1
-   ```
+### 5.2 Academic integrity
 
-4. **For string keys**, remember to:
-   - Allocate memory with `strdup()` or `malloc()`+`strcpy()`
-   - Free strings when deleting nodes
-   - Compare with `strcmp()`, not `==`
+Plagiarism and unauthorised collaboration are incompatible with the learning goals. Submissions will be compared for structural similarity. Cases of misconduct are handled under the institutional regulations.
 
-5. **Debug rotations** by printing the tree before and after each rotation
+## 6. Submission format
 
-6. **Test systematically:**
-   - First test with integer keys (like the exercises)
-   - Then adapt to string keys
-   - Finally add file I/O
+Submit a single ZIP archive named:
 
----
+`ATP_Week09_<YourName>.zip`
 
-## 📚 Resources
+The archive must contain:
 
-- Lecture slides: `slides/presentation-week09.html`
-- Working example: `src/example1.c`
-- Exercise solutions: `solution/` directory
-- Online visualiser: https://visualgo.net/en/bst
+- `homework1_dictionary.c`
+- `homework2_visualiser.c`
+- a brief `README.txt` describing your design choices, key invariants and test strategy
 
----
+Your code must compile from a clean directory with a single command line invocation. If you provide a Makefile then document the targets.
 
-*Good luck! Remember: a well-balanced tree is a happy tree. 🌳*
+## 7. Practical guidance
+
+1. Begin from the Week 09 exercises and refactor rather than rewriting from scratch.
+2. Make invariants executable by implementing a validation routine and calling it after each operation in debug builds.
+3. Use sanitiser builds during development:
+
+```bash
+gcc -std=c11 -Wall -Wextra -fsanitize=address,undefined -g -O1 -o hw1 homework1_dictionary.c
+./hw1
+```
+
+4. Test edge cases explicitly: empty tree, single-node tree, deletion of missing keys, duplicate insertions and extremely long keys.
+
+## References
+
+| Reference (APA 7th) | DOI |
+|---|---|
+| Amani, M., Lai, K. A., & Tarjan, R. E. (2016). *Amortized rotation cost in AVL trees*. *Information Processing Letters, 116*(5), 327–330. | https://doi.org/10.1016/j.ipl.2015.12.009 |
+| Bayer, R. (1972). Symmetric binary B-Trees: Data structure and maintenance algorithms. *Acta Informatica, 1*, 290–306. | https://doi.org/10.1007/BF00289509 |
+| Karlton, P. L., Fuller, S. H., Scroggs, R. E., & Kaehler, E. B. (1976). Performance of height-balanced trees. *Communications of the ACM, 19*(1), 23–28. | https://doi.org/10.1145/359970.359989 |
