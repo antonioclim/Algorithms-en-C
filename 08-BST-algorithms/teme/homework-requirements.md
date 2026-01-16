@@ -1,78 +1,154 @@
-# Week 08 Homework: Binary Search Trees
+# Week 08 Homework: Binary Search Trees and Expression Trees
 
-## 📋 General Information
+## 1. Administrative information
 
-- **Deadline:** End of Week 09
-- **Points:** 100 (10% of final grade)
-- **Language:** C (C11 standard)
-- **Compiler:** GCC with `-Wall -Wextra -std=c11`
-- **Submission:** Single `.c` file per homework via university platform
+- **Deadline**: end of Week 09 (as communicated via the course platform)
+- **Total score**: 100 points (10% of the final grade)
+- **Language and standard**: ISO C (C11)
+- **Compilation policy**: GCC with `-Wall -Wextra -std=c11` and no warnings
+- **Submission format**: one `.c` file per homework task uploaded via the university platform
 
----
+You are expected to submit code that is correct, robust and readable. Correctness is assessed by automatic tests and by manual inspection. Manual inspection focuses on invariants, memory ownership and clarity of algorithmic intent.
 
-## 📝 Homework 1: Contact Directory (50 points)
+## 2. General technical requirements
 
-### Description
+### 2.1 Determinism and I/O discipline
 
-Implement a contact directory application using a Binary Search Tree. Each contact has a unique name (string) and an associated phone number. The BST should be ordered alphabetically by contact name.
+Your programmes must produce deterministic output for the same input. Avoid any prompts such as `Enter option:` because they make automated marking brittle. Print exactly what the specification requests and nothing else.
 
-### Requirements
+### 2.2 Memory ownership and deallocation
 
-1. **Contact Structure** (5 points)
-   - Define a `Contact` structure with:
-     - `name` - character array (max 50 characters)
-     - `phone` - character array (max 15 characters)
-   - Define a `ContactNode` structure with:
-     - `contact` - the Contact data
-     - `left` and `right` - pointers to children
+All dynamically allocated nodes must be freed before programme termination. In a tree, correct deallocation is **post-order**:
 
-2. **Insertion** (10 points)
-   - Implement `ContactNode *insert_contact(ContactNode *root, const char *name, const char *phone)`
-   - Use `strcmp()` for alphabetical ordering
-   - Ignore duplicate names (or update phone number)
-
-3. **Search** (10 points)
-   - Implement `ContactNode *search_contact(ContactNode *root, const char *name)`
-   - Return the node if found, NULL otherwise
-
-4. **Deletion** (10 points)
-   - Implement `ContactNode *delete_contact(ContactNode *root, const char *name)`
-   - Handle all three deletion cases correctly
-
-5. **Display Operations** (10 points)
-   - Implement `void display_all_contacts(ContactNode *root)` - alphabetical listing
-   - Implement `void display_contacts_starting_with(ContactNode *root, char letter)` - contacts starting with given letter
-
-6. **Memory Management** (5 points)
-   - Implement `void free_directory(ContactNode *root)`
-   - No memory leaks (verified with Valgrind)
-
-### Example Usage
-
-```c
-int main(void) {
-    ContactNode *directory = NULL;
-    
-    directory = insert_contact(directory, "Alice", "555-0101");
-    directory = insert_contact(directory, "Bob", "555-0102");
-    directory = insert_contact(directory, "Charlie", "555-0103");
-    
-    printf("All contacts:\n");
-    display_all_contacts(directory);
-    
-    ContactNode *found = search_contact(directory, "Bob");
-    if (found) {
-        printf("Found: %s - %s\n", found->contact.name, found->contact.phone);
-    }
-    
-    directory = delete_contact(directory, "Alice");
-    
-    free_directory(directory);
-    return 0;
-}
+```text
+FREE(node):
+  if node == NULL: return
+  FREE(node.left)
+  FREE(node.right)
+  free(node)
 ```
 
-### Input/Output Format
+If you free the parent before the children you lose access to the children and you leak memory.
+
+### 2.3 Error handling policy
+
+Where an operation can fail (for instance `malloc` returning `NULL` or division by zero in Homework 2) you must adopt and document a consistent policy:
+
+- either terminate with an informative error message on standard error
+- or return a neutral value and continue, provided the behaviour is specified
+
+A silent crash will be penalised even if the core algorithm is correct.
+
+## 3. Homework 1: Contact directory implemented as a BST (50 points)
+
+### 3.1 Problem statement
+
+Implement a contact directory that stores pairs `(name, phone)` where `name` is a unique identifier. The directory must support insertion, lookup, deletion and ordered listing. The underlying data structure must be a **Binary Search Tree ordered lexicographically by name**.
+
+The assignment is designed to test whether you can apply the BST invariant to a non-numeric key domain and whether you can implement deletion without losing subtrees.
+
+### 3.2 Data model
+
+You must define the following two structures.
+
+```c
+#define MAX_NAME_LEN 50
+#define MAX_PHONE_LEN 15
+
+typedef struct Contact {
+    char name[MAX_NAME_LEN];
+    char phone[MAX_PHONE_LEN];
+} Contact;
+
+typedef struct ContactNode {
+    Contact contact;
+    struct ContactNode *left;
+    struct ContactNode *right;
+} ContactNode;
+```
+
+**Invariant (BST by name).** For every node `x`:
+
+- every contact name in `x.left` is strictly smaller than `x.contact.name` under `strcmp`
+- every contact name in `x.right` is strictly larger than `x.contact.name` under `strcmp`
+
+You must state in comments whether your implementation is case-sensitive. If you choose to be case-insensitive you must normalise consistently at insertion and lookup.
+
+### 3.3 Required operations and contracts
+
+#### 3.3.1 Insertion
+
+```c
+ContactNode *insert_contact(ContactNode *root, const char *name, const char *phone);
+```
+
+- If `name` does not exist: insert a new node.
+- If `name` already exists: either ignore the operation or update the phone number. State your policy clearly.
+- Time complexity: `O(h)` where `h` is tree height.
+
+**Algorithmic skeleton (recursive).**
+
+```text
+INSERT(root, name, phone):
+  if root == NULL: return new_node(name, phone)
+  cmp = strcmp(name, root.name)
+  if cmp < 0: root.left = INSERT(root.left, name, phone)
+  else if cmp > 0: root.right = INSERT(root.right, name, phone)
+  else: handle duplicate policy
+  return root
+```
+
+#### 3.3.2 Search
+
+```c
+ContactNode *search_contact(ContactNode *root, const char *name);
+```
+
+An iterative implementation is recommended because it uses constant auxiliary space.
+
+#### 3.3.3 Deletion
+
+```c
+ContactNode *delete_contact(ContactNode *root, const char *name);
+```
+
+You must correctly handle all three deletion cases:
+
+1. leaf node
+2. one child
+3. two children, using successor or predecessor replacement
+
+If you use successor replacement, the successor is the minimum element of the right subtree.
+
+#### 3.3.4 Display and queries
+
+```c
+void display_all_contacts(ContactNode *root);
+void display_contacts_starting_with(ContactNode *root, char letter);
+```
+
+- `display_all_contacts` must output contacts in lexicographic order, which corresponds to in-order traversal.
+- `display_contacts_starting_with` must output only names that start with the given letter. You may implement this as an in-order traversal with a predicate filter. If you want asymptotic pruning you must justify your pruning condition.
+
+#### 3.3.5 Cleanup
+
+```c
+void free_directory(ContactNode *root);
+```
+
+### 3.4 Input language and output contract
+
+Your programme should read an integer `n` followed by `n` commands.
+
+Commands:
+
+- `ADD <Name> <Phone>`
+- `SEARCH <Name>`
+- `DELETE <Name>`
+- `LIST`
+- `LISTPREFIX <Letter>`
+
+Example:
 
 ```
 Input:
@@ -92,170 +168,138 @@ Contacts:
   Bob: 555-0102
 ```
 
-### File: `homework1_contacts.c`
+You may extend the language with additional commands if you wish, but the required commands must behave exactly as specified.
 
----
+### 3.5 Marking rubric (50 points)
 
-## 📝 Homework 2: Expression Tree Evaluator (50 points)
+- Data structures and invariant definition: 5
+- Insertion correctness and duplicate policy: 10
+- Search correctness and robustness: 10
+- Deletion correctness (all three cases): 10
+- Ordered printing and filtered printing: 10
+- Memory management and absence of leaks: 5
 
-### Description
+## 4. Homework 2: Expression tree evaluator (50 points)
 
-Implement an expression tree that represents arithmetic expressions. Each leaf node contains an integer operand, and each internal node contains an operator (+, -, *, /). Build the tree from postfix notation and evaluate it.
+### 4.1 Problem statement
 
-### Requirements
+Implement an expression tree for arithmetic expressions. Leaves contain integer operands. Internal nodes contain binary operators from the set `{+, -, *, /}`. The tree is built from a postfix string and then used to:
 
-1. **Node Structure** (5 points)
-   - Define an `ExprNode` structure supporting both:
-     - Operand nodes (integers)
-     - Operator nodes (characters: +, -, *, /)
-   - Use a union or separate fields for value and operator
-   - Include a type indicator (is_operator flag or enum)
+- evaluate the expression
+- print infix notation (fully parenthesised)
+- print prefix notation
+- print postfix notation
 
-2. **Tree Building from Postfix** (15 points)
-   - Implement `ExprNode *build_expression_tree(const char *postfix)`
-   - Parse postfix expression (e.g., "3 4 + 2 *" = (3+4)*2)
-   - Use a stack to build the tree:
-     - For operand: create leaf node, push to stack
-     - For operator: pop two nodes, create operator node with them as children, push result
+This task complements the BST work by focusing on tree construction from a linear representation and on post-order evaluation.
 
-3. **Tree Evaluation** (15 points)
-   - Implement `int evaluate(ExprNode *root)`
-   - Recursively evaluate:
-     - Leaf: return the operand value
-     - Internal: evaluate left, evaluate right, apply operator
-   - Handle division by zero (return 0 or error)
+### 4.2 Data model
 
-4. **Tree Display** (10 points)
-   - Implement `void display_infix(ExprNode *root)` - print with parentheses
-   - Implement `void display_prefix(ExprNode *root)` - prefix notation
-   - Implement `void display_postfix(ExprNode *root)` - postfix notation
-
-5. **Memory Management** (5 points)
-   - Implement `void free_expression_tree(ExprNode *root)`
-   - No memory leaks
-
-### Example Usage
+You must define a node type that can represent both operands and operators. A union is recommended:
 
 ```c
-int main(void) {
-    /* Expression: (3 + 4) * 2 = 14 */
-    /* Postfix: 3 4 + 2 * */
-    
-    ExprNode *expr = build_expression_tree("3 4 + 2 *");
-    
-    printf("Infix: ");
-    display_infix(expr);  /* ((3 + 4) * 2) */
-    printf("\n");
-    
-    printf("Prefix: ");
-    display_prefix(expr);  /* * + 3 4 2 */
-    printf("\n");
-    
-    printf("Result: %d\n", evaluate(expr));  /* 14 */
-    
-    free_expression_tree(expr);
-    return 0;
-}
+typedef struct ExprNode {
+    bool is_operator;
+    union {
+        int operand;
+        char operator;
+    } value;
+    struct ExprNode *left;
+    struct ExprNode *right;
+} ExprNode;
 ```
 
-### Input/Output Format
+### 4.3 Building from postfix
 
-```
-Input:
-3 4 + 2 *
-
-Output:
-Infix: ((3 + 4) * 2)
-Prefix: * + 3 4 2
-Postfix: 3 4 + 2 *
-Result: 14
+```c
+ExprNode *build_expression_tree(const char *postfix);
 ```
 
-### File: `homework2_expression.c`
+You must use a stack of node pointers. Each token is processed as follows.
 
----
+- operand token: create a leaf and push it
+- operator token: pop right operand, pop left operand, create operator node and push it
 
-## 📊 Evaluation Criteria
+Pseudocode:
 
-| Criterion | Homework 1 | Homework 2 |
-|-----------|------------|------------|
-| Functional correctness | 20p | 20p |
-| Proper BST/tree operations | 12p | 12p |
-| Edge case handling | 8p | 8p |
-| Code quality & style | 5p | 5p |
-| No compiler warnings | 3p | 3p |
-| Memory management (Valgrind) | 2p | 2p |
-| **Total** | **50p** | **50p** |
+```text
+BUILD(postfix_tokens):
+  S = empty stack
+  for token in postfix_tokens:
+    if token is integer:
+      push(S, operand_node(token))
+    else if token is operator:
+      R = pop(S)
+      L = pop(S)
+      push(S, operator_node(token, L, R))
+  return pop(S)
+```
 
-### Penalties
+The ordering constraint is essential: the first pop is the right operand.
 
-| Issue | Penalty |
-|-------|---------|
-| Compiler warnings | -10% of homework score |
-| Memory leaks (Valgrind errors) | -20% of homework score |
-| Crashes on valid input | -30% of homework score |
-| Incorrect output format | -10% of homework score |
-| Late submission (per day) | -10% of homework score |
-| Plagiarism | -100% (0 points) + disciplinary action |
+### 4.4 Evaluation
 
----
+```c
+int evaluate(ExprNode *root);
+```
 
-## 📤 Submission Instructions
+Pseudocode:
 
-1. **Naming Convention:**
-   - `homework1_contacts.c`
-   - `homework2_expression.c`
+```text
+EVAL(node):
+  if node is operand: return node.operand
+  a = EVAL(node.left)
+  b = EVAL(node.right)
+  return APPLY(node.operator, a, b)
+```
 
-2. **File Header:** Each file must begin with:
-   ```c
-   /**
-    * Week 08 Homework [1/2]: [Title]
-    * Student: [Your Name]
-    * Group: [Your Group]
-    * Date: [Submission Date]
-    */
-   ```
+Division by zero must be handled. If you choose to return 0, you must document that this is your defined semantics.
 
-3. **Verification Before Submission:**
-   ```bash
-   # Compile without warnings
-   gcc -Wall -Wextra -std=c11 -o homework1 homework1_contacts.c
-   
-   # Check for memory leaks
-   valgrind --leak-check=full ./homework1
-   ```
+### 4.5 Display functions
 
-4. **Submit via:** University e-learning platform
+```c
+void display_infix(ExprNode *root);
+void display_prefix(ExprNode *root);
+void display_postfix(ExprNode *root);
+```
 
----
+- infix must be fully parenthesised so that evaluation order is unambiguous
+- prefix corresponds to pre-order traversal
+- postfix corresponds to post-order traversal
 
-## 💡 Tips for Success
+### 4.6 Memory management
 
-1. **Start with the structure definitions** — get the data types right first
+```c
+void free_expression_tree(ExprNode *root);
+```
 
-2. **Test incrementally** — verify each function works before moving to the next
+Use post-order deallocation.
 
-3. **Draw the trees** — sketch what the tree should look like for test cases
+### 4.7 Marking rubric (50 points)
 
-4. **Handle edge cases:**
-   - Empty tree operations
-   - Single-node tree
-   - Duplicate keys (Homework 1)
-   - Division by zero (Homework 2)
+- Node type design and correctness of representation: 5
+- Correct postfix parsing and tree construction: 15
+- Correct evaluation including edge cases: 15
+- Correct rendering of notations: 10
+- Memory management and robustness: 5
 
-5. **Use Valgrind early** — don't wait until the end to check for memory issues
+## 5. Global evaluation criteria and penalties
 
-6. **Read the requirements carefully** — points are allocated to specific features
+### 5.1 Criteria applied to both homeworks
 
----
+- functional correctness under automated tests
+- correct application of BST and tree invariants
+- correct handling of edge cases
+- absence of compiler warnings
+- absence of memory leaks
 
-## 📚 Reference Materials
+### 5.2 Penalties
 
-- Lecture slides: Week 08 - Binary Search Trees
-- Example code: `example1.c` in the starter kit
-- Textbook: CLRS Chapter 12
-- Online: [VisuAlgo BST](https://visualgo.net/en/bst)
+- compiler warnings: up to 10% of the homework score
+- memory leaks: up to 20% of the homework score
+- crashes on valid input: up to 30% of the homework score
+- incorrect output format: up to 10% of the homework score
+- late submission: as specified by the course policy
 
----
+### 5.3 Academic integrity
 
-*Good luck! Remember: a well-tested, working solution is better than a complex, buggy one.*
+You must write your own implementation. If you consult external material, cite it in comments. Submissions that are substantially identical will be treated as plagiarism according to university regulations.

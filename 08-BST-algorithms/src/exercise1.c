@@ -68,7 +68,12 @@
  *       the typedef isn't complete yet within the structure definition.
  */
 
-/* YOUR CODE HERE */
+typedef struct BSTNode {
+    int key;
+    struct BSTNode *left;
+    struct BSTNode *right;
+} BSTNode;
+
 
 
 /* =============================================================================
@@ -92,7 +97,18 @@
  * @return Pointer to the new node, or NULL if allocation fails
  */
 
-/* YOUR CODE HERE */
+BSTNode *bst_create_node(int key) {
+    BSTNode *node = (BSTNode *)malloc(sizeof(BSTNode));
+    if (node == NULL) {
+        /* Allocation failure is unrecoverable for this exercise. */
+        return NULL;
+    }
+    node->key = key;
+    node->left = NULL;
+    node->right = NULL;
+    return node;
+}
+
 
 
 /* =============================================================================
@@ -120,7 +136,23 @@
  * @return Pointer to the node if found, NULL otherwise
  */
 
-/* YOUR CODE HERE */
+BSTNode *bst_search(BSTNode *root, int key) {
+    BSTNode *current = root;
+
+    while (current != NULL) {
+        if (key == current->key) {
+            return current;
+        }
+        if (key < current->key) {
+            current = current->left;
+        } else {
+            current = current->right;
+        }
+    }
+
+    return NULL;
+}
+
 
 
 /* =============================================================================
@@ -148,7 +180,21 @@
  * @return The root of the tree (may be new if tree was empty)
  */
 
-/* YOUR CODE HERE */
+BSTNode *bst_insert(BSTNode *root, int key) {
+    if (root == NULL) {
+        return bst_create_node(key);
+    }
+
+    if (key < root->key) {
+        root->left = bst_insert(root->left, key);
+    } else if (key > root->key) {
+        root->right = bst_insert(root->right, key);
+    }
+
+    /* Duplicate keys are ignored. */
+    return root;
+}
+
 
 
 /* =============================================================================
@@ -173,7 +219,16 @@
  * @param root The root of the BST
  */
 
-/* YOUR CODE HERE */
+void bst_inorder(BSTNode *root) {
+    if (root == NULL) {
+        return;
+    }
+
+    bst_inorder(root->left);
+    printf("%d ", root->key);
+    bst_inorder(root->right);
+}
+
 
 
 /**
@@ -189,7 +244,26 @@
  * Post-order: recurse left, recurse right, then print
  */
 
-/* YOUR CODE HERE */
+void bst_preorder(BSTNode *root) {
+    if (root == NULL) {
+        return;
+    }
+
+    printf("%d ", root->key);
+    bst_preorder(root->left);
+    bst_preorder(root->right);
+}
+
+void bst_postorder(BSTNode *root) {
+    if (root == NULL) {
+        return;
+    }
+
+    bst_postorder(root->left);
+    bst_postorder(root->right);
+    printf("%d ", root->key);
+}
+
 
 
 /* =============================================================================
@@ -220,7 +294,30 @@
  * @return Pointer to the node with min/max key, or NULL if empty
  */
 
-/* YOUR CODE HERE */
+BSTNode *bst_find_min(BSTNode *root) {
+    if (root == NULL) {
+        return NULL;
+    }
+
+    while (root->left != NULL) {
+        root = root->left;
+    }
+
+    return root;
+}
+
+BSTNode *bst_find_max(BSTNode *root) {
+    if (root == NULL) {
+        return NULL;
+    }
+
+    while (root->right != NULL) {
+        root = root->right;
+    }
+
+    return root;
+}
+
 
 
 /* =============================================================================
@@ -245,7 +342,16 @@
  * @param root The root of the BST to deallocate
  */
 
-/* YOUR CODE HERE */
+void bst_free(BSTNode *root) {
+    if (root == NULL) {
+        return;
+    }
+
+    bst_free(root->left);
+    bst_free(root->right);
+    free(root);
+}
+
 
 
 /* =============================================================================
@@ -272,7 +378,23 @@
  * Hint: #include <limits.h> for INT_MIN and INT_MAX
  */
 
-/* YOUR CODE HERE (BONUS) */
+static bool bst_is_valid_helper(BSTNode *node, int min, int max) {
+    if (node == NULL) {
+        return true;
+    }
+
+    if (node->key <= min || node->key >= max) {
+        return false;
+    }
+
+    return bst_is_valid_helper(node->left, min, node->key) &&
+           bst_is_valid_helper(node->right, node->key, max);
+}
+
+bool bst_is_valid(BSTNode *root) {
+    return bst_is_valid_helper(root, INT_MIN, INT_MAX);
+}
+
 
 
 /* =============================================================================

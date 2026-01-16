@@ -122,7 +122,17 @@ void bst_free(BSTNode *root) {
  * @return Pointer to the node with minimum key, or NULL if empty
  */
 
-/* YOUR CODE HERE */
+BSTNode *bst_find_min(BSTNode *root) {
+    if (root == NULL) {
+        return NULL;
+    }
+
+    while (root->left != NULL) {
+        root = root->left;
+    }
+
+    return root;
+}
 
 
 /* =============================================================================
@@ -164,7 +174,44 @@ void bst_free(BSTNode *root) {
  * @return The root of the tree (may change if root was deleted)
  */
 
-/* YOUR CODE HERE */
+BSTNode *bst_delete(BSTNode *root, int key) {
+    if (root == NULL) {
+        return NULL;
+    }
+
+    if (key < root->key) {
+        root->left = bst_delete(root->left, key);
+        return root;
+    }
+
+    if (key > root->key) {
+        root->right = bst_delete(root->right, key);
+        return root;
+    }
+
+    /* Found the node to delete. */
+
+    /* Case 1 and Case 2a: no left child (includes leaf). */
+    if (root->left == NULL) {
+        BSTNode *temp = root->right;
+        free(root);
+        return temp;
+    }
+
+    /* Case 2b: no right child. */
+    if (root->right == NULL) {
+        BSTNode *temp = root->left;
+        free(root);
+        return temp;
+    }
+
+    /* Case 3: two children. Replace with in-order successor. */
+    BSTNode *successor = bst_find_min(root->right);
+    root->key = successor->key;
+    root->right = bst_delete(root->right, successor->key);
+
+    return root;
+}
 
 
 /* =============================================================================
@@ -190,7 +237,16 @@ void bst_free(BSTNode *root) {
  * @return Height of the tree (-1 for empty tree)
  */
 
-/* YOUR CODE HERE */
+int bst_height(BSTNode *root) {
+    if (root == NULL) {
+        return -1;
+    }
+
+    int left_h = bst_height(root->left);
+    int right_h = bst_height(root->right);
+
+    return 1 + (left_h > right_h ? left_h : right_h);
+}
 
 
 /* =============================================================================
@@ -218,7 +274,25 @@ void bst_free(BSTNode *root) {
  * @return Count of nodes/leaves
  */
 
-/* YOUR CODE HERE */
+int bst_count_nodes(BSTNode *root) {
+    if (root == NULL) {
+        return 0;
+    }
+
+    return 1 + bst_count_nodes(root->left) + bst_count_nodes(root->right);
+}
+
+int bst_count_leaves(BSTNode *root) {
+    if (root == NULL) {
+        return 0;
+    }
+
+    if (root->left == NULL && root->right == NULL) {
+        return 1;
+    }
+
+    return bst_count_leaves(root->left) + bst_count_leaves(root->right);
+}
 
 
 /* =============================================================================
@@ -247,7 +321,23 @@ void bst_free(BSTNode *root) {
  * @param high Upper bound of range (inclusive)
  */
 
-/* YOUR CODE HERE */
+void bst_range_search(BSTNode *root, int low, int high) {
+    if (root == NULL) {
+        return;
+    }
+
+    if (root->key > low) {
+        bst_range_search(root->left, low, high);
+    }
+
+    if (root->key >= low && root->key <= high) {
+        printf("%d ", root->key);
+    }
+
+    if (root->key < high) {
+        bst_range_search(root->right, low, high);
+    }
+}
 
 
 /* =============================================================================
@@ -279,7 +369,32 @@ void bst_free(BSTNode *root) {
  * @return The kth smallest key, or -1 if k is invalid
  */
 
-/* YOUR CODE HERE */
+static void bst_kth_helper(BSTNode *root, int k, int *count, int *result) {
+    if (root == NULL || *result != -1) {
+        return;
+    }
+
+    bst_kth_helper(root->left, k, count, result);
+
+    (*count)++;
+    if (*count == k) {
+        *result = root->key;
+        return;
+    }
+
+    bst_kth_helper(root->right, k, count, result);
+}
+
+int bst_kth_smallest(BSTNode *root, int k) {
+    if (k <= 0) {
+        return -1;
+    }
+
+    int count = 0;
+    int result = -1;
+    bst_kth_helper(root, k, &count, &result);
+    return result;
+}
 
 
 /* =============================================================================
@@ -309,7 +424,28 @@ void bst_free(BSTNode *root) {
  * @return Pointer to the LCA node, or NULL if tree is empty
  */
 
-/* YOUR CODE HERE */
+BSTNode *bst_lca(BSTNode *root, int key1, int key2) {
+    if (root == NULL) {
+        return NULL;
+    }
+
+    /* Normalise ordering so key1 <= key2. */
+    if (key1 > key2) {
+        int tmp = key1;
+        key1 = key2;
+        key2 = tmp;
+    }
+
+    if (key2 < root->key) {
+        return bst_lca(root->left, key1, key2);
+    }
+
+    if (key1 > root->key) {
+        return bst_lca(root->right, key1, key2);
+    }
+
+    return root;
+}
 
 
 /* =============================================================================
@@ -353,7 +489,33 @@ void bst_free(BSTNode *root) {
  * @param root The root of the BST
  */
 
-/* YOUR CODE HERE */
+static void bst_print_helper(BSTNode *root, int space, int indent) {
+    if (root == NULL) {
+        return;
+    }
+
+    space += indent;
+
+    bst_print_helper(root->right, space, indent);
+
+    printf("\n");
+    for (int i = indent; i < space; i++) {
+        printf(" ");
+    }
+    printf("%d", root->key);
+
+    bst_print_helper(root->left, space, indent);
+}
+
+void bst_print_tree(BSTNode *root) {
+    if (root == NULL) {
+        printf("  (empty tree)\n");
+        return;
+    }
+
+    bst_print_helper(root, 0, 5);
+    printf("\n");
+}
 
 
 /* =============================================================================
@@ -384,7 +546,22 @@ void bst_free(BSTNode *root) {
  * @return true if valid BST, false otherwise
  */
 
-/* YOUR CODE HERE */
+static bool bst_is_valid_helper(BSTNode *node, int min, int max) {
+    if (node == NULL) {
+        return true;
+    }
+
+    if (node->key <= min || node->key >= max) {
+        return false;
+    }
+
+    return bst_is_valid_helper(node->left, min, node->key) &&
+           bst_is_valid_helper(node->right, node->key, max);
+}
+
+bool bst_is_valid(BSTNode *root) {
+    return bst_is_valid_helper(root, INT_MIN, INT_MAX);
+}
 
 
 /* =============================================================================
@@ -409,7 +586,18 @@ void bst_free(BSTNode *root) {
  * @param root The root of the tree to mirror
  */
 
-/* YOUR CODE HERE (BONUS) */
+void bst_mirror(BSTNode *root) {
+    if (root == NULL) {
+        return;
+    }
+
+    BSTNode *temp = root->left;
+    root->left = root->right;
+    root->right = temp;
+
+    bst_mirror(root->left);
+    bst_mirror(root->right);
+}
 
 
 /* =============================================================================
@@ -436,7 +624,20 @@ void bst_free(BSTNode *root) {
  * @return true if such a path exists, false otherwise
  */
 
-/* YOUR CODE HERE (BONUS) */
+bool bst_has_path_sum(BSTNode *root, int target) {
+    if (root == NULL) {
+        return false;
+    }
+
+    target -= root->key;
+
+    /* If this is a leaf, the path sum condition reduces to target == 0. */
+    if (root->left == NULL && root->right == NULL) {
+        return target == 0;
+    }
+
+    return bst_has_path_sum(root->left, target) || bst_has_path_sum(root->right, target);
+}
 
 
 /* =============================================================================
@@ -460,7 +661,51 @@ void bst_free(BSTNode *root) {
  * This allows saving and loading BST structures.
  */
 
-/* YOUR CODE HERE (BONUS) */
+void bst_serialize(BSTNode *root, FILE *fp) {
+    if (fp == NULL) {
+        return;
+    }
+
+    /*
+     * Serialise using pre-order traversal.
+     *
+     * We write INT_MIN as a null marker. This is convenient for teaching but it
+     * assumes that INT_MIN is not used as a legitimate key in the tree.
+     */
+    if (root == NULL) {
+        fprintf(fp, "%d ", INT_MIN);
+        return;
+    }
+
+    fprintf(fp, "%d ", root->key);
+    bst_serialize(root->left, fp);
+    bst_serialize(root->right, fp);
+}
+
+BSTNode *bst_deserialize(FILE *fp) {
+    if (fp == NULL) {
+        return NULL;
+    }
+
+    int value;
+    if (fscanf(fp, "%d", &value) != 1) {
+        return NULL;
+    }
+
+    if (value == INT_MIN) {
+        return NULL;
+    }
+
+    BSTNode *node = bst_create_node(value);
+    if (node == NULL) {
+        return NULL;
+    }
+
+    node->left = bst_deserialize(fp);
+    node->right = bst_deserialize(fp);
+
+    return node;
+}
 
 
 /* =============================================================================

@@ -1,333 +1,311 @@
-# Extended Challenges - Week 08: Binary Search Trees
+# Extended challenges for Week 08
 
-## 🚀 Advanced Challenges (Optional)
+## 1. Purpose and grading semantics
 
-Each correctly solved challenge: **+10 bonus points**
+The challenges below are optional extensions designed to deepen your understanding of BST engineering beyond the core homework tasks. Each completed challenge can earn up to **10 bonus points**, with a maximum bonus of **50 points** across the set.
 
-Maximum bonus: **+50 points** (all 5 challenges)
+You should treat each challenge as a mini-research exercise: state your invariants, document algorithmic design decisions, justify complexity and ensure that memory ownership is unambiguous.
 
-These challenges are designed to deepen your understanding of Binary Search Trees and prepare you for technical interviews. They go beyond the basic homework requirements.
-
----
-
-## ⭐ Challenge 1: Self-Balancing Detection (Difficulty: Medium)
-
-### Description
-
-Implement functions to analyse tree balance and detect when a BST has become severely unbalanced.
-
-### Requirements
-
-1. **Balance Factor Calculation**
-   ```c
-   int balance_factor(BSTNode *node);
-   ```
-   - Calculate balance factor: height(left) - height(right)
-   - Return 0 for NULL nodes
-
-2. **Balance Check**
-   ```c
-   bool is_balanced(BSTNode *root);
-   ```
-   - Return true if |balance_factor| <= 1 for ALL nodes
-   - Use recursive approach
-
-3. **Imbalance Report**
-   ```c
-   void report_imbalances(BSTNode *root);
-   ```
-   - Print all nodes where |balance_factor| > 1
-   - Include node key and balance factor
-
-4. **Degenerate Detection**
-   ```c
-   bool is_degenerate(BSTNode *root);
-   ```
-   - Return true if tree resembles a linked list
-   - (Every node has at most one child)
-
-### Example Output
-
-```
-Balance Analysis:
-  Node 50: balance_factor = -2 (UNBALANCED!)
-  Node 70: balance_factor = -1
-  Node 80: balance_factor = -1
-Tree is NOT balanced.
-```
-
-### Bonus Points: +10
+Unless a challenge explicitly requests interactive behaviour, design the programme so it can be tested non-interactively.
 
 ---
 
-## ⭐ Challenge 2: BST Iterator (Difficulty: Medium-Hard)
+## 2. Challenge 1: Balance analysis and degeneracy detection
 
-### Description
+### 2.1 Problem statement
 
-Implement an iterator that allows in-order traversal without recursion, returning one element at a time. This is a common interview question (LeetCode #173).
+Implement functions that measure structural imbalance and detect when a BST has become effectively linear.
 
-### Requirements
-
-1. **Iterator Structure**
-   ```c
-   typedef struct BSTIterator {
-       /* Your implementation - hint: use a stack */
-   } BSTIterator;
-   ```
-
-2. **Initialisation**
-   ```c
-   BSTIterator *bst_iterator_create(BSTNode *root);
-   ```
-   - Create and initialise the iterator
-   - Push all left nodes onto stack
-
-3. **Next Element**
-   ```c
-   int bst_iterator_next(BSTIterator *iter);
-   ```
-   - Return the next smallest element
-   - Update internal state
-   - O(1) amortised time complexity
-
-4. **Has Next**
-   ```c
-   bool bst_iterator_has_next(BSTIterator *iter);
-   ```
-   - Return true if more elements exist
-   - O(1) time complexity
-
-5. **Cleanup**
-   ```c
-   void bst_iterator_free(BSTIterator *iter);
-   ```
-
-### Example Usage
+### 2.2 Required API
 
 ```c
-BSTNode *root = /* tree with 1,2,3,4,5 */;
-BSTIterator *iter = bst_iterator_create(root);
-
-while (bst_iterator_has_next(iter)) {
-    printf("%d ", bst_iterator_next(iter));
-}
-/* Output: 1 2 3 4 5 */
-
-bst_iterator_free(iter);
+int bst_balance_factor(BSTNode *node);
+bool bst_is_balanced(BSTNode *root);
+void bst_report_imbalances(BSTNode *root);
+bool bst_is_degenerate(BSTNode *root);
 ```
 
-### Bonus Points: +10
+### 2.3 Definitions
+
+- **Height** is defined as in the laboratory: `height(NULL) = -1` and `height(leaf) = 0`.
+- The **balance factor** of a node is `height(left) - height(right)`.
+- A tree is **AVL-balanced** if `|balance_factor(node)| ≤ 1` for every node.
+- A tree is **degenerate** if each node has at most one non-null child.
+
+### 2.4 Algorithmic guidance
+
+A naïve implementation recomputes height at every node leading to `O(n^2)` in the worst case. A better design computes both height and balance validity in a single post-order pass.
+
+#### Post-order aggregation pseudocode
+
+```
+CHECK(node):
+  if node == NULL: return (height=-1, ok=true)
+  (hl, okL) = CHECK(node.left)
+  (hr, okR) = CHECK(node.right)
+  h = 1 + max(hl, hr)
+  ok = okL and okR and abs(hl - hr) <= 1
+  return (h, ok)
+```
+
+The reporting function can reuse the same traversal while emitting nodes whose balance factor exceeds 1 in magnitude.
 
 ---
 
-## ⭐ Challenge 3: Build Balanced BST from Sorted Array (Difficulty: Medium)
+## 3. Challenge 2: In-order iterator without recursion
 
-### Description
+### 3.1 Problem statement
 
-Given a sorted array, construct a height-balanced BST. This is the reverse of in-order traversal and appears in LeetCode #108.
+Implement an iterator that returns one key at a time in ascending order without recursion. This can be done using an explicit stack that simulates the call stack of in-order traversal.
 
-### Requirements
+### 3.2 Required API
 
-1. **Main Function**
-   ```c
-   BSTNode *sorted_array_to_bst(int *arr, int n);
-   ```
-   - Input: sorted array of n integers
-   - Output: root of height-balanced BST
-   - All elements should be in the tree
-
-2. **Helper Function** (recursive approach)
-   ```c
-   BSTNode *build_balanced(int *arr, int start, int end);
-   ```
-   - Pick middle element as root
-   - Recursively build left subtree from left half
-   - Recursively build right subtree from right half
-
-3. **Verification**
-   - The resulting tree must be a valid BST
-   - Height should be ⌊log₂(n)⌋ or ⌈log₂(n)⌉
-
-### Example
-
-```
-Input array: [1, 2, 3, 4, 5, 6, 7]
-
-Output tree:
-       4
-      / \
-     2   6
-    / \ / \
-   1  3 5  7
-
-Height: 2 (optimal for 7 nodes)
-```
-
-### Bonus Points: +10
-
----
-
-## ⭐ Challenge 4: Threaded Binary Search Tree (Difficulty: Hard)
-
-### Description
-
-Implement a threaded BST where NULL pointers are replaced with pointers to in-order predecessor/successor. This allows in-order traversal without recursion or stack.
-
-### Requirements
-
-1. **Modified Node Structure**
-   ```c
-   typedef struct ThreadedNode {
-       int key;
-       struct ThreadedNode *left;
-       struct ThreadedNode *right;
-       bool left_is_thread;   /* true if left points to predecessor */
-       bool right_is_thread;  /* true if right points to successor */
-   } ThreadedNode;
-   ```
-
-2. **Insertion**
-   ```c
-   ThreadedNode *threaded_insert(ThreadedNode *root, int key);
-   ```
-   - Maintain thread pointers during insertion
-   - Update predecessor/successor links
-
-3. **In-order Traversal (Iterative)**
-   ```c
-   void threaded_inorder(ThreadedNode *root);
-   ```
-   - Use threads to traverse without recursion
-   - No stack needed!
-   - O(n) time, O(1) space
-
-4. **Find Successor**
-   ```c
-   ThreadedNode *inorder_successor(ThreadedNode *node);
-   ```
-   - Return the in-order successor using threads
-   - O(1) time if right_is_thread is true
-
-### Example Structure
-
-```
-For tree: 1 - 2 - 3 - 4 - 5
-
-Normal:          Threaded:
-    2               2
-   / \             /|\
-  1   4           1 | 4
-     / \         /| |/|\
-    3   5       X 3-+ 5-X
-
-X = NULL, arrows show thread links
-```
-
-### Bonus Points: +10
-
----
-
-## ⭐ Challenge 5: BST Reconstruction from Traversals (Difficulty: Hard)
-
-### Description
-
-Reconstruct a BST given its pre-order traversal (or post-order traversal). This tests deep understanding of BST properties and traversal orders.
-
-### Requirements
-
-1. **From Pre-order**
-   ```c
-   BSTNode *bst_from_preorder(int *preorder, int n);
-   ```
-   - Input: pre-order traversal array
-   - Output: reconstructed BST
-   - Use BST property for efficient O(n) solution
-
-2. **From Post-order**
-   ```c
-   BSTNode *bst_from_postorder(int *postorder, int n);
-   ```
-   - Same as above but from post-order
-
-3. **Verification Function**
-   ```c
-   bool verify_reconstruction(BSTNode *original, BSTNode *reconstructed);
-   ```
-   - Compare two trees for structural equality
-
-### Algorithm Hints
-
-**For pre-order [50, 30, 20, 40, 70, 60, 80]:**
-- First element (50) is root
-- Elements < 50 form left subtree: [30, 20, 40]
-- Elements > 50 form right subtree: [70, 60, 80]
-- Recursively apply to subtrees
-
-**Optimised approach uses upper bound:**
 ```c
-BSTNode *build(int *pre, int n, int *idx, int bound);
-```
-- Track current index
-- Use bound to determine when subtree ends
-- O(n) time complexity
+typedef struct BSTIterator BSTIterator;
 
-### Example
-
-```
-Input pre-order: [50, 30, 20, 40, 70, 60, 80]
-
-Reconstructed tree:
-       50
-      /  \
-    30    70
-   /  \  /  \
-  20  40 60  80
+BSTIterator *bst_iterator_create(BSTNode *root);
+bool bst_iterator_has_next(BSTIterator *it);
+int bst_iterator_next(BSTIterator *it);
+void bst_iterator_free(BSTIterator *it);
 ```
 
-### Bonus Points: +10
+### 3.3 Correctness invariant
+
+At all times, the stack stores a path of nodes whose left subtrees have been fully processed, while their own keys have not yet been emitted.
+
+### 3.4 Complexity target
+
+- `has_next`: `O(1)`
+- `next`: `O(1)` amortised
+- memory: `O(h)` where `h` is height
+
+#### Iterator initialisation pseudocode
+
+```
+INIT(root):
+  while root != NULL:
+    push(root)
+    root = root.left
+```
+
+#### Next operation pseudocode
+
+```
+NEXT():
+  node = pop()
+  key = node.key
+  x = node.right
+  while x != NULL:
+    push(x)
+    x = x.left
+  return key
+```
 
 ---
 
-## 📊 Bonus Point System
+## 4. Challenge 3: Build a height-balanced BST from a sorted array
 
-| Challenges Completed | Total Bonus | Special Recognition |
-|---------------------|-------------|---------------------|
-| 1 | +10 points | — |
-| 2 | +20 points | — |
-| 3 | +30 points | — |
-| 4 | +40 points | — |
-| All 5 | +50 points | 🏆 "BST Master" badge |
+### 4.1 Problem statement
 
----
+Given a sorted array of distinct integers, construct a BST whose height is asymptotically optimal. Use the median element as the root and recurse on halves.
 
-## 📤 Submission Guidelines
+### 4.2 Required API
 
-1. **File Naming:** `challenge[1-5]_[short_name].c`
-   - Example: `challenge1_balance.c`
-   - Example: `challenge2_iterator.c`
+```c
+BSTNode *bst_from_sorted_array(const int *a, int n);
+```
 
-2. **Include Test Cases:** Each submission should include a `main()` function demonstrating the functionality.
+### 4.3 Pseudocode
 
-3. **Documentation:** Comment your code explaining the algorithm and time/space complexity.
+```
+BUILD(a, lo, hi):
+  if lo > hi: return NULL
+  mid = (lo + hi) // 2
+  node = new(a[mid])
+  node.left  = BUILD(a, lo, mid-1)
+  node.right = BUILD(a, mid+1, hi)
+  return node
+```
 
-4. **Deadline:** Same as main homework (end of Week 09)
+### 4.4 Verification expectations
 
----
-
-## 💡 Interview Connection
-
-These challenges directly relate to common technical interview questions:
-
-| Challenge | Related Interview Questions |
-|-----------|---------------------------|
-| Balance Detection | "Check if a binary tree is balanced" |
-| BST Iterator | LeetCode #173 - BST Iterator |
-| Array to BST | LeetCode #108 - Convert Sorted Array to BST |
-| Threaded BST | "Morris Traversal" variant |
-| Reconstruction | LeetCode #1008 - Construct BST from Preorder |
-
-Completing these challenges will significantly improve your interview preparation!
+- `bst_is_valid(root)` returns true
+- `bst_height(root)` is near `log2(n)`
 
 ---
 
-*"The best way to learn is by doing. Challenge yourself!"*
+## 5. Challenge 4: Threaded binary search tree
+
+### 5.1 Problem statement
+
+Implement a threaded BST that replaces null pointers with predecessor or successor threads, enabling in-order traversal without recursion and without an auxiliary stack.
+
+### 5.2 Node model
+
+```c
+typedef struct ThreadedNode {
+  int key;
+  struct ThreadedNode *left;
+  struct ThreadedNode *right;
+  bool left_is_thread;
+  bool right_is_thread;
+} ThreadedNode;
+```
+
+### 5.3 Traversal idea
+
+If `right_is_thread` is true, the `right` pointer is the in-order successor and can be followed in `O(1)`. If it is false, the successor is the leftmost node in the right subtree.
+
+Threaded trees reduce auxiliary space but increase insertion complexity because predecessor and successor links must be updated carefully.
+
+---
+
+## 6. Challenge 5: Order statistics via subtree sizes
+
+### 6.1 Problem statement
+
+Augment each node with the size of its subtree so that rank and selection operations run in `O(h)` time.
+
+### 6.2 API suggestions
+
+```c
+typedef struct OSTNode {
+  int key;
+  int size;              /* size of subtree rooted here */
+  struct OSTNode *left;
+  struct OSTNode *right;
+} OSTNode;
+
+int ost_rank(OSTNode *root, int key);
+int ost_select(OSTNode *root, int k);
+```
+
+### 6.3 Invariant
+
+For every node `x`, `x.size = 1 + size(x.left) + size(x.right)`.
+
+### 6.4 Consequence
+
+If `left_size = size(x.left)`, then:
+- `rank(x.key) = left_size` within the subtree
+- `select(k)` compares `k` with `left_size + 1` as shown in the repository README
+
+---
+
+## 7. Submission expectations for extended work
+
+If you submit any challenge, include:
+- a short technical report as comments at the top of the `.c` file
+- invariants for each data structure
+- a note on complexity
+- a brief description of how you tested the code
+
+Extended solutions should compile without warnings and should free all allocated memory.
+
+
+---
+
+## 8. Engineering notes and common edge cases
+
+This section is not part of the marking rubric but it is included to make the challenges technically meaningful rather than merely syntactic.
+
+### 8.1 Height conventions and their consequences
+
+The laboratory uses `height(NULL) = -1` and `height(leaf) = 0`. This convention ensures that
+
+- the recurrence `height(node) = 1 + max(height(left), height(right))` works without special cases
+- the height of a singleton tree is 0 which aligns with the graph theoretic definition of path length in edges
+
+When you combine height with balance factors, be explicit about whether you are measuring height in nodes or height in edges. Mixing conventions is one of the most common sources of off-by-one errors in balance diagnostics.
+
+### 8.2 Degeneracy detection
+
+A tree is degenerate if every node has at most one child. A direct recursive characterisation is:
+
+```
+DEGENERATE(node):
+  if node == NULL: return true
+  if node.left != NULL and node.right != NULL: return false
+  return DEGENERATE(node.left) and DEGENERATE(node.right)
+```
+
+This property is orthogonal to balance: a perfectly degenerate tree is maximally unbalanced but a non-degenerate tree can still have catastrophic height.
+
+### 8.3 Iterator robustness and amortised analysis
+
+The in-order iterator is a standard example in which worst-case and amortised costs differ. A single `next` call can traverse a path of length `h` when it descends the left spine of a right subtree. Over a full traversal, each node is pushed at most once and popped at most once, hence the total stack operations are `O(n)` and the amortised cost per `next` is `O(1)`.
+
+A useful invariant to assert during debugging is that the stack is always strictly decreasing in key order from bottom to top when the iterator is used on a valid BST.
+
+### 8.4 Threaded BST insertion outline
+
+Threaded insertion is error-prone because it must preserve both the BST ordering predicate and the predecessor/successor threading predicate. One systematic approach is to treat the thread flags as part of the invariant and to write insertion as a careful case analysis.
+
+A high-level outline for inserting `key` into a right-threaded structure is:
+
+```
+INSERT(root, key):
+  if root == NULL: return new_threaded_node(key)
+
+  cur = root
+  while true:
+    if key < cur.key:
+      if cur.left_is_thread:
+        /* Insert as cur.left. cur.left currently points to predecessor. */
+        n = new_node(key)
+        n.left = cur.left
+        n.left_is_thread = true
+        n.right = cur
+        n.right_is_thread = true
+        cur.left = n
+        cur.left_is_thread = false
+        break
+      else:
+        cur = cur.left
+
+    else if key > cur.key:
+      if cur.right_is_thread:
+        /* Insert as cur.right. cur.right currently points to successor. */
+        n = new_node(key)
+        n.right = cur.right
+        n.right_is_thread = true
+        n.left = cur
+        n.left_is_thread = true
+        cur.right = n
+        cur.right_is_thread = false
+        break
+      else:
+        cur = cur.right
+
+    else:
+      /* Duplicate policy: either ignore or update payload. */
+      break
+
+  return root
+```
+
+The correctness obligation is to show that the newly inserted node is threaded to its predecessor and successor and that all previously valid threads remain valid.
+
+### 8.5 Order statistics maintenance during updates
+
+If you augment nodes with `size`, you must update sizes on the recursion unwinding path during insertion and deletion. A typical insertion skeleton is:
+
+```c
+root = insert(root, key);
+root->size = 1 + size(root->left) + size(root->right);
+```
+
+Deletion is more subtle because structural cases can return a child pointer directly. You should update size after the structural case has been resolved, not before.
+
+---
+
+## 9. Testing strategies for extended work
+
+For extended tasks, simple example-based testing is rarely sufficient. Combine at least two of the following approaches.
+
+1. **Property checks**: after each update, assert `bst_is_valid(root)` for non-threaded BSTs.
+2. **Metamorphic testing**: insert a set of keys, record in-order output then delete the same keys in a random order and assert that the final tree is empty.
+3. **Cross-validation**: compare results against a reference container in another language (for example Python `bisect` on a sorted list) for randomly generated sequences.
+4. **Memory checks**: use a leak detector (Valgrind or sanitizers) and also ensure you free partial structures on error paths.
+
+A minimal random test harness in C can be built around `rand()` but if you do so, fix the seed with `srand(0)` to keep your tests reproducible.

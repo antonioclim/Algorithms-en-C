@@ -1,475 +1,666 @@
-# Week 08: Binary Search Trees (BST)
+# Week 08: Binary Search Trees in C (C11)
 
-## 🎯 Learning Objectives
+## 1. Scope and intellectual objectives
 
-Upon completion of this laboratory, students will be able to:
+This laboratory develops a principled implementation of a **Binary Search Tree (BST)** and uses it to practise three habits of mind that are indispensable in low level algorithm engineering:
 
-1. **Remember** the fundamental properties that distinguish a Binary Search Tree from a general binary tree, including the ordering invariant and structural constraints
-2. **Understand** the relationship between tree balance and algorithmic complexity, explaining why degenerate trees lead to O(n) operations
-3. **Apply** recursive and iterative algorithms for search, insertion and deletion operations on Binary Search Trees
-4. **Analyse** the time and space complexity of BST operations under best-case, average-case and worst-case scenarios
-5. **Evaluate** different deletion strategies (in-order predecessor vs successor replacement) and their implications for tree balance
-6. **Create** a complete BST implementation with support for traversals, range queries and tree validation functions
+1. **Invariant thinking**: the BST ordering predicate is treated as a formal constraint on the pointer graph rather than as an informal slogan.
+2. **Complexity reasoning**: the cost of each operation is analysed in terms of height and then translated into best case, average case and worst case bounds.
+3. **Ownership discipline**: every allocation implies a deallocation path and every structural update is justified in terms of both correctness and memory safety.
 
----
+A BST is not merely a binary tree with a convenient search routine. It is a data structure whose **semantic content** is the set of stored keys and whose **representation** is a directed acyclic pointer graph constrained by an ordering relation. The central pedagogical claim of the week is that once the ordering relation is written down precisely, the implementation becomes an exercise in maintaining that relation under mutation.
 
-## 📜 Historical Context
+The repository is structured as a small, testable artefact rather than as a collection of loosely related fragments. Each student exercise is validated by a deterministic output contract under `make test`.
 
-The Binary Search Tree emerged from the confluence of two powerful ideas in computer science: the efficiency of binary search and the flexibility of linked data structures. The concept crystallised in the late 1950s and early 1960s, as researchers sought data structures that could support efficient dynamic operations—insertion and deletion—whilst maintaining the logarithmic search times that made sorted arrays so attractive.
-
-The formal study of tree-based searching gained momentum with the work of several pioneering researchers. Andrew Donald Booth and Kathleen Booth explored binary tree structures in their 1956 work on automatic digital calculators. However, it was the contributions of researchers at the RAND Corporation, Stanford University and MIT throughout the 1960s that established the theoretical foundations we use today. The analysis of average-case behaviour for random BSTs, showing expected O(log n) operations, represented a significant achievement in probabilistic analysis of algorithms.
-
-The recognition that BSTs could degenerate into linear structures sparked decades of research into self-balancing variants. This led to the development of AVL trees by Georgy Adelson-Velsky and Evgenii Landis in 1962, Red-Black trees by Rudolf Bayer in 1972 and numerous other balanced tree structures. The humble BST thus served as both a practical data structure and a launching point for more sophisticated algorithms.
-
-### Key Figure: Donald Knuth (1938–)
-
-Donald Ervin Knuth, born in Milwaukee, Wisconsin, stands as one of the most influential figures in the analysis of algorithms and data structures. His monumental work, *The Art of Computer Programming*, begun in 1962 and still ongoing, provides the most comprehensive treatment of fundamental algorithms ever assembled. Volume 3, *Sorting and Searching*, published in 1973, contains exhaustive analysis of tree-based data structures including Binary Search Trees.
-
-Knuth's contributions extend far beyond algorithmic analysis. He created the TeX typesetting system and the METAFONT font description language, revolutionising technical publishing. His analysis of BST behaviour under random insertions established the mathematical foundations that generations of computer scientists have built upon.
-
-> *"Premature optimisation is the root of all evil."*
-> — Donald Knuth, *Structured Programming with go to Statements* (1974)
-
----
-
-## 📚 Theoretical Foundations
-
-### 1. The Binary Search Tree Property
-
-A Binary Search Tree is a binary tree that satisfies the **BST invariant**: for every node *x*, all keys in the left subtree of *x* are strictly less than *x*'s key, and all keys in the right subtree are strictly greater than *x*'s key. This property must hold recursively throughout the entire tree.
+## 2. Repository layout and artefact roles
 
 ```
-        Valid BST              Invalid BST (violation at node 3)
-           50                        50
-          /  \                      /  \
-        30    70                  30    70
-       /  \   / \                /  \   / \
-      20  40 60  80            20  40 60  80
-                                   /
-                                  35  ← violates: 35 > 30 but in left subtree
+08-BST-algorithms/
+  src/
+    example1.c        Demonstration programme covering the full BST toolchain
+    exercise1.c       Student exercise: basic BST operations (insert, search, traversal)
+    exercise2.c       Student exercise: deletion and advanced BST queries
+  solution/
+    exercise1_sol.c   Instructor reference for Exercise 1
+    exercise2_sol.c   Instructor reference for Exercise 2
+    homework1_sol.c   Instructor reference: contact directory using a BST of strings
+    homework2_sol.c   Instructor reference: expression tree evaluator built from postfix
+  tests/
+    test1_input.txt   Input script for Exercise 1
+    test1_expected.txt Golden output for Exercise 1
+    test2_input.txt   Input script for Exercise 2
+    test2_expected.txt Golden output for Exercise 2
+  data/
+    sample_keys.txt   Representative key sets for experimentation
+    operations.txt    Representative operation scripts for manual exploration
+  slides/
+    presentation-week08.html       Lecture slides
+    presentation-comparativ.html   Comparative notes and examples
+  teme/
+    homework-requirements.md       Homework specification
+    homework-extended.md           Optional extension challenges
 ```
 
-The BST property enables binary search in a tree structure:
+The separation between `src/` and `solution/` exists to support a teaching workflow in which students implement the required operations whilst instructors retain a reference implementation for marking and debugging.
 
-```
-┌─────────────────────────────────────────────────────────────────────────────┐
-│  SEARCH(node, key):                                                         │
-│    if node is NULL:                                                         │
-│        return NOT_FOUND                                                     │
-│    if key == node.key:                                                      │
-│        return node                                                          │
-│    if key < node.key:                                                       │
-│        return SEARCH(node.left, key)    ← eliminate right subtree           │
-│    else:                                                                    │
-│        return SEARCH(node.right, key)   ← eliminate left subtree            │
-└─────────────────────────────────────────────────────────────────────────────┘
-```
+## 3. Formal model of a BST
 
-### 2. Node Structure and Memory Layout
+### 3.1 Structural model
 
-Each BST node contains three essential components: a key (and optionally associated data), a pointer to the left child and a pointer to the right child. Some implementations include a parent pointer for simplified deletion and traversal operations.
+A BST is a rooted binary tree with unique keys. Each node stores a key and has two outgoing child pointers `left` and `right` that are either `NULL` or point to other nodes.
+
+The canonical C representation used throughout the week is:
 
 ```c
 typedef struct BSTNode {
-    int key;                    // The search key
-    void *data;                 // Optional: associated data
-    struct BSTNode *left;       // Left child (smaller keys)
-    struct BSTNode *right;      // Right child (larger keys)
-    struct BSTNode *parent;     // Optional: parent pointer
+    int key;
+    struct BSTNode *left;
+    struct BSTNode *right;
 } BSTNode;
 ```
 
-Memory layout for a BST with keys {20, 10, 30, 5, 15, 25, 35}:
+This model is intentionally minimal: it makes pointer manipulations explicit and keeps the proof obligations local.
+
+### 3.2 Ordering invariant
+
+Let `Keys(T)` be the set of keys stored in tree `T` and let `Left(x)` and `Right(x)` denote the left and right subtrees of node `x`. The BST invariant can be written as:
+
+- For every node `x` in the tree:
+  - for all keys `k` in `Keys(Left(x))`, `k < x.key`
+  - for all keys `k` in `Keys(Right(x))`, `k > x.key`
+
+Equivalently, the tree is a valid BST if and only if there exists an assignment of an interval `(min, max)` to each node such that the node key lies strictly inside its interval and each child interval is a strict subinterval induced by the parent key.
+
+### 3.3 Duplicate policy
+
+The student exercises implement the common textbook policy:
+
+- if an insertion key is already present then insertion performs no structural change
+
+This policy simplifies validation because the strict inequality form of the invariant can be used without additional bookkeeping.
+
+## 4. Algorithmic core
+
+Throughout this section, let `h` be the height of the tree and let `n` be the number of stored keys.
+
+### 4.1 Search
+
+Search exploits the invariant by eliminating half of the remaining search space at each step, provided the tree is reasonably balanced.
+
+#### Iterative search (preferred in C)
+
+Pseudocode:
 
 ```
-                    Stack                         Heap
-              ┌──────────────┐           ┌─────────────────────────┐
-   root ────────────────────────────────►│ key: 20                 │
-              │              │           │ left ──────────────┐    │
-              │              │           │ right ─────────────│────│─┐
-              │              │           └─────────────────────│───┘ │
-              │              │                                 │     │
-              │              │           ┌─────────────────────▼───┐ │
-              │              │           │ key: 10                 │ │
-              │              │           │ left ───────────┐       │ │
-              │              │           │ right ──────────│───┐   │ │
-              │              │           └──────────────────│───│──┘ │
-              │              │                              │   │    │
-              └──────────────┘           ┌──────────────────▼─┐ │    │
-                                         │ key: 5             │ │    │
-                                         │ left: NULL         │ │    │
-                                         │ right: NULL        │ │    │
-                                         └────────────────────┘ │    │
-                                         ┌──────────────────────▼──┐ │
-                                         │ key: 15                 │ │
-                                         │ left: NULL              │ │
-                                         │ right: NULL             │ │
-                                         └─────────────────────────┘ │
-                                         ┌───────────────────────────▼─┐
-                                         │ key: 30                     │
-                                         │ left ───► [25]              │
-                                         │ right ───► [35]             │
-                                         └─────────────────────────────┘
+SEARCH(root, key):
+    current ← root
+    while current ≠ NULL:
+        if key = current.key:
+            return current
+        else if key < current.key:
+            current ← current.left
+        else:
+            current ← current.right
+    return NULL
 ```
 
-### 3. Complexity Analysis
+Properties:
+- time complexity: `O(h)`
+- auxiliary space: `O(1)`
 
-The efficiency of BST operations depends critically on tree height. A perfectly balanced tree has height ⌊log₂(n)⌋, whilst a completely degenerate tree (effectively a linked list) has height n-1.
+Iterative search is preferable in C because it avoids recursion depth concerns and imposes no additional stack usage.
 
-| Operation | Best Case | Average Case | Worst Case | Space |
-|-----------|-----------|--------------|------------|-------|
-| Search    | O(1)      | O(log n)     | O(n)       | O(1)  |
-| Insert    | O(1)      | O(log n)     | O(n)       | O(1)  |
-| Delete    | O(1)      | O(log n)     | O(n)       | O(1)  |
-| Traversal | O(n)      | O(n)         | O(n)       | O(h)* |
-| Find Min  | O(1)      | O(log n)     | O(n)       | O(1)  |
-| Find Max  | O(1)      | O(log n)     | O(n)       | O(1)  |
+### 4.2 Insertion
 
-*Where h = tree height; O(log n) for balanced trees, O(n) for degenerate trees
+Insertion is a constructive operation: it modifies the pointer graph so that the BST invariant holds after the modification.
 
-**Probability Analysis**: When n keys are inserted in random order, the expected height of the resulting BST is approximately 2.99 × log₂(n). This remarkable result, proved by Knuth and others, demonstrates that random BSTs behave well on average even without explicit balancing.
+Pseudocode (recursive insertion with duplicate suppression):
 
 ```
-Tree Shape vs Performance:
-
-Balanced (h = 3):              Degenerate (h = 6):
-       4                              1
-      / \                              \
-     2   6                              2
-    / \ / \                              \
-   1  3 5  7                              3
-                                           \
-Operations: O(log n)                        4
-                                             \
-                                              5
-                                               \
-                                                6
-                                    Operations: O(n)
+INSERT(root, key):
+    if root = NULL:
+        return new_node(key)
+    if key < root.key:
+        root.left ← INSERT(root.left, key)
+    else if key > root.key:
+        root.right ← INSERT(root.right, key)
+    else:
+        do nothing
+    return root
 ```
 
----
+Properties:
+- time complexity: `O(h)`
+- auxiliary space: `O(h)` due to recursion
 
-## 🏭 Industrial Applications
+A fully iterative insertion is possible and often preferable for production code. The recursive form is pedagogically useful because it matches the tree’s inductive structure and makes the proof of invariant preservation almost mechanical.
 
-Binary Search Trees and their balanced variants form the backbone of numerous production systems. Understanding their implementation provides insight into how modern software achieves efficient data management.
+### 4.3 Traversals
 
-### 1. Database Indexing (PostgreSQL B-Trees)
+Traversals are representation dependent but semantics preserving. They do not change the set of stored keys but they expose different structural views.
 
-Database management systems rely heavily on tree-based indices. PostgreSQL's B-Tree index, a generalisation of the BST concept, accelerates queries by orders of magnitude:
+- **In order** (left, node, right) yields keys in ascending order for a BST.
+- **Pre order** (node, left, right) is useful for copying and serialisation.
+- **Post order** (left, right, node) is essential for safe deallocation.
 
-```c
-/* Simplified representation of how database queries use tree indices */
-typedef struct IndexEntry {
-    Datum key;              /* Indexed column value */
-    ItemPointer tid;        /* Pointer to actual row (tuple ID) */
-    struct IndexEntry *left;
-    struct IndexEntry *right;
-} IndexEntry;
+Pseudocode for in order traversal:
 
-/* Query: SELECT * FROM users WHERE age = 25 */
-IndexEntry *find_index_entry(IndexEntry *root, Datum search_key) {
-    while (root != NULL) {
-        int cmp = compare_datums(search_key, root->key);
-        if (cmp == 0) {
-            return root;  /* Found: follow tid to retrieve full row */
-        }
-        root = (cmp < 0) ? root->left : root->right;
-    }
-    return NULL;  /* Not found: no matching row exists */
-}
+```
+INORDER(node):
+    if node = NULL: return
+    INORDER(node.left)
+    visit(node)
+    INORDER(node.right)
 ```
 
-### 2. Memory Allocators (Linux Kernel Red-Black Trees)
+### 4.4 Minimum and maximum
 
-The Linux kernel uses Red-Black trees (self-balancing BSTs) extensively for managing memory regions:
+The minimum key is located at the leftmost node and the maximum at the rightmost node.
 
-```c
-/* From Linux kernel: include/linux/rbtree.h (simplified) */
-struct rb_node {
-    unsigned long rb_parent_color;
-    struct rb_node *rb_right;
-    struct rb_node *rb_left;
-};
+Pseudocode:
 
-struct vm_area_struct {
-    unsigned long vm_start;     /* Start address of memory region */
-    unsigned long vm_end;       /* End address */
-    struct rb_node vm_rb;       /* Red-Black tree node for fast lookup */
-    /* ... other fields ... */
-};
-
-/* Finding a memory region containing a given address: O(log n) */
-struct vm_area_struct *find_vma(struct mm_struct *mm, unsigned long addr);
+```
+FIND_MIN(root):
+    if root = NULL: return NULL
+    while root.left ≠ NULL:
+        root ← root.left
+    return root
 ```
 
-### 3. Standard Library Implementations (C++ std::map and std::set)
+Time: `O(h)` and in the best case `O(1)` when the root is already the minimum.
 
-The C++ Standard Library's ordered associative containers use Red-Black trees internally:
+### 4.5 Deletion (Hibbard style successor replacement)
 
-```cpp
-// C++ std::map is typically implemented as a Red-Black tree
-#include <map>
+Deletion is the operation that most clearly exposes the need for an invariant centred perspective. The repository implements the classical three case deletion using the in order successor.
 
-std::map<std::string, int> word_counts;
-word_counts["algorithm"] = 42;  // O(log n) insertion
-word_counts["binary"] = 17;
-word_counts["tree"] = 23;
+Let `x` be the node whose key equals the deletion key.
 
-// O(log n) lookup
-auto it = word_counts.find("binary");
+- **Case A (leaf)**: remove `x` and set the corresponding parent pointer to `NULL`.
+- **Case B (one child)**: splice out `x` by linking its parent directly to its only child.
+- **Case C (two children)**:
+  1. find the in order successor `s` of `x` (the minimum node in `x.right`)
+  2. copy `s.key` into `x.key` (this preserves the BST ordering constraints around `x`)
+  3. delete `s` recursively from `x.right` (now `s` is in Case A or Case B)
 
-// In-order traversal: keys appear in sorted order
-for (const auto& [word, count] : word_counts) {
-    std::cout << word << ": " << count << std::endl;
-}
-// Output: algorithm: 42, binary: 17, tree: 23
+Pseudocode:
+
+```
+DELETE(root, key):
+    if root = NULL: return NULL
+    if key < root.key:
+        root.left ← DELETE(root.left, key)
+        return root
+    if key > root.key:
+        root.right ← DELETE(root.right, key)
+        return root
+
+    # key = root.key, delete this node
+    if root.left = NULL:
+        temp ← root.right
+        free(root)
+        return temp
+    if root.right = NULL:
+        temp ← root.left
+        free(root)
+        return temp
+
+    successor ← FIND_MIN(root.right)
+    root.key ← successor.key
+    root.right ← DELETE(root.right, successor.key)
+    return root
 ```
 
-### 4. File Systems (Btrfs Extent Trees)
+The algorithm above is correct because successor replacement preserves the sortedness of the in order sequence. However it is not balance preserving: over long sequences of operations the tree may drift towards degeneracy. This is precisely why self balancing variants exist and why one should avoid treating a plain BST as a universal index.
 
-Modern file systems use B-trees and variants for metadata management:
+### 4.6 Range search
 
-```c
-/* Btrfs uses B+ trees for file extent mapping (simplified concept) */
-typedef struct ExtentNode {
-    uint64_t logical_offset;    /* Logical position in file */
-    uint64_t physical_block;    /* Physical location on disc */
-    uint64_t length;            /* Extent length */
-    struct ExtentNode *left;
-    struct ExtentNode *right;
-} ExtentNode;
+Range search demonstrates how invariants can be used to prune work beyond simple equality search.
 
-/* Finding which disc block contains file offset X: O(log n) */
-ExtentNode *find_extent(ExtentNode *root, uint64_t file_offset);
+Pseudocode:
+
+```
+RANGE_SEARCH(node, low, high):
+    if node = NULL: return
+    if node.key > low:
+        RANGE_SEARCH(node.left, low, high)
+    if low ≤ node.key ≤ high:
+        output(node.key)
+    if node.key < high:
+        RANGE_SEARCH(node.right, low, high)
 ```
 
-### 5. Network Routing Tables (Longest Prefix Match)
+This procedure performs an in order traversal restricted to nodes that could possibly fall inside the interval. The pruning conditions are logically forced by the BST invariant.
 
-Network routers use tree structures for IP address lookup:
+### 4.7 Kth smallest element
 
-```c
-/* Simplified routing table using BST principles */
-typedef struct RouteEntry {
-    uint32_t network;           /* Network address */
-    uint32_t mask;              /* Subnet mask */
-    uint32_t next_hop;          /* Next router IP */
-    struct RouteEntry *left;    /* More specific routes */
-    struct RouteEntry *right;   /* Less specific routes */
-} RouteEntry;
+The repository implements kth smallest using an in order traversal with a counter. This is optimal in space and simplicity but has worst case `O(n)` time even for a balanced tree when `k` is large.
 
-/* Determine next hop for destination IP: O(log n) average */
-uint32_t lookup_route(RouteEntry *root, uint32_t dest_ip);
+Pseudocode:
+
+```
+KTH(node, k, count, result):
+    if node = NULL or result is set: return
+    KTH(node.left, k, count, result)
+    count ← count + 1
+    if count = k:
+        result ← node.key
+        return
+    KTH(node.right, k, count, result)
 ```
 
----
+Alternative design (not implemented here): store subtree sizes at each node so that kth can be found in `O(h)` time. That design requires more complex invariant maintenance during insertion and deletion.
 
-## 💻 Laboratory Exercises
+### 4.8 Lowest common ancestor in a BST
 
-### Exercise 1: Basic BST Operations
+For a BST, the LCA of two keys is the unique node at which their search paths diverge.
 
-Implement a complete Binary Search Tree supporting fundamental operations.
+Pseudocode:
 
-**Requirements:**
-1. Define a BST node structure with key, left child and right child pointers
-2. Implement `bst_create_node()` for dynamic node allocation
-3. Implement iterative `bst_search()` that returns the node or NULL
-4. Implement recursive `bst_insert()` maintaining the BST property
-5. Implement `bst_find_min()` and `bst_find_max()` functions
-6. Implement all three traversal orders: in-order, pre-order, post-order
-7. Implement `bst_free()` to deallocate the entire tree
-8. Create a validation function `bst_is_valid()` to verify the BST property
-
-**Input Format:**
 ```
-[number of operations]
-[operation] [arguments]
-...
+LCA(root, a, b):
+    if root = NULL: return NULL
+    if a > b: swap(a, b)
+    if b < root.key:
+        return LCA(root.left, a, b)
+    if a > root.key:
+        return LCA(root.right, a, b)
+    return root
 ```
 
-**Operations:**
-- `INSERT key` - Insert a new key
-- `SEARCH key` - Search for a key
-- `MIN` - Find minimum key
-- `MAX` - Find maximum key
-- `INORDER` - Print in-order traversal
-- `PREORDER` - Print pre-order traversal
-- `POSTORDER` - Print post-order traversal
+This implementation assumes both keys exist in the tree. In a production setting one would validate existence before reporting an LCA to avoid returning a misleading node.
 
-### Exercise 2: BST Deletion and Advanced Operations
+### 4.9 Validation by range propagation
 
-Extend the BST implementation with deletion and additional functionality.
+Validation is most naturally written as a range propagation problem.
 
-**Requirements:**
-1. Implement `bst_delete()` handling all three cases:
-   - Deleting a leaf node
-   - Deleting a node with one child
-   - Deleting a node with two children (using in-order successor)
-2. Implement `bst_height()` to compute tree height
-3. Implement `bst_count_nodes()` to count total nodes
-4. Implement `bst_count_leaves()` to count leaf nodes
-5. Implement `bst_range_search()` to find all keys in range [low, high]
-6. Implement `bst_kth_smallest()` using augmented nodes or traversal
-7. Implement `bst_lca()` to find lowest common ancestor of two nodes
-8. Implement `bst_print_tree()` for visual tree representation
+Pseudocode:
 
-**Input Format:**
 ```
-[initial tree from space-separated keys]
-[number of operations]
-[operation] [arguments]
-...
+IS_VALID(node, min, max):
+    if node = NULL: return true
+    if node.key ≤ min or node.key ≥ max: return false
+    return IS_VALID(node.left, min, node.key) and IS_VALID(node.right, node.key, max)
 ```
 
----
+In C, `INT_MIN` and `INT_MAX` are used as sentinel bounds. This is safe for the strict inequality formulation when keys are ordinary integers, but for general key types or for policies that allow duplicates one must adjust the predicate accordingly.
 
-## 🔧 Compilation and Execution
+### 4.10 Visual printing
+
+The rotated printing method is a presentation algorithm rather than a data structure algorithm. It is nonetheless a useful debugging tool because it reveals the tree shape and therefore offers evidence about balance or degeneracy.
+
+The algorithm prints the right subtree first so that it appears above the root on the terminal.
+
+```
+PRINT(node, space, indent):
+    if node = NULL: return
+    space ← space + indent
+    PRINT(node.right, space, indent)
+    print newline and (space - indent) spaces and node.key
+    PRINT(node.left, space, indent)
+```
+
+## 5. Complexity analysis
+
+### 5.1 Height as the controlling parameter
+
+Most BST operations are `O(h)` where `h` is the tree height. The relationship between `h` and `n` depends on shape:
+
+- perfectly balanced BST: `h = floor(log2 n)`
+- degenerate BST (linked list): `h = n - 1`
+
+### 5.2 Best case, average case and worst case
+
+- Best case: `O(1)` when the root already satisfies the query (searching for the root key, finding min when root is min and similar).
+- Worst case: `O(n)` for search, insertion and deletion when the tree degenerates.
+- Expected case under random insertion order: height grows logarithmically with `n` and therefore the expected cost of the fundamental operations is `O(log n)`.
+
+A classical quantitative statement is that the expected height of a random BST is asymptotically `α ln n` with `α ≈ 4.311` which corresponds to approximately `2.99 log2 n`.
+
+## 6. Exercisable command languages
+
+The student programmes are small interpreters that execute operation scripts.
+
+### 6.1 Exercise 1 grammar
+
+Input format:
+
+- first line: integer `n`, the number of operations
+- next `n` lines: one operation per line
+
+Commands:
+
+- `INSERT k`
+- `SEARCH k`
+- `INORDER`
+- `PREORDER`
+- `POSTORDER`
+- `MIN`
+- `MAX`
+
+The output is intentionally strict because tests compare against golden files.
+
+### 6.2 Exercise 2 grammar
+
+Input format:
+
+- first line: initial keys separated by spaces
+- second line: integer `n`, the number of operations
+- next `n` lines: one operation per line
+
+Commands:
+
+- `HEIGHT`
+- `COUNT`
+- `LEAVES`
+- `DELETE k`
+- `INORDER`
+- `RANGE low high`
+- `KTH k`
+- `LCA a b`
+- `PRINT`
+- `VALID`
+
+## 7. Testing methodology
+
+### 7.1 Deterministic regression testing
+
+The repository uses golden file testing:
+
+- `tests/test1_input.txt` drives `exercise1`
+- `tests/test1_expected.txt` is the required output
+- `tests/test2_input.txt` drives `exercise2`
+- `tests/test2_expected.txt` is the required output
+
+Run:
 
 ```bash
-# Build all targets
-make
-
-# Build specific target
-make example1
-make exercise1
-make exercise2
-
-# Run the example demonstration
-make run
-
-# Run automated tests
-make test
-
-# Check for memory leaks with Valgrind
-make valgrind
-
-# Build and run solutions (instructor only)
-make solutions
-
-# Clean build artifacts
 make clean
-
-# Display help
-make help
+make test
 ```
 
-**Compiler flags used:**
-- `-Wall` — Enable all common warnings
-- `-Wextra` — Enable additional warnings
-- `-std=c11` — Use C11 standard
-- `-g` — Include debugging symbols
-- `-fsanitize=address` — (optional) Enable address sanitiser
+The goal is not only to obtain the correct set of keys but also to produce a stable interface. For this reason the traversal functions in the exercises print a trailing space after each key. This design choice makes the output format trivial to generate and also reduces the risk of off by one errors in printing logic.
 
----
+### 7.2 Memory correctness
 
-## 📁 Directory Structure
+A tree is a heap allocated graph and therefore memory correctness is part of functional correctness. The canonical free routine is post order and should be treated as non optional.
 
-```
-week-08-binary-search-trees/
-├── README.md                           # This documentation
-├── Makefile                            # Build automation
-│
-├── slides/
-│   ├── presentation-week08.html        # Main lecture (38 slides)
-│   └── presentation-comparativ.html    # Pseudocode → C → Python (12 slides)
-│
-├── src/
-│   ├── example1.c                      # Complete BST demonstration
-│   ├── exercise1.c                     # Basic operations exercise
-│   └── exercise2.c                     # Deletion and advanced exercise
-│
-├── data/
-│   ├── sample_keys.txt                 # Sample key data for testing
-│   └── operations.txt                  # Sample operation sequences
-│
-├── tests/
-│   ├── test1_input.txt                 # Test input for exercise 1
-│   ├── test1_expected.txt              # Expected output for exercise 1
-│   ├── test2_input.txt                 # Test input for exercise 2
-│   └── test2_expected.txt              # Expected output for exercise 2
-│
-├── teme/
-│   ├── homework-requirements.md        # Two homework assignments
-│   └── homework-extended.md            # Five bonus challenges
-│
-└── solution/
-    ├── exercise1_sol.c                 # Solution for exercise 1
-    ├── exercise2_sol.c                 # Solution for exercise 2
-    ├── homework1_sol.c                 # Solution for homework 1
-    └── homework2_sol.c                 # Solution for homework 2
+Where available, Valgrind can be used via `make valgrind`.
+
+## 8. Common failure modes and diagnostic strategies
+
+1. **Incorrect deletion in Case C**: failure to delete the successor after copying it produces a duplicate key and violates the strict BST invariant.
+2. **Memory leaks**: freeing the parent before children loses reachability of allocated subtrees.
+3. **Range search without pruning**: a naive traversal over the entire tree ignores the BST property and becomes needlessly expensive.
+4. **kth smallest without early termination**: continuing traversal after finding the kth node wastes time and can overwrite the result.
+5. **Invalid LCA assumptions**: reporting an LCA without verifying key existence can produce plausible but wrong answers.
+
+A disciplined debugging approach is to validate the BST after each mutation using the range based validator. If validation fails, the most recent structural change is the prime suspect.
+
+## 9. Cross-language correspondence (conceptual notational equivalence)
+
+The algorithms in this week are language independent. Only the memory model differs.
+
+### 9.1 C (manual ownership)
+
+```c
+BSTNode *insert(BSTNode *root, int key) {
+    if (!root) return new_node(key);
+    if (key < root->key) root->left = insert(root->left, key);
+    else if (key > root->key) root->right = insert(root->right, key);
+    return root;
+}
 ```
 
----
+### 9.2 C++ (RAII via smart pointers)
 
-## 📖 Recommended Reading
+```cpp
+struct Node {
+    int key;
+    std::unique_ptr<Node> left;
+    std::unique_ptr<Node> right;
+};
+```
 
-### Essential
-- Cormen, T.H., Leiserson, C.E., Rivest, R.L., Stein, C. — *Introduction to Algorithms*, Chapter 12: Binary Search Trees
-- Sedgewick, R., Wayne, K. — *Algorithms*, Section 3.2: Binary Search Trees
-- Knuth, D.E. — *The Art of Computer Programming, Vol. 3: Sorting and Searching*, Section 6.2
+The structural recursion is identical but deallocation is implicit.
 
-### Advanced
-- Adelson-Velsky, G., Landis, E. — "An algorithm for the organisation of information" (1962) — The original AVL paper
-- Bayer, R. — "Symmetric binary B-Trees: Data structure and maintenance algorithms" (1972) — Red-Black trees origin
-- Sleator, D., Tarjan, R. — "Self-Adjusting Binary Search Trees" (1985) — Splay trees
+### 9.3 Java (garbage collection)
 
-### Online Resources
-- Visualgo BST: https://visualgo.net/en/bst — Interactive BST visualisation
-- USFCA BST Visualisation: https://www.cs.usfca.edu/~galles/visualization/BST.html
-- MIT OpenCourseWare 6.006 Lecture 5: https://ocw.mit.edu/courses/6-006-introduction-to-algorithms-spring-2020/
+```java
+class Node {
+    int key;
+    Node left;
+    Node right;
+}
+```
 
----
+Garbage collection eliminates explicit frees, but it does not eliminate logical errors in pointer updates.
 
-## ✅ Self-Assessment Checklist
+### 9.4 Python (dynamic objects)
 
-Before completing this laboratory, verify that you can:
+```python
+class Node:
+    def __init__(self, key):
+        self.key = key
+        self.left = None
+        self.right = None
+```
 
-- [ ] Explain the BST property and identify whether a given tree satisfies it
-- [ ] Implement iterative and recursive search in a BST
-- [ ] Insert a new key whilst maintaining the BST property
-- [ ] Delete a node handling all three cases (leaf, one child, two children)
-- [ ] Perform in-order, pre-order and post-order traversals both recursively and iteratively
-- [ ] Analyse the time complexity of BST operations and explain worst-case scenarios
-- [ ] Implement tree utility functions (height, count, validation)
-- [ ] Use Valgrind to verify that your implementation has no memory leaks
-- [ ] Explain the relationship between tree balance and operation efficiency
-- [ ] Describe real-world applications of BST structures
+The main conceptual difference is that recursion depth is more likely to be a practical limitation in Python for large degenerate trees.
 
----
 
-## 💼 Interview Preparation
+## 10. Correctness sketches and invariant preservation
 
-Common interview questions on Binary Search Trees:
+The unit tests shipped with this repository are **behavioural oracles** in the narrow sense that they validate observable output for two concrete input scripts. They are therefore necessary but not sufficient for a full mathematical argument of correctness. The purpose of this section is to provide a minimal but rigorous scaffold that connects implementation structure to the BST invariant and to show where correctness obligations actually arise.
 
-1. **Validity Check**: "Given a binary tree, write a function to determine if it is a valid Binary Search Tree." (LeetCode #98)
-   - Key insight: Track valid range [min, max] for each node during traversal
+### 10.1 Insertion preserves the BST invariant
 
-2. **Kth Smallest Element**: "Find the kth smallest element in a BST." (LeetCode #230)
-   - Key insight: In-order traversal visits nodes in sorted order
+Let a BST be defined by the predicate:
 
-3. **Lowest Common Ancestor**: "Given two nodes in a BST, find their lowest common ancestor." (LeetCode #235)
-   - Key insight: LCA is where the two nodes' paths diverge
+- for every node `x`, every key in `x.left` is strictly smaller than `x.key`
+- for every node `x`, every key in `x.right` is strictly greater than `x.key`
 
-4. **Convert Sorted Array to BST**: "Given a sorted array, create a height-balanced BST." (LeetCode #108)
-   - Key insight: Recursively choose middle element as root
+The implementation in `src/exercise1.c` and `src/exercise2.c` performs insertion by descending left when `key < root->key` and right when `key > root->key`. It terminates only when it reaches a null position, at which point it allocates a new node.
 
-5. **BST Iterator**: "Implement an iterator that returns the next smallest element in O(1) amortised time." (LeetCode #173)
-   - Key insight: Use a stack to simulate in-order traversal
+**Proof sketch (structural induction on the recursion).**
 
----
+- Base case: inserting into an empty tree returns a singleton node whose left and right pointers are null, hence the predicate holds vacuously.
+- Inductive step: assume the predicate holds for the existing tree rooted at `root`. If `key < root->key`, insertion recurses into `root.left`. By the inductive hypothesis, the recursive call returns a BST whose keys remain strictly smaller than `root->key` because the call does not modify any value in the right subtree and because all comparisons were performed against `root->key` before descent. Symmetrically for the right case. Duplicate keys are ignored by design, which avoids the need to specify an equality policy.
 
-## 🔗 Next Week Preview
+The crucial implementation detail is not the recursion itself but the **assignment** back to the child pointer:
 
-**Week 09: AVL Trees**
+```c
+root->left = bst_insert(root->left, key);
+```
 
-Building upon your understanding of Binary Search Trees, we shall explore AVL trees—the first self-balancing BST structure ever invented. Named after its creators Adelson-Velsky and Landis, AVL trees maintain strict balance through rotation operations. You will learn to:
+This ensures the constructed subtree becomes part of the parent structure without losing references, hence maintaining both semantic correctness (the key becomes reachable) and memory safety (no orphaned allocations).
 
-- Calculate and maintain balance factors at each node
-- Implement single and double rotations (LL, RR, LR, RL)
-- Analyse the guaranteed O(log n) complexity for all operations
-- Compare AVL trees with other balancing schemes
+### 10.2 Deletion and Hibbard style successor replacement
 
-The insights gained from understanding unbalanced BSTs this week will illuminate why self-balancing structures are essential for guaranteed performance.
+Deletion is the first operation in which pointer reassignment can disconnect a non-trivial subtree if performed incorrectly. The algorithm implemented in `src/exercise2.c` is the standard three-case deletion scheme sometimes referred to as *successor replacement*:
 
----
+1. **Leaf node**: free the node and return `NULL`.
+2. **One child**: free the node and return the non-null child pointer.
+3. **Two children**: find the in-order successor (minimum in the right subtree), copy its key into the deleted node position then recursively delete the successor in the right subtree.
 
-*Laboratory materials prepared for ATP Course, Academy of Economic Studies - CSIE Bucharest*
+#### 10.2.1 Why the successor key is valid
+
+Let `x` be the node to delete and `s` be the minimum element in `x.right`. By definition:
+
+- `s.key` is greater than `x.key` because it lies in the right subtree of `x`.
+- `s.key` is smaller than or equal to every key in `x.right` because it is the minimum in that subtree.
+
+After copying `s.key` into `x.key`, the left subtree of `x` still contains keys strictly smaller than the old `x.key` and therefore still smaller than `s.key` because `s.key` was drawn from the right side. The right subtree of `x` still contains keys strictly greater than or equal to `s.key` by minimality. The subsequent recursive deletion removes the duplicate successor node, restoring uniqueness.
+
+#### 10.2.2 Equivalent predecessor strategy and symmetry
+
+A deletion strategy based on the in-order predecessor is symmetric: replace with the maximum element in the left subtree. The two strategies differ mainly in constant factors and in how they bias structural changes. Neither strategy guarantees balance. In an educational repository such as this one, successor replacement is preferable because `bst_find_min` is already a canonical primitive and its correctness is visually intuitive.
+
+### 10.3 Range query correctness
+
+The range search function prints all keys `k` with `low ≤ k ≤ high` in sorted order. Its correctness rests on two observations:
+
+- If `root->key ≤ low`, then every key in the left subtree is strictly smaller than `root->key` and therefore strictly smaller than or equal to `low`. The left subtree can be skipped without losing any admissible keys.
+- If `root->key ≥ high`, then every key in the right subtree is strictly larger than `root->key` and therefore strictly larger than or equal to `high`. The right subtree can be skipped.
+
+The implementation therefore performs an in-order style traversal but guards each recursive descent with a pruning predicate. This produces sorted output because the visit order is identical to in-order traversal on the induced subtree of admissible keys.
+
+### 10.4 The kth smallest element and two design points
+
+The provided `bst_kth_smallest` uses a counter during in-order traversal. It is intentionally simple and aligned with the week’s focus on reasoning rather than augmentation.
+
+- Time complexity is `Θ(h + k)` for a balanced tree when `k` is small and `Θ(n)` in the worst case.
+- Space complexity is `Θ(h)` because recursion depth equals height.
+
+A production-quality variant augments each node with `subtree_size`, enabling selection in `O(h)` time:
+
+```
+SELECT(node, k):
+  left_size = size(node.left)
+  if k == left_size + 1: return node.key
+  if k <= left_size: return SELECT(node.left, k)
+  return SELECT(node.right, k - left_size - 1)
+```
+
+The augmentation requires additional invariant maintenance during insertion and deletion, which is why it is not the default teaching implementation.
+
+### 10.5 Lowest common ancestor correctness in a BST
+
+The LCA algorithm exploits ordered paths. Let `a` and `b` be the two keys with `a ≤ b` after normalisation.
+
+- If `b < root->key`, both keys lie in the left subtree, so the LCA must lie in the left subtree.
+- If `a > root->key`, both keys lie in the right subtree.
+- Otherwise the search paths diverge at `root` or one key equals `root->key`, hence `root` is the deepest common ancestor.
+
+This argument is correct only if both keys exist. If existence is not guaranteed, the algorithm must be coupled with membership checks.
+
+## 11. Worked traces for the included exercises
+
+This repository is designed so that each assessed programme has an explicitly stated command language and a deterministic transcript. The following traces match `tests/test1_input.txt` and `tests/test2_input.txt`.
+
+### 11.1 Exercise 1 trace: fundamental operations
+
+Input script:
+
+```
+12
+INSERT 50
+INSERT 30
+INSERT 70
+INSERT 20
+INSERT 40
+INSERT 60
+INSERT 80
+SEARCH 40
+SEARCH 100
+INORDER
+MIN
+MAX
+```
+
+State after the insertions:
+
+```
+        50
+      /    \
+    30      70
+   /  \    /  \
+ 20   40  60   80
+```
+
+Key properties exercised:
+
+- `SEARCH 40` demonstrates the pruning property: the right subtree of 50 is ignored immediately.
+- `INORDER` demonstrates that in-order traversal is a sorted enumeration because of the BST invariant.
+- `MIN` and `MAX` demonstrate that extremal selection is a single-sided descent.
+
+### 11.2 Exercise 2 trace: deletion and advanced queries
+
+Initial keys are read from a single line, hence the construction order is deterministic.
+
+Input script:
+
+```
+50 30 70 20 40 60 80
+8
+HEIGHT
+COUNT
+LEAVES
+DELETE 30
+INORDER
+RANGE 25 65
+KTH 3
+LCA 20 60
+```
+
+Deletion of key 30 triggers **case 3** (two children). The in-order successor of 30 is 40. After replacement and successor deletion, the tree is:
+
+```
+        50
+      /    \
+    40      70
+   /       /  \
+ 20      60   80
+```
+
+Observations:
+
+- Height remains 2 because the longest root to leaf path length is unchanged.
+- Leaf count becomes 3 if computed after deletion, but the test queries leaves before deletion, hence 4.
+- Range query `[25, 65]` prunes the entire left branch below 20 and the entire right branch above 70.
+
+## 12. Optional augmentations and self-balancing outlook
+
+A plain BST is structurally fragile under adversarial insertion orders. In a laboratory setting this fragility is useful because it makes the connection between height and complexity explicit. In systems work, the fragility motivates balancing mechanisms.
+
+### 12.1 Rotations as local restructuring primitives
+
+A rotation changes shape without changing the in-order sequence of keys. The following pseudocode expresses the right rotation used in AVL and Red-Black balancing.
+
+```
+RIGHT_ROTATE(y):
+  x = y.left
+  T2 = x.right
+  x.right = y
+  y.left = T2
+  return x
+```
+
+The corresponding left rotation is symmetric. If parent pointers are maintained, the rotation must additionally rewire parent links. The key correctness fact is that rotations preserve the in-order sequence and therefore preserve the BST invariant.
+
+### 12.2 Augmentations: subtree sizes, parent pointers and cached heights
+
+Augmentations are additional fields stored per node, each of which introduces an invariant maintenance cost:
+
+- `parent` pointers simplify upward traversals and certain deletions but increase update surface.
+- `subtree_size` enables order statistics such as rank and selection.
+- cached `height` enables AVL balance checks.
+
+In all cases, the engineering question is whether the asymptotic improvement justifies the additional invariant burden and the larger constant factors.
+
+## 13. Implementation audit checklist
+
+Use the checklist below as a disciplined method for reviewing tree code. It is designed to catch errors that often survive superficial testing.
+
+1. **Ownership**: every `malloc` has exactly one reachable `free` path.
+2. **No subtree loss**: in insertion and deletion, child pointers are always assigned from recursive returns.
+3. **Deletion correctness**: case analysis covers leaf, one-child and two-child nodes without fall-through ambiguity.
+4. **Duplicate policy**: equality is handled explicitly and consistently.
+5. **Validation**: `bst_is_valid` uses strict inequalities and correctly narrows ranges.
+6. **Extremal functions**: `find_min` and `find_max` are one-sided and handle empty trees.
+7. **Traversal formatting**: unit tests in this repository require trailing spaces in traversal output.
+8. **Recursion depth**: for large degenerate trees recursion can overflow the call stack; iterative variants should be considered when scalability matters.
+9. **Determinism**: output should be stable and free of debugging banners when run under automated tests.
+
+## 14. References
+
+The following references provide primary or canonical treatments of searching trees, balanced variants and average case analysis.
+
+| Reference (APA 7th ed) | DOI |
+|---|---|
+| Bayer, R., & McCreight, E. M. (1972). Organization and maintenance of large ordered indexes. *Acta Informatica, 1*, 173–189. | https://doi.org/10.1007/BF00288683 |
+| Hoare, C. A. R. (1962). Quicksort. *The Computer Journal, 5*(1), 10–16. | https://doi.org/10.1093/comjnl/5.1.10 |
+| Sleator, D. D., & Tarjan, R. E. (1985). Amortized efficiency of list update and paging rules. *Communications of the ACM, 28*(2), 202–208. | https://doi.org/10.1145/2786.2793 |
+| Sethi, R., & Ullman, J. D. (1970). The generation of optimal code for arithmetic expressions. *Journal of the ACM, 17*(4), 715–728. | https://doi.org/10.1145/321607.321620 |
+| Michael, M. M., & Scott, M. L. (1996). Simple, fast and practical non-blocking and blocking concurrent queue algorithms. In *Proceedings of the Fifteenth Annual ACM Symposium on Principles of Distributed Computing* (pp. 267–275). | https://doi.org/10.1145/248052.248106 |
+
+The selection includes both direct BST related material and supporting foundations. In particular, Hibbard style deletion is a BST topic but it is often presented in textbooks rather than as a single canonical DOI indexed paper, hence the emphasis on broader primary sources.
