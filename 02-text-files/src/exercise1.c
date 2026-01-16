@@ -77,6 +77,37 @@ typedef struct {
     float average;
 } Student;
 
+/* =============================================================================
+ * COMMAND-LINE INTERFACE
+ * =============================================================================
+ *
+ * The laboratory specification uses a fixed input file and a fixed output
+ * report path. For regression testing and for controlled experimentation, this
+ * implementation also accepts optional arguments:
+ *
+ *   --input  <path>   Override the input file path
+ *   --output <path>   Override the report output path
+ *   --test            Suppress decorative banners and emit a minimal stdout
+ *
+ * Test mode is intentionally narrow: it is a formatting discipline, not a
+ * behavioural change.
+ */
+
+static void print_usage(const char *argv0) {
+    fprintf(stderr,
+            "Usage: %s [--input <file>] [--output <file>] [--test]\n",
+            argv0);
+}
+
+static int ensure_output_directory_exists(void) {
+    /* Sufficiently portable for an educational setting. */
+    #ifdef _WIN32
+    return system("mkdir output 2>nul");
+    #else
+    return system("mkdir -p output 2>/dev/null");
+    #endif
+}
+
 
 /* =============================================================================
  * FUNCTION DECLARATIONS
@@ -110,8 +141,16 @@ int write_report(const char *filename, const Student students[], int count);
  *   3. Return sum divided by count
  */
 float calculate_average(const float grades[], int count) {
-    /* YOUR CODE HERE */
-    return 0.0f;  /* Replace this */
+    if (count <= 0) {
+        return 0.0f;
+    }
+
+    float sum = 0.0f;
+    for (int i = 0; i < count; i++) {
+        sum += grades[i];
+    }
+
+    return sum / (float)count;
 }
 
 /**
@@ -136,8 +175,28 @@ float calculate_average(const float grades[], int count) {
  * Hint: The %n specifier stores the number of characters consumed
  */
 int parse_student_line(const char *line, Student *s) {
-    /* YOUR CODE HERE */
-    return 0;  /* Replace this */
+    int offset = 0;
+
+    /* Parse fixed fields: ID, Name, Year and Programme. */
+    int matched = sscanf(line, "%d %49s %d %d%n",
+                         &s->id, s->name, &s->year, &s->programme, &offset);
+    if (matched != 4) {
+        return 0;
+    }
+
+    /* Parse the variable-length grade sequence. */
+    s->grade_count = 0;
+    const char *ptr = line + offset;
+    float grade = 0.0f;
+    int consumed = 0;
+
+    while (s->grade_count < MAX_GRADES && sscanf(ptr, "%f%n", &grade, &consumed) == 1) {
+        s->grades[s->grade_count++] = grade;
+        ptr += consumed;
+    }
+
+    s->average = calculate_average(s->grades, s->grade_count);
+    return 1;
 }
 
 /**
@@ -162,8 +221,33 @@ int parse_student_line(const char *line, Student *s) {
  * Hint: Remember to check count < max_students in loop condition
  */
 int read_students_from_file(const char *filename, Student students[], int max_students) {
-    /* YOUR CODE HERE */
-    return -1;  /* Replace this */
+    FILE *fp = fopen(filename, "r");
+    if (fp == NULL) {
+        perror("Error opening input file");
+        return -1;
+    }
+
+    char line[MAX_LINE_LENGTH];
+    int count = 0;
+    int line_num = 0;
+
+    while (fgets(line, (int)sizeof(line), fp) != NULL && count < max_students) {
+        line_num++;
+
+        /* Skip empty lines. */
+        if (line[0] == '\n' || line[0] == '\0') {
+            continue;
+        }
+
+        if (parse_student_line(line, &students[count])) {
+            count++;
+        } else {
+            fprintf(stderr, "Warning: Failed to parse line %d\n", line_num);
+        }
+    }
+
+    fclose(fp);
+    return count;
 }
 
 /**
@@ -183,8 +267,18 @@ int read_students_from_file(const char *filename, Student students[], int max_st
  *   5. Return the index of the top student
  */
 int find_top_student(const Student students[], int count) {
-    /* YOUR CODE HERE */
-    return -1;  /* Replace this */
+    if (count <= 0) {
+        return -1;
+    }
+
+    int top_idx = 0;
+    for (int i = 1; i < count; i++) {
+        if (students[i].average > students[top_idx].average) {
+            top_idx = i;
+        }
+    }
+
+    return top_idx;
 }
 
 /**
@@ -203,7 +297,20 @@ int find_top_student(const Student students[], int count) {
  *   3. Check programme field and increment appropriate counter
  */
 void count_by_programme(const Student students[], int count, int *prog1050, int *prog1051) {
-    /* YOUR CODE HERE */
+    if (prog1050 == NULL || prog1051 == NULL) {
+        return;
+    }
+
+    *prog1050 = 0;
+    *prog1051 = 0;
+
+    for (int i = 0; i < count; i++) {
+        if (students[i].programme == 1050) {
+            (*prog1050)++;
+        } else if (students[i].programme == 1051) {
+            (*prog1051)++;
+        }
+    }
 }
 
 /**
@@ -233,8 +340,65 @@ void count_by_programme(const Student students[], int count, int *prog1050, int 
  * Hint: Use fprintf with width specifiers like %-10d, %-20s for alignment
  */
 int write_report(const char *filename, const Student students[], int count) {
-    /* YOUR CODE HERE */
-    return -1;  /* Replace this */
+    ensure_output_directory_exists();
+
+    FILE *fp = fopen(filename, "w");
+    if (fp == NULL) {
+        perror("Error creating report file");
+        return -1;
+    }
+
+    /* Header */
+    fprintf(fp, "═══════════════════════════════════════════════════════════════\n");
+    fprintf(fp, "                    STUDENT GRADE REPORT                        \n");
+    fprintf(fp, "═══════════════════════════════════════════════════════════════\n\n");
+
+    /* Table header */
+    fprintf(fp, "%-10s %-20s %-6s %-10s %-8s %-8s\n",
+            "ID", "Name", "Year", "Programme", "Grades", "Average");
+    fprintf(fp, "%-10s %-20s %-6s %-10s %-8s %-8s\n",
+            "----------", "--------------------", "------",
+            "----------", "--------", "--------");
+
+    float total_average = 0.0f;
+    for (int i = 0; i < count; i++) {
+        fprintf(fp, "%-10d %-20s %-6d %-10d %-8d %-8.2f\n",
+                students[i].id,
+                students[i].name,
+                students[i].year,
+                students[i].programme,
+                students[i].grade_count,
+                students[i].average);
+        total_average += students[i].average;
+    }
+
+    /* Summary section */
+    fprintf(fp, "\n───────────────────────────────────────────────────────────────\n");
+    fprintf(fp, "SUMMARY\n");
+    fprintf(fp, "───────────────────────────────────────────────────────────────\n");
+
+    fprintf(fp, "Total students:      %d\n", count);
+
+    int prog1050 = 0;
+    int prog1051 = 0;
+    count_by_programme(students, count, &prog1050, &prog1051);
+    fprintf(fp, "Programme 1050:      %d students\n", prog1050);
+    fprintf(fp, "Programme 1051:      %d students\n", prog1051);
+
+    int top_idx = find_top_student(students, count);
+    if (top_idx >= 0) {
+        fprintf(fp, "Top performer:       %s (%.2f)\n",
+                students[top_idx].name, students[top_idx].average);
+    }
+
+    if (count > 0) {
+        fprintf(fp, "Class average:       %.2f\n", total_average / (float)count);
+    }
+
+    fprintf(fp, "═══════════════════════════════════════════════════════════════\n");
+
+    fclose(fp);
+    return 0;
 }
 
 /* =============================================================================
@@ -242,33 +406,61 @@ int write_report(const char *filename, const Student students[], int count) {
  * =============================================================================
  */
 
-int main(void) {
-    printf("╔═══════════════════════════════════════════════════════════════╗\n");
-    printf("║          EXERCISE 1: Student Grade Processor                  ║\n");
-    printf("╚═══════════════════════════════════════════════════════════════╝\n\n");
-    
+int main(int argc, char **argv) {
+    const char *input_path = INPUT_FILE;
+    const char *output_path = OUTPUT_FILE;
+    int test_mode = 0;
+
+    for (int i = 1; i < argc; i++) {
+        if (strcmp(argv[i], "--input") == 0 && i + 1 < argc) {
+            input_path = argv[++i];
+        } else if (strcmp(argv[i], "--output") == 0 && i + 1 < argc) {
+            output_path = argv[++i];
+        } else if (strcmp(argv[i], "--test") == 0) {
+            test_mode = 1;
+        } else {
+            print_usage(argv[0]);
+            return 2;
+        }
+    }
+
+    if (!test_mode) {
+        printf("╔═══════════════════════════════════════════════════════════════╗\n");
+        printf("║          EXERCISE 1: Student Grade Processor                  ║\n");
+        printf("╚═══════════════════════════════════════════════════════════════╝\n\n");
+    }
+
     Student students[MAX_STUDENTS];
-    
-    /**
-     * TODO 8: Complete the main programme
-     *
-     * Steps:
-     *   1. Call read_students_from_file to load student data
-     *   2. Check if reading was successful (count > 0)
-     *   3. Print the number of students loaded
-     *   4. Find and print the top student's name and average
-     *   5. Call write_report to generate the output file
-     *   6. Print confirmation message
-     *
-     * Expected output format:
-     *   "Loaded X students from file."
-     *   "Top student: [Name] with average [X.XX]"
-     *   "Report written to [filename]"
-     */
-    
-    /* YOUR CODE HERE */
-    
-    printf("\nExercise completed.\n");
+
+    int count = read_students_from_file(input_path, students, MAX_STUDENTS);
+    if (count < 0) {
+        fprintf(stderr, "Failed to read student data.\n");
+        return 1;
+    }
+    if (count == 0) {
+        fprintf(stderr, "No students found in file.\n");
+        return 1;
+    }
+
+    printf("Loaded %d students from file.\n", count);
+
+    int top_idx = find_top_student(students, count);
+    if (top_idx >= 0) {
+        printf("Top student: %s with average %.2f\n",
+               students[top_idx].name, students[top_idx].average);
+    }
+
+    if (write_report(output_path, students, count) == 0) {
+        printf("Report written to %s\n", output_path);
+    } else {
+        fprintf(stderr, "Failed to write report.\n");
+        return 1;
+    }
+
+    if (!test_mode) {
+        printf("\nExercise completed successfully.\n");
+    }
+
     return 0;
 }
 

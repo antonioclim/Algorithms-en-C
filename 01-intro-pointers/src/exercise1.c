@@ -54,7 +54,7 @@
  * Hint: typedef return_type (*TypeName)(param_types);
  */
 
-/* YOUR CODE HERE */
+typedef int (*Operation)(int, int);
 
 
 /* =============================================================================
@@ -70,24 +70,21 @@
  * @return Sum of a and b
  */
 int op_add(int a, int b) {
-    /* YOUR CODE HERE */
-    return 0;  /* Replace this */
+    return a + b;
 }
 
 /**
  * TODO 3: Implement the subtraction function
  */
 int op_subtract(int a, int b) {
-    /* YOUR CODE HERE */
-    return 0;  /* Replace this */
+    return a - b;
 }
 
 /**
  * TODO 4: Implement the multiplication function
  */
 int op_multiply(int a, int b) {
-    /* YOUR CODE HERE */
-    return 0;  /* Replace this */
+    return a * b;
 }
 
 /**
@@ -102,18 +99,36 @@ int op_multiply(int a, int b) {
 static int division_error = 0;  /* Global error flag */
 
 int op_divide(int a, int b) {
-    /* YOUR CODE HERE */
-    /* Remember to set division_error = 1 if b == 0 */
-    return 0;  /* Replace this */
+    if (b == 0) {
+        /*
+         * When stdout is redirected (as in automated tests), it is typically
+         * fully buffered whereas stderr is unbuffered. Flushing stdout here
+         * preserves the intuitive chronological ordering of messages once
+         * stderr is redirected into stdout.
+         */
+        fflush(stdout);
+        fprintf(stderr, "Error: Division by zero\n");
+        division_error = 1;
+        return 0;
+    }
+
+    division_error = 0;
+    return a / b;
 }
 
 /**
  * TODO 6: Implement modulo operation with error handling
  */
 int op_modulo(int a, int b) {
-    /* YOUR CODE HERE */
-    /* Remember to handle division by zero like op_divide */
-    return 0;  /* Replace this */
+    if (b == 0) {
+        fflush(stdout);
+        fprintf(stderr, "Error: Division by zero\n");
+        division_error = 1;
+        return 0;
+    }
+
+    division_error = 0;
+    return a % b;
 }
 
 
@@ -136,7 +151,7 @@ int op_modulo(int a, int b) {
  * or:   Operation dispatch[256] = {0};
  */
 
-/* YOUR CODE HERE */
+static Operation dispatch[256] = {NULL};
 
 
 /**
@@ -152,7 +167,11 @@ int op_modulo(int a, int b) {
  * Hint: dispatch['+'] = op_add;
  */
 void init_dispatch_table(void) {
-    /* YOUR CODE HERE */
+    dispatch['+'] = op_add;
+    dispatch['-'] = op_subtract;
+    dispatch['*'] = op_multiply;
+    dispatch['/'] = op_divide;
+    dispatch['%'] = op_modulo;
 
 }
 
@@ -179,9 +198,20 @@ int calculate(int a, char op, int b, int *error) {
     *error = 0;
     division_error = 0;
 
-    /* YOUR CODE HERE */
+    if (dispatch[(unsigned char)op] == NULL) {
+        fflush(stdout);
+        fprintf(stderr, "Error: Unknown operator\n");
+        *error = 1;
+        return 0;
+    }
 
-    return 0;  /* Replace this */
+    int result = dispatch[(unsigned char)op](a, b);
+
+    if (division_error) {
+        *error = 1;
+    }
+
+    return result;
 }
 
 
@@ -215,7 +245,10 @@ int main(void) {
          * Use printf("%d %c %d = %d\n", a, op, b, result);
          */
 
-        /* YOUR CODE HERE */
+        int result = calculate(a, op, b, &error);
+        if (!error) {
+            printf("%d %c %d = %d\n", a, op, b, result);
+        }
 
     }
 

@@ -411,7 +411,7 @@ void demo_csv_parsing(void) {
     char original[] = "one,two,three";
     printf("Before strtok: \"%s\"\n", original);
     
-    char *tok = strtok(original, ",");
+    (void)strtok(original, ",");
     printf("After first strtok(): \"%s\"\n", original);
     printf("  Notice: The comma is replaced with '\\0'!\n");
     printf("  Original string is now modified.\n");

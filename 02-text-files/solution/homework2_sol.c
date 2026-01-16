@@ -426,10 +426,15 @@ int main(int argc, char *argv[]) {
     const char *config_file = argv[1];
     const char *command = argv[2];
     
-    ConfigFile config;
+    ConfigFile *config = (ConfigFile *)malloc(sizeof(*config));
+    if (config == NULL) {
+        perror("malloc");
+        return 1;
+    }
     
     /* Load configuration */
-    if (load_config(config_file, &config) != 0) {
+    if (load_config(config_file, config) != 0) {
+        free(config);
         return 1;
     }
     
@@ -437,60 +442,69 @@ int main(int argc, char *argv[]) {
     if (strcmp(command, "get") == 0) {
         if (argc != 5) {
             fprintf(stderr, "Usage: %s <file> get <section> <key>\n", argv[0]);
+            free(config);
             return 1;
         }
         
-        const char *value = config_get(&config, argv[3], argv[4]);
+        const char *value = config_get(config, argv[3], argv[4]);
         if (value != NULL) {
             printf("%s\n", value);
         } else {
             fprintf(stderr, "Key not found: [%s] %s\n", argv[3], argv[4]);
+            free(config);
             return 1;
         }
         
     } else if (strcmp(command, "set") == 0) {
         if (argc != 6) {
             fprintf(stderr, "Usage: %s <file> set <section> <key> <value>\n", argv[0]);
+            free(config);
             return 1;
         }
         
-        if (config_set(&config, argv[3], argv[4], argv[5]) == 0) {
-            if (save_config(config_file, &config) == 0) {
+        if (config_set(config, argv[3], argv[4], argv[5]) == 0) {
+            if (save_config(config_file, config) == 0) {
                 printf("Set [%s] %s = %s\n", argv[3], argv[4], argv[5]);
             }
         } else {
+            free(config);
             return 1;
         }
         
     } else if (strcmp(command, "delete") == 0) {
         if (argc != 5) {
             fprintf(stderr, "Usage: %s <file> delete <section> <key>\n", argv[0]);
+            free(config);
             return 1;
         }
         
-        if (config_delete(&config, argv[3], argv[4]) == 0) {
-            if (save_config(config_file, &config) == 0) {
+        if (config_delete(config, argv[3], argv[4]) == 0) {
+            if (save_config(config_file, config) == 0) {
                 printf("Deleted [%s] %s\n", argv[3], argv[4]);
             }
         } else {
+            free(config);
             return 1;
         }
         
     } else if (strcmp(command, "list-sections") == 0) {
-        config_list_sections(&config);
+        config_list_sections(config);
         
     } else if (strcmp(command, "list-keys") == 0) {
         if (argc != 4) {
             fprintf(stderr, "Usage: %s <file> list-keys <section>\n", argv[0]);
+            free(config);
             return 1;
         }
-        config_list_keys(&config, argv[3]);
+        config_list_keys(config, argv[3]);
         
     } else {
         fprintf(stderr, "Unknown command: %s\n", command);
         print_usage(argv[0]);
+        free(config);
         return 1;
     }
-    
+
+    free(config);
     return 0;
 }

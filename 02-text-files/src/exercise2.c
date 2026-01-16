@@ -83,6 +83,39 @@ typedef struct {
     int stock;
 } Product;
 
+/* =============================================================================
+ * COMMAND-LINE INTERFACE AND PORTABILITY UTILITIES
+ * =============================================================================
+ *
+ * The exercises are distributed with default input data under data/. For
+ * deterministic regression tests and for controlled demonstration experiments
+ * it is convenient to allow an explicit input path and a selectable category
+ * filter.
+ *
+ * Supported options:
+ *   --input <path>     Override the CSV input path
+ *   --category <name>  Select the category used for filtering
+ *   --test             Emit deterministic stdout suitable for snapshot diffs
+ */
+
+static void print_usage(const char *argv0) {
+    fprintf(stderr,
+            "Usage: %s [--input <file>] [--category <name>] [--test]\n",
+            argv0);
+}
+
+static int strcasecmp_local(const char *s1, const char *s2) {
+    while (*s1 && *s2) {
+        int diff = tolower((unsigned char)*s1) - tolower((unsigned char)*s2);
+        if (diff != 0) {
+            return diff;
+        }
+        s1++;
+        s2++;
+    }
+    return tolower((unsigned char)*s1) - tolower((unsigned char)*s2);
+}
+
 
 /**
  * Structure to hold parsing statistics
@@ -135,7 +168,30 @@ void print_statistics(const Product products[], int count);
  * Hint: Handle edge case of all-whitespace string
  */
 void trim_whitespace(char *str) {
-    /* YOUR CODE HERE */
+    if (str == NULL || *str == '\0') {
+        return;
+    }
+
+    char *start = str;
+    while (*start && isspace((unsigned char)*start)) {
+        start++;
+    }
+
+    if (*start == '\0') {
+        *str = '\0';
+        return;
+    }
+
+    if (start != str) {
+        memmove(str, start, strlen(start) + 1);
+    }
+
+    char *end = str + strlen(str) - 1;
+    while (end > str && isspace((unsigned char)*end)) {
+        end--;
+    }
+
+    *(end + 1) = '\0';
 }
 
 /**
@@ -159,8 +215,23 @@ void trim_whitespace(char *str) {
  * Hint: First call strtok(line, ","), then strtok(NULL, ",")
  */
 int parse_csv_line(char *line, char *fields[], int max_fields) {
-    /* YOUR CODE HERE */
-    return 0;  /* Replace this */
+    if (line == NULL || fields == NULL || max_fields <= 0) {
+        return 0;
+    }
+
+    /* Remove trailing newline(s). */
+    line[strcspn(line, "\r\n")] = '\0';
+
+    int count = 0;
+    char *token = strtok(line, ",");
+
+    while (token != NULL && count < max_fields) {
+        trim_whitespace(token);
+        fields[count++] = token;
+        token = strtok(NULL, ",");
+    }
+
+    return count;
 }
 
 /**
@@ -186,8 +257,35 @@ int parse_csv_line(char *line, char *fields[], int max_fields) {
  * Hint: strncpy(dest, src, n) copies at most n characters
  */
 int parse_product(char *fields[], int field_count, Product *p) {
-    /* YOUR CODE HERE */
-    return 0;  /* Replace this */
+    if (p == NULL || fields == NULL || field_count < 5) {
+        return 0;
+    }
+
+    strncpy(p->id, fields[0], MAX_FIELD_LENGTH - 1);
+    p->id[MAX_FIELD_LENGTH - 1] = '\0';
+    strncpy(p->name, fields[1], MAX_FIELD_LENGTH - 1);
+    p->name[MAX_FIELD_LENGTH - 1] = '\0';
+    strncpy(p->category, fields[2], MAX_FIELD_LENGTH - 1);
+    p->category[MAX_FIELD_LENGTH - 1] = '\0';
+
+    char *endptr = NULL;
+    p->price = strtod(fields[3], &endptr);
+    if (endptr == fields[3] || (*endptr != '\0' && !isspace((unsigned char)*endptr))) {
+        return 0;
+    }
+
+    endptr = NULL;
+    long stock_long = strtol(fields[4], &endptr, 10);
+    if (endptr == fields[4] || (*endptr != '\0' && !isspace((unsigned char)*endptr))) {
+        return 0;
+    }
+    p->stock = (int)stock_long;
+
+    if (p->price < 0.0 || p->stock < 0) {
+        return 0;
+    }
+
+    return 1;
 }
 
 /**
@@ -216,8 +314,55 @@ int parse_product(char *fields[], int field_count, Product *p) {
  */
 int read_products_from_csv(const char *filename, Product products[], 
                            int max_products, ParseStats *stats) {
-    /* YOUR CODE HERE */
-    return -1;  /* Replace this */
+    FILE *fp = fopen(filename, "r");
+    if (fp == NULL) {
+        perror("Error opening CSV file");
+        return -1;
+    }
+
+    stats->total_lines = 0;
+    stats->successful_parses = 0;
+    stats->failed_parses = 0;
+    stats->empty_lines = 0;
+
+    char line[MAX_LINE_LENGTH];
+    char *fields[MAX_FIELDS];
+    int count = 0;
+    int is_header = 1;
+
+    while (fgets(line, sizeof(line), fp) != NULL) {
+        stats->total_lines++;
+
+        char *check = line;
+        while (*check && isspace((unsigned char)*check)) {
+            check++;
+        }
+        if (*check == '\0') {
+            stats->empty_lines++;
+            continue;
+        }
+
+        if (is_header) {
+            is_header = 0;
+            continue;
+        }
+
+        char line_copy[MAX_LINE_LENGTH];
+        strncpy(line_copy, line, sizeof(line_copy) - 1);
+        line_copy[sizeof(line_copy) - 1] = '\0';
+
+        int field_count = parse_csv_line(line_copy, fields, MAX_FIELDS);
+        if (count < max_products && parse_product(fields, field_count, &products[count])) {
+            count++;
+            stats->successful_parses++;
+        } else {
+            stats->failed_parses++;
+            fprintf(stderr, "Warning: Failed to parse line %d\n", stats->total_lines);
+        }
+    }
+
+    fclose(fp);
+    return count;
 }
 
 /* =============================================================================
@@ -237,7 +382,8 @@ int read_products_from_csv(const char *filename, Product products[],
  * Example: 001,Laptop,Electronics,2499.99,15
  */
 void print_product_csv(const Product *p, FILE *out) {
-    /* YOUR CODE HERE */
+    fprintf(out, "%s,%s,%s,%.2f,%d\n",
+            p->id, p->name, p->category, p->price, p->stock);
 }
 
 /**
@@ -251,7 +397,8 @@ void print_product_csv(const Product *p, FILE *out) {
  * Format: id\tname\tcategory\tprice\tstock
  */
 void print_product_tsv(const Product *p, FILE *out) {
-    /* YOUR CODE HERE */
+    fprintf(out, "%s\t%s\t%s\t%.2f\t%d\n",
+            p->id, p->name, p->category, p->price, p->stock);
 }
 
 /**
@@ -266,7 +413,8 @@ void print_product_tsv(const Product *p, FILE *out) {
  * Example: 001      Laptop                   Electronics     2499.99      15
  */
 void print_product_fixed(const Product *p, FILE *out) {
-    /* YOUR CODE HERE */
+    fprintf(out, "%-8s %-25s %-15s %12.2f %8d\n",
+            p->id, p->name, p->category, p->price, p->stock);
 }
 
 /**
@@ -324,8 +472,18 @@ void print_products(const Product products[], int count, int format, FILE *out) 
  */
 int filter_by_category(const Product products[], int count, 
                        const char *category, Product filtered[], int max_filtered) {
-    /* YOUR CODE HERE */
-    return 0;  /* Replace this */
+    if (products == NULL || filtered == NULL || category == NULL || max_filtered <= 0) {
+        return 0;
+    }
+
+    int filtered_count = 0;
+    for (int i = 0; i < count && filtered_count < max_filtered; i++) {
+        if (strcasecmp_local(products[i].category, category) == 0) {
+            filtered[filtered_count++] = products[i];
+        }
+    }
+
+    return filtered_count;
 }
 
 /**
@@ -339,20 +497,28 @@ int filter_by_category(const Product products[], int count,
 
 /* Compare by price (ascending) */
 int compare_by_price(const void *a, const void *b) {
-    /* YOUR CODE HERE */
-    return 0;  /* Replace this */
+    const Product *pa = (const Product *)a;
+    const Product *pb = (const Product *)b;
+    if (pa->price < pb->price) return -1;
+    if (pa->price > pb->price) return 1;
+    return 0;
 }
 
 /* Compare by stock (descending - highest stock first) */
 int compare_by_stock(const void *a, const void *b) {
-    /* YOUR CODE HERE */
-    return 0;  /* Replace this */
+    const Product *pa = (const Product *)a;
+    const Product *pb = (const Product *)b;
+    /* Descending order: higher stock first. */
+    if (pa->stock < pb->stock) return 1;
+    if (pa->stock > pb->stock) return -1;
+    return 0;
 }
 
 /* Compare by name (alphabetical) */
 int compare_by_name(const void *a, const void *b) {
-    /* YOUR CODE HERE */
-    return 0;  /* Replace this */
+    const Product *pa = (const Product *)a;
+    const Product *pb = (const Product *)b;
+    return strcmp(pa->name, pb->name);
 }
 
 /**
@@ -372,7 +538,26 @@ int compare_by_name(const void *a, const void *b) {
  * Hint: qsort(array, count, sizeof(element), compare_func)
  */
 void sort_products(Product products[], int count, int sort_by) {
-    /* YOUR CODE HERE */
+    if (products == NULL || count <= 1 || sort_by == SORT_NONE) {
+        return;
+    }
+
+    int (*cmp)(const void *, const void *) = NULL;
+    switch (sort_by) {
+        case SORT_PRICE:
+            cmp = compare_by_price;
+            break;
+        case SORT_STOCK:
+            cmp = compare_by_stock;
+            break;
+        case SORT_NAME:
+            cmp = compare_by_name;
+            break;
+        default:
+            return;
+    }
+
+    qsort(products, (size_t)count, sizeof(Product), cmp);
 }
 
 /**
@@ -393,7 +578,74 @@ void sort_products(Product products[], int count, int sort_by) {
  */
 void print_statistics(const Product products[], int count) {
     printf("\n=== Statistics ===\n");
-    /* YOUR CODE HERE */
+    if (products == NULL || count <= 0) {
+        printf("No products to analyse.\n");
+        return;
+    }
+
+    double total_value = 0.0;
+    double total_price = 0.0;
+    int max_price_idx = 0;
+    int min_stock_idx = 0;
+
+    char categories[MAX_PRODUCTS][MAX_FIELD_LENGTH];
+    int category_count = 0;
+
+    for (int i = 0; i < count; i++) {
+        total_value += products[i].price * (double)products[i].stock;
+        total_price += products[i].price;
+
+        if (products[i].price > products[max_price_idx].price) {
+            max_price_idx = i;
+        }
+
+        if (products[i].stock < products[min_stock_idx].stock) {
+            min_stock_idx = i;
+        }
+
+        int found = 0;
+        for (int j = 0; j < category_count; j++) {
+            if (strcasecmp_local(categories[j], products[i].category) == 0) {
+                found = 1;
+                break;
+            }
+        }
+        if (!found && category_count < MAX_PRODUCTS) {
+            strncpy(categories[category_count], products[i].category, MAX_FIELD_LENGTH - 1);
+            categories[category_count][MAX_FIELD_LENGTH - 1] = '\0';
+            category_count++;
+        }
+    }
+
+    printf("Total products:        %d\n", count);
+    printf("Unique categories:     %d\n", category_count);
+    printf("Total inventory value: £%.2f\n", total_value);
+    printf("Average price:         £%.2f\n", total_price / (double)count);
+    printf("Most expensive:        %s (£%.2f)\n",
+           products[max_price_idx].name, products[max_price_idx].price);
+    printf("Lowest stock:          %s (%d units)\n",
+           products[min_stock_idx].name, products[min_stock_idx].stock);
+}
+
+static void print_statistics_terse(const Product products[], int count) {
+    printf("\n=== Statistics ===\n");
+    if (products == NULL || count <= 0) {
+        printf("Total products: 0\n");
+        printf("Total inventory value: 0.00\n");
+        printf("Average price: 0.00\n");
+        return;
+    }
+
+    double total_value = 0.0;
+    double total_price = 0.0;
+    for (int i = 0; i < count; i++) {
+        total_value += products[i].price * (double)products[i].stock;
+        total_price += products[i].price;
+    }
+
+    printf("Total products: %d\n", count);
+    printf("Total inventory value: %.2f\n", total_value);
+    printf("Average price: %.2f\n", total_price / (double)count);
 }
 
 /* =============================================================================
@@ -401,38 +653,82 @@ void print_statistics(const Product products[], int count) {
  * =============================================================================
  */
 
-int main(void) {
-    printf("╔═══════════════════════════════════════════════════════════════╗\n");
-    printf("║            EXERCISE 2: CSV Transformer                        ║\n");
-    printf("╚═══════════════════════════════════════════════════════════════╝\n\n");
-    
+static void print_products_fixed_rows(const Product products[], int count, FILE *out) {
+    for (int i = 0; i < count; i++) {
+        print_product_fixed(&products[i], out);
+    }
+}
+
+int main(int argc, char **argv) {
+    const char *input_path = INPUT_FILE;
+    const char *category_filter = "Electronics";
+    int test_mode = 0;
+
+    for (int i = 1; i < argc; i++) {
+        if (strcmp(argv[i], "--input") == 0 && i + 1 < argc) {
+            input_path = argv[++i];
+        } else if (strcmp(argv[i], "--category") == 0 && i + 1 < argc) {
+            category_filter = argv[++i];
+        } else if (strcmp(argv[i], "--test") == 0) {
+            test_mode = 1;
+        } else {
+            print_usage(argv[0]);
+            return 2;
+        }
+    }
+
+    if (!test_mode) {
+        printf("╔═══════════════════════════════════════════════════════════════╗\n");
+        printf("║            EXERCISE 2: CSV Transformer                        ║\n");
+        printf("╚═══════════════════════════════════════════════════════════════╝\n\n");
+    }
+
     Product products[MAX_PRODUCTS];
     Product filtered[MAX_PRODUCTS];
     ParseStats stats;
-    
-    /**
-     * TODO 13: Complete the main programme
-     *
-     * Steps:
-     *   1. Read products from CSV file
-     *   2. Print parsing statistics
-     *   3. Print all products in fixed-width format
-     *   4. Print products sorted by price
-     *   5. Filter and print only "Electronics" category
-     *   6. Print overall statistics
-     *
-     * Example flow:
-     *   - Read data
-     *   - Print: "Loaded X products (Y failed, Z empty lines)"
-     *   - Print table of all products
-     *   - Sort by price, print again
-     *   - Filter Electronics, print filtered
-     *   - Print statistics
-     */
-    
-    /* YOUR CODE HERE */
-    
-    printf("\nExercise completed.\n");
+
+    int count = read_products_from_csv(input_path, products, MAX_PRODUCTS, &stats);
+    if (count < 0) {
+        fprintf(stderr, "Failed to read CSV file.\n");
+        return 1;
+    }
+
+    printf("Loaded %d products (%d failed, %d empty lines)\n\n",
+           stats.successful_parses, stats.failed_parses, stats.empty_lines);
+
+    /* Section 1: all products. */
+    printf("=== All Products (Fixed Width) ===\n");
+    print_products(products, count, FORMAT_FIXED, stdout);
+
+    /* Section 2: sorted by price. Preserve original ordering for independent filtering. */
+    Product products_sorted[MAX_PRODUCTS];
+    memcpy(products_sorted, products, (size_t)count * sizeof(Product));
+    sort_products(products_sorted, count, SORT_PRICE);
+    printf("\n=== Sorted by Price ===\n");
+    if (test_mode) {
+        print_products_fixed_rows(products_sorted, count, stdout);
+    } else {
+        print_products(products_sorted, count, FORMAT_FIXED, stdout);
+    }
+
+    /* Section 3: filtered by category, based on the original list. */
+    int filtered_count = filter_by_category(products, count, category_filter, filtered, MAX_PRODUCTS);
+    printf("\n=== Filtered: %s ===\n", category_filter);
+    if (test_mode) {
+        print_products_fixed_rows(filtered, filtered_count, stdout);
+    } else {
+        print_products(filtered, filtered_count, FORMAT_FIXED, stdout);
+        printf("(%d products in %s category)\n", filtered_count, category_filter);
+    }
+
+    /* Section 4: statistics. */
+    if (test_mode) {
+        print_statistics_terse(products, count);
+    } else {
+        print_statistics(products, count);
+        printf("\nExercise completed successfully.\n");
+    }
+
     return 0;
 }
 

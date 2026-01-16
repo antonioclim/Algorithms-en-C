@@ -1,22 +1,22 @@
 Loaded 3 products (0 failed, 0 empty lines)
 
 === All Products (Fixed Width) ===
-ID       Name                      Category        Price       Stock
+ID       Name                      Category               Price    Stock
 -------- ------------------------- --------------- ------------ --------
-T01      Test Product A            TestCat              99.99       10
-T02      Test Product B            TestCat              49.99       20
-T03      Test Product C            OtherCat            149.99        5
+T01      Test Product A            TestCat                99.99       10
+T02      Test Product B            TestCat                49.99       20
+T03      Test Product C            OtherCat              149.99        5
 
 === Sorted by Price ===
-T02      Test Product B            TestCat              49.99       20
-T01      Test Product A            TestCat              99.99       10
-T03      Test Product C            OtherCat            149.99        5
+T02      Test Product B            TestCat                49.99       20
+T01      Test Product A            TestCat                99.99       10
+T03      Test Product C            OtherCat              149.99        5
 
 === Filtered: TestCat ===
-T01      Test Product A            TestCat              99.99       10
-T02      Test Product B            TestCat              49.99       20
+T01      Test Product A            TestCat                99.99       10
+T02      Test Product B            TestCat                49.99       20
 
 === Statistics ===
 Total products: 3
-Total inventory value: 2749.85
+Total inventory value: 2749.65
 Average price: 99.99

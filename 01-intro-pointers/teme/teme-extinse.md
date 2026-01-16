@@ -1,229 +1,297 @@
-# Provocări Extinse - Săptămâna 1
+# Extended challenges for Week 01: higher-order design in C via function pointers
 
-## 🚀 Provocări Avansate (Opționale)
+## 1. Scope and intent
 
-Aceste exerciții sunt pentru studenții care doresc să aprofundeze conceptele și să obțină puncte bonus. Fiecare provocare rezolvată corect aduce **+10 puncte bonus** la nota finală.
+The following challenges are optional enrichment activities intended for students who wish to deepen their understanding of function pointers beyond the laboratory core. Each challenge can be approached as a small research exercise in software design: you are asked to construct an interface, specify its invariants and then implement it in a manner that is correct, testable and portable.
 
----
+Across all challenges the general expectations remain unchanged.
 
-## ⭐ Provocare 1: Sistem de Plugins (Dificultate: Medie)
+- The code must compile as ISO C11.
+- The code must not rely on undefined behaviour.
+- The code must be accompanied by a minimal test harness or a structured test plan.
+- Dynamic allocation is permitted but must be justified and must be paired with deterministic deallocation.
 
-### Descriere
+Where the task involves a registry, an event bus or an FSM the central concept is the same: *an application-defined function pointer is stored in a data structure and invoked later under the control of a generic engine*.
 
-Implementați un sistem simplu de plugins care permite încărcarea dinamică de operații matematice.
+## 2. Bonus model
 
-### Cerințe
+Each correctly completed challenge contributes **+10 bonus points** to the final mark for the week, subject to course level rules. A submission is considered complete only if it includes a short design note at the top of the file explaining assumptions, edge cases and the chosen test strategy.
 
-1. **Structura Plugin**:
-   ```c
-   typedef struct {
-       char name[32];
-       char symbol;
-       int (*operation)(int, int);
-       char description[100];
-   } Plugin;
-   ```
+## 3. Challenge 1: a plugin registry for arithmetic operations
 
-2. **Manager de Plugins**:
-   ```c
-   typedef struct {
-       Plugin plugins[20];
-       int count;
-   } PluginManager;
+### 3.1 Design goal
 
-   void plugin_manager_init(PluginManager *pm);
-   int plugin_register(PluginManager *pm, const Plugin *plugin);
-   int plugin_unregister(PluginManager *pm, char symbol);
-   Plugin* plugin_find(PluginManager *pm, char symbol);
-   void plugin_list(const PluginManager *pm);
-   ```
+Design a small plugin registry that allows operations to be registered, listed, looked up and unregistered at runtime. The registry is not dynamic linking in the operating system sense. It is a data structure level abstraction that models the *capability* of dynamic extension.
 
-3. **Demonstrație**:
-   - Înregistrați 5+ operații
-   - Afișați lista de plugin-uri disponibile
-   - Executați operații folosind plugin-urile
-   - Dezînregistrați un plugin și verificați că nu mai este disponibil
+### 3.2 Core data structures
 
-### Puncte Bonus: +10
+```c
+typedef int (*Operation)(int, int);
 
----
+typedef struct {
+    char name[32];
+    char symbol;
+    Operation operation;
+    char description[100];
+} Plugin;
 
-## ⭐ Provocare 2: Sortare Multi-Criteriu (Dificultate: Medie-Ridicată)
+typedef struct {
+    Plugin plugins[20];
+    int count;
+} PluginManager;
+```
 
-### Descriere
+### 3.3 Required API
 
-Implementați un sistem de sortare care poate combina multiple criterii de sortare.
+```c
+void plugin_manager_init(PluginManager *pm);
+int plugin_register(PluginManager *pm, const Plugin *plugin);
+int plugin_unregister(PluginManager *pm, char symbol);
+Plugin *plugin_find(PluginManager *pm, char symbol);
+void plugin_list(const PluginManager *pm);
+```
 
-### Cerințe
+### 3.4 Invariants
 
-1. **Structură pentru criteriu de sortare**:
-   ```c
-   typedef struct {
-       int (*comparator)(const void*, const void*);
-       int ascending;  // 1 = ascending, 0 = descending
-   } SortCriterion;
-   ```
+- `pm->count` is the number of active plugins in the prefix of the `plugins` array.
+- Each `symbol` is unique within the registry.
+- `operation` must be non-null for an active plugin.
 
-2. **Sortare cu multiple criterii**:
-   ```c
-   // Sortează mai întâi după primul criteriu, apoi după al doilea pentru elemente egale, etc.
-   void multi_sort(void *base, size_t nmemb, size_t size,
-                   SortCriterion *criteria, int num_criteria);
-   ```
+### 3.5 Algorithmic sketch
 
-3. **Exemplu de utilizare**:
-   - Sortați studenți mai întâi după an de studiu, apoi după medie (descrescător), apoi după nume
+Registration may be implemented as linear search followed by insertion.
 
-### Puncte Bonus: +10
+```
+procedure register(pm, plugin)
+    if pm.count == CAPACITY then return error
+    if plugin.operation is null then return error
+    if find(pm, plugin.symbol) exists then return error
+    pm.plugins[pm.count] <- plugin (copy)
+    pm.count <- pm.count + 1
+    return ok
+end procedure
+```
 
----
+Unregistration can preserve contiguity by moving the last element into the removed slot.
 
-## ⭐ Provocare 3: Mașină de Stări Finită (Dificultate: Ridicată)
+```
+procedure unregister(pm, symbol)
+    i <- index of plugin with symbol, or none
+    if none then return not found
+    pm.count <- pm.count - 1
+    pm.plugins[i] <- pm.plugins[pm.count]
+    return ok
+end procedure
+```
 
-### Descriere
+### 3.6 Testing suggestions
 
-Implementați un FSM (Finite State Machine) generic folosind tabele de dispatch.
+- Register at least five plugins including boundary cases such as the first and last slot.
+- Attempt to register duplicates and confirm rejection.
+- Unregister a plugin then ensure lookup fails.
+- Execute all registered operations through `plugin_find` and confirm correctness.
 
-### Cerințe
+## 4. Challenge 2: multi-criteria sorting
 
-1. **Structuri de bază**:
-   ```c
-   typedef enum { STATE_A, STATE_B, STATE_C, STATE_COUNT } State;
-   typedef enum { EVENT_X, EVENT_Y, EVENT_Z, EVENT_COUNT } Event;
+### 4.1 Design goal
 
-   typedef State (*TransitionFunc)(void *context);
+Implement a wrapper that composes multiple comparator functions into a single ordering relation. This mirrors how multi-key ordering is expressed in database systems and in high-level languages.
 
-   typedef struct {
-       TransitionFunc transitions[STATE_COUNT][EVENT_COUNT];
-       void (*on_enter[STATE_COUNT])(void *context);
-       void (*on_exit[STATE_COUNT])(void *context);
-   } FSM;
-   ```
+### 4.2 Data model
 
-2. **Funcții FSM**:
-   ```c
-   void fsm_init(FSM *fsm);
-   void fsm_set_transition(FSM *fsm, State from, Event event, TransitionFunc func);
-   void fsm_set_on_enter(FSM *fsm, State state, void (*callback)(void*));
-   void fsm_set_on_exit(FSM *fsm, State state, void (*callback)(void*));
-   State fsm_process_event(FSM *fsm, State current, Event event, void *context);
-   ```
+```c
+typedef struct {
+    int (*comparator)(const void *, const void *);
+    int ascending; /* 1 for ascending, 0 for descending */
+} SortCriterion;
+```
 
-3. **Aplicație practică**: Implementați un semafor de trafic sau un automat de vânzare.
+### 4.3 Required API
 
-### Puncte Bonus: +10
+```c
+void multi_sort(void *base, size_t nmemb, size_t size,
+                SortCriterion *criteria, int num_criteria);
+```
 
----
+### 4.4 Core idea
 
-## ⭐ Provocare 4: Generic Map/Filter/Reduce (Dificultate: Medie)
+The composite comparator applies criteria in sequence and returns the first non-zero result, optionally negated for descending order.
 
-### Descriere
+```
+function composite_cmp(a, b)
+    for each criterion c in criteria do
+        r <- c.comparator(a, b)
+        if r != 0 then
+            if c.ascending then return r else return -r
+        end if
+    end for
+    return 0
+end function
+```
 
-Implementați funcțiile de ordin superior map, filter și reduce în C.
+Because `qsort` accepts only a comparator without user context, a portable implementation typically stores the `criteria` array in a static variable or uses `qsort_r` where available. For a bonus exercise you may assume `qsort_r` exists on your platform but you must document that assumption.
 
-### Cerințe
+### 4.5 Complexity
 
-1. **Map**:
-   ```c
-   void array_map(void *dest, const void *src, size_t n, size_t elem_size,
-                  void (*transform)(void *dest_elem, const void *src_elem));
-   ```
+If the underlying sort performs `O(n log n)` comparisons, the composite comparator may perform up to `num_criteria` primitive comparisons per comparator call, yielding a multiplicative constant factor. This is rarely problematic for small arrays but is analytically important.
 
-2. **Filter**:
-   ```c
-   size_t array_filter(void *dest, const void *src, size_t n, size_t elem_size,
-                       int (*predicate)(const void *elem));
-   ```
+## 5. Challenge 3: a generic finite state machine via dispatch tables
 
-3. **Reduce**:
-   ```c
-   void array_reduce(void *result, const void *arr, size_t n, size_t elem_size,
-                     void (*reducer)(void *acc, const void *elem),
-                     const void *initial);
-   ```
+### 5.1 Design goal
 
-4. **Demonstrație cu int și struct**:
-   - Map: dublează fiecare element
-   - Filter: păstrează doar elementele pozitive
-   - Reduce: calculează suma/produsul
+Construct a finite state machine (FSM) engine where transitions are selected by a two-dimensional dispatch table indexed by `(state, event)`. This makes the transition relation explicit and supports reasoning about completeness.
 
-### Puncte Bonus: +10
+### 5.2 Core types
 
----
+```c
+typedef enum { STATE_A, STATE_B, STATE_C, STATE_COUNT } State;
+typedef enum { EVENT_X, EVENT_Y, EVENT_Z, EVENT_COUNT } Event;
 
-## ⭐ Provocare 5: Event System (Dificultate: Ridicată)
+typedef State (*TransitionFunc)(void *context);
 
-### Descriere
+typedef struct {
+    TransitionFunc transitions[STATE_COUNT][EVENT_COUNT];
+    void (*on_enter[STATE_COUNT])(void *context);
+    void (*on_exit[STATE_COUNT])(void *context);
+} FSM;
+```
 
-Implementați un sistem de evenimente similar cu cel din GUI frameworks.
+### 5.3 Processing algorithm
 
-### Cerințe
+```
+function process_event(fsm, current_state, event, context)
+    t <- fsm.transitions[current_state][event]
+    if t is null then
+        return current_state  /* no transition defined */
+    next_state <- t(context)
+    if next_state != current_state then
+        if fsm.on_exit[current_state] exists then call it
+        if fsm.on_enter[next_state] exists then call it
+    end if
+    return next_state
+end function
+```
 
-1. **Structuri**:
-   ```c
-   typedef void (*EventHandler)(void *sender, void *event_data, void *user_data);
+### 5.4 Practical instantiation
 
-   typedef struct {
-       char event_name[32];
-       EventHandler handler;
-       void *user_data;
-   } Subscription;
+Choose a domain such as a traffic light controller or a vending machine. State names and events should be domain meaningful, not `STATE_A` and `EVENT_X`. Provide a transition table in the source file and a short trace demonstrating correct evolution.
 
-   typedef struct {
-       Subscription subscriptions[100];
-       int count;
-   } EventBus;
-   ```
+### 5.5 Testing suggestions
 
-2. **Funcții**:
-   ```c
-   void event_bus_init(EventBus *bus);
-   int event_subscribe(EventBus *bus, const char *event_name,
-                       EventHandler handler, void *user_data);
-   int event_unsubscribe(EventBus *bus, const char *event_name,
-                         EventHandler handler);
-   void event_emit(EventBus *bus, const char *event_name,
-                   void *sender, void *event_data);
-   ```
+- Verify that undefined transitions leave the state unchanged.
+- Verify that `on_exit` and `on_enter` callbacks are invoked exactly when a state change occurs.
+- Provide a table coverage test: iterate over all `(state, event)` pairs and assert that all expected transitions are present.
 
-3. **Demonstrație**:
-   - Creați evenimente "button_click", "key_press", "timer_tick"
-   - Înregistrați multiple handler-e pentru fiecare eveniment
-   - Emiteți evenimente și verificați că toate handler-ele sunt apelate
+## 6. Challenge 4: generic map, filter and reduce
 
-### Puncte Bonus: +10
+### 6.1 Design goal
 
----
+Implement higher-order array combinators in C while keeping the interface byte-based and type-agnostic. This challenge makes explicit the relationship between abstract functional patterns and concrete memory representation.
 
-## 📊 Sistem de Punctare Bonus
+### 6.2 Required APIs
 
-| Provocări Completate | Bonus Total |
-|---------------------|-------------|
-| 1 provocare | +10 puncte |
-| 2 provocări | +20 puncte |
-| 3 provocări | +30 puncte |
-| 4 provocări | +40 puncte |
-| Toate 5 | +50 puncte + Insignă "Master Callbacks" 🏆 |
+```c
+void array_map(void *dest, const void *src, size_t n, size_t elem_size,
+               void (*transform)(void *dest_elem, const void *src_elem));
 
----
+size_t array_filter(void *dest, const void *src, size_t n, size_t elem_size,
+                    int (*predicate)(const void *elem));
 
-## 📤 Predare
+void array_reduce(void *result, const void *arr, size_t n, size_t elem_size,
+                  void (*reducer)(void *acc, const void *elem),
+                  const void *initial);
+```
 
-1. Fișierele să fie numite `bonus1_plugins.c`, `bonus2_multisort.c`, etc.
-2. Fiecare fișier trebuie să compileze independent
-3. Includeți comentarii explicative
-4. Testați cu Valgrind pentru memory leaks
+### 6.3 Implementation notes
 
----
+- `array_map` is a structured loop with deterministic writes.
+- `array_filter` is a stable selection operator when implemented with a write index.
+- `array_reduce` requires careful treatment of accumulator type and initial value.
 
-## 💡 Sfaturi
+A typical pointer arithmetic scheme is:
 
-1. **Începeți cu provocarea care vi se pare cea mai interesantă**
-2. **Folosiți typedef extensiv** pentru claritate
-3. **Testați incremental** - nu scrieți tot codul și apoi testați
-4. **Desenați diagrame** pentru FSM și Event System
-5. **Citiți documentația** - man pages pentru funcții standard
+```c
+const unsigned char *in = src;
+unsigned char *out = dest;
+for (size_t i = 0; i < n; i++) {
+    transform(out + i * elem_size, in + i * elem_size);
+}
+```
 
----
+### 6.4 Demonstration scenarios
 
-*Provocările sunt opționale dar recompensate. Succes! 🎯*
+- Integers: map doubling, filter positive, reduce sum.
+- Structures: map applying a discount, filter in-stock, reduce total inventory value.
+
+## 7. Challenge 5: an event bus
+
+### 7.1 Design goal
+
+Implement an event subscription system similar to those found in GUI frameworks. The bus stores subscriptions and emits an event by invoking all handlers whose `event_name` matches.
+
+### 7.2 Data model
+
+```c
+typedef void (*EventHandler)(void *sender, void *event_data, void *user_data);
+
+typedef struct {
+    char event_name[32];
+    EventHandler handler;
+    void *user_data;
+} Subscription;
+
+typedef struct {
+    Subscription subscriptions[100];
+    int count;
+} EventBus;
+```
+
+### 7.3 Required API
+
+```c
+void event_bus_init(EventBus *bus);
+int event_subscribe(EventBus *bus, const char *event_name,
+                    EventHandler handler, void *user_data);
+int event_unsubscribe(EventBus *bus, const char *event_name,
+                      EventHandler handler);
+void event_emit(EventBus *bus, const char *event_name,
+                void *sender, void *event_data);
+```
+
+### 7.4 Algorithmic sketch
+
+```
+procedure emit(bus, name, sender, data)
+    for i from 0 to bus.count - 1 do
+        if subscriptions[i].event_name equals name then
+            call subscriptions[i].handler(sender, data, subscriptions[i].user_data)
+        end if
+    end for
+end procedure
+```
+
+### 7.5 Testing suggestions
+
+- Subscribe multiple handlers to the same event and confirm invocation order.
+- Subscribe handlers to different events and confirm separation.
+- Unsubscribe one handler and confirm it is no longer invoked.
+- Exercise the capacity limit and confirm rejection behaviour.
+
+## 8. Naming and submission conventions
+
+Name each file according to the challenge number.
+
+- `bonus1_plugins.c`
+- `bonus2_multisort.c`
+- `bonus3_fsm.c`
+- `bonus4_map_filter_reduce.c`
+- `bonus5_event_bus.c`
+
+Each file should compile independently and include a minimal `main` function that exercises the API.
+
+## 9. Bibliographic pointers
+
+| Reference (APA 7th) | DOI |
+|---|---|
+| Bentley, J. L., & McIlroy, M. D. (1993). Engineering a sort function. *Software: Practice and Experience, 23*(11), 1249–1265. | https://doi.org/10.1002/spe.4380231105 |
+| Hoare, C. A. R. (1962). Quicksort. *The Computer Journal, 5*(1), 10–16. | https://doi.org/10.1093/comjnl/5.1.10 |

@@ -137,35 +137,85 @@ run-ex2: exercise2_sol
 # TESTING TARGETS
 # =============================================================================
 
-test: exercise1_sol exercise2_sol
+
+# -----------------------------------------------------------------------------
+# Automated regression tests
+# -----------------------------------------------------------------------------
+
+test: exercise1 exercise2
 	@echo ""
 	@echo "$(YELLOW)$(BOLD)Running Automated Tests$(NC)"
 	@echo "$(YELLOW)────────────────────────────────────────────────────────────────$(NC)"
 	@mkdir -p $(OUT_DIR)
 	@echo ""
 	@echo "$(CYAN)Test 1: Exercise 1 (Student Grade Processor)$(NC)"
-	@./exercise1_sol > /dev/null 2>&1 && \
-		echo "$(GREEN)  ✓ Exercise 1 runs without errors$(NC)" || \
-		echo "$(RED)  ✗ Exercise 1 failed$(NC)"
+	@./exercise1 --input $(TEST_DIR)/test1_input.txt --test > $(OUT_DIR)/test1_actual.txt 2>&1
+	@diff -u $(TEST_DIR)/test1_expected.txt $(OUT_DIR)/test1_actual.txt > $(OUT_DIR)/test1_diff.txt 2>&1 && \
+		echo "$(GREEN)  ✓ Output matches expected snapshot$(NC)" || \
+		(echo "$(RED)  ✗ Output mismatch (see $(OUT_DIR)/test1_diff.txt)$(NC)" && false)
 	@echo ""
 	@echo "$(CYAN)Test 2: Exercise 2 (CSV Transformer)$(NC)"
-	@./exercise2_sol > /dev/null 2>&1 && \
-		echo "$(GREEN)  ✓ Exercise 2 runs without errors$(NC)" || \
-		echo "$(RED)  ✗ Exercise 2 failed$(NC)"
+	@./exercise2 --input $(TEST_DIR)/test2_input.txt --category TestCat --test > $(OUT_DIR)/test2_actual.txt 2>&1
+	@diff -u $(TEST_DIR)/test2_expected.txt $(OUT_DIR)/test2_actual.txt > $(OUT_DIR)/test2_diff.txt 2>&1 && \
+		echo "$(GREEN)  ✓ Output matches expected snapshot$(NC)" || \
+		(echo "$(RED)  ✗ Output mismatch (see $(OUT_DIR)/test2_diff.txt)$(NC)" && false)
 	@echo ""
 	@echo "$(YELLOW)────────────────────────────────────────────────────────────────$(NC)"
 	@echo "$(GREEN)$(BOLD)Tests completed$(NC)"
 
 # Verbose tests with output comparison
-test-verbose: exercise1_sol exercise2_sol
+test-verbose: exercise1 exercise2
 	@echo ""
 	@echo "$(YELLOW)$(BOLD)Running Verbose Tests$(NC)"
 	@echo ""
-	@echo "$(CYAN)Exercise 1 Output:$(NC)"
-	@./exercise1_sol
+	@echo "$(CYAN)Exercise 1 Output (tests/test1_input.txt):$(NC)"
+	@./exercise1 --input $(TEST_DIR)/test1_input.txt --test
 	@echo ""
-	@echo "$(CYAN)Exercise 2 Output:$(NC)"
-	@./exercise2_sol
+	@echo "$(CYAN)Exercise 2 Output (tests/test2_input.txt):$(NC)"
+	@./exercise2 --input $(TEST_DIR)/test2_input.txt --category TestCat --test
+
+# Run instructor reference solutions as smoke tests
+test-solutions: exercise1_sol exercise2_sol homework1_sol homework2_sol
+	@echo ""
+	@echo "$(YELLOW)$(BOLD)Running Solution Smoke Tests$(NC)"
+	@echo "$(YELLOW)────────────────────────────────────────────────────────────────$(NC)"
+	@./exercise1_sol > /dev/null 2>&1 && echo "$(GREEN)  ✓ exercise1_sol runs$(NC)" || (echo "$(RED)  ✗ exercise1_sol failed$(NC)" && false)
+	@./exercise2_sol > /dev/null 2>&1 && echo "$(GREEN)  ✓ exercise2_sol runs$(NC)" || (echo "$(RED)  ✗ exercise2_sol failed$(NC)" && false)
+	@echo "$(CYAN)  · homework1_sol functional smoke test$(NC)"
+	@printf '%s\n' \
+	  '127.0.0.1 - - [10/Oct/2000:13:55:36 -0700] "GET /index.html HTTP/1.0" 200 2326' \
+	  '127.0.0.1 - - [10/Oct/2000:13:55:37 -0700] "POST /api/login HTTP/1.0" 302 512' \
+	  '127.0.0.2 - - [10/Oct/2000:13:55:38 -0700] "GET /missing HTTP/1.0" 404 0' \
+	  'malformed log line for negative testing' \
+	  > $(OUT_DIR)/hw1_sample.log
+	@./homework1_sol $(OUT_DIR)/hw1_sample.log $(OUT_DIR)/hw1_report.txt > $(OUT_DIR)/hw1_stdout.txt 2>&1 && \
+	  test -s $(OUT_DIR)/hw1_report.txt && \
+	  echo "$(GREEN)  ✓ homework1_sol produced a non-empty report$(NC)" || \
+	  (echo "$(RED)  ✗ homework1_sol failed to produce report$(NC)" && false)
+	@echo "$(CYAN)  · homework2_sol functional smoke test$(NC)"
+	@printf '%s\n' \
+	  '[general]' \
+	  'name = Alice' \
+	  'version = 1' \
+	  '' \
+	  '[paths]' \
+	  'root = /var/www' \
+	  > $(OUT_DIR)/hw2_sample.ini
+	@./homework2_sol $(OUT_DIR)/hw2_sample.ini get general name > $(OUT_DIR)/hw2_get.txt 2>&1 && \
+	  grep -qx 'Alice' $(OUT_DIR)/hw2_get.txt && \
+	  echo "$(GREEN)  ✓ homework2_sol get works$(NC)" || \
+	  (echo "$(RED)  ✗ homework2_sol get failed$(NC)" && false)
+	@./homework2_sol $(OUT_DIR)/hw2_sample.ini set general name Bob > /dev/null 2>&1 && \
+	  ./homework2_sol $(OUT_DIR)/hw2_sample.ini get general name > $(OUT_DIR)/hw2_get2.txt 2>&1 && \
+	  grep -qx 'Bob' $(OUT_DIR)/hw2_get2.txt && \
+	  echo "$(GREEN)  ✓ homework2_sol set works$(NC)" || \
+	  (echo "$(RED)  ✗ homework2_sol set failed$(NC)" && false)
+	@./homework2_sol $(OUT_DIR)/hw2_sample.ini delete general version > /dev/null 2>&1 && \
+	  ! ./homework2_sol $(OUT_DIR)/hw2_sample.ini get general version > /dev/null 2>&1 && \
+	  echo "$(GREEN)  ✓ homework2_sol delete works$(NC)" || \
+	  (echo "$(RED)  ✗ homework2_sol delete failed$(NC)" && false)
+	@echo "$(YELLOW)────────────────────────────────────────────────────────────────$(NC)"
+	@echo "$(GREEN)$(BOLD)Solution smoke tests completed$(NC)"
 
 # =============================================================================
 # MEMORY CHECKING
@@ -252,4 +302,5 @@ help:
 
 # Mark targets that don't create files
 .PHONY: all clean run test valgrind help solutions debug \
-        run-ex1 run-ex2 test-verbose valgrind-ex1 valgrind-ex2 distclean
+        run-ex1 run-ex2 test-verbose test-solutions \
+        valgrind-ex1 valgrind-ex2 distclean

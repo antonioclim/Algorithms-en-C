@@ -48,10 +48,9 @@
  *   - float grade     (grade from 0.0 to 10.0)
  */
 typedef struct {
-    /* YOUR CODE HERE */
-    int id;          /* Remove this placeholder */
-    char name[50];   /* Remove this placeholder */
-    float grade;     /* Remove this placeholder */
+    int id;                 /* Student identifier, typically unique */
+    char name[MAX_NAME_LEN];/* Full name, UTF-8 safe as byte sequence */
+    float grade;            /* Numeric grade, assumed in [0.0, 10.0] */
 } Student;
 
 
@@ -73,8 +72,11 @@ typedef struct {
  *   3. Return the difference (or use safe comparison)
  */
 int cmp_by_id(const void *a, const void *b) {
-    /* YOUR CODE HERE */
-    return 0;  /* Replace this */
+    const Student *s1 = (const Student *)a;
+    const Student *s2 = (const Student *)b;
+
+    /* Safe comparator pattern: avoids overflow that subtraction may trigger */
+    return (s1->id > s2->id) - (s1->id < s2->id);
 }
 
 /**
@@ -83,8 +85,9 @@ int cmp_by_id(const void *a, const void *b) {
  * Hint: Use strcmp() from <string.h>
  */
 int cmp_by_name(const void *a, const void *b) {
-    /* YOUR CODE HERE */
-    return 0;  /* Replace this */
+    const Student *s1 = (const Student *)a;
+    const Student *s2 = (const Student *)b;
+    return strcmp(s1->name, s2->name);
 }
 
 /**
@@ -98,8 +101,12 @@ int cmp_by_name(const void *a, const void *b) {
  * return 0;
  */
 int cmp_by_grade_desc(const void *a, const void *b) {
-    /* YOUR CODE HERE */
-    return 0;  /* Replace this */
+    const Student *s1 = (const Student *)a;
+    const Student *s2 = (const Student *)b;
+
+    if (s2->grade > s1->grade) return 1;
+    if (s2->grade < s1->grade) return -1;
+    return 0;
 }
 
 /**
@@ -130,8 +137,9 @@ int cmp_by_grade_asc(const void *a, const void *b) {
  *   return strcmp(search_name, student->name);
  */
 int cmp_search_name(const void *key, const void *element) {
-    /* YOUR CODE HERE */
-    return 0;  /* Replace this */
+    const char *search_name = (const char *)key;
+    const Student *student = (const Student *)element;
+    return strcmp(search_name, student->name);
 }
 
 
@@ -194,18 +202,40 @@ int load_students(const char *filename, Student *students, int max_students) {
 
     char line[MAX_LINE_LEN];
     int count = 0;
+    int line_num = 0;
 
-    /* TODO: Read and parse each line */
     while (fgets(line, sizeof(line), file) != NULL && count < max_students) {
+        line_num++;
+
+        /* Remove trailing newline to simplify parsing and diagnostics */
+        line[strcspn(line, "\n")] = '\0';
+
         /* Skip header line if present */
-        if (count == 0 && strncmp(line, "id", 2) == 0) {
+        if (line_num == 1 && strncmp(line, "id", 2) == 0) {
             continue;
         }
 
-        /* YOUR CODE HERE */
-        /* Parse the line and store in students[count] */
-        /* Increment count if successful */
+        /* Skip empty lines */
+        if (line[0] == '\0') {
+            continue;
+        }
 
+        int id;
+        char name[MAX_NAME_LEN];
+        float grade;
+
+        if (sscanf(line, "%d,%49[^,],%f", &id, name, &grade) == 3) {
+            students[count].id = id;
+
+            /* Copy defensively and guarantee NUL termination */
+            strncpy(students[count].name, name, MAX_NAME_LEN - 1);
+            students[count].name[MAX_NAME_LEN - 1] = '\0';
+
+            students[count].grade = grade;
+            count++;
+        } else {
+            fprintf(stderr, "Warning: Could not parse line %d: %s\n", line_num, line);
+        }
     }
 
     fclose(file);
@@ -224,12 +254,12 @@ int load_students(const char *filename, Student *students, int max_students) {
  *   2. Print the top N students
  */
 void show_top_students(Student *students, int n, int top_n) {
-    /* YOUR CODE HERE */
-    /* Sort by grade descending */
-    /* Print top N */
+    qsort(students, n, sizeof(Student), cmp_by_grade_desc);
 
     printf("\n🏆 Top %d Students:\n", top_n);
-    printf("   (Not implemented yet)\n");
+    for (int i = 0; i < top_n && i < n; i++) {
+        printf("   %d. %s - %.2f\n", i + 1, students[i].name, students[i].grade);
+    }
 }
 
 /**
@@ -247,8 +277,7 @@ void show_top_students(Student *students, int n, int top_n) {
  * IMPORTANT: Array must be sorted by name before calling bsearch!
  */
 Student* find_student_by_name(Student *students, int n, const char *name) {
-    /* YOUR CODE HERE */
-    return NULL;  /* Replace this */
+    return (Student *)bsearch(name, students, n, sizeof(Student), cmp_search_name);
 }
 
 
@@ -292,12 +321,14 @@ int main(int argc, char *argv[]) {
 
     /* TODO 9: Sort by ID and display */
     printf("\n─── Sorting by ID ───\n");
-    /* YOUR CODE HERE: qsort by id, then print_students */
+    qsort(students, count, sizeof(Student), cmp_by_id);
+    print_students(students, count, "Sorted by ID");
 
 
     /* TODO 10: Sort by name and display */
     printf("\n─── Sorting by Name ───\n");
-    /* YOUR CODE HERE: qsort by name, then print_students */
+    qsort(students, count, sizeof(Student), cmp_by_name);
+    print_students(students, count, "Sorted by Name");
 
 
     /* TODO 11: Show top 3 students */

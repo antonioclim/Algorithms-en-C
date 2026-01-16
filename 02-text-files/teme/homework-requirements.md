@@ -1,6 +1,6 @@
 # Week 02 Homework: Text File Processing
 
-## 📋 General Information
+## General Information
 
 - **Deadline:** End of Week 03
 - **Points:** 100 (10% of final grade)
@@ -10,7 +10,7 @@
 
 ---
 
-## 📝 Homework 1: Log File Analyser (50 points)
+## Homework 1: Log File Analyser (50 points)
 
 ### Description
 
@@ -61,6 +61,53 @@ Example:
 ./homework1 access.log report.txt
 ```
 
+### Algorithmic blueprint (recommended, not prescriptive)
+
+The specification can be met either by a two-phase in-memory approach
+(read then analyse) or by a streaming approach (analyse as you read). The
+streaming form is usually preferable because it bounds peak memory by the size
+of the summary structures rather than by the file length.
+
+#### Streaming pass pseudocode
+
+```text
+initialise statistics counters
+initialise associative containers:
+  ip_counts   : IP -> integer
+  path_counts : PATH -> integer
+
+for each line in file with line_number:
+  if parse_log_line(line) fails:
+      failed_parses++
+      emit warning(line_number)
+      continue
+  successful_parses++
+  total_requests++
+  total_bytes += bytes
+
+  increment method counter(method)
+  increment status class counter(status)
+
+  ip_counts[ip]++
+  path_counts[path]++
+
+top_ips   <- top_k(ip_counts, k=5)
+top_paths <- top_k(path_counts, k=5)
+write formatted report
+```
+
+#### Top-*k* extraction strategies
+
+- **Sort-all**: convert the map to an array and sort by count, then take the
+  first *k*. This is simple and predictable with time **O(m log m)** where *m*
+  is the number of unique keys.
+- **Maintained heap**: maintain a min-heap of size *k* while scanning the map.
+  This reduces work to **O(m log k)** and becomes relevant when *m* is large.
+
+The reference solution uses bounded arrays and linear search for uniqueness in
+order to keep the data structures tangible. That design is adequate for
+laboratory-scale inputs but you should justify your own complexity choices.
+
 ### Output Format
 
 ```
@@ -110,7 +157,7 @@ Top 5 Active IPs
 
 ---
 
-## 📝 Homework 2: Configuration File Manager (50 points)
+## Homework 2: Configuration File Manager (50 points)
 
 ### Description
 
@@ -181,11 +228,56 @@ file = /var/log/app.log
 ./homework2 config.ini list-keys database
 ```
 
+### Algorithmic blueprint (recommended, not prescriptive)
+
+Because the task explicitly requires preservation of comments, blank lines and
+section order, a purely key-value representation is insufficient. A robust
+design stores the entire file as a sequence of typed lines and maintains the
+current section as parsing state.
+
+#### Core data model
+
+Represent each input line as a record:
+
+```text
+line.type  ∈ {EMPTY, COMMENT, SECTION, KEYVALUE, UNKNOWN}
+line.raw   = original unmodified line (for faithful round-tripping)
+line.section, line.key, line.value = parsed components where applicable
+```
+
+#### Parsing pass pseudocode
+
+```text
+current_section <- ""
+for each raw_line in file:
+  if raw_line is blank:
+      emit Line(EMPTY, raw_line)
+  else if raw_line starts with ';' or '#':
+      emit Line(COMMENT, raw_line)
+  else if raw_line matches '[' section ']':
+      current_section <- section
+      emit Line(SECTION, raw_line, section=current_section)
+  else if raw_line contains '=':
+      key, value <- split at first '=' then trim both sides
+      emit Line(KEYVALUE, raw_line, section=current_section, key=key, value=value)
+  else:
+      emit Line(UNKNOWN, raw_line)
+```
+
+#### Update operations
+
+- `get(section, key)`: first matching `KEYVALUE` line in that section
+- `set(section, key, value)`: update if present else insert after the section header
+- `delete(section, key)`: remove matching `KEYVALUE` line
+
+All operations are **O(n)** in the number of lines unless you also maintain an
+index from `(section, key)` to line position.
+
 ### File: `homework2_config_manager.c`
 
 ---
 
-## 📊 Evaluation Criteria
+## Evaluation Criteria
 
 | Criterion | Homework 1 | Homework 2 |
 |-----------|------------|------------|
@@ -209,7 +301,7 @@ file = /var/log/app.log
 
 ---
 
-## 📤 Submission Guidelines
+## Submission Guidelines
 
 1. **Files to submit:**
    - `homework1_log_analyser.c`
@@ -234,7 +326,7 @@ file = /var/log/app.log
 
 ---
 
-## 💡 Tips for Success
+## Tips for Success
 
 1. **Start with parsing** — Get the file reading and parsing working first before adding features.
 
@@ -250,7 +342,7 @@ file = /var/log/app.log
 
 ---
 
-## 🆘 Getting Help
+## Getting Help
 
 - **Office hours:** Wednesday 14:00-16:00
 - **Course forum:** Post questions (without sharing solution code)

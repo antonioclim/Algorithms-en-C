@@ -1,6 +1,6 @@
 # Extended Challenges - Week 02
 
-## 🚀 Advanced Challenges (Optional)
+## Advanced Challenges (Optional)
 
 Each correctly solved challenge earns **+10 bonus points** (maximum +50 points).
 
@@ -8,7 +8,7 @@ These challenges are designed for students who want to push beyond the core requ
 
 ---
 
-## ⭐ Challenge 1: Multi-Format Data Converter (Difficulty: Medium)
+## Challenge 1: Multi-Format Data Converter (Difficulty: Medium)
 
 ### Description
 
@@ -57,7 +57,7 @@ Jane Doe,25,"New York"
 
 ---
 
-## ⭐ Challenge 2: Diff Utility Clone (Difficulty: Medium-Hard)
+## Challenge 2: Diff Utility Clone (Difficulty: Medium-Hard)
 
 ### Description
 
@@ -102,7 +102,7 @@ Implement a simplified version of the Unix `diff` command that compares two text
 
 ---
 
-## ⭐ Challenge 3: Real-Time Log Tail (Difficulty: Medium)
+## Challenge 3: Real-Time Log Tail (Difficulty: Medium)
 
 ### Description
 
@@ -155,7 +155,7 @@ while (running) {
 
 ---
 
-## ⭐ Challenge 4: Structured Log Parser with Regex (Difficulty: Hard)
+## Challenge 4: Structured Log Parser with Regex (Difficulty: Hard)
 
 ### Description
 
@@ -201,7 +201,7 @@ const char *SYSLOG_PATTERN =
 
 ---
 
-## ⭐ Challenge 5: File Indexer and Search Engine (Difficulty: Hard)
+## Challenge 5: File Indexer and Search Engine (Difficulty: Hard)
 
 ### Description
 
@@ -248,7 +248,7 @@ Example:
 
 ---
 
-## 📊 Bonus Point System
+## Bonus Point System
 
 | Challenges Completed | Total Bonus | Special Recognition |
 |---------------------|-------------|---------------------|
@@ -256,7 +256,7 @@ Example:
 | 2 challenges | +20 points | — |
 | 3 challenges | +30 points | "File I/O Expert" badge |
 | 4 challenges | +40 points | "File I/O Expert" badge |
-| All 5 challenges | +50 points | "Text Processing Master" badge 🏆 |
+| All 5 challenges | +50 points | "Text Processing Master" badge |
 
 ### Badge Benefits
 
@@ -267,7 +267,7 @@ Students earning badges receive:
 
 ---
 
-## 📋 Submission Guidelines for Challenges
+## Submission Guidelines for Challenges
 
 1. **Separate submission** from regular homework
 2. **Include README** explaining your approach
@@ -286,13 +286,13 @@ challenge5_indexer.c
 
 ---
 
-## 💡 General Tips
+## General Tips
 
 1. **Start simple** — Get basic functionality working before optimising.
 
 2. **Research algorithms** — For Challenge 2 (diff), look up Longest Common Subsequence. For Challenge 5, study inverted indexes.
 
-3. **Test extensively** — Edge cases matter! Test with empty files, huge files, special characters.
+3. **Test extensively** — Edge cases matter. Test with empty files, huge files and special characters.
 
 4. **Profile your code** — Use `time` command to measure performance on large inputs.
 
@@ -300,4 +300,105 @@ challenge5_indexer.c
 
 ---
 
-Good luck, and remember: the journey of mastering these techniques is as valuable as the destination! 🚀
+These optional tasks are most valuable when treated as small research problems.
+State your assumptions explicitly, justify algorithmic choices with complexity
+arguments and validate behaviour with adversarial test cases.
+
+---
+
+## Appendix: Algorithmic notes and pseudocode sketches
+
+The following material is optional but it is intended to raise the technical
+ceiling of the challenges. The pseudocode uses C-like conventions while
+remaining language-agnostic.
+
+### A. Quote-aware CSV parsing (finite-state scanner)
+
+The minimal `strtok` approach used in the laboratory fails on inputs such as
+`"Smith, John"` because commas may occur inside quoted fields. A robust parser
+is most naturally expressed as a single-pass state machine.
+
+**State variables**
+
+- `in_quotes`: boolean
+- `field_start`: pointer or index into the line buffer
+
+**Pseudocode**
+
+```text
+function split_csv_quoted(line):
+  fields <- []
+  in_quotes <- false
+  field <- empty string builder
+
+  for each character c in line:
+    if c == '"':
+        in_quotes <- not in_quotes
+        continue
+    if c == ',' and not in_quotes:
+        fields.append(field.trim())
+        field.clear()
+        continue
+    field.append(c)
+
+  fields.append(field.trim())
+  return fields
+```
+
+This scanner is **O(L)** in the line length and does not require recursion. To
+support escaped quotes (`""` within a quoted field) refine the quote transition
+to detect the doubled quote pattern.
+
+### B. Unified diff generation (LCS and Myers style reasoning)
+
+The human-friendly `diff -u` format requires a mapping from two line sequences
+to an edit script. Two classical routes are widely discussed:
+
+- Dynamic programming for Longest Common Subsequence (LCS), typically **O(nm)**
+  time and **O(nm)** space unless optimised
+- Myers' O(ND) algorithm where *D* is the edit distance, often faster in
+  practice for similar files
+
+**LCS core recurrence**
+
+```text
+if A[i] == B[j]:
+    dp[i][j] = dp[i-1][j-1] + 1
+else:
+    dp[i][j] = max(dp[i-1][j], dp[i][j-1])
+```
+
+From the completed `dp` table an edit script is reconstructed by backtracking.
+
+### C. Large file handling (external sorting)
+
+For challenges where the working set exceeds memory, use external sorting:
+
+```text
+function external_sort(file, chunk_bytes):
+  runs <- []
+  while not EOF(file):
+      chunk <- read up to chunk_bytes
+      sort(chunk)
+      run_file <- write chunk to temporary file
+      runs.append(run_file)
+  return k_way_merge(runs)
+```
+
+The k-way merge is naturally implemented with a min-heap over the current head
+element of each run.
+
+### D. Inverted index construction (for the file indexer)
+
+An inverted index maps tokens to a postings list of document identifiers. A
+simple implementation is:
+
+```text
+for each document d:
+  tokens <- normalise(tokenise(read(d)))
+  for each token t in tokens:
+      index[t].add(d)
+```
+
+If you want to keep the index on disk, consider writing postings in sorted
+order with delta encoding for compression.

@@ -1,6 +1,6 @@
 # Week 02: Text File Processing in C
 
-## 🎯 Learning Objectives
+## Learning Objectives
 
 By the end of this laboratory session, students will be able to:
 
@@ -13,7 +13,7 @@ By the end of this laboratory session, students will be able to:
 
 ---
 
-## 📜 Historical Context
+## Historical Context
 
 The evolution of file I/O in C reflects the broader history of operating system design. When Dennis Ritchie and Ken Thompson developed C at Bell Labs between 1969 and 1973, they designed it to be the systems programming language for Unix. The elegant abstraction of "everything is a file" in Unix directly influenced how C handles I/O operations.
 
@@ -29,7 +29,7 @@ Dennis MacAlistair Ritchie, known affectionately as "dmr", created the C program
 
 ---
 
-## 📚 Theoretical Foundations
+## Theoretical Foundations
 
 ### 1. The Stream Abstraction
 
@@ -119,7 +119,7 @@ int setvbuf(FILE *stream, char *buffer, int mode, size_t size);
 
 ---
 
-## 🏭 Industrial Applications
+## Industrial Applications
 
 ### Application 1: Log File Parsing (Unix/Linux System Administration)
 
@@ -258,7 +258,7 @@ int read_market_data(const char *filename, StockQuote *quotes, int max) {
 
 ---
 
-## 💻 Laboratory Exercises
+## Laboratory Exercises
 
 ### Exercise 1: Student Grade Processor
 
@@ -295,7 +295,7 @@ Create a utility that reads CSV files, performs data transformations and outputs
 
 ---
 
-## 🔧 Compilation and Execution
+## Compilation and Execution
 
 ### Building the Project
 
@@ -336,11 +336,217 @@ make test
 
 # Verbose test output
 make test-verbose
+
+# Run smoke tests for instructor reference solutions
+make test-solutions
 ```
+
+The regression harness used by `make test` is intentionally strict: it executes
+the student-facing binaries with deterministic flags and compares stdout against
+the canonical snapshots under `tests/` using `diff -u`. This arrangement
+privileges reproducibility over cosmetic freedom, which is pedagogically useful
+when discussing experimental control, buffering and output normalisation.
+
+In particular the exercises implement a `--test` mode that suppresses decorative
+banners and other non-essential output so that the remaining lines constitute a
+stable behavioural contract.
 
 ---
 
-## 📁 Directory Structure
+## Command-Line Interface (Reproducible Experiments)
+
+Although the laboratory sheet can be followed with the default bundled data
+files, both exercises expose a minimal command-line interface in order to
+support automated testing and to facilitate controlled comparisons.
+
+### Exercise 1 (Student Grade Processor)
+
+```bash
+# Default run (reads data/studgrades.txt and writes output/report.txt)
+./exercise1
+
+# Deterministic run for regression
+./exercise1 --input tests/test1_input.txt --output output/report.txt --test
+```
+
+Supported options:
+
+- `--input <path>` selects the input record file
+- `--output <path>` selects the report path
+- `--test` produces minimal, deterministic stdout
+
+### Exercise 2 (CSV Transformer)
+
+```bash
+# Default run (reads data/products.csv, filters Electronics)
+./exercise2
+
+# Deterministic run for regression
+./exercise2 --input tests/test2_input.txt --category TestCat --test
+```
+
+Supported options:
+
+- `--input <path>` selects the CSV file
+- `--category <name>` selects the category string used for filtering
+- `--test` produces deterministic stdout suitable for snapshot diffs
+
+---
+
+## Algorithmic Deep Dive (Parsing, Aggregation and Sorting)
+
+This section makes explicit the computational content that is easy to gloss
+over when focusing solely on C syntax. The exercises are, at their core,
+instances of the same pattern: **tokenise → validate → transform → aggregate →
+report**.
+
+### 1. Record Grammars (Operational EBNF)
+
+For rigorous reasoning, the line formats can be described with a lightweight,
+operational grammar. The following EBNF is deliberately pragmatic: it mirrors
+what the implementation accepts rather than asserting an idealised standard.
+
+#### 1.1 Student records (space-delimited)
+
+```text
+student_line  ::= id SP name SP year SP programme (SP grade)*
+id            ::= DIGIT+
+name          ::= NONSPACE+
+year          ::= DIGIT{4}
+programme     ::= DIGIT+
+grade         ::= DIGIT+ ('.' DIGIT+)?
+SP            ::= ' ' { ' ' | '\t' }
+```
+
+The salient feature is the **unbounded suffix** `(SP grade)*`, which prevents a
+single `sscanf` call from being sufficient when the number of grades is not
+fixed.
+
+#### 1.2 Product records (CSV, unquoted fields)
+
+```text
+csv_line      ::= field ',' field ',' field ',' field ',' field
+field         ::= { CHAR - { ',', '\r', '\n' } }
+```
+
+The laboratory parser uses `strtok` for pedagogical clarity. This choice
+imposes the usual restrictions: embedded commas and quoted fields are not
+treated as part of a single field. The optional challenges discuss how one
+might implement an RFC 4180 compatible scanner.
+
+### 2. Exercise 1: Parsing with `sscanf` and the `%n` cursor
+
+The core technique is the `%n` conversion specifier which records the number of
+characters consumed so far. This turns `sscanf` into a cursor-based lexer: once
+the prefix is parsed, the remainder of the string is iteratively scanned.
+
+#### Pseudocode (C-like)
+
+```text
+function parse_student_line(line):
+    offset <- 0
+    matched <- sscanf(line, "%d %s %d %d%n", id, name, year, programme, offset)
+    if matched != 4:
+        return failure
+
+    grades <- empty list
+    cursor <- line + offset
+    while length(grades) < MAX_GRADES and sscanf(cursor, "%f%n", g, delta) == 1:
+        append(grades, g)
+        cursor <- cursor + delta
+
+    average <- mean(grades)
+    return Student(id, name, year, programme, grades, average)
+```
+
+#### Complexity and invariants
+
+- Let *L* be the character length of a line and *k* the number of grades.
+  The scan is **O(L)** time because the cursor advances monotonically and each
+  character is visited a constant number of times.
+- The memory footprint is **O(1)** beyond the fixed arrays because grades are
+  stored in a bounded buffer.
+- The loop invariant is: `cursor` always points to the first unconsumed
+  character and `grades` contains exactly the grades parsed from the prefix of
+  the suffix.
+
+### 3. Exercise 2: CSV tokenisation, validation and stable filtering
+
+#### 3.1 Tokenisation with destructive scanning
+
+`strtok` replaces delimiters with `\0` and returns pointers into the same buffer.
+Therefore parsing must operate on a mutable copy of the original line.
+
+```text
+function parse_csv_line(line):
+    strip line endings
+    fields <- []
+    token <- strtok(line, ",")
+    while token != NULL and len(fields) < MAX_FIELDS:
+        trim(token)
+        append(fields, token)
+        token <- strtok(NULL, ",")
+    return fields
+```
+
+#### 3.2 Numeric validation with `strtod` and `strtol`
+
+The conversion functions are used with an `endptr` so that lexical validity can
+be tested. This is preferable to `atof` and `atoi` because failures can be
+distinguished from legitimate zeros.
+
+#### 3.3 Sorting and filtering as separate transformations
+
+The demonstration flow in `exercise2` intentionally keeps the original array
+intact and sorts a copy. This makes the data pipeline easier to reason about:
+filtering is then **stable with respect to input order** rather than being an
+artefact of the previous sort.
+
+```text
+products       <- read_products(...)
+products_sorted <- copy(products)
+qsort(products_sorted, compare_by_price)
+
+filtered <- [p in products where lower(p.category) == lower(category_filter)]
+```
+
+Time complexity is **O(n log n)** for sorting and **O(n)** for filtering where
+*n* is the number of products.
+
+### 4. Cross-language parallels (for conceptual transfer)
+
+The underlying algorithms are not tied to C. The following sketches make the
+dataflow explicit without focusing on syntax.
+
+#### Python (illustrative)
+
+```python
+import csv
+
+with open('products.csv', newline='') as f:
+    rows = list(csv.DictReader(f))
+
+rows_sorted = sorted(rows, key=lambda r: float(r['Price']))
+filtered = [r for r in rows if r['Category'].casefold() == 'Electronics'.casefold()]
+
+total_value = sum(float(r['Price']) * int(r['Stock']) for r in rows)
+```
+
+#### C++ (illustrative)
+
+```cpp
+std::vector<Product> v = read_csv(...);
+auto sorted = v;
+std::sort(sorted.begin(), sorted.end(), [](auto& a, auto& b){ return a.price < b.price; });
+auto filtered = v | std::views::filter([&](auto& p){ return iequals(p.category, cat); });
+```
+
+The pedagogical point is that the core operations are portable: scanning,
+validation, aggregation and ordering.
+
+---
+
+## Directory Structure
 
 ```
 week-02-text-files/
@@ -380,7 +586,7 @@ week-02-text-files/
 
 ---
 
-## 📖 Recommended Reading
+## Recommended Reading
 
 ### Essential References
 
@@ -400,7 +606,7 @@ week-02-text-files/
 
 ---
 
-## ✅ Self-Assessment Checklist
+## Self-Assessment Checklist
 
 Before completing this week's laboratory, ensure you can:
 
@@ -417,7 +623,7 @@ Before completing this week's laboratory, ensure you can:
 
 ---
 
-## 💼 Interview Preparation
+## Interview Preparation
 
 ### Common Interview Questions
 
@@ -443,11 +649,11 @@ Before completing this week's laboratory, ensure you can:
 
 ---
 
-## 🔗 Next Week Preview
+## Next Week Preview
 
 **Week 03: Binary File Processing**
 
-Next week we shall explore binary file operations, covering `fread()` and `fwrite()` for efficient data serialisation, the `fseek()`/`ftell()` functions for random access, and techniques for designing portable binary file formats. We shall examine struct padding considerations and implement a simple database engine with indexed record access.
+Next week we shall explore binary file operations, covering `fread()` and `fwrite()` for efficient data serialisation, the `fseek()`/`ftell()` functions for random access and techniques for designing portable binary file formats. We shall examine struct padding considerations and implement a simple database engine with indexed record access.
 
 ---
 
