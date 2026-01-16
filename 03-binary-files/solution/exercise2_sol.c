@@ -86,7 +86,13 @@ static void init_product(Product *p, int32_t code, const char *name,
 static int compare_index(const void *a, const void *b) {
     const IndexEntry *ia = (const IndexEntry *)a;
     const IndexEntry *ib = (const IndexEntry *)b;
-    return ia->code - ib->code;
+    if (ia->code < ib->code) {
+        return -1;
+    }
+    if (ia->code > ib->code) {
+        return 1;
+    }
+    return 0;
 }
 
 static void replace_underscores(char *str) {
@@ -526,14 +532,15 @@ void print_all_products(void) {
  * Print statistics
  */
 void print_stats(const DatabaseStats *stats) {
-    printf("\n╔════════════════════════════════════╗\n");
-    printf("║        DATABASE STATISTICS         ║\n");
-    printf("╠════════════════════════════════════╣\n");
-    printf("║  Total Records:    %10zu     ║\n", stats->total_records);
-    printf("║  Active Records:   %10zu     ║\n", stats->active_records);
-    printf("║  Deleted Records:  %10zu     ║\n", stats->deleted_records);
-    printf("║  File Size:        %10ld B   ║\n", stats->file_size);
-    printf("╚════════════════════════════════════╝\n");
+    /* Printed verbatim to match the published reference output for Week 03. */
+    printf("\n╔════════════════════════════════════════════════════════════════╗\n");
+    printf("║                    DATABASE STATISTICS                         ║\n");
+    printf("╠════════════════════════════════════════════════════════════════╣\n");
+    printf("║  Total Records:%12zu%36s║\n", stats->total_records, "");
+    printf("║  Active Records:%11zu%36s║\n", stats->active_records, "");
+    printf("║  Deleted Records:%10zu%36s║\n", stats->deleted_records, "");
+    printf("║  File Size:%16ld B%34s║\n", stats->file_size, "");
+    printf("╚════════════════════════════════════════════════════════════════╝\n");
 }
 
 /* =============================================================================

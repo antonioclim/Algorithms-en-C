@@ -139,7 +139,13 @@ static void init_product(Product *p, int32_t code, const char *name,
 static int compare_index(const void *a, const void *b) {
     const IndexEntry *ia = (const IndexEntry *)a;
     const IndexEntry *ib = (const IndexEntry *)b;
-    return ia->code - ib->code;
+    if (ia->code < ib->code) {
+        return -1;
+    }
+    if (ia->code > ib->code) {
+        return 1;
+    }
+    return 0;
 }
 
 /**
@@ -178,29 +184,56 @@ static void replace_underscores(char *str) {
  * Hint: Use ftell() BEFORE writing to get the offset
  */
 int add_product(const Product *product) {
-    /* YOUR CODE HERE */
-    
-    /* Step 1-4: Write to data file */
+    if (product == NULL) {
+        return -1;
+    }
+
+    /* Step 1-4: append to the data file and capture the record offset */
     FILE *data_fp = fopen(DATA_FILE, "ab");
     if (data_fp == NULL) {
         return -1;
     }
-    
-    /* Get offset before writing */
+
     long offset = ftell(data_fp);
-    
-    /* Write product */
+    if (offset < 0) {
+        fclose(data_fp);
+        return -1;
+    }
+
     if (fwrite(product, sizeof(Product), 1, data_fp) != 1) {
         fclose(data_fp);
         return -1;
     }
-    
+
     fclose(data_fp);
-    
-    /* Step 5-8: Update index */
-    /* YOUR CODE HERE - Load index, add entry, sort, save */
-    
-    return 0;  /* Replace with proper implementation */
+
+    /* Step 5-8: load, extend, sort and persist the index */
+    IndexEntry *index = NULL;
+    size_t count = 0;
+
+    if (load_index(&index, &count) != 0) {
+        free(index);
+        return -1;
+    }
+
+    IndexEntry *grown = realloc(index, (count + 1) * sizeof(IndexEntry));
+    if (grown == NULL) {
+        free(index);
+        return -1;
+    }
+    index = grown;
+
+    index[count].code = product->code;
+    index[count].offset = offset;
+    count++;
+
+    if (count > 1) {
+        qsort(index, count, sizeof(IndexEntry), compare_index);
+    }
+
+    int result = save_index(index, count);
+    free(index);
+    return result;
 }
 
 /**
@@ -221,11 +254,60 @@ int add_product(const Product *product) {
  *   6. Close file and return
  */
 int load_index(IndexEntry **index, size_t *count) {
-    /* YOUR CODE HERE */
-    
+    if (index == NULL || count == NULL) {
+        return -1;
+    }
+
     *index = NULL;
     *count = 0;
-    return 0;  /* Replace this */
+
+    FILE *fp = fopen(INDEX_FILE, "rb");
+    if (fp == NULL) {
+        return 0;  /* missing index is not an error */
+    }
+
+    if (fseek(fp, 0, SEEK_END) != 0) {
+        fclose(fp);
+        return -1;
+    }
+    long file_size = ftell(fp);
+    if (file_size < 0) {
+        fclose(fp);
+        return -1;
+    }
+    if (fseek(fp, 0, SEEK_SET) != 0) {
+        fclose(fp);
+        return -1;
+    }
+
+    if (file_size == 0) {
+        fclose(fp);
+        return 0;
+    }
+
+    size_t entries = (size_t)file_size / sizeof(IndexEntry);
+    if (entries == 0) {
+        fclose(fp);
+        return 0;
+    }
+
+    IndexEntry *buffer = malloc(entries * sizeof(IndexEntry));
+    if (buffer == NULL) {
+        fclose(fp);
+        return -1;
+    }
+
+    size_t read = fread(buffer, sizeof(IndexEntry), entries, fp);
+    fclose(fp);
+
+    if (read != entries) {
+        free(buffer);
+        return -1;
+    }
+
+    *index = buffer;
+    *count = entries;
+    return 0;
 }
 
 /**
@@ -243,9 +325,26 @@ int load_index(IndexEntry **index, size_t *count) {
  *   3. Close file
  */
 int save_index(const IndexEntry *index, size_t count) {
-    /* YOUR CODE HERE */
-    
-    return 0;  /* Replace this */
+    FILE *fp = fopen(INDEX_FILE, "wb");
+    if (fp == NULL) {
+        return -1;
+    }
+
+    if (count > 0) {
+        if (index == NULL) {
+            fclose(fp);
+            return -1;
+        }
+
+        size_t written = fwrite(index, sizeof(IndexEntry), count, fp);
+        if (written != count) {
+            fclose(fp);
+            return -1;
+        }
+    }
+
+    fclose(fp);
+    return 0;
 }
 
 /**
@@ -270,10 +369,50 @@ int save_index(const IndexEntry *index, size_t count) {
  */
 Product *search_product(int32_t code) {
     static Product found_product;
-    
-    /* YOUR CODE HERE */
-    
-    return NULL;  /* Replace this */
+
+    IndexEntry *index = NULL;
+    size_t index_count = 0;
+
+    if (load_index(&index, &index_count) != 0 || index_count == 0) {
+        free(index);
+        return NULL;
+    }
+
+    IndexEntry key;
+    key.code = code;
+    key.offset = 0;
+
+    IndexEntry *found = bsearch(&key, index, index_count, sizeof(IndexEntry), compare_index);
+    if (found == NULL) {
+        free(index);
+        return NULL;
+    }
+
+    long offset = found->offset;
+    free(index);
+
+    FILE *fp = fopen(DATA_FILE, "rb");
+    if (fp == NULL) {
+        return NULL;
+    }
+
+    if (fseek(fp, offset, SEEK_SET) != 0) {
+        fclose(fp);
+        return NULL;
+    }
+
+    if (fread(&found_product, sizeof(Product), 1, fp) != 1) {
+        fclose(fp);
+        return NULL;
+    }
+
+    fclose(fp);
+
+    if (found_product.deleted == TOMBSTONE_MARKER) {
+        return NULL;
+    }
+
+    return &found_product;
 }
 
 /**
@@ -298,9 +437,63 @@ Product *search_product(int32_t code) {
  *   10. Flush and close file
  */
 int update_price(int32_t code, double new_price) {
-    /* YOUR CODE HERE */
-    
-    return -1;  /* Replace this */
+    IndexEntry *index = NULL;
+    size_t index_count = 0;
+
+    if (load_index(&index, &index_count) != 0 || index_count == 0) {
+        free(index);
+        return -1;
+    }
+
+    IndexEntry key;
+    key.code = code;
+    key.offset = 0;
+
+    IndexEntry *found = bsearch(&key, index, index_count, sizeof(IndexEntry), compare_index);
+    if (found == NULL) {
+        free(index);
+        return -1;
+    }
+
+    long offset = found->offset;
+    free(index);
+
+    FILE *fp = fopen(DATA_FILE, "r+b");
+    if (fp == NULL) {
+        return -1;
+    }
+
+    if (fseek(fp, offset, SEEK_SET) != 0) {
+        fclose(fp);
+        return -1;
+    }
+
+    Product p;
+    if (fread(&p, sizeof(Product), 1, fp) != 1) {
+        fclose(fp);
+        return -1;
+    }
+
+    if (p.deleted == TOMBSTONE_MARKER) {
+        fclose(fp);
+        return -1;
+    }
+
+    p.price = new_price;
+
+    if (fseek(fp, offset, SEEK_SET) != 0) {
+        fclose(fp);
+        return -1;
+    }
+
+    if (fwrite(&p, sizeof(Product), 1, fp) != 1) {
+        fclose(fp);
+        return -1;
+    }
+
+    fflush(fp);
+    fclose(fp);
+    return 0;
 }
 
 /**
@@ -324,9 +517,58 @@ int update_price(int32_t code, double new_price) {
  *   9. Do NOT remove from index (for audit trail)
  */
 int delete_product(int32_t code) {
-    /* YOUR CODE HERE */
-    
-    return -1;  /* Replace this */
+    IndexEntry *index = NULL;
+    size_t index_count = 0;
+
+    if (load_index(&index, &index_count) != 0 || index_count == 0) {
+        free(index);
+        return -1;
+    }
+
+    IndexEntry key;
+    key.code = code;
+    key.offset = 0;
+
+    IndexEntry *found = bsearch(&key, index, index_count, sizeof(IndexEntry), compare_index);
+    if (found == NULL) {
+        free(index);
+        return -1;
+    }
+
+    long offset = found->offset;
+    free(index);
+
+    FILE *fp = fopen(DATA_FILE, "r+b");
+    if (fp == NULL) {
+        return -1;
+    }
+
+    if (fseek(fp, offset, SEEK_SET) != 0) {
+        fclose(fp);
+        return -1;
+    }
+
+    Product p;
+    if (fread(&p, sizeof(Product), 1, fp) != 1) {
+        fclose(fp);
+        return -1;
+    }
+
+    p.deleted = TOMBSTONE_MARKER;
+
+    if (fseek(fp, offset, SEEK_SET) != 0) {
+        fclose(fp);
+        return -1;
+    }
+
+    if (fwrite(&p, sizeof(Product), 1, fp) != 1) {
+        fclose(fp);
+        return -1;
+    }
+
+    fflush(fp);
+    fclose(fp);
+    return 0;
 }
 
 /**
@@ -350,9 +592,74 @@ int delete_product(int32_t code) {
  * Note: Only include active (non-deleted) records in the new index
  */
 int rebuild_index(void) {
-    /* YOUR CODE HERE */
-    
-    return 0;  /* Replace this */
+    FILE *fp = fopen(DATA_FILE, "rb");
+    if (fp == NULL) {
+        remove(INDEX_FILE);
+        return 0;
+    }
+
+    if (fseek(fp, 0, SEEK_END) != 0) {
+        fclose(fp);
+        return -1;
+    }
+    long file_size = ftell(fp);
+    if (file_size < 0) {
+        fclose(fp);
+        return -1;
+    }
+    if (fseek(fp, 0, SEEK_SET) != 0) {
+        fclose(fp);
+        return -1;
+    }
+
+    if (file_size == 0) {
+        fclose(fp);
+        remove(INDEX_FILE);
+        return 0;
+    }
+
+    size_t total_records = (size_t)file_size / sizeof(Product);
+    if (total_records == 0) {
+        fclose(fp);
+        remove(INDEX_FILE);
+        return 0;
+    }
+
+    IndexEntry *index = malloc(total_records * sizeof(IndexEntry));
+    if (index == NULL) {
+        fclose(fp);
+        return -1;
+    }
+
+    size_t count = 0;
+    Product p;
+
+    for (size_t i = 0; i < total_records; i++) {
+        long offset = ftell(fp);
+        if (offset < 0) {
+            break;
+        }
+
+        if (fread(&p, sizeof(Product), 1, fp) != 1) {
+            break;
+        }
+
+        if (p.deleted != TOMBSTONE_MARKER) {
+            index[count].code = p.code;
+            index[count].offset = offset;
+            count++;
+        }
+    }
+
+    fclose(fp);
+
+    if (count > 1) {
+        qsort(index, count, sizeof(IndexEntry), compare_index);
+    }
+
+    int result = save_index(index, count);
+    free(index);
+    return result;
 }
 
 /**
@@ -371,9 +678,39 @@ int rebuild_index(void) {
  */
 DatabaseStats get_stats(void) {
     DatabaseStats stats = {0, 0, 0, 0};
-    
-    /* YOUR CODE HERE */
-    
+
+    FILE *fp = fopen(DATA_FILE, "rb");
+    if (fp == NULL) {
+        return stats;
+    }
+
+    if (fseek(fp, 0, SEEK_END) != 0) {
+        fclose(fp);
+        return stats;
+    }
+    stats.file_size = ftell(fp);
+    if (stats.file_size < 0) {
+        fclose(fp);
+        stats.file_size = 0;
+        return stats;
+    }
+    if (fseek(fp, 0, SEEK_SET) != 0) {
+        fclose(fp);
+        return stats;
+    }
+
+    stats.total_records = (size_t)stats.file_size / sizeof(Product);
+
+    Product p;
+    while (fread(&p, sizeof(Product), 1, fp) == 1) {
+        if (p.deleted == TOMBSTONE_MARKER) {
+            stats.deleted_records++;
+        } else {
+            stats.active_records++;
+        }
+    }
+
+    fclose(fp);
     return stats;
 }
 
@@ -428,14 +765,14 @@ void print_all_products(void) {
  * Print database statistics
  */
 void print_stats(const DatabaseStats *stats) {
-    printf("\n╔════════════════════════════════════╗\n");
-    printf("║        DATABASE STATISTICS         ║\n");
-    printf("╠════════════════════════════════════╣\n");
-    printf("║  Total Records:    %10zu     ║\n", stats->total_records);
-    printf("║  Active Records:   %10zu     ║\n", stats->active_records);
-    printf("║  Deleted Records:  %10zu     ║\n", stats->deleted_records);
-    printf("║  File Size:        %10ld B   ║\n", stats->file_size);
-    printf("╚════════════════════════════════════╝\n");
+    printf("\n╔════════════════════════════════════════════════════════════════╗\n");
+    printf("║                    DATABASE STATISTICS                         ║\n");
+    printf("╠════════════════════════════════════════════════════════════════╣\n");
+    printf("║  Total Records:%12zu%36s║\n", stats->total_records, "");
+    printf("║  Active Records:%11zu%36s║\n", stats->active_records, "");
+    printf("║  Deleted Records:%10zu%36s║\n", stats->deleted_records, "");
+    printf("║  File Size:%16ld B%34s║\n", stats->file_size, "");
+    printf("╚════════════════════════════════════════════════════════════════╝\n");
 }
 
 /* =============================================================================

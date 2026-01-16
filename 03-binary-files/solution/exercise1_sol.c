@@ -15,6 +15,18 @@
 #include <string.h>
 #include <stdint.h>
 
+/*
+ * NOTE ON RECORD LAYOUT
+ *
+ * The laboratory exercises deliberately write and read fixed-size records via
+ * fwrite and fread. Default struct alignment typically introduces padding for
+ * MAX_NAME_LENGTH = 50 which would change the on-disk size and break
+ * deterministic regression output.
+ *
+ * For that reason the reference solution also forces a packed layout for the
+ * Student record. In production you would prefer explicit serialisation.
+ */
+
 /* =============================================================================
  * CONSTANTS
  * =============================================================================
@@ -31,12 +43,26 @@
 /**
  * Student structure - fixed size for binary storage
  */
-typedef struct {
+#if defined(__GNUC__) || defined(__clang__)
+#define PACKED __attribute__((packed))
+#else
+#define PACKED
+#endif
+
+#if defined(_MSC_VER)
+#pragma pack(push, 1)
+#endif
+
+typedef struct PACKED {
     int32_t id;
     char    name[MAX_NAME_LENGTH];
     float   gpa;
     int32_t year;
 } Student;
+
+#if defined(_MSC_VER)
+#pragma pack(pop)
+#endif
 
 /* =============================================================================
  * FUNCTION PROTOTYPES
@@ -253,9 +279,9 @@ void print_student_table(const Student *students, size_t count) {
         return;
     }
     
-    /* Print table header */
+    /* Print table header (verbatim to match the published reference output) */
     printf("┌────────┬──────────────────────┬───────┬──────┐\n");
-    printf("│ %6s │ %-20s │ %5s │ %4s │\n", "ID", "Name", "GPA", "Year");
+    printf("│   ID   │        Name          │  GPA  │ Year │\n");
     printf("├────────┼──────────────────────┼───────┼──────┤\n");
     
     /* Print each student */

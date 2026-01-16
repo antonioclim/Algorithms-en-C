@@ -1,512 +1,582 @@
 # Week 03: Binary Files in C
 
-## 🎯 Learning Objectives
+## Abstract
 
-Upon successful completion of this laboratory, students will be able to:
+This laboratory develops a record-oriented model of persistence in C by treating a file as an addressable sequence of bytes rather than a textual stream. Students implement two complementary designs:
 
-1. **Remember** the fundamental differences between text and binary file modes, including the role of buffering and newline translation across operating systems
-2. **Understand** the internal representation of data types in memory and how this representation maps directly to binary file storage
-3. **Apply** the standard library functions `fread()`, `fwrite()`, `fseek()` and `ftell()` to implement persistent data storage for structured records
-4. **Analyse** the trade-offs between text and binary file formats in terms of portability, human readability, storage efficiency and access patterns
-5. **Evaluate** different serialisation strategies for complex data structures, including fixed-length records, length-prefixed strings and index files
-6. **Create** a complete binary file-based database system with support for sequential and random access operations, including record insertion, modification, deletion and searching
+1. A fixed-length binary record store supporting sequential access, bulk loading and in-place updates.
+2. A data file coupled to a separate index file enabling asymptotically faster point lookups through binary search.
 
----
+The work foregrounds the non-trivial boundary between an in-memory representation and an on-disk representation, with particular emphasis on alignment, padding, determinism, robustness under I/O failure and the epistemology of testing when the primary observable is a byte-level artefact.
 
-## 📜 Historical Context
+## Learning outcomes
 
-The distinction between text and binary file handling emerged from the fundamental architectural differences between early computing systems. In the 1960s and 1970s, mainframe computers from IBM used EBCDIC encoding and record-oriented file systems, whilst Unix systems adopted ASCII encoding and stream-oriented files. This divergence created lasting implications for how programmers must handle file I/O across platforms.
+On successful completion of the laboratory a student should be able to:
 
-The C programming language, developed by Dennis Ritchie at Bell Labs between 1969 and 1973, introduced a unified abstraction for file handling through the `FILE*` stream concept. The ANSI C standardisation effort in 1989 (C89/C90) codified the distinction between text and binary modes, mandating that implementations support both but allowing platform-specific behaviours for text mode operations. This design decision balanced portability with the reality of diverse operating system file semantics.
+1. Distinguish text mode from binary mode with respect to newline translation, encoding assumptions and platform-defined behaviour.
+2. Use `fread`, `fwrite`, `fseek` and `ftell` to implement sequential and random access operations over fixed-size records.
+3. Explain how alignment and padding affect `sizeof(struct)` and why this matters when serialising memory layouts.
+4. Design an on-disk record format with explicit invariants and validate those invariants through deterministic tests.
+5. Construct an auxiliary index file that maps keys to byte offsets and use binary search to obtain O(log n) lookup.
+6. Implement tombstone-based deletion and justify its correctness and limitations.
+7. Develop a reproducible verification workflow combining snapshot testing with memory diagnostics.
 
-Binary file I/O became particularly crucial with the rise of database systems and scientific computing in the 1980s. Systems like dBASE III (1984) popularised fixed-length binary record formats for efficient random access, whilst the HDF (Hierarchical Data Format) developed at NCSA in 1987 demonstrated sophisticated approaches to portable binary data storage. These early decisions continue to influence modern data storage formats, from SQLite's file structure to Protocol Buffers and Apache Parquet.
+## Repository structure
 
-### Key Figure: Dennis Ritchie (1941–2011)
-
-Dennis MacAlistair Ritchie, known affectionately as "dmr" in the Unix community, created the C programming language and co-developed the Unix operating system alongside Ken Thompson. His design of C's file I/O abstraction layer—providing both low-level byte-stream access and high-level formatted operations—established patterns that persist in virtually every systems programming language today.
-
-Ritchie received the Turing Award in 1983 (jointly with Thompson) and the National Medal of Technology in 1998. His philosophy of creating simple, composable tools that "do one thing well" profoundly shaped software engineering practice.
-
-> *"The only way to learn a new programming language is by writing programs in it."*
-> — Dennis Ritchie
-
----
-
-## 📚 Theoretical Foundations
-
-### 1. Text Mode vs Binary Mode
-
-When opening files in C, the mode string determines how the runtime library handles data translation:
+The laboratory is intentionally small and mechanically explicit. The directory tree below is therefore part of the specification rather than an incidental organisational choice.
 
 ```
-Text Mode ("r", "w", "a")           Binary Mode ("rb", "wb", "ab")
-┌─────────────────────────────┐    ┌─────────────────────────────┐
-│  Application Data           │    │  Application Data           │
-│  "Hello\nWorld"             │    │  "Hello\nWorld"             │
-└──────────────┬──────────────┘    └──────────────┬──────────────┘
-               │                                  │
-               ▼                                  ▼
-┌─────────────────────────────┐    ┌─────────────────────────────┐
-│  C Runtime Translation      │    │  No Translation             │
-│  • \n → \r\n (Windows)      │    │  • Bytes pass through       │
-│  • EOF handling (Ctrl+Z)    │    │  • No EOF interpretation    │
-│  • Character encoding       │    │  • Exact byte preservation  │
-└──────────────┬──────────────┘    └──────────────┬──────────────┘
-               │                                  │
-               ▼                                  ▼
-┌─────────────────────────────┐    ┌─────────────────────────────┐
-│  File on Disk               │    │  File on Disk               │
-│  "Hello\r\nWorld" (Win)     │    │  "Hello\nWorld"             │
-│  "Hello\nWorld" (Unix)      │    │  (identical everywhere)     │
-└─────────────────────────────┘    └─────────────────────────────┘
+03-binary-files/
+  Makefile
+  README.md
+  src/
+    example1.c
+    exercise1.c
+    exercise2.c
+  tests/
+    test1_input.txt
+    test1_expected.txt
+    test2_input.txt
+    test2_expected.txt
+  data/
+    students_sample.txt
+    products_sample.txt
+  solution/
+    exercise1_sol.c
+    exercise2_sol.c
+    homework1_sol.c
+    homework2_sol.c
+  teme/
+    homework-requirements.md
+    homework-extended.md
+  slides/
+    presentation-week03.html
+    presentation-comparativ.html
 ```
 
-**Critical Implications:**
-- Binary mode guarantees byte-for-byte fidelity between memory and disk
-- Text mode behaviour varies by platform (Windows vs Unix vs legacy systems)
-- Mixing modes leads to data corruption: never read a binary file in text mode
-- The `fseek()` function has limited guarantees in text mode
+### Build and execution workflow
 
-### 2. Memory Layout and Serialisation
+The `Makefile` is designed to encode the intended development workflow:
 
-Understanding how C represents data types in memory is essential for binary file operations:
+- `make` builds `example1`, `exercise1` and `exercise2`.
+- `make test` executes regression tests and compares complete programme output against reference transcripts.
+- `make valgrind` runs a lightweight memory-leak check on the built executables.
+- `make solutions` builds instructor reference implementations and is included for completeness.
 
-```
-Structure: Student Record
-┌─────────────────────────────────────────────────────────────────┐
-│  struct Student {                                               │
-│      int id;              // 4 bytes (typically)                │
-│      char name[32];       // 32 bytes                           │
-│      float gpa;           // 4 bytes (typically)                │
-│      int year;            // 4 bytes (typically)                │
-│  };                                                             │
-└─────────────────────────────────────────────────────────────────┘
+The reference tests are intentionally strict. They treat the entire console transcript as the observable behaviour. This style of test is a pedagogical choice: it forces students to reason about determinism, formatting and the consequences of undefined or implementation-defined behaviour.
 
-Memory Layout (assuming no padding, 44 bytes total):
-┌────────────┬────────────────────────────────┬────────────┬────────────┐
-│   id (4B)  │         name (32B)             │  gpa (4B)  │  year (4B) │
-├────────────┼────────────────────────────────┼────────────┼────────────┤
-│ 0x00001234 │ "Alice Johnson\0\0\0..."       │ 0x40533333 │ 0x000007E8 │
-│  (4660)    │                                │   (3.3)    │   (2024)   │
-└────────────┴────────────────────────────────┴────────────┴────────────┘
-Byte offset:  0          4                      36          40         44
-```
+## Conceptual foundations
 
-**Serialisation Concerns:**
-- **Endianness**: x86 uses little-endian; network protocols often use big-endian
-- **Alignment and Padding**: Compilers may insert padding bytes for alignment
-- **Sizeof Variations**: `int` may be 2, 4, or 8 bytes depending on platform
-- **Floating-Point Format**: IEEE 754 is near-universal but not guaranteed
+### Text mode and binary mode are not merely cosmetic
 
-### 3. File Positioning and Random Access
+C exposes a single `FILE *` stream abstraction but the mode string supplied to `fopen` changes how the implementation is permitted to transform bytes. In text mode an implementation may:
 
-Binary files support efficient random access through positioning functions:
+- translate newline sequences between in-memory and on-disk representations
+- treat control characters as end-of-file markers on particular platforms
+- apply implementation-defined buffering or encoding behaviour
 
-```
-File Position Model:
-                    
-     ftell() returns current position
-              │
-              ▼
-┌─────┬─────┬─────┬─────┬─────┬─────┬─────┬─────┐
-│ R0  │ R1  │ R2  │ R3  │ R4  │ R5  │ R6  │ EOF │  Records in file
-└─────┴─────┴─────┴─────┴─────┴─────┴─────┴─────┘
-  ↑                 ↑                         ↑
-  │                 │                         │
-SEEK_SET=0    SEEK_SET + n*sizeof(record)   SEEK_END=0
+In binary mode the implementation is required to expose a byte-preserving view of the file. The most important consequence for this laboratory is that binary mode makes `fseek` and `ftell` meaningful for random access to record offsets because the mapping between file positions and bytes becomes stable.
 
-fseek() positioning modes:
-┌──────────────┬──────────────────────────────────────────┐
-│ SEEK_SET     │ Absolute position from file beginning   │
-│ SEEK_CUR     │ Relative to current position            │
-│ SEEK_END     │ Relative to file end (usually negative) │
-└──────────────┴──────────────────────────────────────────┘
+### Binary serialisation is a contract not an accident
 
-Random Access Formula:
-    position = record_index × sizeof(record)
-    fseek(fp, position, SEEK_SET);
-    fread(&record, sizeof(record), 1, fp);
-```
+A binary record format is a contract between two components:
 
-**Complexity Analysis:**
+- the producer that writes bytes
+- the consumer that interprets bytes
 
-| Operation         | Sequential File | Random Access Binary |
-|-------------------|-----------------|----------------------|
-| Read record n     | O(n)            | O(1)                 |
-| Append record     | O(1)            | O(1)                 |
-| Update record n   | O(n) rebuild    | O(1)                 |
-| Delete record n   | O(n) rebuild    | O(1) with tombstone  |
-| Search (unsorted) | O(n)            | O(n)                 |
-| Search (sorted)   | O(n)            | O(log n) binary      |
+In this laboratory the producer and consumer are the same programme at different times. This makes it tempting to treat `fwrite(&record, sizeof(record), 1, fp)` as self-evidently correct. It is correct only under a set of assumptions that should be stated explicitly.
 
----
+#### Alignment and padding
 
-## 🏭 Industrial Applications
+For a structure `struct S { ... }` the C standard permits the compiler to insert padding bytes between fields and at the end of the structure. Padding exists to satisfy alignment constraints that enable efficient memory access. The existence of padding means that:
 
-### 1. SQLite Database Engine
+- `sizeof(S)` is not necessarily the sum of field sizes
+- a binary file written by `fwrite(&s, sizeof(S), 1, fp)` encodes both payload fields and padding bytes
+- a file written on one machine may be misinterpreted on another if structure layout differs
 
-SQLite, the world's most deployed database engine, uses a sophisticated binary file format:
+Exercise 1 makes this phenomenon concrete by using `MAX_NAME_LENGTH = 50`, which induces padding under typical alignment rules. The student implementation therefore forces a packed layout for the `Student` record so that the record size matches the mathematically expected sum of the field sizes.
 
-```c
-/* SQLite-style page-based file access */
-#define PAGE_SIZE 4096
+A more robust industrial approach is to define an explicit serialisation, for example by writing each field individually in a specified byte order. This laboratory acknowledges that approach in the discussions and homework specification but uses packed records to keep the core logic accessible.
 
-typedef struct {
-    uint32_t page_number;
-    uint8_t  data[PAGE_SIZE - sizeof(uint32_t)];
-} DatabasePage;
+#### Endianness and floating-point representation
 
-int read_page(FILE *db, uint32_t page_num, DatabasePage *page) {
-    long offset = (long)page_num * PAGE_SIZE;
-    if (fseek(db, offset, SEEK_SET) != 0) return -1;
-    if (fread(page, PAGE_SIZE, 1, db) != 1) return -1;
-    return 0;
-}
-```
+Even with a fixed layout, binary records can be non-portable if they embed multi-byte integers or floating-point values without specifying endianness and representation.
 
-### 2. Game Save Systems
+- Integers in C are typically stored in two’s complement and may be little-endian or big-endian.
+- Floating-point values are commonly IEEE 754 but the standard does not require IEEE 754.
 
-Modern games store complex state in binary formats:
+The laboratory tests assume a typical modern environment (little-endian two’s complement, IEEE 754 for `float` and `double`). Students should recognise that this is an assumption and should be able to articulate what would need to change to make the format portable.
 
-```c
-/* Game save file structure */
-typedef struct {
-    char     magic[4];          /* "SAVE" identifier */
-    uint32_t version;           /* Save format version */
-    uint32_t checksum;          /* Data integrity check */
-    time_t   timestamp;         /* When saved */
-    
-    /* Player state */
-    float    position[3];       /* x, y, z coordinates */
-    float    health;
-    uint32_t inventory_count;
-    /* Variable-length inventory follows... */
-} SaveFileHeader;
+## Example 1: Practical byte-level navigation
 
-int save_game(const char *filename, const GameState *state) {
-    FILE *fp = fopen(filename, "wb");
-    if (!fp) return -1;
-    
-    SaveFileHeader header = {
-        .magic = {'S','A','V','E'},
-        .version = SAVE_VERSION,
-        .timestamp = time(NULL)
-    };
-    /* ... populate and write ... */
-    fwrite(&header, sizeof(header), 1, fp);
-    fclose(fp);
-    return 0;
-}
-```
+`src/example1.c` is a compact demonstration of the mechanics of binary I/O. It illustrates how to:
 
-### 3. Image File Formats (BMP)
+- open a stream in binary mode
+- write a fixed-size record
+- rewind or seek to a known offset
+- interpret `ftell` as the next write position
 
-The Windows Bitmap format demonstrates binary file structure:
+The pedagogical aim is to make the file position an explicit state variable that can be reasoned about.
 
-```c
-/* BMP file headers (packed structures) */
-#pragma pack(push, 1)
-typedef struct {
-    uint16_t type;              /* 0x4D42 = "BM" */
-    uint32_t size;              /* File size in bytes */
-    uint16_t reserved1;
-    uint16_t reserved2;
-    uint32_t offset;            /* Offset to pixel data */
-} BMPFileHeader;
+## Exercise 1: Student records database
 
-typedef struct {
-    uint32_t size;              /* Header size (40) */
-    int32_t  width;
-    int32_t  height;
-    uint16_t planes;            /* Always 1 */
-    uint16_t bits_per_pixel;    /* 1, 4, 8, 24, or 32 */
-    uint32_t compression;
-    /* ... additional fields ... */
-} BMPInfoHeader;
-#pragma pack(pop)
-```
+### File model
 
-### 4. Scientific Data: HDF5 Pattern
+The database is a single file `students.bin` containing a sequence of fixed-size `Student` records. Each record has the fields:
 
-High-performance computing relies on binary formats:
+- `id` (32-bit signed integer)
+- `name` (fixed-length character array of 50 bytes)
+- `gpa` (`float`)
+- `year` (32-bit signed integer)
 
-```c
-/* Simplified HDF5-style chunked data storage */
-typedef struct {
-    size_t dimensions[3];       /* Data dimensions */
-    size_t chunk_size[3];       /* Chunk dimensions */
-    int    compression_type;    /* 0=none, 1=gzip, 2=lz4 */
-    off_t  data_offset;         /* Offset to data in file */
-} DatasetDescriptor;
+The record layout is packed to ensure a deterministic on-disk size of 62 bytes per record.
 
-/* Write a chunk of data */
-int write_chunk(FILE *fp, const DatasetDescriptor *desc,
-                const size_t chunk_index[3], const void *data) {
-    /* Calculate offset based on chunk coordinates */
-    off_t offset = calculate_chunk_offset(desc, chunk_index);
-    fseek(fp, offset, SEEK_SET);
-    size_t chunk_bytes = desc->chunk_size[0] * desc->chunk_size[1] * 
-                         desc->chunk_size[2] * sizeof(float);
-    return fwrite(data, chunk_bytes, 1, fp) == 1 ? 0 : -1;
-}
-```
+### Operations and algorithms
 
-### 5. Embedded Systems: Configuration Storage
+The exercise implements the following operations:
 
-Microcontrollers often store settings in binary format:
+1. **Append record** (`save_student`): open file in append mode and write a single record.
+2. **Bulk load** (`load_students`): read the entire file into a dynamically allocated array.
+3. **Sequential search** (`find_student_by_id`): linear scan of the loaded array.
+4. **In-place update** (`update_student`): seek to `index * sizeof(Student)` and overwrite the record.
+5. **Count records** (`count_students`): compute `filesize / sizeof(Student)` without loading.
+6. **Presentation** (`print_student_table`): produce a deterministic table matching the reference transcript.
 
-```c
-/* EEPROM-style configuration storage */
-typedef struct {
-    uint16_t magic;             /* 0xCF96 validity marker */
-    uint8_t  version;
-    uint8_t  flags;
-    int16_t  calibration[8];    /* Sensor calibration values */
-    uint32_t serial_number;
-    uint16_t crc16;             /* Data integrity check */
-} DeviceConfig;
+Although the task is small, it contains most of the elements of a database storage engine in miniature: a physical layout, an access pattern and a set of invariants.
 
-/* Calculate CRC and save configuration */
-int save_config(const char *path, DeviceConfig *config) {
-    config->magic = 0xCF96;
-    config->crc16 = calculate_crc16(config, sizeof(*config) - 2);
-    
-    FILE *fp = fopen(path, "wb");
-    if (!fp) return -1;
-    int result = fwrite(config, sizeof(*config), 1, fp) == 1 ? 0 : -1;
-    fclose(fp);
-    return result;
-}
-```
+### Correctness invariants
 
----
+The key invariants can be stated formally.
 
-## 💻 Laboratory Exercises
+Let `R` be the record size in bytes and let `F` be the length of the file in bytes.
 
-### Exercise 1: Student Records Database
+- **Well-formedness**: `F mod R = 0`. If violated then the file contains a partial record and the database is corrupt.
+- **Record count**: `N = F / R`.
+- **Record addressability**: the `i`-th record begins at byte offset `i * R`.
 
-Implement a binary file-based student records system with the following capabilities:
+The implementation assumes a well-formed file and uses the second and third invariants to compute counts and to perform random access.
 
-**Requirements:**
-1. Define a `Student` structure with: ID (int), name (char[50]), GPA (float), year (int)
-2. Implement `save_student()` to append a record to a binary file
-3. Implement `load_students()` to read all records from the file
-4. Implement `find_student_by_id()` using sequential search
-5. Implement `update_student()` to modify a specific record in place
-6. Implement `count_students()` using file size calculation
-7. Display formatted output with proper alignment
-8. Handle all file operation errors gracefully
+### Pseudocode
 
-**Input Format:**
-```
-3
-1001 Alice_Johnson 3.75 2024
-1002 Bob_Smith 3.42 2023
-1003 Carol_Williams 3.91 2024
-```
-
-**Expected Output:**
-```
-╔════════════════════════════════════════════════════════════════╗
-║                    STUDENT RECORDS DATABASE                    ║
-╚════════════════════════════════════════════════════════════════╝
-
-[INFO] Saving 3 students to database...
-[OK] Student 1001 saved successfully
-[OK] Student 1002 saved successfully
-[OK] Student 1003 saved successfully
-
-[INFO] Loading all students from database...
-┌────────┬──────────────────────┬───────┬──────┐
-│   ID   │        Name          │  GPA  │ Year │
-├────────┼──────────────────────┼───────┼──────┤
-│   1001 │ Alice Johnson        │  3.75 │ 2024 │
-│   1002 │ Bob Smith            │  3.42 │ 2023 │
-│   1003 │ Carol Williams       │  3.91 │ 2024 │
-└────────┴──────────────────────┴───────┴──────┘
-
-Total records: 3
-File size: 204 bytes
-```
-
-### Exercise 2: Binary File Index System
-
-Implement an indexed binary file system with random access capabilities:
-
-**Requirements:**
-1. Create a `Product` structure with: code (int), name (char[40]), price (double), quantity (int)
-2. Implement a separate index file mapping product codes to file offsets
-3. Implement `add_product()` that updates both data and index files
-4. Implement `search_product()` using the index for O(1) lookup
-5. Implement `update_price()` using random access
-6. Implement `delete_product()` using a tombstone marker
-7. Implement `compact_file()` to remove deleted records
-8. Implement `rebuild_index()` to regenerate the index from data file
-9. Track and display statistics: total records, active records, deleted records
-10. Implement binary search on sorted index for O(log n) code lookup
-
-**Bonus Challenges:**
-- Implement a B-tree index structure
-- Add transaction logging for crash recovery
-- Implement record locking for concurrent access simulation
-
----
-
-## 🔧 Compilation and Execution
-
-```bash
-# Build all targets
-make
-
-# Build specific targets
-make example1          # Complete demonstration
-make exercise1         # Student records exercise
-make exercise2         # Indexed file exercise
-
-# Run examples
-make run               # Execute all examples
-
-# Run with Valgrind memory checking
-make valgrind          # Check for memory leaks
-
-# Run automated tests
-make test              # Compare outputs with expected results
-
-# Clean build artefacts
-make clean
-
-# Display help
-make help
-```
-
-**Compiler Flags Explained:**
-- `-Wall`: Enable all common warnings
-- `-Wextra`: Enable additional warnings
-- `-std=c11`: Use C11 standard for modern features
-- `-g`: Include debugging symbols for GDB/Valgrind
-- `-O2`: Optimisation level 2 (for release builds)
-
----
-
-## 📁 Directory Structure
+#### Append a record
 
 ```
-week-03-binary-files/
-├── README.md                           # This documentation
-├── Makefile                            # Build automation
-│
-├── slides/
-│   ├── presentation-week03.html        # Main lecture (35-40 slides)
-│   └── presentation-comparativ.html    # Pseudocode→C→Python comparison
-│
-├── src/
-│   ├── example1.c                      # Complete binary file demonstration
-│   ├── exercise1.c                     # Student records (8 TODOs)
-│   └── exercise2.c                     # Indexed file system (12 TODOs)
-│
-├── data/
-│   ├── students_sample.txt             # Sample student data
-│   └── products_sample.txt             # Sample product data
-│
-├── tests/
-│   ├── test1_input.txt                 # Test input for exercise 1
-│   ├── test1_expected.txt              # Expected output for exercise 1
-│   ├── test2_input.txt                 # Test input for exercise 2
-│   └── test2_expected.txt              # Expected output for exercise 2
-│
-├── teme/
-│   ├── homework-requirements.md        # Homework 1 & 2 specifications
-│   └── homework-extended.md            # Bonus challenges
-│
-└── solution/
-    ├── exercise1_sol.c                 # Solution for exercise 1
-    ├── exercise2_sol.c                 # Solution for exercise 2
-    ├── homework1_sol.c                 # Solution for homework 1
-    └── homework2_sol.c                 # Solution for homework 2
+procedure SAVE_STUDENT(filename, student_record):
+    fp <- fopen(filename, "ab")
+    if fp == NULL:
+        return FAILURE
+
+    written <- fwrite(address(student_record), sizeof(Student), 1, fp)
+    fclose(fp)
+
+    if written != 1:
+        return FAILURE
+    return SUCCESS
 ```
 
----
+#### Bulk load all records
 
-## 📖 Recommended Reading
+```
+procedure LOAD_STUDENTS(filename):
+    fp <- fopen(filename, "rb")
+    if fp == NULL:
+        return (EMPTY_ARRAY, 0)
 
-### Essential References
+    fseek(fp, 0, SEEK_END)
+    F <- ftell(fp)
+    fseek(fp, 0, SEEK_SET)
 
-1. **Kernighan, B.W. & Ritchie, D.M.** (1988). *The C Programming Language*, 2nd Edition. Chapter 7: Input and Output. Prentice Hall. ISBN: 0-13-110362-8
+    if F == 0:
+        fclose(fp)
+        return (EMPTY_ARRAY, 0)
 
-2. **ISO/IEC 9899:2011** — C11 Standard, Section 7.21: Input/Output `<stdio.h>`
+    N <- F / sizeof(Student)
+    arr <- malloc(N * sizeof(Student))
+    if arr == NULL:
+        fclose(fp)
+        return FAILURE
 
-3. **Plauger, P.J.** (1992). *The Standard C Library*. Chapters 12-13: `<stdio.h>` Implementation. Prentice Hall.
+    read <- fread(arr, sizeof(Student), N, fp)
+    fclose(fp)
 
-### Advanced Topics
+    return (arr, read)
+```
 
-4. **Bryant, R.E. & O'Hallaron, D.R.** (2015). *Computer Systems: A Programmer's Perspective*, 3rd Edition. Chapter 10: System-Level I/O. Pearson.
+#### Sequential search
 
-5. **Folk, M.J., Zoellick, B. & Riccardi, G.** (1998). *File Structures: An Object-Oriented Approach with C++*, 3rd Edition. Chapters 4-6: Secondary Storage and File Organisation.
+```
+procedure FIND_BY_ID(students, N, id):
+    for i from 0 to N-1:
+        if students[i].id == id:
+            return address(students[i])
+    return NULL
+```
 
-6. **SQLite Documentation**: File Format Description — https://www.sqlite.org/fileformat.html
+#### In-place update
 
-### Online Resources
+```
+procedure UPDATE_STUDENT(filename, index, new_record):
+    fp <- fopen(filename, "r+b")
+    if fp == NULL:
+        return FAILURE
 
-7. **cppreference.com** — `<stdio.h>` reference: https://en.cppreference.com/w/c/io
+    offset <- index * sizeof(Student)
+    if fseek(fp, offset, SEEK_SET) != 0:
+        fclose(fp)
+        return FAILURE
 
-8. **GNU C Library Manual** — File System Interface: https://www.gnu.org/software/libc/manual/html_node/File-System-Interface.html
+    written <- fwrite(address(new_record), sizeof(Student), 1, fp)
+    fflush(fp)
+    fclose(fp)
 
-9. **Beej's Guide to C Programming** — Chapter on File I/O: https://beej.us/guide/bgc/html/split/
+    if written != 1:
+        return FAILURE
+    return SUCCESS
+```
 
----
+### Complexity analysis
 
-## ✅ Self-Assessment Checklist
+| Operation | Time complexity | Space complexity | Rationale |
+|---|---:|---:|---|
+| Append record | O(1) | O(1) | single `fwrite` at end of file |
+| Bulk load | O(N) | O(N) | reads each record once and stores them |
+| Sequential search | O(N) | O(1) additional | linear scan |
+| In-place update | O(1) | O(1) | one seek and one write |
+| Count records | O(1) | O(1) | uses file size |
 
-Before submitting your work, verify that you can:
+## Exercise 2: Indexed product database
 
-- [ ] Explain the difference between text mode and binary mode file operations
-- [ ] Use `fopen()` with appropriate mode strings ("rb", "wb", "ab", "r+b", "w+b")
-- [ ] Calculate file sizes using `fseek()` and `ftell()`
-- [ ] Read and write structures using `fread()` and `fwrite()`
-- [ ] Implement random access to specific records using `fseek()` with `SEEK_SET`
-- [ ] Handle endianness issues when designing portable binary formats
-- [ ] Understand structure padding and its implications for binary files
-- [ ] Implement an index file for efficient record lookup
-- [ ] Design a binary file format with magic numbers and version fields
-- [ ] Use Valgrind to verify no memory leaks in file handling code
+### Design rationale
 
----
+Exercise 2 introduces a separation of concerns between:
 
-## 💼 Interview Preparation
+- a **data file** that stores the authoritative sequence of `Product` records
+- an **index file** that stores a sorted mapping from product code to byte offset in the data file
 
-Common technical interview questions on binary files:
+This is a microcosm of the way many storage engines are constructed: the data file is append-friendly and the index is optimised for lookup.
 
-1. **"What happens if you read a binary file in text mode on Windows?"**
-   - *Expected answer*: Newline translation corrupts binary data; 0x1A (Ctrl+Z) may be interpreted as EOF; byte counts become unreliable.
+### Data file layout
 
-2. **"How would you implement a simple database with fast lookups using binary files?"**
-   - *Expected answer*: Use fixed-size records for O(1) position calculation; create a separate sorted index file; use binary search on the index; consider B-tree for large datasets.
+The data file `products.bin` is a sequence of fixed-size `Product` records. Each record includes a tombstone field:
 
-3. **"Explain the portability issues with using `fwrite()` on structures."**
-   - *Expected answer*: Structure padding varies by compiler; sizeof(int) varies by platform; endianness differs between architectures; solution is explicit serialisation of each field.
+- `deleted` equals `0` for active records
+- `deleted` equals `-1` for deleted records
 
-4. **"How does `fseek()` differ between text and binary modes?"**
-   - *Expected answer*: In binary mode, offset is exact byte count; in text mode, only `fseek(fp, 0, SEEK_SET)`, `fseek(fp, 0, SEEK_END)`, and `fseek(fp, ftell_value, SEEK_SET)` are guaranteed to work.
+This is a simple implementation of a tombstone approach. It preserves the history of insertions and deletions without requiring expensive compaction on each delete.
 
-5. **"Design a binary file format for storing a variable-length string array."**
-   - *Expected answer*: Header with count and total size; length-prefixed strings (4-byte length + chars); alternatively, offset table pointing to null-terminated strings; consider alignment requirements.
+### Index file layout
 
----
+The index file `products.idx` is a sequence of `IndexEntry` records:
 
-## 🔗 Next Week Preview
+- `code` is the search key
+- `offset` is the byte position of the corresponding `Product` in the data file
 
-**Week 04: Dynamic Data Structures — Linked Lists**
+The index is maintained in sorted order by `code` so that lookups can be performed with binary search.
 
-Building on this week's file I/O foundation, next week introduces dynamic memory allocation and linked data structures. You will learn to:
+### Algorithms and invariants
 
-- Allocate and deallocate memory with `malloc()`, `calloc()`, `realloc()` and `free()`
-- Implement singly and doubly linked lists
-- Serialise linked structures to binary files
-- Compare array-based vs linked implementations for common operations
+The index must satisfy the following invariants.
 
-The file handling skills from this week directly support persistent storage of linked structures—a common requirement in real-world applications.
+- **Sortedness**: entries are sorted non-decreasing by `code`.
+- **Soundness**: for each entry `(code, offset)` the data file at `offset` contains a record with `record.code = code`.
+- **Consistency under deletion**: an entry may exist for a record whose tombstone is set. In that case `search_product` must treat the record as absent.
 
----
+### Pseudocode
 
-*© 2024 Academy of Economic Studies — Algorithms and Programming Techniques Course*
-*This material is licensed under CC BY-NC-SA 4.0*
+#### Add product
+
+```
+procedure ADD_PRODUCT(product):
+    fp_data <- fopen(DATA_FILE, "ab")
+    if fp_data == NULL:
+        return FAILURE
+
+    offset <- ftell(fp_data)
+    fwrite(product, sizeof(Product), 1, fp_data)
+    fclose(fp_data)
+
+    (index, n) <- LOAD_INDEX()
+    index <- realloc(index, (n+1) * sizeof(Index_ENTRY))
+    index[n] <- (product.code, offset)
+    n <- n + 1
+
+    sort(index by code)
+    SAVE_INDEX(index, n)
+    free(index)
+    return SUCCESS
+```
+
+#### Search product via index
+
+```
+procedure SEARCH_PRODUCT(code):
+    (index, n) <- LOAD_INDEX()
+    if n == 0:
+        return NOT_FOUND
+
+    entry <- BINARY_SEARCH(index, n, key=code)
+    free(index)
+    if entry == NULL:
+        return NOT_FOUND
+
+    fp <- fopen(DATA_FILE, "rb")
+    fseek(fp, entry.offset, SEEK_SET)
+    read product
+    fclose(fp)
+
+    if product.deleted == TOMBSTONE:
+        return NOT_FOUND
+    return product
+```
+
+#### Update price (random access)
+
+```
+procedure UPDATE_PRICE(code, new_price):
+    entry <- LOOKUP_IN_INDEX(code)
+    if entry == NULL:
+        return FAILURE
+
+    fp <- fopen(DATA_FILE, "r+b")
+    fseek(fp, entry.offset, SEEK_SET)
+    read product
+
+    if product.deleted == TOMBSTONE:
+        fclose(fp)
+        return FAILURE
+
+    product.price <- new_price
+    fseek(fp, entry.offset, SEEK_SET)
+    fwrite(product)
+    fflush(fp)
+    fclose(fp)
+    return SUCCESS
+```
+
+#### Tombstone deletion
+
+```
+procedure DELETE_PRODUCT(code):
+    entry <- LOOKUP_IN_INDEX(code)
+    if entry == NULL:
+        return FAILURE
+
+    fp <- fopen(DATA_FILE, "r+b")
+    fseek(fp, entry.offset, SEEK_SET)
+    read product
+
+    product.deleted <- TOMBSTONE
+    fseek(fp, entry.offset, SEEK_SET)
+    fwrite(product)
+    fflush(fp)
+    fclose(fp)
+    return SUCCESS
+```
+
+#### Rebuild index
+
+```
+procedure REBUILD_INDEX():
+    fp <- fopen(DATA_FILE, "rb")
+    if fp == NULL:
+        remove INDEX_FILE
+        return SUCCESS
+
+    index <- empty array
+    while read product from fp succeeds:
+        offset <- current record offset
+        if product.deleted != TOMBSTONE:
+            append (product.code, offset) to index
+
+    sort(index by code)
+    SAVE_INDEX(index)
+    free(index)
+    fclose(fp)
+    return SUCCESS
+```
+
+### Complexity analysis
+
+| Operation | Time complexity | Space complexity | Notes |
+|---|---:|---:|---|
+| Add product | O(n log n) | O(n) | index is loaded and resorted on each insert in this simple design |
+| Search product | O(log n) | O(n) transient | O(n) memory is used to load index then freed |
+| Update price | O(log n) | O(n) transient | same index lookup then O(1) write |
+| Delete product | O(log n) | O(n) transient | deletion is O(1) on data file after lookup |
+| Rebuild index | O(N log N) | O(N) | scans all records and sorts active keys |
+
+The design is intentionally not optimal for high insertion rates. Its purpose is to make the role of an index explicit. In advanced work an index would be maintained incrementally without full reload and re-sort on each insert.
+
+## Testing and verification
+
+### Regression tests as behavioural specifications
+
+The `tests/` directory contains input fixtures and expected outputs. The `make test` target executes both exercises and diffs the produced output against the reference transcripts.
+
+This style of test has two benefits in a teaching setting:
+
+- It reduces the degrees of freedom so that students learn to reason about deterministic formatting and error handling.
+- It makes incorrect assumptions visible, for example relying on an uninitialised padding byte that changes across runs.
+
+### Memory diagnostics
+
+`make valgrind` runs each executable under Valgrind and reports a compact summary. Passing Valgrind is not a proof of correctness but it is an essential sanity check in a language where memory safety is not guaranteed by the runtime.
+
+## Cross-language perspectives
+
+Binary record I/O is a recurring idea across ecosystems although the idioms differ.
+
+### Python
+
+Python’s `struct` module provides explicit packing, endianness and field sizes.
+
+```python
+import struct
+
+# little-endian: int32, 50-byte string, float32, int32
+fmt = "<i50sfi"
+packed = struct.pack(fmt, 1001, b"Alice Johnson".ljust(50, b"\0"), 3.75, 2024)
+```
+
+### C++
+
+C++ streams can be used in binary mode but the same caveat applies: writing a raw `struct` is only safe if the layout is stable and agreed.
+
+```cpp
+std::ofstream out("students.bin", std::ios::binary | std::ios::app);
+out.write(reinterpret_cast<const char*>(&student), sizeof(Student));
+```
+
+### Java
+
+Java’s `RandomAccessFile` exposes explicit seek and read/write operations, which map cleanly onto the random-access patterns used in Exercise 2.
+
+```java
+RandomAccessFile raf = new RandomAccessFile("products.bin", "rw");
+raf.seek(offset);
+raf.writeInt(code);
+```
+
+In Java, the portability problem is not removed but it is moved: one typically writes an explicit byte order via `ByteBuffer`.
+
+## Suggested extensions
+
+Students who wish to push beyond the laboratory requirements may consider:
+
+- adding a header with a magic number and a version field to each binary file
+- implementing compaction to remove tombstones and rebuild a dense file
+- maintaining the index incrementally without full reload and re-sort
+- implementing a multi-level index structure such as a B-tree stored on disk
+- implementing a write-ahead log that makes updates crash-resilient
+
+Each extension forces a deeper engagement with invariants and failure models which is the central intellectual aim of working with binary files.
+
+## Implementation notes that matter in practice
+
+The laboratory code is intentionally small but its central theme is subtle: when a programme writes binary bytes it is not merely producing output but asserting a long-lived contract. The discussion below makes the contract explicit and identifies the points at which naive implementations typically fail.
+
+### Deterministic output is part of the behavioural specification
+
+The regression tests compare the entire console transcript and therefore treat formatting as observable behaviour. This is not an aesthetic constraint. Deterministic output is a proxy for deterministic reasoning. If two runs of the same programme with the same input produce different output then one of the following is occurring:
+
+- uninitialised memory is being printed or written to disk
+- an implementation-defined detail such as struct padding is leaking into the output
+- the programme is reading a file with a non-deterministic initial state
+
+The box-drawing tables used in the exercises also highlight an operational detail: the output is UTF-8 and therefore the terminal environment must be able to render box-drawing characters. The tests assume a UTF-8 capable environment and a byte-for-byte match of the output stream.
+
+### Byte offsets and record layouts
+
+Binary file programming becomes simpler when the byte layout is written down as a table rather than held implicitly in the programmer’s head.
+
+#### Student record layout (packed)
+
+The student database uses a packed record of size 62 bytes.
+
+| Field | Type | Offset (bytes) | Length (bytes) | Notes |
+|---|---|---:|---:|---|
+| `id` | `int32_t` | 0 | 4 | two’s complement on typical platforms |
+| `name` | `char[50]` | 4 | 50 | NUL-terminated if shorter than 50 |
+| `gpa` | `float` | 54 | 4 | IEEE 754 binary32 on typical platforms |
+| `year` | `int32_t` | 58 | 4 | stored as signed integer |
+
+The packed layout removes the padding that would otherwise appear after the 50-byte `name` field. The pedagogical point is that padding is not an error in C but it is a hazard for naive serialisation.
+
+#### Product record layout (default alignment)
+
+The product database uses a 64-byte record under the default alignment rules expected by the test environment.
+
+| Field | Type | Offset (bytes) | Length (bytes) | Notes |
+|---|---|---:|---:|---|
+| `deleted` | `int32_t` | 0 | 4 | 0 = active, -1 = tombstone |
+| `code` | `int32_t` | 4 | 4 | primary key |
+| `name` | `char[40]` | 8 | 40 | fixed-length name buffer |
+| `price` | `double` | 48 | 8 | IEEE 754 binary64 on typical platforms |
+| `quantity` | `int32_t` | 56 | 4 | units in stock |
+| padding | bytes | 60 | 4 | tail padding to satisfy 8-byte alignment |
+
+The final padding is often ignored in informal discussions yet it is present in the bytes written by `fwrite` when the programme writes `sizeof(Product)` bytes.
+
+### Index semantics and binary search correctness
+
+Exercise 2 uses `qsort` to maintain a sorted index and `bsearch` to look up keys. The correctness of binary search depends on two conditions:
+
+1. the index is sorted according to the same comparator used by the search
+2. the comparator defines a total order (no contradictory results)
+
+The implementation therefore uses a comparator that returns -1, 0 or 1 based on explicit comparisons rather than subtraction. Subtraction-based comparators are common in small examples but they can overflow when keys are far apart, which can violate transitivity and thereby break the assumptions of `qsort` and `bsearch`.
+
+Binary search can be written as the following canonical procedure.
+
+```
+procedure BINARY_SEARCH(A, n, key):
+    lo <- 0
+    hi <- n - 1
+    while lo <= hi:
+        mid <- lo + floor((hi - lo) / 2)
+        if A[mid].code == key:
+            return A[mid]
+        else if A[mid].code < key:
+            lo <- mid + 1
+        else:
+            hi <- mid - 1
+    return NOT_FOUND
+```
+
+The crucial detail is the computation of `mid`: writing `mid <- (lo + hi) / 2` may overflow for large indices and is therefore replaced by `lo + (hi - lo)/2`.
+
+### Failure models and recovery strategies
+
+The moment an index file is introduced the system has two persistent artefacts and therefore a new class of failure becomes possible: the artefacts can become inconsistent. Typical causes include programme termination between writing the data record and updating the index or index corruption due to an external process.
+
+The laboratory includes `rebuild_index` as a deliberately simple recovery procedure. It treats the data file as the source of truth, scans records and regenerates a fresh index containing only active entries. This is a standard pattern in storage engineering: keep recovery simple by ensuring there exists at least one artefact from which the others can be derived.
+
+In more advanced designs one would add journalling or a write-ahead log so that the index can be updated atomically with the data record. On POSIX systems this typically involves `fsync` in addition to `fflush` because `fflush` only flushes user-space buffers.
+
+### Why tombstones exist and when they are insufficient
+
+Tombstone deletion is a space-time trade-off.
+
+- It makes deletes O(1) because a record is modified in place.
+- It preserves audit information because deleted records remain present.
+- It increases file size over time and therefore eventually requires compaction.
+
+The correct way to reason about tombstones is to treat them as a logical predicate on records. A record exists in the logical database if and only if its tombstone flag is not set. All algorithms that read records must apply this predicate.
+
+### Limits of the laboratory model
+
+The programmes in this repository are single-process and assume exclusive access to the underlying files. They also assume that input is well-formed. These assumptions are appropriate for an introductory laboratory but they should be named explicitly because removing them changes the problem qualitatively.
+
+If concurrent access were permitted, even a read-only search would need to consider the possibility that the index is being updated concurrently. If the input were adversarial rather than pedagogical, the programme would need stronger validation, for example checking that `file_size % record_size == 0` and rejecting corrupt files.
+
+## References
+
+| Reference | DOI |
+|---|---|
+| Bayer, R., & McCreight, E. (1972). Organization and maintenance of large ordered indexes. *Acta Informatica, 1*, 173–189. | https://doi.org/10.1007/BF00288683 |
+| Hoare, C. A. R. (1962). Quicksort. *The Computer Journal, 5*(1), 10–16. | https://doi.org/10.1093/comjnl/5.1.10 |
+| Codd, E. F. (1970). A relational model of data for large shared data banks. *Communications of the ACM, 13*(6), 377–387. | https://doi.org/10.1145/362384.362685 |
+| Graefe, G. (2012). A survey of B-tree logging and recovery techniques. *ACM Transactions on Database Systems, 37*(1), Article 1. | https://doi.org/10.1145/2109196.2109197 |
+| IEEE. (2019). *IEEE Standard for Floating-Point Arithmetic (IEEE 754-2019)*. *IEEE Std 754-2019*. | https://doi.org/10.1109/IEEESTD.2019.8766229 |
+| Mohan, C., Haderle, D. J., Lindsay, B. G., Pirahesh, H., & Schwarz, P. M. (1992). ARIES: A transaction recovery method supporting fine-granularity locking and partial rollbacks using write-ahead logging. *ACM Transactions on Database Systems, 17*(1), 94–162. | https://doi.org/10.1145/128765.128770 |
+| Sears, R., & Brewer, E. (2009). Segment-based recovery: Write-ahead logging revisited. *Proceedings of the VLDB Endowment, 2*(1), 490–501. | https://doi.org/10.14778/1687627.1687683 |

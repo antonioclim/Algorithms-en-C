@@ -37,6 +37,24 @@
 #include <stdint.h>
 
 /* =============================================================================
+ * PORTABILITY NOTE: STRUCT LAYOUT AND PACKING
+ * =============================================================================
+ *
+ * This exercise persists records by writing the in-memory struct layout
+ * directly to disk via fwrite and reading them back via fread.
+ *
+ * In standard C the compiler may insert padding bytes between fields and at
+ * the end of a struct to satisfy alignment constraints. That padding is
+ * implementation-defined and may vary across compilers, optimisation levels
+ * and architectures.
+ *
+ * For teaching purposes and to keep the on-disk format deterministic in the
+ * provided tests we force a packed layout for Student. In production code you
+ * would typically define an explicit serialisation format instead of relying
+ * on packed structs.
+ */
+
+/* =============================================================================
  * CONSTANTS
  * =============================================================================
  */
@@ -61,13 +79,31 @@
  * Hint: Use int32_t from <stdint.h> for portable integer sizes
  */
 
-typedef struct {
-    /* YOUR CODE HERE */
+/* GCC and Clang support __attribute__((packed)). For MSVC we also provide a
+ * pragma-based fallback. The tests for this laboratory assume a packed record
+ * size of 62 bytes (4 + 50 + 4 + 4) rather than the padded size typically
+ * produced by default alignment rules.
+ */
+#if defined(__GNUC__) || defined(__clang__)
+#define PACKED __attribute__((packed))
+#else
+#define PACKED
+#endif
+
+#if defined(_MSC_VER)
+#pragma pack(push, 1)
+#endif
+
+typedef struct PACKED {
     int32_t id;
     char    name[MAX_NAME_LENGTH];
     float   gpa;
     int32_t year;
 } Student;
+
+#if defined(_MSC_VER)
+#pragma pack(pop)
+#endif
 
 /* =============================================================================
  * FUNCTION PROTOTYPES
@@ -135,9 +171,25 @@ static void replace_underscores(char *str) {
  * Hint: fwrite returns the number of elements successfully written
  */
 int save_student(const char *filename, const Student *student) {
-    /* YOUR CODE HERE */
-    
-    return 0;  /* Replace this */
+    if (filename == NULL || student == NULL) {
+        return -1;
+    }
+
+    FILE *fp = fopen(filename, "ab");
+    if (fp == NULL) {
+        perror("Error opening file for writing");
+        return -1;
+    }
+
+    size_t written = fwrite(student, sizeof(Student), 1, fp);
+    fclose(fp);
+
+    if (written != 1) {
+        fprintf(stderr, "Error: failed to write student record\n");
+        return -1;
+    }
+
+    return 0;
 }
 
 /**
@@ -165,11 +217,67 @@ int save_student(const char *filename, const Student *student) {
  * Hint: Remember to handle the case where the file is empty
  */
 int load_students(const char *filename, Student **students, size_t *count) {
-    /* YOUR CODE HERE */
-    
+    if (students == NULL || count == NULL) {
+        return -1;
+    }
+
     *students = NULL;
     *count = 0;
-    return 0;  /* Replace this */
+
+    if (filename == NULL) {
+        return -1;
+    }
+
+    FILE *fp = fopen(filename, "rb");
+    if (fp == NULL) {
+        /* Missing file means empty database rather than an error. */
+        return 0;
+    }
+
+    if (fseek(fp, 0, SEEK_END) != 0) {
+        fclose(fp);
+        return -1;
+    }
+    long file_size = ftell(fp);
+    if (file_size < 0) {
+        fclose(fp);
+        return -1;
+    }
+    if (fseek(fp, 0, SEEK_SET) != 0) {
+        fclose(fp);
+        return -1;
+    }
+
+    if (file_size == 0) {
+        fclose(fp);
+        return 0;
+    }
+
+    size_t records = (size_t)file_size / sizeof(Student);
+    if (records == 0) {
+        fclose(fp);
+        return 0;
+    }
+
+    Student *buffer = malloc(records * sizeof(Student));
+    if (buffer == NULL) {
+        fprintf(stderr, "Error: memory allocation failed\n");
+        fclose(fp);
+        return -1;
+    }
+
+    size_t read = fread(buffer, sizeof(Student), records, fp);
+    fclose(fp);
+
+    /* If the read is partial, we still return the successfully read prefix. */
+    if (read == 0) {
+        free(buffer);
+        return 0;
+    }
+
+    *students = buffer;
+    *count = read;
+    return 0;
 }
 
 /**
@@ -191,9 +299,17 @@ int load_students(const char *filename, Student **students, size_t *count) {
  * Hint: This is a simple linear search - O(n) complexity
  */
 Student *find_student_by_id(Student *students, size_t count, int32_t id) {
-    /* YOUR CODE HERE */
-    
-    return NULL;  /* Replace this */
+    if (students == NULL || count == 0) {
+        return NULL;
+    }
+
+    for (size_t i = 0; i < count; i++) {
+        if (students[i].id == id) {
+            return &students[i];
+        }
+    }
+
+    return NULL;
 }
 
 /**
@@ -218,9 +334,33 @@ Student *find_student_by_id(Student *students, size_t count, int32_t id) {
  * Hint: "r+b" opens for both reading and writing without truncating
  */
 int update_student(const char *filename, size_t index, const Student *student) {
-    /* YOUR CODE HERE */
-    
-    return 0;  /* Replace this */
+    if (filename == NULL || student == NULL) {
+        return -1;
+    }
+
+    FILE *fp = fopen(filename, "r+b");
+    if (fp == NULL) {
+        perror("Error opening file for update");
+        return -1;
+    }
+
+    long offset = (long)(index * sizeof(Student));
+    if (fseek(fp, offset, SEEK_SET) != 0) {
+        perror("Error seeking to record");
+        fclose(fp);
+        return -1;
+    }
+
+    size_t written = fwrite(student, sizeof(Student), 1, fp);
+    fflush(fp);
+    fclose(fp);
+
+    if (written != 1) {
+        fprintf(stderr, "Error: failed to write updated record\n");
+        return -1;
+    }
+
+    return 0;
 }
 
 /**
@@ -243,9 +383,27 @@ int update_student(const char *filename, size_t index, const Student *student) {
  * Hint: This should NOT load the file contents into memory
  */
 size_t count_students(const char *filename) {
-    /* YOUR CODE HERE */
-    
-    return 0;  /* Replace this */
+    if (filename == NULL) {
+        return 0;
+    }
+
+    FILE *fp = fopen(filename, "rb");
+    if (fp == NULL) {
+        return 0;
+    }
+
+    if (fseek(fp, 0, SEEK_END) != 0) {
+        fclose(fp);
+        return 0;
+    }
+    long file_size = ftell(fp);
+    fclose(fp);
+
+    if (file_size <= 0) {
+        return 0;
+    }
+
+    return (size_t)file_size / sizeof(Student);
 }
 
 /**
@@ -271,13 +429,23 @@ void print_student_table(const Student *students, size_t count) {
         printf("[INFO] No students to display\n");
         return;
     }
-    
-    /* YOUR CODE HERE */
-    /* Print table header */
-    
-    /* Print each student row */
-    
-    /* Print table footer */
+
+    /* The header line is printed verbatim to match the provided reference
+     * output used by the automated tests.
+     */
+    printf("┌────────┬──────────────────────┬───────┬──────┐\n");
+    printf("│   ID   │        Name          │  GPA  │ Year │\n");
+    printf("├────────┼──────────────────────┼───────┼──────┤\n");
+
+    for (size_t i = 0; i < count; i++) {
+        printf("│ %6d │ %-20s │ %5.2f │ %4d │\n",
+               students[i].id,
+               students[i].name,
+               students[i].gpa,
+               students[i].year);
+    }
+
+    printf("└────────┴──────────────────────┴───────┴──────┘\n");
 }
 
 /**
@@ -290,7 +458,9 @@ void print_student_table(const Student *students, size_t count) {
  * Hint: Always check for NULL before calling free()
  */
 void free_students(Student *students) {
-    /* YOUR CODE HERE */
+    if (students != NULL) {
+        free(students);
+    }
 }
 
 /* =============================================================================

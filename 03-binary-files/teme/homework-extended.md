@@ -1,261 +1,204 @@
-# Extended Challenges - Week 03: Binary Files
+# Extended challenges for Week 03: Binary files, indices and recovery
 
-## 🚀 Advanced Challenges (Optional)
+## Scope and intent
 
-These challenges are designed for students who want to deepen their understanding of binary file handling and explore advanced concepts. Each correctly solved challenge earns **+10 bonus points**.
+The optional challenges below are designed for students who wish to deepen their understanding of persistent data structures, failure models and performance trade-offs. Each challenge is specified at the level of an engineering problem rather than a toy exercise: you are expected to define invariants, justify algorithmic choices and demonstrate reproducibility.
+
+Each successfully completed challenge earns **+10 bonus points** subject to the constraints in the course handbook. You may complete more than one challenge but the maximum bonus applied to the course total is determined by the module coordinator.
+
+The challenges are independent although several compose naturally. If you choose to combine them then your submission must clearly separate the contributions so that marking remains feasible.
 
 ---
 
-## ⭐ Challenge 1: B-Tree Index (Difficulty: Hard)
+## Challenge 1: On-disk B-tree index
 
-### Description
+### 1.1 Problem statement
 
-Implement a B-tree index structure stored in a binary file for efficient key-value lookups. Unlike a simple sorted array index, a B-tree maintains balance and supports efficient insertions without rebuilding.
+Implement an on-disk B-tree index for efficient key to offset lookup. In contrast to a flat sorted array stored in memory, a B-tree is designed to minimise I/O by keeping node fan-out high and tree height small. The goal is not merely to implement a search tree but to implement a search tree whose *layout and update strategy* respect the fact that the primary cost is disk access.
 
-### Requirements
+### 1.2 Data model
+
+- Keys are 32-bit signed integers.
+- Values are 64-bit file offsets into an external data file.
+- The B-tree is stored in a single binary file and nodes are addressed by byte offsets.
+- Node size is fixed and chosen to align with a convenient block size (for example 4096 bytes) so that a node can be read with a single I/O request.
+
+### 1.3 Suggested node layout
+
+The layout below is intentionally explicit. You may change it if you explain why.
 
 ```c
-#define BTREE_ORDER 4  /* Maximum children per node */
+#define BTREE_ORDER 64  /* example: high fan-out to reduce height */
 
-typedef struct BTreeNode {
+typedef struct {
     int32_t  is_leaf;
     int32_t  num_keys;
     int32_t  keys[BTREE_ORDER - 1];
-    long     values[BTREE_ORDER - 1];    /* Data file offsets */
-    long     children[BTREE_ORDER];       /* Child node offsets */
+    int64_t  values[BTREE_ORDER - 1];   /* data file offsets */
+    int64_t  children[BTREE_ORDER];     /* child node offsets, -1 if none */
 } BTreeNode;
 ```
 
-1. Implement `btree_insert()` with node splitting
-2. Implement `btree_search()` with O(log n) complexity
-3. Store the entire B-tree in a single binary file
-4. Support at least 1000 keys without performance degradation
+### 1.4 Invariants
 
-### Evaluation
+Your implementation must maintain the standard B-tree invariants:
 
-- Correct B-tree structure: 4 points
-- Efficient search: 3 points
-- Correct insertion with splitting: 3 points
+- Keys in a node are stored in strictly increasing order.
+- Every internal node with `k` keys has `k + 1` children.
+- All leaves appear at the same depth.
+- Every node except the root has between `ceil(order/2) - 1` and `order - 1` keys.
 
-### Bonus Points: +10
+The on-disk representation adds further invariants:
 
----
+- Every child pointer is either `-1` or a valid node offset that is aligned to the node size.
+- A node can be read and written atomically at the level of a single `fread` and `fwrite` of `sizeof(BTreeNode)` bytes.
 
-## ⭐ Challenge 2: Copy-on-Write Transactions (Difficulty: Medium)
+### 1.5 Algorithms and pseudocode
 
-### Description
+#### Search
 
-Implement a copy-on-write (CoW) mechanism for safe updates. Instead of modifying records in place, write new versions and update pointers atomically.
-
-### Requirements
-
-```c
-typedef struct {
-    uint32_t version;           /* Record version number */
-    long     previous_offset;   /* Pointer to previous version */
-    int32_t  is_current;        /* 1 if this is the current version */
-    /* ... actual data fields ... */
-} VersionedRecord;
+```
+procedure BTREE_SEARCH(root_offset, key):
+    node_offset <- root_offset
+    while node_offset != -1:
+        node <- READ_NODE(node_offset)
+        i <- LOWER_BOUND(node.keys, node.num_keys, key)
+        if i < node.num_keys and node.keys[i] == key:
+            return node.values[i]
+        if node.is_leaf:
+            return NOT_FOUND
+        node_offset <- node.children[i]
+    return NOT_FOUND
 ```
 
-1. Implement `cow_update()` that writes a new version without modifying the old one
-2. Implement `cow_read()` that finds the current version
-3. Implement `cow_rollback()` to revert to a previous version
-4. Implement `cow_vacuum()` to remove old versions and compact the file
+#### Insert with splitting
 
-### Evaluation
-
-- Correct versioning: 4 points
-- Working rollback: 3 points
-- Vacuum implementation: 3 points
-
-### Bonus Points: +10
-
----
-
-## ⭐ Challenge 3: Memory-Mapped File I/O (Difficulty: Medium)
-
-### Description
-
-Use `mmap()` system call to map a binary file directly into memory, enabling array-like access to file contents without explicit read/write calls.
-
-### Requirements
-
-```c
-#include <sys/mman.h>
-
-typedef struct {
-    void   *mapped_region;
-    size_t  file_size;
-    int     fd;
-} MappedDatabase;
+```
+procedure BTREE_INSERT(root_offset, key, value):
+    root <- READ_NODE(root_offset)
+    if root is full:
+        new_root_offset <- ALLOCATE_NODE()
+        new_root <- empty internal node
+        new_root.children[0] <- root_offset
+        SPLIT_CHILD(new_root, 0)
+        WRITE_NODE(new_root_offset, new_root)
+        root_offset <- new_root_offset
+    INSERT_NONFULL(root_offset, key, value)
+    return root_offset
 ```
 
-1. Implement `mmap_open()` to map a file into memory
-2. Implement `mmap_close()` to unmap and sync
-3. Implement record access using pointer arithmetic
-4. Demonstrate performance improvement over fread/fwrite for random access
-5. Handle file growth (remapping)
+Your split procedure must be carefully specified because it is the core of the data structure.
 
-### Evaluation
+### 1.6 Evaluation criteria
 
-- Correct mmap usage: 4 points
-- Safe error handling: 3 points
-- Performance comparison: 3 points
-
-### Bonus Points: +10
+- Correct B-tree invariants over a non-trivial workload: 4
+- Search correctness and asymptotic behaviour: 2
+- Insert correctness including splitting and root growth: 3
+- File format documentation and recovery strategy for a corrupted index file: 1
 
 ---
 
-## ⭐ Challenge 4: Cross-Platform Binary Format (Difficulty: Medium)
+## Challenge 2: Compaction and vacuuming for tombstones
 
-### Description
+### 2.1 Problem statement
 
-Design and implement a portable binary file format that works correctly across different architectures (32-bit, 64-bit, little-endian, big-endian).
+Implement a compaction procedure for a tombstone-based record file such as `products.bin`. The procedure should create a new dense file containing only active records and should rebuild the corresponding index so that it points into the new file.
 
-### Requirements
+### 2.2 Correctness requirements
 
-1. Define explicit byte-order conversion functions:
-   ```c
-   uint32_t to_little_endian_32(uint32_t value);
-   uint32_t from_little_endian_32(uint32_t value);
-   uint64_t to_little_endian_64(uint64_t value);
-   ```
+- The compacted file contains exactly the records whose tombstone flag is not set.
+- The relative order of active records is preserved unless you justify an alternative.
+- The index points to the correct offsets in the compacted file.
 
-2. Use packed structures or byte-by-byte serialisation:
-   ```c
-   void serialize_int32(uint8_t *buffer, int32_t value);
-   int32_t deserialize_int32(const uint8_t *buffer);
-   ```
+### 2.3 Atomic replacement
 
-3. Include a format descriptor in the file header:
-   ```c
-   typedef struct {
-       uint8_t  byte_order_mark;   /* 0x01 = little, 0x02 = big */
-       uint8_t  pointer_size;      /* 4 or 8 bytes */
-       uint8_t  alignment;         /* Structure alignment used */
-       uint8_t  version;           /* Format version */
-   } FormatDescriptor;
-   ```
+A key engineering requirement is to avoid leaving the system in a state where both the old and new files are unusable. A standard approach is:
 
-4. Demonstrate reading a file created on a different (simulated) architecture
+1. write `products.bin.tmp` and `products.idx.tmp`
+2. flush and close both
+3. rename `products.bin` to `products.bin.bak`
+4. rename `products.bin.tmp` to `products.bin`
+5. rename `products.idx.tmp` to `products.idx`
 
-### Evaluation
-
-- Correct byte-order handling: 4 points
-- Explicit serialisation: 3 points
-- Format detection: 3 points
-
-### Bonus Points: +10
+Explain the failure cases at each step and how the `.bak` file supports recovery.
 
 ---
 
-## ⭐ Challenge 5: Write-Ahead Logging (WAL) (Difficulty: Hard)
+## Challenge 3: Write-ahead logging and crash recovery
 
-### Description
+### 3.1 Problem statement
 
-Implement a write-ahead logging system for crash recovery. All modifications are first written to a log file before being applied to the main data file.
+Add a write-ahead log (WAL) to a record store so that updates become recoverable after a crash. The WAL is an append-only file. Each update is first written to the WAL and only then applied to the data file.
 
-### Requirements
+### 3.2 Minimal log record design
 
-```c
-typedef struct {
-    uint64_t sequence_number;
-    uint32_t operation;          /* INSERT, UPDATE, DELETE */
-    long     record_offset;
-    uint32_t record_size;
-    uint8_t  old_data[256];      /* For undo */
-    uint8_t  new_data[256];      /* For redo */
-    uint32_t checksum;
-} WALEntry;
-```
+Define a log record format that contains at minimum:
 
-1. Implement `wal_begin_transaction()`
-2. Implement `wal_log_operation()` to write before modifying data
-3. Implement `wal_commit()` to mark transaction complete
-4. Implement `wal_recover()` to replay committed transactions after crash
-5. Implement `wal_checkpoint()` to apply all pending changes and truncate log
+- an operation code (insert, update, delete)
+- a key
+- the new record payload or the delta required to reconstruct it
+- a monotonically increasing sequence number
 
-### Evaluation
+### 3.3 Recovery procedure
 
-- Correct logging: 3 points
-- Transaction semantics: 3 points
-- Recovery implementation: 4 points
+On startup the programme must:
 
-### Bonus Points: +10
+1. read the last committed sequence number from the data file header (or reconstruct it)
+2. scan the WAL and apply any operations with a larger sequence number
+3. truncate or checkpoint the WAL
+
+Discuss idempotence: applying the same log record twice must not corrupt the database.
 
 ---
 
-## 📊 Bonus Point System
+## Challenge 4: Portability layer for binary serialisation
 
-| Challenges Completed | Total Bonus | Badge |
-|---------------------|-------------|-------|
-| 1 | +10 points | Binary Apprentice |
-| 2 | +20 points | File Handler |
-| 3 | +30 points | Storage Expert |
-| 4 | +40 points | I/O Master |
-| All 5 | +50 points | 🏆 **Binary Wizard** |
+### 4.1 Problem statement
 
----
+Remove dependence on compiler-specific struct layouts by implementing an explicit serialisation layer that writes fields in a defined byte order. The goal is that a file written on a little-endian machine can be read correctly on a big-endian machine.
 
-## 📤 Submission Guidelines
+### 4.2 Suggested approach
 
-1. Create separate source files for each challenge:
-   - `challenge1_btree.c`
-   - `challenge2_cow.c`
-   - `challenge3_mmap.c`
-   - `challenge4_portable.c`
-   - `challenge5_wal.c`
+- define `write_int32_le`, `read_int32_le`, `write_double_le` and similar primitives
+- write each field in a fixed order
+- define a versioned header so that future changes do not silently break compatibility
 
-2. Include a `README.md` explaining:
-   - Which challenges you attempted
-   - How to compile and test
-   - Any design decisions or limitations
-
-3. Provide test cases demonstrating functionality
-
-4. Submit in a folder named `Week03_Bonus_[YourName]`
+This challenge is primarily about specification discipline: the byte order and field widths must be stated clearly.
 
 ---
 
-## 💡 Implementation Tips
+## Challenge 5: Integrity checks and defensive validation
 
-### Challenge 1 (B-Tree)
-- Start with a simple 2-3 tree before generalising
-- Draw the tree structure on paper during insertion
-- Test with sequential and random key patterns
+### 5.1 Problem statement
 
-### Challenge 2 (Copy-on-Write)
-- Think of it like Git commits
-- Consider how to efficiently find the "current" version
-- Vacuum is essentially garbage collection
+Augment any of the previous challenges by adding explicit integrity checks to your file formats. The purpose is to make corruption detectable rather than silent. You are not required to implement cryptographic security but you are expected to implement *engineering-grade* checks that detect common classes of failure.
 
-### Challenge 3 (mmap)
-- Remember to use `msync()` to ensure data persistence
-- Handle `SIGBUS` for mapped file access errors
-- Start with read-only mapping before read-write
+### 5.2 Requirements
 
-### Challenge 4 (Portable Format)
-- Study how PNG or TIFF handle cross-platform issues
-- Network byte order (big-endian) is a common choice
-- Test with endianness detection: `int test = 1; char *p = (char*)&test;`
+- Add a versioned header with a magic number, record size and record count.
+- Add a per-record checksum (for example CRC32) or a per-block checksum if you use fixed-size blocks.
+- On read, validate that `file_size` is compatible with the declared record size and that `record_count` matches the derived count.
+- If a mismatch is detected, fail with a clear diagnostic and, where appropriate, offer a recovery path (for example index rebuild or file scan).
 
-### Challenge 5 (WAL)
-- Study how SQLite or PostgreSQL implement WAL
-- Checksum is critical for detecting corruption
-- Consider what happens if crash occurs during log write
+### 5.3 Discussion
+
+The conceptual aim is to distinguish three statements that are often conflated in beginner code:
+
+- the file exists
+- the file is well-formed
+- the file encodes the intended logical state
+
+Integrity checks address the second statement directly. They do not prove the third but they provide a principled basis for rejecting bytes that cannot be interpreted safely.
 
 ---
 
-## 📖 Recommended Reading
+## Submission guidance
 
-- *Database Internals* by Alex Petrov (Chapters on B-Trees and WAL)
-- SQLite File Format documentation
-- POSIX.1-2017 `mmap()` specification
-- Endianness on Wikipedia
+For optional challenges the quality of the argument matters as much as the code. Provide:
 
----
+- a brief design document describing file formats, invariants and failure models
+- a reproducible test harness with deterministic output
+- a short complexity analysis that separates CPU cost from I/O cost
+- evidence of memory safety (Valgrind summary or equivalent)
 
-*These challenges represent real-world techniques used in production database systems. Mastering them provides valuable skills for systems programming careers.*
-
-**Good luck, and may your bytes be ever aligned! 🎯**
+Where your implementation choices differ from the suggested designs you must justify the differences in writing.
