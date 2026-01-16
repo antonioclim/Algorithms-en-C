@@ -1,0 +1,19 @@
+# Sample MQTT-style messages
+# Format: topic value
+# Lines starting with # are comments
+
+home/temperature 22.5
+home/humidity 55.0
+home/temperature 22.8
+home/pressure 1013.25
+home/humidity 54.5
+home/temperature 23.1
+home/temperature 22.6
+home/humidity 56.0
+home/temperature 45.0
+home/humidity 55.5
+home/temperature 22.9
+garden/temperature 18.5
+garden/humidity 72.0
+home/temperature 22.4
+home/humidity 55.2

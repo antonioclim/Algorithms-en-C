@@ -1,0 +1,1862 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Week 19: Algorithms for IoT and Stream Processing | ATP Course</title>
+    <!-- highlight.js for syntax highlighting -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/c.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/python.min.js"></script>
+    <style>
+        /* ================================================================
+           CSS VARIABLES - DARK THEME
+           ================================================================ */
+        :root {
+            --bg-primary: #0d1117;
+            --bg-secondary: #161b22;
+            --bg-tertiary: #21262d;
+            --bg-card: #1c2128;
+            --accent-blue: #58a6ff;
+            --accent-green: #3fb950;
+            --accent-orange: #d29922;
+            --accent-red: #f85149;
+            --accent-purple: #a371f7;
+            --accent-cyan: #39c5cf;
+            --accent-yellow: #e3b341;
+            --text-primary: #e6edf3;
+            --text-secondary: #8b949e;
+            --text-muted: #6e7681;
+            --border-default: #30363d;
+            --border-muted: #21262d;
+            --gradient-blue: linear-gradient(135deg, #1f6feb 0%, #388bfd 100%);
+            --gradient-green: linear-gradient(135deg, #238636 0%, #3fb950 100%);
+            --gradient-orange: linear-gradient(135deg, #9e6a03 0%, #d29922 100%);
+            --gradient-purple: linear-gradient(135deg, #8957e5 0%, #a371f7 100%);
+            --gradient-iot: linear-gradient(135deg, #0d4429 0%, #238636 50%, #39c5cf 100%);
+            --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.4);
+            --shadow-card: 0 4px 12px rgba(0, 0, 0, 0.3);
+        }
+
+        /* ================================================================
+           RESET AND BASE STYLES
+           ================================================================ */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html, body {
+            height: 100%;
+            overflow: hidden;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans', Helvetica, Arial, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.6;
+        }
+
+        /* ================================================================
+           PROGRESS BAR
+           ================================================================ */
+        .progress-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: var(--bg-tertiary);
+            z-index: 1000;
+        }
+
+        .progress-bar {
+            height: 100%;
+            background: var(--gradient-iot);
+            transition: width 0.3s ease;
+        }
+
+        /* ================================================================
+           SLIDE CONTAINER
+           ================================================================ */
+        .slides-container {
+            width: 100%;
+            height: 100vh;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .slide {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            padding: 60px 80px;
+            display: none;
+            overflow-y: auto;
+            animation: fadeIn 0.5s ease;
+        }
+
+        .slide.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* ================================================================
+           TYPOGRAPHY
+           ================================================================ */
+        h1 {
+            font-size: 2.8em;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 0.5em;
+            line-height: 1.2;
+        }
+
+        h2 {
+            font-size: 2.2em;
+            font-weight: 600;
+            color: var(--accent-blue);
+            margin-bottom: 0.8em;
+            border-bottom: 2px solid var(--border-default);
+            padding-bottom: 0.3em;
+        }
+
+        h3 {
+            font-size: 1.5em;
+            font-weight: 600;
+            color: var(--accent-green);
+            margin: 1em 0 0.5em 0;
+        }
+
+        h4 {
+            font-size: 1.2em;
+            font-weight: 600;
+            color: var(--accent-orange);
+            margin: 0.8em 0 0.4em 0;
+        }
+
+        p {
+            font-size: 1.15em;
+            margin-bottom: 1em;
+            color: var(--text-primary);
+        }
+
+        /* ================================================================
+           TITLE SLIDE STYLES
+           ================================================================ */
+        .title-slide {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            background: var(--gradient-iot);
+            background-size: 400% 400%;
+            animation: gradientShift 15s ease infinite;
+        }
+
+        @keyframes gradientShift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        .title-slide h1 {
+            font-size: 3.5em;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+        }
+
+        .title-slide .subtitle {
+            font-size: 1.8em;
+            color: var(--text-secondary);
+            margin-top: 0.5em;
+        }
+
+        .title-slide .meta {
+            margin-top: 2em;
+            font-size: 1.2em;
+            color: var(--text-muted);
+        }
+
+        .week-badge {
+            display: inline-block;
+            background: var(--accent-cyan);
+            color: var(--bg-primary);
+            padding: 0.3em 1em;
+            border-radius: 20px;
+            font-weight: 700;
+            font-size: 1.2em;
+            margin-bottom: 1em;
+        }
+
+        /* ================================================================
+           CONTENT CONTAINERS
+           ================================================================ */
+        .content-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-default);
+            border-radius: 12px;
+            padding: 1.5em;
+            margin: 1em 0;
+            box-shadow: var(--shadow-card);
+        }
+
+        .content-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1.5em;
+            margin: 1em 0;
+        }
+
+        .content-grid.three-col {
+            grid-template-columns: repeat(3, 1fr);
+        }
+
+        .highlight-box {
+            background: var(--bg-tertiary);
+            border-left: 4px solid var(--accent-blue);
+            padding: 1em 1.5em;
+            margin: 1em 0;
+            border-radius: 0 8px 8px 0;
+        }
+
+        .highlight-box.green {
+            border-left-color: var(--accent-green);
+        }
+
+        .highlight-box.orange {
+            border-left-color: var(--accent-orange);
+        }
+
+        .highlight-box.purple {
+            border-left-color: var(--accent-purple);
+        }
+
+        /* ================================================================
+           CODE BLOCKS
+           ================================================================ */
+        pre {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-default);
+            border-radius: 8px;
+            padding: 1em;
+            margin: 1em 0;
+            overflow-x: auto;
+            font-size: 0.9em;
+        }
+
+        code {
+            font-family: 'Fira Code', 'Cascadia Code', 'JetBrains Mono', Consolas, monospace;
+        }
+
+        .code-inline {
+            background: var(--bg-tertiary);
+            padding: 0.2em 0.5em;
+            border-radius: 4px;
+            font-family: 'Fira Code', monospace;
+            font-size: 0.9em;
+            color: var(--accent-cyan);
+        }
+
+        /* ================================================================
+           LISTS
+           ================================================================ */
+        ul, ol {
+            margin: 0.5em 0 1em 1.5em;
+            font-size: 1.1em;
+        }
+
+        li {
+            margin: 0.4em 0;
+            color: var(--text-primary);
+        }
+
+        li::marker {
+            color: var(--accent-green);
+        }
+
+        /* ================================================================
+           DIAGRAMS AND ASCII ART
+           ================================================================ */
+        .diagram {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-default);
+            border-radius: 8px;
+            padding: 1.5em;
+            margin: 1em 0;
+            font-family: 'Fira Code', monospace;
+            font-size: 0.85em;
+            line-height: 1.4;
+            white-space: pre;
+            overflow-x: auto;
+            color: var(--accent-cyan);
+        }
+
+        /* ================================================================
+           TABLES
+           ================================================================ */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1em 0;
+            font-size: 1em;
+        }
+
+        th {
+            background: var(--bg-tertiary);
+            color: var(--accent-blue);
+            padding: 0.8em;
+            text-align: left;
+            border-bottom: 2px solid var(--border-default);
+            font-weight: 600;
+        }
+
+        td {
+            padding: 0.7em;
+            border-bottom: 1px solid var(--border-muted);
+            color: var(--text-primary);
+        }
+
+        tr:hover {
+            background: var(--bg-secondary);
+        }
+
+        /* ================================================================
+           FORMULA DISPLAY
+           ================================================================ */
+        .formula {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--accent-purple);
+            border-radius: 8px;
+            padding: 1em 1.5em;
+            margin: 1em 0;
+            text-align: center;
+            font-family: 'Times New Roman', serif;
+            font-size: 1.3em;
+            color: var(--accent-purple);
+        }
+
+        .formula-var {
+            font-style: italic;
+            color: var(--accent-cyan);
+        }
+
+        /* ================================================================
+           TAGS AND BADGES
+           ================================================================ */
+        .tag {
+            display: inline-block;
+            padding: 0.2em 0.6em;
+            border-radius: 4px;
+            font-size: 0.85em;
+            font-weight: 600;
+            margin: 0.2em;
+        }
+
+        .tag-blue { background: rgba(88, 166, 255, 0.2); color: var(--accent-blue); }
+        .tag-green { background: rgba(63, 185, 80, 0.2); color: var(--accent-green); }
+        .tag-orange { background: rgba(210, 153, 34, 0.2); color: var(--accent-orange); }
+        .tag-purple { background: rgba(163, 113, 247, 0.2); color: var(--accent-purple); }
+        .tag-red { background: rgba(248, 81, 73, 0.2); color: var(--accent-red); }
+        .tag-cyan { background: rgba(57, 197, 207, 0.2); color: var(--accent-cyan); }
+
+        /* ================================================================
+           ICONS (Using Unicode/Emoji)
+           ================================================================ */
+        .icon {
+            font-size: 1.5em;
+            margin-right: 0.3em;
+            vertical-align: middle;
+        }
+
+        /* ================================================================
+           QUOTE BLOCK
+           ================================================================ */
+        blockquote {
+            background: var(--bg-tertiary);
+            border-left: 4px solid var(--accent-purple);
+            padding: 1em 1.5em;
+            margin: 1.5em 0;
+            font-style: italic;
+            color: var(--text-secondary);
+            border-radius: 0 8px 8px 0;
+        }
+
+        blockquote cite {
+            display: block;
+            margin-top: 0.5em;
+            color: var(--accent-purple);
+            font-style: normal;
+            font-weight: 600;
+        }
+
+        /* ================================================================
+           ANIMATION CLASSES
+           ================================================================ */
+        .animate-in {
+            animation: slideUp 0.6s ease forwards;
+            opacity: 0;
+        }
+
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .delay-1 { animation-delay: 0.1s; }
+        .delay-2 { animation-delay: 0.2s; }
+        .delay-3 { animation-delay: 0.3s; }
+        .delay-4 { animation-delay: 0.4s; }
+        .delay-5 { animation-delay: 0.5s; }
+
+        /* ================================================================
+           NAVIGATION CONTROLS
+           ================================================================ */
+        .nav-controls {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            display: flex;
+            gap: 10px;
+            z-index: 1000;
+        }
+
+        .nav-btn {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            border: 2px solid var(--border-default);
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            font-size: 1.3em;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .nav-btn:hover {
+            background: var(--accent-blue);
+            border-color: var(--accent-blue);
+            transform: scale(1.1);
+        }
+
+        .slide-counter {
+            position: fixed;
+            bottom: 30px;
+            left: 30px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-default);
+            padding: 0.5em 1em;
+            border-radius: 20px;
+            font-size: 0.9em;
+            color: var(--text-secondary);
+            z-index: 1000;
+        }
+
+        /* ================================================================
+           RESPONSIVE ADJUSTMENTS
+           ================================================================ */
+        @media (max-width: 1200px) {
+            .slide {
+                padding: 40px 50px;
+            }
+            h1 { font-size: 2.2em; }
+            h2 { font-size: 1.8em; }
+            .content-grid { grid-template-columns: 1fr; }
+        }
+
+        /* ================================================================
+           SPECIAL SLIDE TYPES
+           ================================================================ */
+        .section-divider {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            background: var(--bg-secondary);
+        }
+
+        .section-divider h2 {
+            font-size: 3em;
+            border: none;
+            margin: 0;
+        }
+
+        .section-divider .section-number {
+            font-size: 6em;
+            font-weight: 800;
+            color: var(--accent-blue);
+            opacity: 0.3;
+            margin-bottom: -0.3em;
+        }
+
+        /* IoT-specific styles */
+        .sensor-viz {
+            display: flex;
+            gap: 1em;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin: 1em 0;
+        }
+
+        .sensor-card {
+            background: var(--bg-tertiary);
+            border: 2px solid var(--accent-green);
+            border-radius: 12px;
+            padding: 1em;
+            min-width: 150px;
+            text-align: center;
+        }
+
+        .sensor-value {
+            font-size: 2em;
+            font-weight: 700;
+            color: var(--accent-cyan);
+        }
+
+        .sensor-label {
+            font-size: 0.9em;
+            color: var(--text-secondary);
+        }
+
+        /* Stream visualisation */
+        .stream-flow {
+            display: flex;
+            align-items: center;
+            gap: 0.5em;
+            padding: 1em;
+            background: var(--bg-secondary);
+            border-radius: 8px;
+            overflow-x: auto;
+        }
+
+        .stream-item {
+            padding: 0.5em 1em;
+            background: var(--accent-blue);
+            color: var(--bg-primary);
+            border-radius: 4px;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+
+        .stream-arrow {
+            color: var(--accent-green);
+            font-size: 1.5em;
+        }
+    </style>
+</head>
+<body>
+    <!-- Progress Bar -->
+    <div class="progress-container">
+        <div class="progress-bar" id="progressBar"></div>
+    </div>
+
+    <!-- Slides Container -->
+    <div class="slides-container" id="slidesContainer">
+
+        <!-- ============================================================
+             SLIDE 1: TITLE
+             ============================================================ -->
+        <div class="slide title-slide active" data-slide="1">
+            <div class="week-badge">WEEK 19</div>
+            <h1>🌐 Algorithms for IoT and Stream Processing</h1>
+            <p class="subtitle">Real-Time Data Analysis • Sensor Networks • MQTT Patterns</p>
+            <div class="meta">
+                <p>ATP Course — Algorithms and Programming Techniques</p>
+                <p>Academy of Economic Studies Bucharest — CSIE</p>
+            </div>
+        </div>
+
+        <!-- ============================================================
+             SLIDE 2: LEARNING OBJECTIVES
+             ============================================================ -->
+        <div class="slide" data-slide="2">
+            <h2>🎯 Learning Objectives</h2>
+            <div class="content-card">
+                <p>Upon completion of this laboratory session, you will be able to:</p>
+                <ol>
+                    <li class="animate-in delay-1"><strong>Remember</strong> — Define streaming algorithms and their bounded-memory constraints</li>
+                    <li class="animate-in delay-2"><strong>Understand</strong> — Explain circular buffer mechanics and moving average calculations</li>
+                    <li class="animate-in delay-3"><strong>Apply</strong> — Implement Welford's algorithm for online variance computation</li>
+                    <li class="animate-in delay-4"><strong>Analyse</strong> — Evaluate anomaly detection thresholds using z-score analysis</li>
+                    <li class="animate-in delay-5"><strong>Evaluate</strong> — Compare different smoothing factors and their impact on responsiveness</li>
+                    <li class="animate-in delay-5"><strong>Create</strong> — Design complete IoT data processing pipelines with MQTT patterns</li>
+                </ol>
+            </div>
+        </div>
+
+        <!-- ============================================================
+             SLIDE 3: HISTORICAL CONTEXT
+             ============================================================ -->
+        <div class="slide" data-slide="3">
+            <h2>📜 Historical Context</h2>
+            <div class="content-grid">
+                <div class="content-card">
+                    <h3>🔬 S. Muthukrishnan</h3>
+                    <p>Pioneer of streaming algorithms and theoretical foundations for processing massive data streams with sublinear memory.</p>
+                    <span class="tag tag-blue">Data Streams</span>
+                    <span class="tag tag-green">Sketches</span>
+                </div>
+                <div class="content-card">
+                    <h3>💡 Kevin Ashton (1999)</h3>
+                    <p>Coined the term "Internet of Things" whilst working at Procter & Gamble on RFID supply chain tracking.</p>
+                    <span class="tag tag-orange">IoT Pioneer</span>
+                    <span class="tag tag-purple">RFID</span>
+                </div>
+            </div>
+            <blockquote>
+                "I could be wrong, but I'm fairly sure the phrase 'Internet of Things' started life as the title of a presentation I made at Procter & Gamble in 1999."
+                <cite>— Kevin Ashton, MIT Auto-ID Center</cite>
+            </blockquote>
+        </div>
+
+        <!-- ============================================================
+             SLIDE 4: WHY STREAMING ALGORITHMS?
+             ============================================================ -->
+        <div class="slide" data-slide="4">
+            <h2>❓ Why Streaming Algorithms?</h2>
+            <div class="highlight-box orange">
+                <h3>The Challenge</h3>
+                <p>Traditional algorithms assume all data fits in memory. IoT systems generate continuous, unbounded streams that must be processed in real-time.</p>
+            </div>
+            <div class="content-grid">
+                <div class="content-card">
+                    <h4>📊 Scale of IoT Data</h4>
+                    <ul>
+                        <li>Smart factory: 1M+ readings/hour</li>
+                        <li>Smart city: 100K+ sensors</li>
+                        <li>Autonomous vehicles: 1GB/second</li>
+                        <li>Healthcare monitors: 24/7 streams</li>
+                    </ul>
+                </div>
+                <div class="content-card">
+                    <h4>⚡ Constraints</h4>
+                    <ul>
+                        <li>Single pass over data</li>
+                        <li>Bounded memory O(1) or O(log n)</li>
+                        <li>Real-time response required</li>
+                        <li>No random access to history</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- ============================================================
+             SLIDE 5: SECTION DIVIDER - CIRCULAR BUFFERS
+             ============================================================ -->
+        <div class="slide section-divider" data-slide="5">
+            <div class="section-number">01</div>
+            <h2>Circular Buffers (Ring Buffers)</h2>
+            <p class="subtitle">The Foundation of Stream Processing</p>
+        </div>
+
+        <!-- ============================================================
+             SLIDE 6: CIRCULAR BUFFER CONCEPT
+             ============================================================ -->
+        <div class="slide" data-slide="6">
+            <h2>🔄 Circular Buffer Concept</h2>
+            <p>A fixed-size buffer that wraps around, overwriting oldest data when full — perfect for sliding window operations.</p>
+            <div class="diagram">
+┌───────────────────────────────────────────────────────────────────┐
+│                    CIRCULAR BUFFER (capacity = 5)                 │
+├───────────────────────────────────────────────────────────────────┤
+│                                                                   │
+│   Initial state:          After 3 pushes:       After 6 pushes:  │
+│   ┌───┬───┬───┬───┬───┐   ┌───┬───┬───┬───┬───┐ ┌───┬───┬───┬───┬───┐
+│   │   │   │   │   │   │   │ A │ B │ C │   │   │ │ F │ B │ C │ D │ E │
+│   └───┴───┴───┴───┴───┘   └───┴───┴───┴───┴───┘ └───┴───┴───┴───┴───┘
+│     ↑                       ↑                     ↑
+│    head                    head                  head (overwrote A)
+│                                                                   │
+│   Key insight: head = (head + 1) % capacity                       │
+│                                                                   │
+└───────────────────────────────────────────────────────────────────┘
+            </div>
+        </div>
+
+        <!-- ============================================================
+             SLIDE 7: CIRCULAR BUFFER STRUCTURE
+             ============================================================ -->
+        <div class="slide" data-slide="7">
+            <h2>🏗️ Circular Buffer Structure in C</h2>
+            <pre><code class="language-c">typedef struct {
+    double *data;       /* Array of elements                    */
+    size_t capacity;    /* Maximum number of elements           */
+    size_t count;       /* Current number of valid elements     */
+    size_t head;        /* Index where next element goes        */
+    double cached_sum;  /* Running sum for O(1) mean           */
+} CircularBuffer;
+
+CircularBuffer *cb_create(size_t capacity) {
+    CircularBuffer *cb = malloc(sizeof(CircularBuffer));
+    if (!cb) return NULL;
+    
+    cb->data = calloc(capacity, sizeof(double));
+    if (!cb->data) { free(cb); return NULL; }
+    
+    cb->capacity = capacity;
+    cb->count = 0;
+    cb->head = 0;
+    cb->cached_sum = 0.0;
+    
+    return cb;
+}</code></pre>
+        </div>
+
+        <!-- ============================================================
+             SLIDE 8: CIRCULAR BUFFER PUSH OPERATION
+             ============================================================ -->
+        <div class="slide" data-slide="8">
+            <h2>➕ Push Operation — O(1) Amortised</h2>
+            <pre><code class="language-c">void cb_push(CircularBuffer *cb, double value) {
+    if (cb->count == cb->capacity) {
+        /* Buffer full: subtract old value before overwriting */
+        cb->cached_sum -= cb->data[cb->head];
+    } else {
+        cb->count++;
+    }
+    
+    /* Store new value at head position */
+    cb->data[cb->head] = value;
+    cb->cached_sum += value;
+    
+    /* Advance head with wraparound */
+    cb->head = (cb->head + 1) % cb->capacity;
+}</code></pre>
+            <div class="highlight-box green">
+                <h4>Key Insight: Cached Sum</h4>
+                <p>By maintaining a running sum, we achieve <strong>O(1)</strong> mean calculation instead of O(n) per query. This is essential for real-time processing.</p>
+            </div>
+        </div>
+
+        <!-- ============================================================
+             SLIDE 9: CIRCULAR BUFFER STATISTICS
+             ============================================================ -->
+        <div class="slide" data-slide="9">
+            <h2>📊 Buffer Statistics</h2>
+            <div class="content-grid">
+                <div class="content-card">
+                    <h4>Mean — O(1)</h4>
+                    <pre><code class="language-c">double cb_mean(CircularBuffer *cb) {
+    if (cb->count == 0) return 0.0;
+    return cb->cached_sum / cb->count;
+}</code></pre>
+                </div>
+                <div class="content-card">
+                    <h4>Variance — O(n)</h4>
+                    <pre><code class="language-c">double cb_variance(CircularBuffer *cb) {
+    if (cb->count < 2) return 0.0;
+    double mean = cb_mean(cb);
+    double sum_sq = 0.0;
+    for (size_t i = 0; i < cb->count; i++) {
+        double diff = cb->data[i] - mean;
+        sum_sq += diff * diff;
+    }
+    return sum_sq / (cb->count - 1);
+}</code></pre>
+                </div>
+            </div>
+            <div class="highlight-box orange">
+                <p><strong>Note:</strong> Variance requires O(n) with this approach. For O(1) variance, use Welford's algorithm (covered later).</p>
+            </div>
+        </div>
+
+        <!-- ============================================================
+             SLIDE 10: SECTION DIVIDER - MOVING AVERAGES
+             ============================================================ -->
+        <div class="slide section-divider" data-slide="10">
+            <div class="section-number">02</div>
+            <h2>Moving Averages</h2>
+            <p class="subtitle">Signal Smoothing for Noisy Sensors</p>
+        </div>
+
+        <!-- ============================================================
+             SLIDE 11: SIMPLE MOVING AVERAGE
+             ============================================================ -->
+        <div class="slide" data-slide="11">
+            <h2>📈 Simple Moving Average (SMA)</h2>
+            <div class="formula">
+                SMA<sub>t</sub> = (1/n) × Σ<sub>i=t-n+1</sub><sup>t</sup> x<sub>i</sub>
+            </div>
+            <p>The arithmetic mean of the last <em>n</em> values. Easy to implement with a circular buffer.</p>
+            <div class="diagram">
+┌─────────────────────────────────────────────────────────────────┐
+│                    SMA EXAMPLE (window = 3)                     │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                 │
+│   Raw:  10 → 12 → 11 → 15 → 13 → 14 → 16 → 12                  │
+│                                                                 │
+│   SMA:   -    -   11.0  12.7  13.0  14.0  14.3  14.0           │
+│                    ↑     ↑     ↑     ↑     ↑     ↑             │
+│               (10+12+11) (12+11+15)  ...continuing...           │
+│                    /3       /3                                  │
+│                                                                 │
+│   ✓ Equal weight to all values in window                        │
+│   ✗ Slow to respond to sudden changes                           │
+│                                                                 │
+└─────────────────────────────────────────────────────────────────┘
+            </div>
+        </div>
+
+        <!-- ============================================================
+             SLIDE 12: EXPONENTIAL MOVING AVERAGE
+             ============================================================ -->
+        <div class="slide" data-slide="12">
+            <h2>📉 Exponential Moving Average (EMA)</h2>
+            <div class="formula">
+                EMA<sub>t</sub> = α × x<sub>t</sub> + (1 - α) × EMA<sub>t-1</sub>
+            </div>
+            <p>Gives more weight to recent values. The smoothing factor <strong>α</strong> (0 &lt; α ≤ 1) controls responsiveness.</p>
+            <div class="content-grid">
+                <div class="content-card">
+                    <h4>Low α (e.g., 0.1)</h4>
+                    <ul>
+                        <li>Heavy smoothing</li>
+                        <li>Slow response to changes</li>
+                        <li>Better noise rejection</li>
+                        <li>Use for stable signals</li>
+                    </ul>
+                </div>
+                <div class="content-card">
+                    <h4>High α (e.g., 0.7)</h4>
+                    <ul>
+                        <li>Light smoothing</li>
+                        <li>Fast response to changes</li>
+                        <li>More noise passes through</li>
+                        <li>Use for rapid detection</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- ============================================================
+             SLIDE 13: EMA IMPLEMENTATION
+             ============================================================ -->
+        <div class="slide" data-slide="13">
+            <h2>💻 EMA Implementation</h2>
+            <pre><code class="language-c">typedef struct {
+    double value;      /* Current EMA value      */
+    double alpha;      /* Smoothing factor       */
+    bool initialised;  /* First value flag       */
+} ExponentialMA;
+
+void ema_init(ExponentialMA *ema, double alpha) {
+    ema->value = 0.0;
+    ema->alpha = alpha;
+    ema->initialised = false;
+}
+
+double ema_update(ExponentialMA *ema, double new_value) {
+    if (!ema->initialised) {
+        ema->value = new_value;  /* First value: use as-is */
+        ema->initialised = true;
+    } else {
+        /* EMA formula: α × new + (1-α) × old */
+        ema->value = ema->alpha * new_value + 
+                     (1.0 - ema->alpha) * ema->value;
+    }
+    return ema->value;
+}</code></pre>
+        </div>
+
+        <!-- ============================================================
+             SLIDE 14: SMA VS EMA COMPARISON
+             ============================================================ -->
+        <div class="slide" data-slide="14">
+            <h2>⚖️ SMA vs EMA Comparison</h2>
+            <table>
+                <tr>
+                    <th>Aspect</th>
+                    <th>Simple MA</th>
+                    <th>Exponential MA</th>
+                </tr>
+                <tr>
+                    <td>Memory</td>
+                    <td>O(n) — stores window</td>
+                    <td>O(1) — single value</td>
+                </tr>
+                <tr>
+                    <td>Computation</td>
+                    <td>O(1) with cached sum</td>
+                    <td>O(1)</td>
+                </tr>
+                <tr>
+                    <td>Weight Distribution</td>
+                    <td>Equal for all in window</td>
+                    <td>Exponential decay</td>
+                </tr>
+                <tr>
+                    <td>Response to Change</td>
+                    <td>Delayed (window lag)</td>
+                    <td>Immediate (tunable via α)</td>
+                </tr>
+                <tr>
+                    <td>Use Case</td>
+                    <td>Fixed-window analysis</td>
+                    <td>Real-time filtering</td>
+                </tr>
+            </table>
+        </div>
+
+        <!-- ============================================================
+             SLIDE 15: SECTION DIVIDER - WELFORD'S ALGORITHM
+             ============================================================ -->
+        <div class="slide section-divider" data-slide="15">
+            <div class="section-number">03</div>
+            <h2>Welford's Online Algorithm</h2>
+            <p class="subtitle">Numerically Stable Running Statistics</p>
+        </div>
+
+        <!-- ============================================================
+             SLIDE 16: THE NUMERICAL STABILITY PROBLEM
+             ============================================================ -->
+        <div class="slide" data-slide="16">
+            <h2>⚠️ The Numerical Stability Problem</h2>
+            <div class="highlight-box orange">
+                <h4>Naive Variance Formula</h4>
+                <div class="formula">
+                    σ² = E[X²] - E[X]² = (Σx²)/n - (Σx/n)²
+                </div>
+                <p><strong>Problem:</strong> Subtracting two large, similar numbers causes catastrophic cancellation.</p>
+            </div>
+            <div class="content-card">
+                <h4>Example of Catastrophic Cancellation</h4>
+                <pre><code class="language-c">/* Values: 10000000.0, 10000001.0, 10000002.0 */
+double sum_x = 30000003.0;
+double sum_x2 = 300000030000005.0;
+double mean = 10000001.0;
+double mean_sq = 100000020000001.0;  /* Expected */
+
+/* Due to floating-point precision limits: */
+double variance = sum_x2/3 - mean*mean;  /* May give 0 or negative! */</code></pre>
+            </div>
+        </div>
+
+        <!-- ============================================================
+             SLIDE 17: WELFORD'S ALGORITHM
+             ============================================================ -->
+        <div class="slide" data-slide="17">
+            <h2>🔬 Welford's Algorithm (1962)</h2>
+            <p>Single-pass algorithm that avoids the subtraction of large numbers.</p>
+            <div class="diagram">
+┌───────────────────────────────────────────────────────────────────┐
+│                    WELFORD'S UPDATE EQUATIONS                     │
+├───────────────────────────────────────────────────────────────────┤
+│                                                                   │
+│   For each new value x:                                           │
+│                                                                   │
+│   1. count = count + 1                                            │
+│                                                                   │
+│   2. delta = x - mean           ← difference from OLD mean        │
+│                                                                   │
+│   3. mean = mean + delta/count  ← update mean incrementally       │
+│                                                                   │
+│   4. delta2 = x - mean          ← difference from NEW mean        │
+│                       ↑                                           │
+│                       └── CRITICAL: use NEW mean here!            │
+│                                                                   │
+│   5. M2 = M2 + delta × delta2   ← accumulate sum of squared dev   │
+│                                                                   │
+│   Variance = M2 / (count - 1)   ← sample variance (Bessel corr.)  │
+│                                                                   │
+└───────────────────────────────────────────────────────────────────┘
+            </div>
+        </div>
+
+        <!-- ============================================================
+             SLIDE 18: WELFORD IMPLEMENTATION
+             ============================================================ -->
+        <div class="slide" data-slide="18">
+            <h2>💻 Welford Implementation</h2>
+            <pre><code class="language-c">typedef struct {
+    size_t count;
+    double mean;
+    double M2;    /* Sum of squared differences from mean */
+} WelfordState;
+
+void welford_init(WelfordState *w) {
+    w->count = 0;
+    w->mean = 0.0;
+    w->M2 = 0.0;
+}
+
+void welford_update(WelfordState *w, double value) {
+    w->count++;
+    
+    double delta = value - w->mean;           /* Step 2 */
+    w->mean += delta / w->count;              /* Step 3 */
+    double delta2 = value - w->mean;          /* Step 4: NEW mean! */
+    w->M2 += delta * delta2;                  /* Step 5 */
+}
+
+double welford_variance(WelfordState *w) {
+    if (w->count < 2) return 0.0;
+    return w->M2 / (w->count - 1);  /* Sample variance */
+}
+
+double welford_stddev(WelfordState *w) {
+    return sqrt(welford_variance(w));
+}</code></pre>
+        </div>
+
+        <!-- ============================================================
+             SLIDE 19: SECTION DIVIDER - ANOMALY DETECTION
+             ============================================================ -->
+        <div class="slide section-divider" data-slide="19">
+            <div class="section-number">04</div>
+            <h2>Anomaly Detection</h2>
+            <p class="subtitle">Z-Score Based Outlier Identification</p>
+        </div>
+
+        <!-- ============================================================
+             SLIDE 20: Z-SCORE CONCEPT
+             ============================================================ -->
+        <div class="slide" data-slide="20">
+            <h2>📏 Z-Score: Measuring Deviation</h2>
+            <div class="formula">
+                z = (x - μ) / σ
+            </div>
+            <p>The z-score tells us how many standard deviations a value is from the mean.</p>
+            <div class="diagram">
+┌───────────────────────────────────────────────────────────────────┐
+│                    NORMAL DISTRIBUTION Z-SCORES                   │
+├───────────────────────────────────────────────────────────────────┤
+│                                                                   │
+│                           ████████                                │
+│                         ██████████████                            │
+│                      ███████████████████                          │
+│                   ████████████████████████                        │
+│                ████████████████████████████████                   │
+│             ██████████████████████████████████████                │
+│         ███████████████████████████████████████████████           │
+│    ─────────────────────────────────────────────────────────      │
+│   -3σ    -2σ    -1σ     μ     +1σ    +2σ    +3σ                  │
+│                                                                   │
+│   |z| > 1.0 : ~32% of values                                      │
+│   |z| > 2.0 : ~5% of values   ← Unusual                           │
+│   |z| > 2.5 : ~1% of values   ← Suspicious (recommended default)  │
+│   |z| > 3.0 : ~0.3% of values ← Three-sigma rule: Anomaly         │
+│                                                                   │
+└───────────────────────────────────────────────────────────────────┘
+            </div>
+        </div>
+
+        <!-- ============================================================
+             SLIDE 21: ANOMALY DETECTION IMPLEMENTATION
+             ============================================================ -->
+        <div class="slide" data-slide="21">
+            <h2>💻 Anomaly Detection Implementation</h2>
+            <pre><code class="language-c">typedef enum {
+    ANOMALY_NORMAL,
+    ANOMALY_WARNING,
+    ANOMALY_CRITICAL
+} AnomalySeverity;
+
+typedef struct {
+    bool is_anomaly;
+    double z_score;
+    AnomalySeverity severity;
+} AnomalyResult;
+
+AnomalyResult detect_anomaly(double value, double mean, double stddev,
+                             double threshold) {
+    AnomalyResult result = { false, 0.0, ANOMALY_NORMAL };
+    
+    if (stddev < 1e-10) return result;  /* Avoid division by zero */
+    
+    result.z_score = (value - mean) / stddev;
+    double abs_z = fabs(result.z_score);
+    
+    if (abs_z > threshold) {
+        result.is_anomaly = true;
+        result.severity = (abs_z > threshold + 1.0) 
+                          ? ANOMALY_CRITICAL 
+                          : ANOMALY_WARNING;
+    }
+    
+    return result;
+}</code></pre>
+        </div>
+
+        <!-- ============================================================
+             SLIDE 22: BASELINE ESTABLISHMENT
+             ============================================================ -->
+        <div class="slide" data-slide="22">
+            <h2>🏗️ Baseline Establishment</h2>
+            <div class="highlight-box purple">
+                <h4>The Cold Start Problem</h4>
+                <p>Anomaly detection requires knowledge of "normal". We must establish a baseline before detecting deviations.</p>
+            </div>
+            <pre><code class="language-c">typedef struct {
+    WelfordState stats;
+    size_t baseline_count;   /* How many readings to establish baseline */
+    bool baseline_ready;
+    double threshold;        /* Z-score threshold for anomaly */
+} AnomalyDetector;
+
+void detector_init(AnomalyDetector *d, size_t baseline_n, double threshold) {
+    welford_init(&d->stats);
+    d->baseline_count = baseline_n;
+    d->baseline_ready = false;
+    d->threshold = threshold;
+}
+
+AnomalyResult detector_process(AnomalyDetector *d, double value) {
+    AnomalyResult result = { false, 0.0, ANOMALY_NORMAL };
+    
+    if (!d->baseline_ready) {
+        welford_update(&d->stats, value);
+        if (d->stats.count >= d->baseline_count) {
+            d->baseline_ready = true;
+        }
+        return result;  /* Still building baseline */
+    }
+    
+    /* Baseline ready: check for anomaly */
+    return detect_anomaly(value, d->stats.mean, 
+                          welford_stddev(&d->stats), d->threshold);
+}</code></pre>
+        </div>
+
+        <!-- ============================================================
+             SLIDE 23: SECTION DIVIDER - MQTT PATTERNS
+             ============================================================ -->
+        <div class="slide section-divider" data-slide="23">
+            <div class="section-number">05</div>
+            <h2>MQTT Messaging Patterns</h2>
+            <p class="subtitle">Publish-Subscribe for IoT</p>
+        </div>
+
+        <!-- ============================================================
+             SLIDE 24: MQTT OVERVIEW
+             ============================================================ -->
+        <div class="slide" data-slide="24">
+            <h2>📡 MQTT: Message Queuing Telemetry Transport</h2>
+            <p>Lightweight publish-subscribe protocol designed for constrained devices and low-bandwidth networks.</p>
+            <div class="diagram">
+┌───────────────────────────────────────────────────────────────────┐
+│                    MQTT ARCHITECTURE                              │
+├───────────────────────────────────────────────────────────────────┤
+│                                                                   │
+│   ┌─────────┐                               ┌─────────────┐       │
+│   │ Sensor  │──PUBLISH──►┌──────────┐──────►│ Dashboard   │       │
+│   │   #1    │ topic:     │          │       │ (subscriber)│       │
+│   └─────────┘ temp/room1 │          │       └─────────────┘       │
+│                          │  BROKER  │                             │
+│   ┌─────────┐            │          │       ┌─────────────┐       │
+│   │ Sensor  │──PUBLISH──►│          │──────►│ Alert System│       │
+│   │   #2    │ topic:     │          │       │ (subscriber)│       │
+│   └─────────┘ temp/room2 └──────────┘       └─────────────┘       │
+│                                ▲                                  │
+│                                │                                  │
+│                          ┌─────────────┐                          │
+│                          │ Logger      │                          │
+│                          │ (subscribes │                          │
+│                          │  to temp/#) │                          │
+│                          └─────────────┘                          │
+│                                                                   │
+└───────────────────────────────────────────────────────────────────┘
+            </div>
+        </div>
+
+        <!-- ============================================================
+             SLIDE 25: MQTT TOPICS
+             ============================================================ -->
+        <div class="slide" data-slide="25">
+            <h2>🏷️ MQTT Topics</h2>
+            <p>Topics are hierarchical strings used to filter messages. Publishers send to topics; subscribers filter by topics.</p>
+            <div class="content-card">
+                <h4>Topic Examples</h4>
+                <ul>
+                    <li><code class="code-inline">home/livingroom/temperature</code></li>
+                    <li><code class="code-inline">factory/line1/machine3/vibration</code></li>
+                    <li><code class="code-inline">vehicle/truck42/gps/latitude</code></li>
+                </ul>
+            </div>
+            <div class="content-grid">
+                <div class="content-card">
+                    <h4>Wildcard: + (Single Level)</h4>
+                    <p><code class="code-inline">home/+/temperature</code></p>
+                    <p>Matches: home/bedroom/temperature, home/kitchen/temperature</p>
+                </div>
+                <div class="content-card">
+                    <h4>Wildcard: # (Multi Level)</h4>
+                    <p><code class="code-inline">factory/#</code></p>
+                    <p>Matches: factory/line1, factory/line1/machine3, etc.</p>
+                </div>
+            </div>
+            <div class="highlight-box">
+                <p><strong>Note:</strong> Our simulation uses exact matching only for simplicity.</p>
+            </div>
+        </div>
+
+        <!-- ============================================================
+             SLIDE 26: BROKER IMPLEMENTATION
+             ============================================================ -->
+        <div class="slide" data-slide="26">
+            <h2>💻 Simulated Broker Structure</h2>
+            <pre><code class="language-c">#define MAX_TOPIC_LEN 64
+#define MAX_SUBSCRIBERS 32
+#define MAX_TOPICS 16
+
+/* Callback function type for message delivery */
+typedef void (*MessageCallback)(const char *topic, double value, void *ctx);
+
+typedef struct {
+    char topic_filter[MAX_TOPIC_LEN];
+    MessageCallback callback;
+    void *context;
+    bool active;
+} Subscriber;
+
+typedef struct {
+    char name[MAX_TOPIC_LEN];
+    size_t message_count;
+    double sum, min, max;
+} TopicStats;
+
+typedef struct {
+    Subscriber subscribers[MAX_SUBSCRIBERS];
+    size_t subscriber_count;
+    TopicStats topics[MAX_TOPICS];
+    size_t topic_count;
+} Broker;</code></pre>
+        </div>
+
+        <!-- ============================================================
+             SLIDE 27: BROKER OPERATIONS
+             ============================================================ -->
+        <div class="slide" data-slide="27">
+            <h2>🔧 Broker Operations</h2>
+            <pre><code class="language-c">bool broker_subscribe(Broker *b, const char *topic_filter,
+                      MessageCallback callback, void *context) {
+    if (b->subscriber_count >= MAX_SUBSCRIBERS) return false;
+    
+    Subscriber *sub = &b->subscribers[b->subscriber_count++];
+    strncpy(sub->topic_filter, topic_filter, MAX_TOPIC_LEN - 1);
+    sub->callback = callback;
+    sub->context = context;
+    sub->active = true;
+    
+    return true;
+}
+
+size_t broker_publish(Broker *b, const char *topic, double value) {
+    /* Update topic statistics */
+    TopicStats *stats = broker_get_or_create_topic(b, topic);
+    if (stats) {
+        stats->message_count++;
+        stats->sum += value;
+        if (value < stats->min) stats->min = value;
+        if (value > stats->max) stats->max = value;
+    }
+    
+    /* Deliver to matching subscribers */
+    size_t delivered = 0;
+    for (size_t i = 0; i < b->subscriber_count; i++) {
+        Subscriber *sub = &b->subscribers[i];
+        if (sub->active && strcmp(sub->topic_filter, topic) == 0) {
+            sub->callback(topic, value, sub->context);
+            delivered++;
+        }
+    }
+    return delivered;
+}</code></pre>
+        </div>
+
+        <!-- ============================================================
+             SLIDE 28: CALLBACK EXAMPLE
+             ============================================================ -->
+        <div class="slide" data-slide="28">
+            <h2>📞 Subscriber Callbacks</h2>
+            <pre><code class="language-c">/* Logger callback: prints all messages */
+void logger_callback(const char *topic, double value, void *ctx) {
+    (void)ctx;  /* Unused */
+    printf("[LOG] %s: %.2f\n", topic, value);
+}
+
+/* Alert callback: triggers when value exceeds threshold */
+typedef struct {
+    double threshold;
+    const char *alert_name;
+} AlertContext;
+
+void alert_callback(const char *topic, double value, void *ctx) {
+    AlertContext *alert = (AlertContext *)ctx;
+    if (value > alert->threshold) {
+        printf("⚠️  ALERT [%s]: %s = %.2f (threshold: %.2f)\n",
+               alert->alert_name, topic, value, alert->threshold);
+    }
+}
+
+/* Usage */
+AlertContext temp_alert = { .threshold = 30.0, .alert_name = "HIGH_TEMP" };
+broker_subscribe(&broker, "sensors/temperature", alert_callback, &temp_alert);
+broker_subscribe(&broker, "sensors/temperature", logger_callback, NULL);</code></pre>
+        </div>
+
+        <!-- ============================================================
+             SLIDE 29: SECTION DIVIDER - SENSOR SIMULATION
+             ============================================================ -->
+        <div class="slide section-divider" data-slide="29">
+            <div class="section-number">06</div>
+            <h2>Sensor Simulation</h2>
+            <p class="subtitle">Generating Realistic Data Streams</p>
+        </div>
+
+        <!-- ============================================================
+             SLIDE 30: SENSOR MODEL
+             ============================================================ -->
+        <div class="slide" data-slide="30">
+            <h2>🌡️ Sensor Simulation Model</h2>
+            <p>Realistic sensor data includes: base signal, noise, drift and occasional anomalies.</p>
+            <div class="diagram">
+┌───────────────────────────────────────────────────────────────────┐
+│                    SENSOR SIGNAL COMPONENTS                       │
+├───────────────────────────────────────────────────────────────────┤
+│                                                                   │
+│   reading = base_value + drift + noise + (anomaly?)               │
+│                                                                   │
+│   ┌──────────────────────────────────────────────────────────┐    │
+│   │ base_value │ The expected nominal value (e.g., 22°C)     │    │
+│   ├────────────┼─────────────────────────────────────────────┤    │
+│   │ drift      │ Slow change over time (sensor aging)        │    │
+│   ├────────────┼─────────────────────────────────────────────┤    │
+│   │ noise      │ Random variation (Gaussian, σ = noise_level)│    │
+│   ├────────────┼─────────────────────────────────────────────┤    │
+│   │ anomaly    │ Occasional spike/drop (probability-based)   │    │
+│   └────────────┴─────────────────────────────────────────────┘    │
+│                                                                   │
+└───────────────────────────────────────────────────────────────────┘
+            </div>
+        </div>
+
+        <!-- ============================================================
+             SLIDE 31: SENSOR IMPLEMENTATION
+             ============================================================ -->
+        <div class="slide" data-slide="31">
+            <h2>💻 Sensor Simulator Implementation</h2>
+            <pre><code class="language-c">typedef struct {
+    double base_value;     /* Nominal value */
+    double noise_level;    /* Standard deviation of noise */
+    double drift_rate;     /* Change per reading */
+    double current_drift;  /* Accumulated drift */
+    double anomaly_prob;   /* Probability of anomaly (0-1) */
+} SensorSimulator;
+
+/* Box-Muller transform for Gaussian random numbers */
+double random_gaussian(void) {
+    static bool has_spare = false;
+    static double spare;
+    
+    if (has_spare) { has_spare = false; return spare; }
+    
+    double u, v, s;
+    do {
+        u = (rand() / (double)RAND_MAX) * 2.0 - 1.0;
+        v = (rand() / (double)RAND_MAX) * 2.0 - 1.0;
+        s = u * u + v * v;
+    } while (s >= 1.0 || s == 0.0);
+    
+    s = sqrt(-2.0 * log(s) / s);
+    spare = v * s;
+    has_spare = true;
+    return u * s;
+}</code></pre>
+        </div>
+
+        <!-- ============================================================
+             SLIDE 32: SENSOR READ FUNCTION
+             ============================================================ -->
+        <div class="slide" data-slide="32">
+            <h2>📖 Sensor Read Function</h2>
+            <pre><code class="language-c">typedef struct {
+    double value;
+    bool is_anomaly_injected;
+} SensorReading;
+
+SensorReading sensor_read(SensorSimulator *s) {
+    SensorReading reading = { 0.0, false };
+    
+    /* Base + drift + noise */
+    double value = s->base_value + s->current_drift + 
+                   random_gaussian() * s->noise_level;
+    
+    /* Update drift for next reading */
+    s->current_drift += s->drift_rate;
+    
+    /* Maybe inject anomaly */
+    if ((rand() / (double)RAND_MAX) < s->anomaly_prob) {
+        double spike = (rand() % 2 ? 1 : -1) * (15.0 + rand() % 20);
+        value += spike;
+        reading.is_anomaly_injected = true;
+    }
+    
+    reading.value = value;
+    return reading;
+}</code></pre>
+        </div>
+
+        <!-- ============================================================
+             SLIDE 33: SECTION DIVIDER - COMPLETE PIPELINE
+             ============================================================ -->
+        <div class="slide section-divider" data-slide="33">
+            <div class="section-number">07</div>
+            <h2>Complete Processing Pipeline</h2>
+            <p class="subtitle">Putting It All Together</p>
+        </div>
+
+        <!-- ============================================================
+             SLIDE 34: PIPELINE ARCHITECTURE
+             ============================================================ -->
+        <div class="slide" data-slide="34">
+            <h2>🏭 Stream Processing Pipeline</h2>
+            <div class="diagram">
+┌───────────────────────────────────────────────────────────────────┐
+│                    IoT DATA PROCESSING PIPELINE                   │
+├───────────────────────────────────────────────────────────────────┤
+│                                                                   │
+│   ┌──────────┐    ┌───────────┐    ┌────────────────┐            │
+│   │  SENSOR  │───►│ EMA       │───►│ CIRCULAR       │            │
+│   │  INPUT   │    │ FILTER    │    │ BUFFER         │            │
+│   └──────────┘    └───────────┘    └────────┬───────┘            │
+│                                              │                    │
+│                    ┌─────────────────────────┘                    │
+│                    │                                              │
+│                    ▼                                              │
+│   ┌────────────────────────┐    ┌────────────────────────┐       │
+│   │  ANOMALY DETECTION     │    │  WELFORD STATISTICS    │       │
+│   │  (z-score analysis)    │    │  (mean, variance)      │       │
+│   └───────────┬────────────┘    └────────────────────────┘       │
+│               │                                                   │
+│               ▼                                                   │
+│   ┌────────────────────────┐                                      │
+│   │  MQTT BROKER           │───► Subscribers (alerts, logs, etc.) │
+│   │  (publish results)     │                                      │
+│   └────────────────────────┘                                      │
+│                                                                   │
+└───────────────────────────────────────────────────────────────────┘
+            </div>
+        </div>
+
+        <!-- ============================================================
+             SLIDE 35: PIPELINE STRUCTURE
+             ============================================================ -->
+        <div class="slide" data-slide="35">
+            <h2>💻 Pipeline Structure</h2>
+            <pre><code class="language-c">typedef struct {
+    /* Input components */
+    SensorSimulator sensor;
+    
+    /* Processing components */
+    ExponentialMA ema_filter;
+    CircularBuffer *window_buffer;
+    WelfordState baseline_stats;
+    AnomalyDetector detector;
+    
+    /* Output components */
+    Broker *broker;
+    const char *output_topic;
+    
+    /* Metrics */
+    size_t readings_processed;
+    size_t anomalies_detected;
+    size_t true_positives;
+    size_t false_positives;
+    size_t false_negatives;
+} StreamPipeline;</code></pre>
+        </div>
+
+        <!-- ============================================================
+             SLIDE 36: PIPELINE PROCESSING
+             ============================================================ -->
+        <div class="slide" data-slide="36">
+            <h2>⚙️ Pipeline Process Function</h2>
+            <pre><code class="language-c">void pipeline_process(StreamPipeline *p) {
+    /* 1. Read from sensor */
+    SensorReading raw = sensor_read(&p->sensor);
+    
+    /* 2. Apply EMA smoothing */
+    double smoothed = ema_update(&p->ema_filter, raw.value);
+    
+    /* 3. Store in circular buffer */
+    cb_push(p->window_buffer, smoothed);
+    
+    /* 4. Check for anomalies (after baseline) */
+    AnomalyResult result = detector_process(&p->detector, smoothed);
+    
+    /* 5. Update metrics */
+    p->readings_processed++;
+    if (result.is_anomaly) {
+        p->anomalies_detected++;
+        if (raw.is_anomaly_injected) p->true_positives++;
+        else p->false_positives++;
+    } else if (raw.is_anomaly_injected) {
+        p->false_negatives++;
+    }
+    
+    /* 6. Publish to MQTT broker */
+    if (result.is_anomaly) {
+        broker_publish(p->broker, "alerts/anomaly", smoothed);
+    }
+    broker_publish(p->broker, p->output_topic, smoothed);
+}</code></pre>
+        </div>
+
+        <!-- ============================================================
+             SLIDE 37: EVALUATION METRICS
+             ============================================================ -->
+        <div class="slide" data-slide="37">
+            <h2>📊 Detection Evaluation Metrics</h2>
+            <div class="content-grid">
+                <div class="content-card">
+                    <h4>Precision</h4>
+                    <div class="formula">
+                        Precision = TP / (TP + FP)
+                    </div>
+                    <p>"Of all detected anomalies, how many were real?"</p>
+                </div>
+                <div class="content-card">
+                    <h4>Recall (Sensitivity)</h4>
+                    <div class="formula">
+                        Recall = TP / (TP + FN)
+                    </div>
+                    <p>"Of all real anomalies, how many did we catch?"</p>
+                </div>
+            </div>
+            <pre><code class="language-c">void pipeline_print_metrics(StreamPipeline *p) {
+    double precision = (p->true_positives + p->false_positives > 0)
+        ? (double)p->true_positives / (p->true_positives + p->false_positives)
+        : 0.0;
+    
+    double recall = (p->true_positives + p->false_negatives > 0)
+        ? (double)p->true_positives / (p->true_positives + p->false_negatives)
+        : 0.0;
+    
+    printf("Precision: %.2f%%, Recall: %.2f%%\n", 
+           precision * 100, recall * 100);
+}</code></pre>
+        </div>
+
+        <!-- ============================================================
+             SLIDE 38: INDUSTRIAL APPLICATIONS
+             ============================================================ -->
+        <div class="slide" data-slide="38">
+            <h2>🏭 Industrial Applications</h2>
+            <div class="content-grid">
+                <div class="content-card">
+                    <h3>🔧 Predictive Maintenance</h3>
+                    <p>Monitor vibration, temperature and current to predict equipment failure before it occurs.</p>
+                    <span class="tag tag-green">Cost Savings</span>
+                    <span class="tag tag-blue">Downtime Reduction</span>
+                </div>
+                <div class="content-card">
+                    <h3>⚡ Smart Grid</h3>
+                    <p>Real-time monitoring of power consumption, voltage fluctuations and grid stability.</p>
+                    <span class="tag tag-orange">Energy</span>
+                    <span class="tag tag-purple">Sustainability</span>
+                </div>
+                <div class="content-card">
+                    <h3>🌿 Environmental Monitoring</h3>
+                    <p>Air quality, water quality, weather stations with distributed sensor networks.</p>
+                    <span class="tag tag-cyan">Ecology</span>
+                    <span class="tag tag-green">Public Health</span>
+                </div>
+                <div class="content-card">
+                    <h3>🚗 Vehicle Telemetry</h3>
+                    <p>Fleet management, driver behaviour analysis, predictive maintenance for vehicles.</p>
+                    <span class="tag tag-red">Safety</span>
+                    <span class="tag tag-orange">Logistics</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- ============================================================
+             SLIDE 39: COMPLEXITY SUMMARY
+             ============================================================ -->
+        <div class="slide" data-slide="39">
+            <h2>📈 Complexity Summary</h2>
+            <table>
+                <tr>
+                    <th>Operation</th>
+                    <th>Time</th>
+                    <th>Space</th>
+                    <th>Notes</th>
+                </tr>
+                <tr>
+                    <td>Circular Buffer Push</td>
+                    <td>O(1)</td>
+                    <td>O(n)</td>
+                    <td>n = window size</td>
+                </tr>
+                <tr>
+                    <td>Circular Buffer Mean</td>
+                    <td>O(1)</td>
+                    <td>O(1)</td>
+                    <td>Cached sum</td>
+                </tr>
+                <tr>
+                    <td>EMA Update</td>
+                    <td>O(1)</td>
+                    <td>O(1)</td>
+                    <td>Single value</td>
+                </tr>
+                <tr>
+                    <td>Welford Update</td>
+                    <td>O(1)</td>
+                    <td>O(1)</td>
+                    <td>Running stats</td>
+                </tr>
+                <tr>
+                    <td>Z-Score Detection</td>
+                    <td>O(1)</td>
+                    <td>O(1)</td>
+                    <td>Given mean/std</td>
+                </tr>
+                <tr>
+                    <td>MQTT Publish</td>
+                    <td>O(s)</td>
+                    <td>O(s + t)</td>
+                    <td>s=subscribers, t=topics</td>
+                </tr>
+            </table>
+        </div>
+
+        <!-- ============================================================
+             SLIDE 40: EXERCISES OVERVIEW
+             ============================================================ -->
+        <div class="slide" data-slide="40">
+            <h2>💻 Laboratory Exercises</h2>
+            <div class="content-grid">
+                <div class="content-card">
+                    <h3>Exercise 1: Stream Processing Pipeline</h3>
+                    <p>Implement the complete pipeline with:</p>
+                    <ul>
+                        <li>Circular buffer with cached statistics</li>
+                        <li>EMA smoothing filter</li>
+                        <li>Welford's online variance</li>
+                        <li>Z-score anomaly detection</li>
+                    </ul>
+                    <span class="tag tag-blue">7 TODOs</span>
+                </div>
+                <div class="content-card">
+                    <h3>Exercise 2: MQTT Broker Simulation</h3>
+                    <p>Build a simulated MQTT broker with:</p>
+                    <ul>
+                        <li>Topic-based routing</li>
+                        <li>Subscriber callbacks</li>
+                        <li>Per-topic statistics</li>
+                        <li>Multi-sensor simulation</li>
+                    </ul>
+                    <span class="tag tag-green">7 TODOs</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- ============================================================
+             SLIDE 41: KEY TAKEAWAYS
+             ============================================================ -->
+        <div class="slide" data-slide="41">
+            <h2>🔑 Key Takeaways</h2>
+            <div class="highlight-box green">
+                <ol>
+                    <li><strong>Circular buffers</strong> enable sliding window operations with O(1) amortised insertion</li>
+                    <li><strong>EMA</strong> provides tunable smoothing with O(1) memory — prefer over SMA for real-time</li>
+                    <li><strong>Welford's algorithm</strong> computes variance numerically stably in a single pass</li>
+                    <li><strong>Z-score thresholds</strong> around 2.5-3.0 balance sensitivity and false positives</li>
+                    <li><strong>MQTT publish-subscribe</strong> decouples sensors from consumers</li>
+                    <li><strong>Baseline establishment</strong> is critical before anomaly detection begins</li>
+                </ol>
+            </div>
+        </div>
+
+        <!-- ============================================================
+             SLIDE 42: NEXT WEEK PREVIEW
+             ============================================================ -->
+        <div class="slide" data-slide="42">
+            <h2>🔗 Next Week Preview</h2>
+            <div class="content-card">
+                <h3>Week 20: Parallel and Concurrent Programming</h3>
+                <p>We will explore how to leverage multiple CPU cores for performance:</p>
+                <ul>
+                    <li>POSIX threads (pthreads) — creation, joining, detaching</li>
+                    <li>Synchronisation primitives — mutexes, condition variables, semaphores</li>
+                    <li>Lock-free programming with C11 atomics</li>
+                    <li>Thread pools and work queues</li>
+                    <li>Map-Reduce pattern for parallel data processing</li>
+                </ul>
+                <div class="highlight-box purple">
+                    <p><strong>Connection to IoT:</strong> Parallel processing enables handling multiple sensor streams simultaneously, improving throughput in edge computing scenarios.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- ============================================================
+             SLIDE 43: FURTHER READING
+             ============================================================ -->
+        <div class="slide" data-slide="43">
+            <h2>📖 Recommended Reading</h2>
+            <div class="content-grid">
+                <div class="content-card">
+                    <h4>Essential</h4>
+                    <ul>
+                        <li>CLRS: Chapter 4 (Divide-and-Conquer), Chapter 17 (Amortised Analysis)</li>
+                        <li>Muthukrishnan, S. — "Data Streams: Algorithms and Applications"</li>
+                        <li>MQTT Specification v5.0 — OASIS Standard</li>
+                    </ul>
+                </div>
+                <div class="content-card">
+                    <h4>Advanced</h4>
+                    <ul>
+                        <li>Welford, B.P. (1962) — "Note on a Method for Calculating Corrected Sums"</li>
+                        <li>Flajolet et al. — "HyperLogLog: the analysis of a near-optimal cardinality estimation algorithm"</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="highlight-box">
+                <h4>🔗 Online Resources</h4>
+                <ul>
+                    <li>Eclipse Mosquitto — Open source MQTT broker: <code class="code-inline">mosquitto.org</code></li>
+                    <li>InfluxDB — Time series database: <code class="code-inline">influxdata.com</code></li>
+                    <li>Grafana — Visualisation for IoT data: <code class="code-inline">grafana.com</code></li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- ============================================================
+             SLIDE 44: THANK YOU
+             ============================================================ -->
+        <div class="slide title-slide" data-slide="44">
+            <div class="week-badge">WEEK 19 COMPLETE</div>
+            <h1>Questions?</h1>
+            <p class="subtitle">Thank you for your attention</p>
+            <div class="meta">
+                <p>ATP Course — Academy of Economic Studies Bucharest — CSIE</p>
+                <p>Alternative learning kit for non-formal education</p>
+            </div>
+        </div>
+
+    </div><!-- End slides-container -->
+
+    <!-- Navigation Controls -->
+    <div class="nav-controls">
+        <button class="nav-btn" onclick="prevSlide()" title="Previous (←)">◀</button>
+        <button class="nav-btn" onclick="nextSlide()" title="Next (→)">▶</button>
+    </div>
+
+    <!-- Slide Counter -->
+    <div class="slide-counter">
+        <span id="currentSlide">1</span> / <span id="totalSlides">44</span>
+    </div>
+
+    <!-- JavaScript -->
+    <script>
+        // Initialize highlight.js
+        hljs.highlightAll();
+
+        // Slide management
+        let currentSlide = 1;
+        const totalSlides = document.querySelectorAll('.slide').length;
+
+        document.getElementById('totalSlides').textContent = totalSlides;
+
+        function showSlide(n) {
+            const slides = document.querySelectorAll('.slide');
+            
+            if (n < 1) n = totalSlides;
+            if (n > totalSlides) n = 1;
+            
+            currentSlide = n;
+            
+            slides.forEach((slide, index) => {
+                slide.classList.remove('active');
+                if (index === n - 1) {
+                    slide.classList.add('active');
+                }
+            });
+            
+            document.getElementById('currentSlide').textContent = currentSlide;
+            updateProgressBar();
+        }
+
+        function nextSlide() {
+            showSlide(currentSlide + 1);
+        }
+
+        function prevSlide() {
+            showSlide(currentSlide - 1);
+        }
+
+        function updateProgressBar() {
+            const progress = (currentSlide / totalSlides) * 100;
+            document.getElementById('progressBar').style.width = progress + '%';
+        }
+
+        // Keyboard navigation
+        document.addEventListener('keydown', (e) => {
+            switch(e.key) {
+                case 'ArrowRight':
+                case ' ':
+                case 'PageDown':
+                    e.preventDefault();
+                    nextSlide();
+                    break;
+                case 'ArrowLeft':
+                case 'PageUp':
+                    e.preventDefault();
+                    prevSlide();
+                    break;
+                case 'Home':
+                    e.preventDefault();
+                    showSlide(1);
+                    break;
+                case 'End':
+                    e.preventDefault();
+                    showSlide(totalSlides);
+                    break;
+            }
+        });
+
+        // Touch support for mobile
+        let touchStartX = 0;
+        let touchEndX = 0;
+
+        document.addEventListener('touchstart', (e) => {
+            touchStartX = e.changedTouches[0].screenX;
+        });
+
+        document.addEventListener('touchend', (e) => {
+            touchEndX = e.changedTouches[0].screenX;
+            handleSwipe();
+        });
+
+        function handleSwipe() {
+            const swipeThreshold = 50;
+            const diff = touchStartX - touchEndX;
+            
+            if (Math.abs(diff) > swipeThreshold) {
+                if (diff > 0) {
+                    nextSlide();
+                } else {
+                    prevSlide();
+                }
+            }
+        }
+
+        // Initialize
+        updateProgressBar();
+    </script>
+</body>
+</html>

@@ -1,0 +1,1335 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Week 19: Comparative View — Pseudocode / C / Python | ATP Course</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/c.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/python.min.js"></script>
+    <style>
+        :root {
+            --bg-primary: #0d1117;
+            --bg-secondary: #161b22;
+            --bg-tertiary: #21262d;
+            --bg-card: #1c2128;
+            --accent-blue: #58a6ff;
+            --accent-green: #3fb950;
+            --accent-orange: #d29922;
+            --accent-red: #f85149;
+            --accent-purple: #a371f7;
+            --accent-cyan: #39c5cf;
+            --text-primary: #e6edf3;
+            --text-secondary: #8b949e;
+            --text-muted: #6e7681;
+            --border-default: #30363d;
+            --shadow-card: 0 4px 12px rgba(0, 0, 0, 0.3);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html, body {
+            height: 100%;
+            overflow: hidden;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans', Helvetica, Arial, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.5;
+        }
+
+        /* Progress Bar */
+        .progress-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: var(--bg-tertiary);
+            z-index: 1000;
+        }
+
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, var(--accent-blue), var(--accent-green), var(--accent-orange));
+            transition: width 0.3s ease;
+        }
+
+        /* Slides */
+        .slides-container {
+            width: 100%;
+            height: 100vh;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .slide {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            padding: 50px 60px;
+            display: none;
+            overflow-y: auto;
+            animation: fadeIn 0.4s ease;
+        }
+
+        .slide.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        /* Typography */
+        h1 {
+            font-size: 2.4em;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 0.4em;
+            text-align: center;
+        }
+
+        h2 {
+            font-size: 1.8em;
+            font-weight: 600;
+            color: var(--accent-cyan);
+            margin-bottom: 0.6em;
+            border-bottom: 2px solid var(--border-default);
+            padding-bottom: 0.2em;
+        }
+
+        h3 {
+            font-size: 1.1em;
+            font-weight: 600;
+            margin-bottom: 0.4em;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: var(--text-secondary);
+            margin-bottom: 1.5em;
+        }
+
+        /* Title slide */
+        .title-slide {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            background: linear-gradient(135deg, #0d4429 0%, #1f6feb 100%);
+        }
+
+        .title-slide h1 {
+            font-size: 2.8em;
+        }
+
+        .badge {
+            display: inline-block;
+            background: var(--accent-cyan);
+            color: var(--bg-primary);
+            padding: 0.3em 1em;
+            border-radius: 20px;
+            font-weight: 700;
+            margin-bottom: 0.8em;
+        }
+
+        /* Three-column comparison layout */
+        .comparison-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1em;
+            height: calc(100% - 80px);
+        }
+
+        .comparison-column {
+            background: var(--bg-card);
+            border: 1px solid var(--border-default);
+            border-radius: 8px;
+            padding: 1em;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .comparison-column.pseudocode {
+            border-top: 3px solid var(--accent-purple);
+        }
+
+        .comparison-column.c-code {
+            border-top: 3px solid var(--accent-blue);
+        }
+
+        .comparison-column.python-code {
+            border-top: 3px solid var(--accent-green);
+        }
+
+        .column-header {
+            display: flex;
+            align-items: center;
+            gap: 0.5em;
+            margin-bottom: 0.8em;
+            padding-bottom: 0.5em;
+            border-bottom: 1px solid var(--border-default);
+        }
+
+        .column-header.pseudocode h3 { color: var(--accent-purple); }
+        .column-header.c-code h3 { color: var(--accent-blue); }
+        .column-header.python-code h3 { color: var(--accent-green); }
+
+        .lang-icon {
+            width: 24px;
+            height: 24px;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 0.8em;
+        }
+
+        .lang-icon.pseudo { background: var(--accent-purple); color: white; }
+        .lang-icon.c { background: var(--accent-blue); color: white; }
+        .lang-icon.py { background: var(--accent-green); color: white; }
+
+        /* Code blocks */
+        pre {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-default);
+            border-radius: 6px;
+            padding: 0.8em;
+            margin: 0;
+            overflow-x: auto;
+            font-size: 0.78em;
+            flex: 1;
+        }
+
+        code {
+            font-family: 'Fira Code', 'Cascadia Code', 'JetBrains Mono', Consolas, monospace;
+        }
+
+        .pseudocode-text {
+            font-family: 'Georgia', serif;
+            font-style: italic;
+            color: var(--accent-purple);
+            line-height: 1.6;
+        }
+
+        /* Highlight box */
+        .highlight-box {
+            background: var(--bg-tertiary);
+            border-left: 3px solid var(--accent-orange);
+            padding: 0.8em;
+            margin: 0.5em 0;
+            border-radius: 0 6px 6px 0;
+            font-size: 0.9em;
+        }
+
+        /* Navigation */
+        .nav-controls {
+            position: fixed;
+            bottom: 25px;
+            right: 25px;
+            display: flex;
+            gap: 8px;
+            z-index: 1000;
+        }
+
+        .nav-btn {
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            border: 2px solid var(--border-default);
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            font-size: 1.2em;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .nav-btn:hover {
+            background: var(--accent-blue);
+            border-color: var(--accent-blue);
+        }
+
+        .slide-counter {
+            position: fixed;
+            bottom: 25px;
+            left: 25px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-default);
+            padding: 0.4em 0.8em;
+            border-radius: 15px;
+            font-size: 0.85em;
+            color: var(--text-secondary);
+            z-index: 1000;
+        }
+
+        /* Key insight box */
+        .key-insight {
+            background: rgba(163, 113, 247, 0.1);
+            border: 1px solid var(--accent-purple);
+            border-radius: 6px;
+            padding: 0.8em;
+            margin-top: 0.5em;
+        }
+
+        .key-insight strong {
+            color: var(--accent-purple);
+        }
+
+        /* Two column layout for some slides */
+        .two-column {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5em;
+        }
+
+        .content-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-default);
+            border-radius: 8px;
+            padding: 1em;
+        }
+
+        @media (max-width: 1200px) {
+            .comparison-grid {
+                grid-template-columns: 1fr;
+            }
+            .slide {
+                padding: 30px 40px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="progress-container">
+        <div class="progress-bar" id="progressBar"></div>
+    </div>
+
+    <div class="slides-container" id="slidesContainer">
+
+        <!-- SLIDE 1: Title -->
+        <div class="slide title-slide active" data-slide="1">
+            <div class="badge">WEEK 19</div>
+            <h1>🔄 Comparative View</h1>
+            <p class="subtitle" style="color: var(--text-primary);">Pseudocode • C • Python</p>
+            <p class="subtitle">IoT and Stream Processing Algorithms</p>
+            <p style="margin-top: 2em; color: var(--text-muted);">ATP Course — ASE-CSIE Bucharest</p>
+        </div>
+
+        <!-- SLIDE 2: Circular Buffer Push -->
+        <div class="slide" data-slide="2">
+            <h2>🔄 Circular Buffer — Push Operation</h2>
+            <div class="comparison-grid">
+                <div class="comparison-column pseudocode">
+                    <div class="column-header pseudocode">
+                        <div class="lang-icon pseudo">📝</div>
+                        <h3>Pseudocode</h3>
+                    </div>
+                    <pre class="pseudocode-text">PROCEDURE cb_push(buffer, value)
+    IF buffer.count = buffer.capacity THEN
+        // Buffer full: subtract old value
+        old_value ← buffer.data[buffer.head]
+        buffer.sum ← buffer.sum - old_value
+    ELSE
+        buffer.count ← buffer.count + 1
+    END IF
+    
+    // Store new value at head
+    buffer.data[buffer.head] ← value
+    buffer.sum ← buffer.sum + value
+    
+    // Advance head with wraparound
+    buffer.head ← (buffer.head + 1) MOD buffer.capacity
+END PROCEDURE</pre>
+                </div>
+                <div class="comparison-column c-code">
+                    <div class="column-header c-code">
+                        <div class="lang-icon c">C</div>
+                        <h3>C Implementation</h3>
+                    </div>
+                    <pre><code class="language-c">void cb_push(CircularBuffer *cb, 
+             double value) {
+    if (cb->count == cb->capacity) {
+        /* Buffer full: subtract old */
+        cb->cached_sum -= 
+            cb->data[cb->head];
+    } else {
+        cb->count++;
+    }
+    
+    /* Store new value at head */
+    cb->data[cb->head] = value;
+    cb->cached_sum += value;
+    
+    /* Advance head with wraparound */
+    cb->head = (cb->head + 1) 
+               % cb->capacity;
+}</code></pre>
+                </div>
+                <div class="comparison-column python-code">
+                    <div class="column-header python-code">
+                        <div class="lang-icon py">Py</div>
+                        <h3>Python Equivalent</h3>
+                    </div>
+                    <pre><code class="language-python">from collections import deque
+
+class CircularBuffer:
+    def __init__(self, capacity):
+        self.data = deque(maxlen=capacity)
+        self.cached_sum = 0.0
+    
+    def push(self, value):
+        if len(self.data) == self.data.maxlen:
+            # Buffer full: subtract oldest
+            self.cached_sum -= self.data[0]
+        
+        self.data.append(value)
+        self.cached_sum += value
+    
+    def mean(self):
+        if not self.data:
+            return 0.0
+        return self.cached_sum / len(self.data)</code></pre>
+                </div>
+            </div>
+            <div class="key-insight">
+                <strong>Key Insight:</strong> Python's <code>deque(maxlen=N)</code> handles wraparound automatically, whilst in C we use modulo arithmetic explicitly.
+            </div>
+        </div>
+
+        <!-- SLIDE 3: EMA Update -->
+        <div class="slide" data-slide="3">
+            <h2>📉 Exponential Moving Average — Update</h2>
+            <div class="comparison-grid">
+                <div class="comparison-column pseudocode">
+                    <div class="column-header pseudocode">
+                        <div class="lang-icon pseudo">📝</div>
+                        <h3>Pseudocode</h3>
+                    </div>
+                    <pre class="pseudocode-text">PROCEDURE ema_update(ema, new_value)
+    IF ema.initialised = FALSE THEN
+        // First value: use directly
+        ema.value ← new_value
+        ema.initialised ← TRUE
+    ELSE
+        // Apply EMA formula
+        // EMA = α × new + (1-α) × old
+        ema.value ← ema.alpha × new_value 
+                  + (1 - ema.alpha) × ema.value
+    END IF
+    
+    RETURN ema.value
+END PROCEDURE
+
+// Formula: EMA_t = α·x_t + (1-α)·EMA_{t-1}</pre>
+                </div>
+                <div class="comparison-column c-code">
+                    <div class="column-header c-code">
+                        <div class="lang-icon c">C</div>
+                        <h3>C Implementation</h3>
+                    </div>
+                    <pre><code class="language-c">typedef struct {
+    double value;
+    double alpha;
+    bool initialised;
+} ExponentialMA;
+
+double ema_update(ExponentialMA *ema, 
+                  double new_value) {
+    if (!ema->initialised) {
+        ema->value = new_value;
+        ema->initialised = true;
+    } else {
+        ema->value = ema->alpha * new_value
+            + (1.0 - ema->alpha) * ema->value;
+    }
+    return ema->value;
+}
+
+/* Usage:
+ * ExponentialMA ema = {0, 0.3, false};
+ * ema_update(&ema, reading);
+ */</code></pre>
+                </div>
+                <div class="comparison-column python-code">
+                    <div class="column-header python-code">
+                        <div class="lang-icon py">Py</div>
+                        <h3>Python Equivalent</h3>
+                    </div>
+                    <pre><code class="language-python">class ExponentialMA:
+    def __init__(self, alpha):
+        self.alpha = alpha
+        self.value = None
+    
+    def update(self, new_value):
+        if self.value is None:
+            self.value = new_value
+        else:
+            self.value = (self.alpha * new_value 
+                + (1 - self.alpha) * self.value)
+        return self.value
+
+# Usage with pandas (vectorised)
+import pandas as pd
+df['ema'] = df['value'].ewm(alpha=0.3).mean()
+
+# Or with scipy
+from scipy.ndimage import uniform_filter1d</code></pre>
+                </div>
+            </div>
+            <div class="key-insight">
+                <strong>Key Insight:</strong> Python/pandas provides built-in <code>ewm()</code> for vectorised EMA. C requires explicit state management.
+            </div>
+        </div>
+
+        <!-- SLIDE 4: Welford's Algorithm -->
+        <div class="slide" data-slide="4">
+            <h2>🔬 Welford's Algorithm — Online Variance</h2>
+            <div class="comparison-grid">
+                <div class="comparison-column pseudocode">
+                    <div class="column-header pseudocode">
+                        <div class="lang-icon pseudo">📝</div>
+                        <h3>Pseudocode</h3>
+                    </div>
+                    <pre class="pseudocode-text">PROCEDURE welford_update(state, value)
+    state.count ← state.count + 1
+    
+    // Step 1: delta from OLD mean
+    delta ← value - state.mean
+    
+    // Step 2: update mean incrementally
+    state.mean ← state.mean + delta / state.count
+    
+    // Step 3: delta2 from NEW mean
+    // CRITICAL: must use updated mean!
+    delta2 ← value - state.mean
+    
+    // Step 4: accumulate M2
+    state.M2 ← state.M2 + delta × delta2
+END PROCEDURE
+
+FUNCTION variance(state)
+    IF state.count < 2 THEN RETURN 0
+    RETURN state.M2 / (state.count - 1)
+END FUNCTION</pre>
+                </div>
+                <div class="comparison-column c-code">
+                    <div class="column-header c-code">
+                        <div class="lang-icon c">C</div>
+                        <h3>C Implementation</h3>
+                    </div>
+                    <pre><code class="language-c">typedef struct {
+    size_t count;
+    double mean;
+    double M2;
+} WelfordState;
+
+void welford_update(WelfordState *w, 
+                    double value) {
+    w->count++;
+    
+    double delta = value - w->mean;
+    w->mean += delta / w->count;
+    double delta2 = value - w->mean;
+    w->M2 += delta * delta2;
+}
+
+double welford_variance(WelfordState *w) {
+    if (w->count < 2) return 0.0;
+    return w->M2 / (w->count - 1);
+}
+
+double welford_stddev(WelfordState *w) {
+    return sqrt(welford_variance(w));
+}</code></pre>
+                </div>
+                <div class="comparison-column python-code">
+                    <div class="column-header python-code">
+                        <div class="lang-icon py">Py</div>
+                        <h3>Python Equivalent</h3>
+                    </div>
+                    <pre><code class="language-python">class WelfordState:
+    def __init__(self):
+        self.count = 0
+        self.mean = 0.0
+        self.M2 = 0.0
+    
+    def update(self, value):
+        self.count += 1
+        delta = value - self.mean
+        self.mean += delta / self.count
+        delta2 = value - self.mean
+        self.M2 += delta * delta2
+    
+    @property
+    def variance(self):
+        if self.count < 2:
+            return 0.0
+        return self.M2 / (self.count - 1)
+
+# NumPy alternative (two-pass)
+import numpy as np
+variance = np.var(data, ddof=1)</code></pre>
+                </div>
+            </div>
+            <div class="key-insight">
+                <strong>Key Insight:</strong> NumPy's <code>np.var()</code> uses two passes. Welford's single-pass is essential for streaming where you cannot revisit data.
+            </div>
+        </div>
+
+        <!-- SLIDE 5: Z-Score Anomaly Detection -->
+        <div class="slide" data-slide="5">
+            <h2>🎯 Z-Score Anomaly Detection</h2>
+            <div class="comparison-grid">
+                <div class="comparison-column pseudocode">
+                    <div class="column-header pseudocode">
+                        <div class="lang-icon pseudo">📝</div>
+                        <h3>Pseudocode</h3>
+                    </div>
+                    <pre class="pseudocode-text">FUNCTION detect_anomaly(value, mean, stddev, threshold)
+    result ← { is_anomaly: FALSE, z_score: 0 }
+    
+    // Guard against division by zero
+    IF stddev < ε THEN
+        RETURN result
+    END IF
+    
+    // Calculate z-score
+    result.z_score ← (value - mean) / stddev
+    
+    // Check threshold
+    IF |result.z_score| > threshold THEN
+        result.is_anomaly ← TRUE
+        
+        // Severity based on how far beyond threshold
+        IF |result.z_score| > threshold + 1.0 THEN
+            result.severity ← CRITICAL
+        ELSE
+            result.severity ← WARNING
+        END IF
+    END IF
+    
+    RETURN result
+END FUNCTION</pre>
+                </div>
+                <div class="comparison-column c-code">
+                    <div class="column-header c-code">
+                        <div class="lang-icon c">C</div>
+                        <h3>C Implementation</h3>
+                    </div>
+                    <pre><code class="language-c">typedef enum {
+    ANOMALY_NORMAL,
+    ANOMALY_WARNING,
+    ANOMALY_CRITICAL
+} AnomalySeverity;
+
+typedef struct {
+    bool is_anomaly;
+    double z_score;
+    AnomalySeverity severity;
+} AnomalyResult;
+
+AnomalyResult detect_anomaly(
+        double value, double mean,
+        double stddev, double threshold) {
+    AnomalyResult r = {false, 0, ANOMALY_NORMAL};
+    
+    if (stddev < 1e-10) return r;
+    
+    r.z_score = (value - mean) / stddev;
+    double abs_z = fabs(r.z_score);
+    
+    if (abs_z > threshold) {
+        r.is_anomaly = true;
+        r.severity = (abs_z > threshold + 1.0)
+            ? ANOMALY_CRITICAL : ANOMALY_WARNING;
+    }
+    return r;
+}</code></pre>
+                </div>
+                <div class="comparison-column python-code">
+                    <div class="column-header python-code">
+                        <div class="lang-icon py">Py</div>
+                        <h3>Python Equivalent</h3>
+                    </div>
+                    <pre><code class="language-python">from dataclasses import dataclass
+from enum import Enum
+import numpy as np
+
+class Severity(Enum):
+    NORMAL = 0
+    WARNING = 1
+    CRITICAL = 2
+
+@dataclass
+class AnomalyResult:
+    is_anomaly: bool = False
+    z_score: float = 0.0
+    severity: Severity = Severity.NORMAL
+
+def detect_anomaly(value, mean, std, threshold=2.5):
+    if std < 1e-10:
+        return AnomalyResult()
+    
+    z = (value - mean) / std
+    if abs(z) > threshold:
+        sev = Severity.CRITICAL if abs(z) > threshold + 1 else Severity.WARNING
+        return AnomalyResult(True, z, sev)
+    return AnomalyResult(False, z)
+
+# Vectorised with scipy
+from scipy import stats
+z_scores = stats.zscore(data)
+anomalies = np.abs(z_scores) > 2.5</code></pre>
+                </div>
+            </div>
+            <div class="key-insight">
+                <strong>Key Insight:</strong> scipy.stats.zscore() computes z-scores for entire arrays efficiently. For streaming, per-element calculation is necessary.
+            </div>
+        </div>
+
+        <!-- SLIDE 6: MQTT Broker Subscribe -->
+        <div class="slide" data-slide="6">
+            <h2>📡 MQTT Broker — Subscribe</h2>
+            <div class="comparison-grid">
+                <div class="comparison-column pseudocode">
+                    <div class="column-header pseudocode">
+                        <div class="lang-icon pseudo">📝</div>
+                        <h3>Pseudocode</h3>
+                    </div>
+                    <pre class="pseudocode-text">PROCEDURE broker_subscribe(broker, topic_filter, callback, context)
+    // Check capacity
+    IF broker.subscriber_count ≥ MAX_SUBSCRIBERS THEN
+        RETURN FALSE
+    END IF
+    
+    // Find empty slot
+    sub ← broker.subscribers[broker.subscriber_count]
+    
+    // Store subscription details
+    sub.topic_filter ← topic_filter
+    sub.callback ← callback
+    sub.context ← context
+    sub.active ← TRUE
+    
+    broker.subscriber_count ← broker.subscriber_count + 1
+    
+    RETURN TRUE
+END PROCEDURE
+
+// Callback signature:
+// callback(topic, value, context)</pre>
+                </div>
+                <div class="comparison-column c-code">
+                    <div class="column-header c-code">
+                        <div class="lang-icon c">C</div>
+                        <h3>C Implementation</h3>
+                    </div>
+                    <pre><code class="language-c">typedef void (*MessageCallback)(
+    const char *topic, 
+    double value, 
+    void *ctx);
+
+typedef struct {
+    char topic_filter[64];
+    MessageCallback callback;
+    void *context;
+    bool active;
+} Subscriber;
+
+bool broker_subscribe(
+        Broker *b, 
+        const char *topic_filter,
+        MessageCallback callback, 
+        void *context) {
+    if (b->subscriber_count >= MAX_SUBSCRIBERS)
+        return false;
+    
+    Subscriber *sub = 
+        &b->subscribers[b->subscriber_count++];
+    strncpy(sub->topic_filter, topic_filter, 63);
+    sub->callback = callback;
+    sub->context = context;
+    sub->active = true;
+    
+    return true;
+}</code></pre>
+                </div>
+                <div class="comparison-column python-code">
+                    <div class="column-header python-code">
+                        <div class="lang-icon py">Py</div>
+                        <h3>Python Equivalent</h3>
+                    </div>
+                    <pre><code class="language-python">from dataclasses import dataclass, field
+from typing import Callable, Any, Dict, List
+
+@dataclass
+class Subscriber:
+    topic_filter: str
+    callback: Callable[[str, float, Any], None]
+    context: Any = None
+
+class Broker:
+    def __init__(self):
+        self.subscribers: List[Subscriber] = []
+        self.topic_stats: Dict[str, dict] = {}
+    
+    def subscribe(self, topic_filter, callback, context=None):
+        self.subscribers.append(
+            Subscriber(topic_filter, callback, context)
+        )
+        return True
+    
+    def publish(self, topic, value):
+        # Update stats
+        if topic not in self.topic_stats:
+            self.topic_stats[topic] = {'count': 0, 'sum': 0}
+        self.topic_stats[topic]['count'] += 1
+        self.topic_stats[topic]['sum'] += value
+        
+        # Deliver to matching subscribers
+        for sub in self.subscribers:
+            if sub.topic_filter == topic:
+                sub.callback(topic, value, sub.context)</code></pre>
+                </div>
+            </div>
+            <div class="key-insight">
+                <strong>Key Insight:</strong> C uses function pointers for callbacks; Python uses first-class functions. Both achieve the same publish-subscribe decoupling.
+            </div>
+        </div>
+
+        <!-- SLIDE 7: MQTT Broker Publish -->
+        <div class="slide" data-slide="7">
+            <h2>📤 MQTT Broker — Publish</h2>
+            <div class="comparison-grid">
+                <div class="comparison-column pseudocode">
+                    <div class="column-header pseudocode">
+                        <div class="lang-icon pseudo">📝</div>
+                        <h3>Pseudocode</h3>
+                    </div>
+                    <pre class="pseudocode-text">FUNCTION broker_publish(broker, topic, value)
+    // Update topic statistics
+    stats ← get_or_create_topic(broker, topic)
+    stats.message_count ← stats.message_count + 1
+    stats.sum ← stats.sum + value
+    IF value < stats.min THEN stats.min ← value
+    IF value > stats.max THEN stats.max ← value
+    
+    // Deliver to matching subscribers
+    delivered ← 0
+    FOR EACH sub IN broker.subscribers DO
+        IF sub.active AND matches(sub.topic_filter, topic) THEN
+            // Invoke callback
+            sub.callback(topic, value, sub.context)
+            delivered ← delivered + 1
+        END IF
+    END FOR
+    
+    RETURN delivered
+END FUNCTION
+
+// Note: matches() does exact string comparison
+// Full MQTT supports + and # wildcards</pre>
+                </div>
+                <div class="comparison-column c-code">
+                    <div class="column-header c-code">
+                        <div class="lang-icon c">C</div>
+                        <h3>C Implementation</h3>
+                    </div>
+                    <pre><code class="language-c">size_t broker_publish(Broker *b, 
+        const char *topic, double value) {
+    
+    /* Update topic statistics */
+    TopicStats *stats = 
+        broker_get_or_create_topic(b, topic);
+    if (stats) {
+        stats->message_count++;
+        stats->sum += value;
+        if (value < stats->min) 
+            stats->min = value;
+        if (value > stats->max) 
+            stats->max = value;
+    }
+    
+    /* Deliver to matching subscribers */
+    size_t delivered = 0;
+    for (size_t i = 0; i < b->subscriber_count; i++) {
+        Subscriber *sub = &b->subscribers[i];
+        if (sub->active && 
+            strcmp(sub->topic_filter, topic) == 0) {
+            sub->callback(topic, value, sub->context);
+            delivered++;
+        }
+    }
+    return delivered;
+}</code></pre>
+                </div>
+                <div class="comparison-column python-code">
+                    <div class="column-header python-code">
+                        <div class="lang-icon py">Py</div>
+                        <h3>Python Equivalent</h3>
+                    </div>
+                    <pre><code class="language-python">def publish(self, topic: str, value: float) -> int:
+    # Update topic statistics
+    if topic not in self.topic_stats:
+        self.topic_stats[topic] = {
+            'count': 0, 'sum': 0.0,
+            'min': float('inf'), 'max': float('-inf')
+        }
+    
+    stats = self.topic_stats[topic]
+    stats['count'] += 1
+    stats['sum'] += value
+    stats['min'] = min(stats['min'], value)
+    stats['max'] = max(stats['max'], value)
+    
+    # Deliver to matching subscribers
+    delivered = 0
+    for sub in self.subscribers:
+        if sub.topic_filter == topic:
+            sub.callback(topic, value, sub.context)
+            delivered += 1
+    
+    return delivered
+
+# With real MQTT (paho-mqtt):
+import paho.mqtt.client as mqtt
+client = mqtt.Client()
+client.connect("localhost", 1883)
+client.publish("sensors/temp", 23.5)</code></pre>
+                </div>
+            </div>
+            <div class="key-insight">
+                <strong>Key Insight:</strong> Real MQTT uses <code>paho-mqtt</code> in Python or Mosquitto in C. Our simulation teaches the core pattern without network complexity.
+            </div>
+        </div>
+
+        <!-- SLIDE 8: Sensor Simulation -->
+        <div class="slide" data-slide="8">
+            <h2>🌡️ Sensor Simulation — Generate Reading</h2>
+            <div class="comparison-grid">
+                <div class="comparison-column pseudocode">
+                    <div class="column-header pseudocode">
+                        <div class="lang-icon pseudo">📝</div>
+                        <h3>Pseudocode</h3>
+                    </div>
+                    <pre class="pseudocode-text">FUNCTION sensor_read(sensor)
+    reading ← { value: 0, is_anomaly: FALSE }
+    
+    // Compute base signal with drift and noise
+    value ← sensor.base_value 
+          + sensor.current_drift 
+          + random_gaussian() × sensor.noise_level
+    
+    // Update drift for next reading
+    sensor.current_drift ← sensor.current_drift + sensor.drift_rate
+    
+    // Maybe inject anomaly
+    IF random() < sensor.anomaly_prob THEN
+        spike ← random_sign() × (15 + random(0, 20))
+        value ← value + spike
+        reading.is_anomaly ← TRUE
+    END IF
+    
+    reading.value ← value
+    RETURN reading
+END FUNCTION
+
+// random_gaussian(): Box-Muller transform
+// random_sign(): returns +1 or -1</pre>
+                </div>
+                <div class="comparison-column c-code">
+                    <div class="column-header c-code">
+                        <div class="lang-icon c">C</div>
+                        <h3>C Implementation</h3>
+                    </div>
+                    <pre><code class="language-c">typedef struct {
+    double value;
+    bool is_anomaly_injected;
+} SensorReading;
+
+SensorReading sensor_read(SensorSimulator *s) {
+    SensorReading r = {0, false};
+    
+    /* Base + drift + noise */
+    double value = s->base_value 
+        + s->current_drift 
+        + random_gaussian() * s->noise_level;
+    
+    /* Update drift */
+    s->current_drift += s->drift_rate;
+    
+    /* Maybe inject anomaly */
+    if ((rand() / (double)RAND_MAX) < s->anomaly_prob) {
+        double spike = (rand() % 2 ? 1 : -1) 
+                     * (15.0 + rand() % 20);
+        value += spike;
+        r.is_anomaly_injected = true;
+    }
+    
+    r.value = value;
+    return r;
+}</code></pre>
+                </div>
+                <div class="comparison-column python-code">
+                    <div class="column-header python-code">
+                        <div class="lang-icon py">Py</div>
+                        <h3>Python Equivalent</h3>
+                    </div>
+                    <pre><code class="language-python">import numpy as np
+from dataclasses import dataclass
+
+@dataclass
+class SensorReading:
+    value: float
+    is_anomaly: bool = False
+
+class SensorSimulator:
+    def __init__(self, base, noise, drift=0, anomaly_prob=0):
+        self.base_value = base
+        self.noise_level = noise
+        self.drift_rate = drift
+        self.current_drift = 0.0
+        self.anomaly_prob = anomaly_prob
+    
+    def read(self) -> SensorReading:
+        value = (self.base_value 
+                + self.current_drift 
+                + np.random.normal(0, self.noise_level))
+        
+        self.current_drift += self.drift_rate
+        
+        is_anomaly = False
+        if np.random.random() < self.anomaly_prob:
+            spike = np.random.choice([-1, 1]) * (15 + np.random.randint(20))
+            value += spike
+            is_anomaly = True
+        
+        return SensorReading(value, is_anomaly)</code></pre>
+                </div>
+            </div>
+            <div class="key-insight">
+                <strong>Key Insight:</strong> NumPy's <code>np.random.normal()</code> is more convenient than implementing Box-Muller manually in C.
+            </div>
+        </div>
+
+        <!-- SLIDE 9: Complete Pipeline -->
+        <div class="slide" data-slide="9">
+            <h2>🏭 Complete Pipeline — Process Reading</h2>
+            <div class="comparison-grid">
+                <div class="comparison-column pseudocode">
+                    <div class="column-header pseudocode">
+                        <div class="lang-icon pseudo">📝</div>
+                        <h3>Pseudocode</h3>
+                    </div>
+                    <pre class="pseudocode-text">PROCEDURE pipeline_process(pipeline)
+    // 1. Read from sensor
+    raw ← sensor_read(pipeline.sensor)
+    
+    // 2. Apply EMA smoothing
+    smoothed ← ema_update(pipeline.ema, raw.value)
+    
+    // 3. Store in circular buffer
+    cb_push(pipeline.buffer, smoothed)
+    
+    // 4. Detect anomalies (if baseline ready)
+    result ← detector_process(pipeline.detector, smoothed)
+    
+    // 5. Update metrics
+    pipeline.readings_processed++
+    IF result.is_anomaly THEN
+        pipeline.anomalies_detected++
+        IF raw.is_anomaly THEN
+            pipeline.true_positives++
+        ELSE
+            pipeline.false_positives++
+        END IF
+    ELSE IF raw.is_anomaly THEN
+        pipeline.false_negatives++
+    END IF
+    
+    // 6. Publish to MQTT
+    broker_publish(pipeline.broker, pipeline.topic, smoothed)
+END PROCEDURE</pre>
+                </div>
+                <div class="comparison-column c-code">
+                    <div class="column-header c-code">
+                        <div class="lang-icon c">C</div>
+                        <h3>C Implementation</h3>
+                    </div>
+                    <pre><code class="language-c">void pipeline_process(StreamPipeline *p) {
+    /* 1. Read from sensor */
+    SensorReading raw = sensor_read(&p->sensor);
+    
+    /* 2. Apply EMA smoothing */
+    double smoothed = ema_update(&p->ema_filter, 
+                                 raw.value);
+    
+    /* 3. Store in circular buffer */
+    cb_push(p->window_buffer, smoothed);
+    
+    /* 4. Detect anomalies */
+    AnomalyResult result = 
+        detector_process(&p->detector, smoothed);
+    
+    /* 5. Update metrics */
+    p->readings_processed++;
+    if (result.is_anomaly) {
+        p->anomalies_detected++;
+        if (raw.is_anomaly_injected) 
+            p->true_positives++;
+        else 
+            p->false_positives++;
+    } else if (raw.is_anomaly_injected) {
+        p->false_negatives++;
+    }
+    
+    /* 6. Publish to MQTT */
+    broker_publish(p->broker, p->output_topic, smoothed);
+}</code></pre>
+                </div>
+                <div class="comparison-column python-code">
+                    <div class="column-header python-code">
+                        <div class="lang-icon py">Py</div>
+                        <h3>Python Equivalent</h3>
+                    </div>
+                    <pre><code class="language-python">class StreamPipeline:
+    def __init__(self, sensor, alpha, window_size, threshold, broker, topic):
+        self.sensor = sensor
+        self.ema = ExponentialMA(alpha)
+        self.buffer = CircularBuffer(window_size)
+        self.detector = AnomalyDetector(baseline_n=10, threshold=threshold)
+        self.broker = broker
+        self.topic = topic
+        self.metrics = {'processed': 0, 'tp': 0, 'fp': 0, 'fn': 0}
+    
+    def process(self):
+        # 1. Read
+        raw = self.sensor.read()
+        
+        # 2. Smooth
+        smoothed = self.ema.update(raw.value)
+        
+        # 3. Buffer
+        self.buffer.push(smoothed)
+        
+        # 4. Detect
+        result = self.detector.process(smoothed)
+        
+        # 5. Metrics
+        self.metrics['processed'] += 1
+        if result.is_anomaly:
+            if raw.is_anomaly: self.metrics['tp'] += 1
+            else: self.metrics['fp'] += 1
+        elif raw.is_anomaly:
+            self.metrics['fn'] += 1
+        
+        # 6. Publish
+        self.broker.publish(self.topic, smoothed)</code></pre>
+                </div>
+            </div>
+        </div>
+
+        <!-- SLIDE 10: Complexity Comparison -->
+        <div class="slide" data-slide="10">
+            <h2>📊 Time & Space Complexity Comparison</h2>
+            <table style="font-size: 0.95em; margin-top: 1em;">
+                <tr>
+                    <th>Algorithm</th>
+                    <th>Time (C)</th>
+                    <th>Space (C)</th>
+                    <th>Python Alternative</th>
+                    <th>Notes</th>
+                </tr>
+                <tr>
+                    <td>Circular Buffer Push</td>
+                    <td>O(1)</td>
+                    <td>O(n)</td>
+                    <td><code>deque(maxlen=n)</code></td>
+                    <td>n = window size</td>
+                </tr>
+                <tr>
+                    <td>Circular Buffer Mean</td>
+                    <td>O(1)</td>
+                    <td>O(1)</td>
+                    <td><code>sum(deque)/len</code> is O(n)</td>
+                    <td>Cached sum trick</td>
+                </tr>
+                <tr>
+                    <td>EMA Update</td>
+                    <td>O(1)</td>
+                    <td>O(1)</td>
+                    <td><code>pandas.ewm()</code></td>
+                    <td>Vectorised in pandas</td>
+                </tr>
+                <tr>
+                    <td>Welford Update</td>
+                    <td>O(1)</td>
+                    <td>O(1)</td>
+                    <td>No stdlib equiv.</td>
+                    <td>Single-pass streaming</td>
+                </tr>
+                <tr>
+                    <td>Z-Score Detection</td>
+                    <td>O(1)</td>
+                    <td>O(1)</td>
+                    <td><code>scipy.stats.zscore</code></td>
+                    <td>Given mean/std</td>
+                </tr>
+                <tr>
+                    <td>Broker Publish</td>
+                    <td>O(s)</td>
+                    <td>O(1)</td>
+                    <td><code>paho-mqtt</code></td>
+                    <td>s = subscribers</td>
+                </tr>
+            </table>
+            <div class="highlight-box" style="margin-top: 1.5em;">
+                <strong>Key Observation:</strong> C implementations give precise control over memory and time complexity. Python libraries abstract this but may have hidden costs (e.g., pandas.ewm creates intermediate arrays).
+            </div>
+        </div>
+
+        <!-- SLIDE 11: When to Use What -->
+        <div class="slide" data-slide="11">
+            <h2>🎯 When to Use C vs Python</h2>
+            <div class="two-column">
+                <div class="content-card" style="border-top: 3px solid var(--accent-blue);">
+                    <h3 style="color: var(--accent-blue);">Use C When...</h3>
+                    <ul>
+                        <li>🔧 <strong>Embedded systems</strong> — ESP32, Arduino, microcontrollers</li>
+                        <li>⚡ <strong>Real-time constraints</strong> — predictable latency required</li>
+                        <li>💾 <strong>Memory limited</strong> — kilobytes, not gigabytes</li>
+                        <li>🔄 <strong>Continuous processing</strong> — millions of readings/second</li>
+                        <li>🔌 <strong>Direct hardware access</strong> — GPIO, I2C, SPI</li>
+                        <li>📦 <strong>No dependencies allowed</strong> — bare metal deployment</li>
+                    </ul>
+                </div>
+                <div class="content-card" style="border-top: 3px solid var(--accent-green);">
+                    <h3 style="color: var(--accent-green);">Use Python When...</h3>
+                    <ul>
+                        <li>📊 <strong>Data analysis</strong> — exploratory work, visualisation</li>
+                        <li>🧪 <strong>Prototyping</strong> — rapid iteration on algorithms</li>
+                        <li>🤖 <strong>ML integration</strong> — TensorFlow, scikit-learn</li>
+                        <li>🌐 <strong>Cloud/server</strong> — AWS Lambda, data pipelines</li>
+                        <li>📈 <strong>Batch processing</strong> — historical data analysis</li>
+                        <li>🔗 <strong>Integration</strong> — REST APIs, databases, services</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="key-insight" style="margin-top: 1em;">
+                <strong>Common Pattern:</strong> Prototype in Python → validate algorithm → implement critical path in C for production deployment on edge devices.
+            </div>
+        </div>
+
+        <!-- SLIDE 12: Summary -->
+        <div class="slide" data-slide="12">
+            <h2>📝 Summary: Algorithm Implementations</h2>
+            <div class="content-card">
+                <table style="font-size: 0.9em;">
+                    <tr>
+                        <th>Component</th>
+                        <th>Key C Technique</th>
+                        <th>Python Equivalent</th>
+                    </tr>
+                    <tr>
+                        <td>Circular Buffer</td>
+                        <td>Modulo wraparound: <code>(head + 1) % capacity</code></td>
+                        <td><code>collections.deque(maxlen=N)</code></td>
+                    </tr>
+                    <tr>
+                        <td>EMA Filter</td>
+                        <td>Manual state struct with α parameter</td>
+                        <td><code>pandas.DataFrame.ewm(alpha=α)</code></td>
+                    </tr>
+                    <tr>
+                        <td>Welford's Algorithm</td>
+                        <td>Two deltas: before and after mean update</td>
+                        <td>Custom class (no stdlib equivalent)</td>
+                    </tr>
+                    <tr>
+                        <td>Z-Score Detection</td>
+                        <td><code>(x - mean) / stddev</code> with threshold</td>
+                        <td><code>scipy.stats.zscore()</code></td>
+                    </tr>
+                    <tr>
+                        <td>MQTT Broker</td>
+                        <td>Function pointers for callbacks</td>
+                        <td><code>paho-mqtt</code> client library</td>
+                    </tr>
+                    <tr>
+                        <td>Sensor Simulation</td>
+                        <td>Box-Muller transform for Gaussian noise</td>
+                        <td><code>numpy.random.normal()</code></td>
+                    </tr>
+                </table>
+            </div>
+            <div class="highlight-box" style="margin-top: 1em;">
+                <p>Understanding both C and Python implementations gives you flexibility: use Python for rapid development and C for performance-critical deployment.</p>
+            </div>
+        </div>
+
+        <!-- SLIDE 13: Thank You -->
+        <div class="slide title-slide" data-slide="13">
+            <div class="badge">COMPARATIVE VIEW COMPLETE</div>
+            <h1>🔄 Pseudocode • C • Python</h1>
+            <p class="subtitle" style="color: var(--text-primary);">Week 19: IoT and Stream Processing</p>
+            <p style="margin-top: 2em; color: var(--text-muted);">ATP Course — ASE-CSIE Bucharest</p>
+        </div>
+
+    </div>
+
+    <!-- Navigation -->
+    <div class="nav-controls">
+        <button class="nav-btn" onclick="prevSlide()">◀</button>
+        <button class="nav-btn" onclick="nextSlide()">▶</button>
+    </div>
+
+    <div class="slide-counter">
+        <span id="currentSlide">1</span> / <span id="totalSlides">13</span>
+    </div>
+
+    <script>
+        hljs.highlightAll();
+
+        let currentSlide = 1;
+        const totalSlides = document.querySelectorAll('.slide').length;
+        document.getElementById('totalSlides').textContent = totalSlides;
+
+        function showSlide(n) {
+            const slides = document.querySelectorAll('.slide');
+            if (n < 1) n = totalSlides;
+            if (n > totalSlides) n = 1;
+            currentSlide = n;
+            
+            slides.forEach((slide, index) => {
+                slide.classList.remove('active');
+                if (index === n - 1) slide.classList.add('active');
+            });
+            
+            document.getElementById('currentSlide').textContent = currentSlide;
+            document.getElementById('progressBar').style.width = (currentSlide / totalSlides * 100) + '%';
+        }
+
+        function nextSlide() { showSlide(currentSlide + 1); }
+        function prevSlide() { showSlide(currentSlide - 1); }
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowRight' || e.key === ' ') { e.preventDefault(); nextSlide(); }
+            if (e.key === 'ArrowLeft') { e.preventDefault(); prevSlide(); }
+        });
+    </script>
+</body>
+</html>
