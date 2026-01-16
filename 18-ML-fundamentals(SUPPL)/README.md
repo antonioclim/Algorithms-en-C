@@ -507,7 +507,7 @@ Example: Deploy a trained linear regression model for real-time temperature pred
 
 ---
 
-*Laboratory materials prepared for ATP Course*
+*Laboratory materials prepared for ADSC Course*
 *Academy of Economic Studies - CSIE Bucharest*
 *Alternative learning kit for non-formal education*
 
