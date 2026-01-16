@@ -3,56 +3,18 @@
  * EXERCISE 2: ROUND-ROBIN TASK SCHEDULER
  * =============================================================================
  *
- * OBJECTIVE:
- *   Build a round-robin CPU scheduler simulation using a queue of processes.
- *   The scheduler should execute processes in time slices (quanta), re-queuing
- *   unfinished processes and tracking comprehensive statistics.
+ * This file is intentionally written as a full laboratory exercise: it combines
+ * (i) an explicit queue implementation (for ready processes) with (ii) a
+ * deterministic simulation of round-robin CPU scheduling.
  *
- * REQUIREMENTS:
- *   1. Define a Process structure with PID, name, burst time and state tracking
- *   2. Implement a queue specifically for Process pointers
- *   3. Load process data from a file
- *   4. Implement the round-robin scheduling algorithm
- *   5. Generate a text-based Gantt chart of execution order
- *   6. Calculate turnaround time and waiting time for each process
- *   7. Compute and display average statistics
- *   8. Support adding new processes during simulation (optional bonus)
+ * The simulation supports a verbose mode (execution trace plus Gantt chart)
+ * suitable for interactive study and a minimal test mode that produces stable
+ * output for automated checking.
  *
- * INPUT FILE FORMAT (processes.txt):
- *   <PID> <ProcessName> <BurstTime> <ArrivalTime>
- *   1 Chrome 10 0
- *   2 VSCode 6 0
- *   3 Spotify 8 2
- *   4 Terminal 4 3
- *
- * COMMAND LINE:
+ * Compilation: gcc -Wall -Wextra -std=c11 -o exercise2 exercise2.c
+ * Usage:
  *   ./exercise2 <process_file> <time_quantum>
- *   ./exercise2 ../data/processes.txt 3
- *
- * EXPECTED OUTPUT:
- *   Loaded 4 processes from file
- *   Time Quantum: 3 ms
- *   
- *   === Execution Timeline ===
- *   [0-3]   Chrome    ████████░░░░░░░░ (7 remaining)
- *   [3-6]   VSCode    ████████████████ (3 remaining)
- *   [6-9]   Spotify   ██████░░░░░░░░░░ (5 remaining)
- *   ...
- *   
- *   === Gantt Chart ===
- *   |Chrome|VSCode|Spotify|Terminal|Chrome|...
- *   0      3      6       9        12     ...
- *   
- *   === Process Statistics ===
- *   PID  Name      Burst  Finish  TAT   Wait
- *   1    Chrome    10     22      22    12
- *   2    VSCode    6      15      15    9
- *   ...
- *   
- *   Average Turnaround Time: 17.25 ms
- *   Average Waiting Time: 10.50 ms
- *
- * COMPILATION: gcc -Wall -Wextra -std=c11 -o exercise2 exercise2.c
+ *   ./exercise2 tests/test2_input.txt 2 --test
  *
  * =============================================================================
  */
@@ -77,35 +39,18 @@
  * =============================================================================
  */
 
-/**
- * TODO 1: Define the Process structure
- *
- * The structure should contain:
- *   - pid: unique process identifier (int)
- *   - name: process name (char array of MAX_NAME_LENGTH)
- *   - burst_time: total CPU time required (int)
- *   - remaining_time: CPU time still needed (int)
- *   - arrival_time: when the process arrived (int)
- *   - start_time: when first executed, -1 if not started (int)
- *   - completion_time: when process finished (int)
- *   - turnaround_time: completion - arrival (int)
- *   - waiting_time: turnaround - burst (int)
- *
- * Hint: Initialise start_time to -1 to detect first execution
- */
 typedef struct {
-    /* YOUR CODE HERE */
     int pid;
     char name[MAX_NAME_LENGTH];
     int burst_time;
     int remaining_time;
     int arrival_time;
-    /* Add more fields */
+    int start_time;        /* first time the process is scheduled, -1 if never */
+    int completion_time;   /* finish time in the simulated timeline */
+    int turnaround_time;   /* completion_time - arrival_time */
+    int waiting_time;      /* turnaround_time - burst_time */
 } Process;
 
-/**
- * Gantt chart entry for visualisation.
- */
 typedef struct {
     int pid;
     char name[MAX_NAME_LENGTH];
@@ -113,25 +58,13 @@ typedef struct {
     int end_time;
 } GanttEntry;
 
-/**
- * TODO 2: Define the ProcessQueue structure
- *
- * A queue to hold process indices (not the processes themselves).
- * Using indices allows us to reference the original process array.
- *
- * Fields needed:
- *   - data: array of integers (process indices)
- *   - front: front index
- *   - rear: rear index
- *   - count: current number of elements
- *   - capacity: maximum capacity
- */
+/* Queue of indices into the processes array. */
 typedef struct {
-    /* YOUR CODE HERE */
     int data[MAX_PROCESSES];
     int front;
     int rear;
     int count;
+    int capacity;
 } ProcessQueue;
 
 /* =============================================================================
@@ -139,89 +72,71 @@ typedef struct {
  * =============================================================================
  */
 
-void pq_init(ProcessQueue *q);
-bool pq_is_empty(const ProcessQueue *q);
-bool pq_enqueue(ProcessQueue *q, int process_index);
-bool pq_dequeue(ProcessQueue *q, int *process_index);
-int pq_size(const ProcessQueue *q);
+static void pq_init(ProcessQueue *q);
+static bool pq_is_empty(const ProcessQueue *q);
+static bool pq_enqueue(ProcessQueue *q, int process_index);
+static bool pq_dequeue(ProcessQueue *q, int *process_index);
 
-int load_processes(const char *filename, Process processes[]);
-void print_process_table(const Process processes[], int count);
-void print_progress_bar(int completed, int total);
-void run_scheduler(Process processes[], int count, int quantum, GanttEntry gantt[], int *gantt_count);
-void print_gantt_chart(const GanttEntry gantt[], int count);
-void print_statistics(const Process processes[], int count);
+static int load_processes(const char *filename, Process processes[]);
+static void print_process_table(const Process processes[], int count);
+static void print_progress_bar(int completed, int total);
+
+static void run_scheduler(Process processes[], int count, int quantum,
+                          GanttEntry gantt[], int *gantt_count,
+                          bool verbose, bool record_gantt);
+
+static void print_gantt_chart(const GanttEntry gantt[], int count);
+static void print_statistics(const Process processes[], int count);
+static void print_averages_only(const Process processes[], int count);
+
+static int compare_by_arrival_then_pid(const void *a, const void *b);
+static void print_usage(const char *program_name);
 
 /* =============================================================================
  * QUEUE OPERATIONS
  * =============================================================================
  */
 
-/**
- * TODO 3: Initialise the process queue
- *
- * @param q  Pointer to queue to initialise
- *
- * Set front, rear and count to 0.
- */
-void pq_init(ProcessQueue *q) {
-    /* YOUR CODE HERE */
+static void pq_init(ProcessQueue *q) {
+    if (!q) {
+        return;
+    }
+    q->front = 0;
+    q->rear = 0;
+    q->count = 0;
+    q->capacity = MAX_PROCESSES;
 }
 
-/**
- * TODO 4: Check if queue is empty
- *
- * @param q  Pointer to queue
- * @return   true if empty, false otherwise
- */
-bool pq_is_empty(const ProcessQueue *q) {
-    /* YOUR CODE HERE */
-    return true;  /* Replace this */
+static bool pq_is_empty(const ProcessQueue *q) {
+    return (!q) || (q->count == 0);
 }
 
-/**
- * TODO 5: Enqueue a process index
- *
- * @param q              Pointer to queue
- * @param process_index  Index of process in the processes array
- * @return               true on success, false if full
- *
- * Steps:
- *   1. Check if queue is full (count >= MAX_PROCESSES)
- *   2. Store process_index at data[rear]
- *   3. Increment rear with wraparound: (rear + 1) % MAX_PROCESSES
- *   4. Increment count
- *   5. Return true
- */
-bool pq_enqueue(ProcessQueue *q, int process_index) {
-    /* YOUR CODE HERE */
-    return false;  /* Replace this */
+static bool pq_enqueue(ProcessQueue *q, int process_index) {
+    if (!q) {
+        return false;
+    }
+    if (q->count >= q->capacity) {
+        return false;
+    }
+
+    q->data[q->rear] = process_index;
+    q->rear = (q->rear + 1) % q->capacity;
+    q->count++;
+    return true;
 }
 
-/**
- * TODO 6: Dequeue a process index
- *
- * @param q              Pointer to queue
- * @param process_index  Pointer to store the dequeued index
- * @return               true on success, false if empty
- *
- * Steps:
- *   1. Check if queue is empty
- *   2. Store data[front] in *process_index
- *   3. Increment front with wraparound
- *   4. Decrement count
- *   5. Return true
- */
-bool pq_dequeue(ProcessQueue *q, int *process_index) {
-    /* YOUR CODE HERE */
-    return false;  /* Replace this */
-}
+static bool pq_dequeue(ProcessQueue *q, int *process_index) {
+    if (!q || !process_index) {
+        return false;
+    }
+    if (pq_is_empty(q)) {
+        return false;
+    }
 
-/**
- * Return queue size.
- */
-int pq_size(const ProcessQueue *q) {
-    return q->count;
+    *process_index = q->data[q->front];
+    q->front = (q->front + 1) % q->capacity;
+    q->count--;
+    return true;
 }
 
 /* =============================================================================
@@ -229,41 +144,36 @@ int pq_size(const ProcessQueue *q) {
  * =============================================================================
  */
 
-/**
- * TODO 7: Load processes from file
- *
- * @param filename   Path to the process data file
- * @param processes  Array to store loaded processes
- * @return           Number of processes loaded, or -1 on error
- *
- * File format per line: <PID> <Name> <BurstTime> <ArrivalTime>
- *
- * Steps:
- *   1. Open the file for reading
- *   2. Return -1 if file cannot be opened
- *   3. Read each line using fscanf or fgets+sscanf
- *   4. For each line:
- *      a. Parse PID, name, burst_time, arrival_time
- *      b. Set remaining_time = burst_time
- *      c. Set start_time = -1 (not yet started)
- *      d. Initialise completion_time, turnaround_time, waiting_time to 0
- *   5. Close the file
- *   6. Return the count of processes loaded
- *
- * Hint: Use fscanf(file, "%d %s %d %d", ...) for parsing
- */
-int load_processes(const char *filename, Process processes[]) {
+static int load_processes(const char *filename, Process processes[]) {
     FILE *file = fopen(filename, "r");
     if (!file) {
         fprintf(stderr, "Error: Cannot open file '%s'\n", filename);
         return -1;
     }
-    
+
     int count = 0;
-    
-    /* YOUR CODE HERE */
-    /* Read processes from file */
-    
+    char line[256];
+
+    while (fgets(line, (int)sizeof(line), file) && count < MAX_PROCESSES) {
+        /* Skip comments and empty lines. */
+        if (line[0] == '#' || line[0] == '\n' || line[0] == '\r') {
+            continue;
+        }
+
+        Process *p = &processes[count];
+        memset(p, 0, sizeof(*p));
+
+        if (sscanf(line, "%d %31s %d %d",
+                   &p->pid, p->name, &p->burst_time, &p->arrival_time) == 4) {
+            p->remaining_time = p->burst_time;
+            p->start_time = -1;
+            p->completion_time = 0;
+            p->turnaround_time = 0;
+            p->waiting_time = 0;
+            count++;
+        }
+    }
+
     fclose(file);
     return count;
 }
@@ -273,12 +183,9 @@ int load_processes(const char *filename, Process processes[]) {
  * =============================================================================
  */
 
-/**
- * Print a visual progress bar.
- */
-void print_progress_bar(int completed, int total) {
+static void print_progress_bar(int completed, int total) {
     int filled = (completed * PROGRESS_BAR_WIDTH) / total;
-    
+
     printf("[");
     for (int i = 0; i < PROGRESS_BAR_WIDTH; i++) {
         if (i < filled) {
@@ -290,15 +197,12 @@ void print_progress_bar(int completed, int total) {
     printf("]");
 }
 
-/**
- * Print process table before scheduling.
- */
-void print_process_table(const Process processes[], int count) {
+static void print_process_table(const Process processes[], int count) {
     printf("\n  Loaded Processes:\n");
     printf("  ┌─────┬────────────────┬───────────┬───────────┐\n");
     printf("  │ PID │ Name           │ Burst(ms) │ Arrival   │\n");
     printf("  ├─────┼────────────────┼───────────┼───────────┤\n");
-    
+
     for (int i = 0; i < count; i++) {
         printf("  │ %3d │ %-14s │    %3d    │    %3d    │\n",
                processes[i].pid,
@@ -306,7 +210,7 @@ void print_process_table(const Process processes[], int count) {
                processes[i].burst_time,
                processes[i].arrival_time);
     }
-    
+
     printf("  └─────┴────────────────┴───────────┴───────────┘\n\n");
 }
 
@@ -315,136 +219,242 @@ void print_process_table(const Process processes[], int count) {
  * =============================================================================
  */
 
-/**
- * TODO 8: Implement the round-robin scheduler
- *
- * @param processes    Array of processes
- * @param count        Number of processes
- * @param quantum      Time quantum (time slice) in ms
- * @param gantt        Array to store Gantt chart entries
- * @param gantt_count  Pointer to store number of Gantt entries
- *
- * Algorithm:
- *   1. Initialise ready queue
- *   2. Sort processes by arrival time (optional, assume already sorted)
- *   3. Set current_time = 0, completed = 0, next_arrival = 0
- *   4. Add processes that have arrived (arrival_time <= current_time) to queue
- *   5. While completed < count:
- *      a. Add any newly arrived processes to queue
- *      b. If queue is empty but processes remain, jump to next arrival
- *      c. Dequeue a process index
- *      d. If this is first execution, record start_time
- *      e. Calculate run_time = min(remaining_time, quantum)
- *      f. Record Gantt entry (pid, name, current_time, current_time + run_time)
- *      g. Print execution line with progress bar
- *      h. Update current_time += run_time
- *      i. Update remaining_time -= run_time
- *      j. Add any processes that arrived during execution
- *      k. If remaining_time > 0, re-enqueue the process
- *      l. Else, record completion_time, calculate TAT and wait, increment completed
- *
- * Hint: Track which processes have been added to queue to avoid duplicates
- */
-void run_scheduler(Process processes[], int count, int quantum, 
-                   GanttEntry gantt[], int *gantt_count) {
+static void run_scheduler(Process processes[], int count, int quantum,
+                          GanttEntry gantt[], int *gantt_count,
+                          bool verbose, bool record_gantt) {
     ProcessQueue ready_queue;
     pq_init(&ready_queue);
-    
+
     int current_time = 0;
     int completed = 0;
-    int next_arrival_idx = 0;  /* Index of next process to arrive */
-    bool in_queue[MAX_PROCESSES] = {false};  /* Track which processes are queued */
-    
-    *gantt_count = 0;
-    
-    printf("  === Execution Timeline ===\n");
-    printf("  ─────────────────────────────────────────────────────────────\n");
-    
-    /* YOUR CODE HERE */
-    /* Implement the round-robin scheduling algorithm */
-    
-    printf("  ─────────────────────────────────────────────────────────────\n\n");
+    int next_arrival_idx = 0;
+
+    /*
+     * in_queue[i] is used as a duplicate suppressor for the arrival stage.
+     * A process is marked true when it has been admitted to the ready queue at
+     * least once and remains true until completion.
+     */
+    bool in_queue[MAX_PROCESSES] = {false};
+
+    if (gantt_count) {
+        *gantt_count = 0;
+    }
+
+    if (verbose) {
+        printf("  === Execution Timeline ===\n");
+        printf("  ─────────────────────────────────────────────────────────────\n");
+    }
+
+    /* Admit processes that arrive at time 0. */
+    while (next_arrival_idx < count && processes[next_arrival_idx].arrival_time <= current_time) {
+        pq_enqueue(&ready_queue, next_arrival_idx);
+        in_queue[next_arrival_idx] = true;
+        next_arrival_idx++;
+    }
+
+    while (completed < count) {
+        /* Admit newly arrived processes. */
+        while (next_arrival_idx < count && processes[next_arrival_idx].arrival_time <= current_time) {
+            if (!in_queue[next_arrival_idx]) {
+                pq_enqueue(&ready_queue, next_arrival_idx);
+                in_queue[next_arrival_idx] = true;
+            }
+            next_arrival_idx++;
+        }
+
+        /* If no ready process exists, jump to the next arrival. */
+        if (pq_is_empty(&ready_queue)) {
+            if (next_arrival_idx < count) {
+                current_time = processes[next_arrival_idx].arrival_time;
+                continue;
+            }
+            break;
+        }
+
+        int idx;
+        pq_dequeue(&ready_queue, &idx);
+        Process *p = &processes[idx];
+
+        if (p->start_time == -1) {
+            p->start_time = current_time;
+        }
+
+        int run_time = (p->remaining_time < quantum) ? p->remaining_time : quantum;
+
+        if (record_gantt && gantt && gantt_count && *gantt_count < MAX_GANTT_ENTRIES) {
+            gantt[*gantt_count].pid = p->pid;
+            strncpy(gantt[*gantt_count].name, p->name, MAX_NAME_LENGTH - 1);
+            gantt[*gantt_count].name[MAX_NAME_LENGTH - 1] = '\0';
+            gantt[*gantt_count].start_time = current_time;
+            gantt[*gantt_count].end_time = current_time + run_time;
+            (*gantt_count)++;
+        }
+
+        if (verbose) {
+            printf("  │ [%3d-%3d] %-12s ", current_time, current_time + run_time, p->name);
+            print_progress_bar(p->burst_time - p->remaining_time + run_time, p->burst_time);
+        }
+
+        current_time += run_time;
+        p->remaining_time -= run_time;
+
+        /* Admit processes that arrive during the execution slice. */
+        while (next_arrival_idx < count && processes[next_arrival_idx].arrival_time <= current_time) {
+            if (!in_queue[next_arrival_idx]) {
+                pq_enqueue(&ready_queue, next_arrival_idx);
+                in_queue[next_arrival_idx] = true;
+            }
+            next_arrival_idx++;
+        }
+
+        if (p->remaining_time > 0) {
+            if (verbose) {
+                printf(" (%d remaining)\n", p->remaining_time);
+            }
+            pq_enqueue(&ready_queue, idx);
+        } else {
+            if (verbose) {
+                printf(" ✓ DONE\n");
+            }
+            p->completion_time = current_time;
+            p->turnaround_time = p->completion_time - p->arrival_time;
+            p->waiting_time = p->turnaround_time - p->burst_time;
+            completed++;
+        }
+    }
+
+    if (verbose) {
+        printf("  ─────────────────────────────────────────────────────────────\n\n");
+    }
 }
 
-/**
- * TODO 9: Print the Gantt chart
- *
- * @param gantt  Array of Gantt entries
- * @param count  Number of entries
- *
- * Display format:
- *   |Process1|Process2|Process3|...
- *   0        3        6        9
- *
- * Steps:
- *   1. Print top border
- *   2. For each entry, print process name with appropriate width
- *   3. Print bottom border with time markers
- */
-void print_gantt_chart(const GanttEntry gantt[], int count) {
-    if (count == 0) return;
-    
+static void print_gantt_chart(const GanttEntry gantt[], int count) {
+    if (count <= 0) {
+        return;
+    }
+
     printf("  === Gantt Chart ===\n  ");
-    
-    /* YOUR CODE HERE */
-    /* Print the Gantt chart visualisation */
-    
+
+    /* Top border. */
+    for (int i = 0; i < count && i < 15; i++) {
+        int width = gantt[i].end_time - gantt[i].start_time;
+        int chars = (width < 3) ? 3 : width;
+        for (int j = 0; j < chars + 2; j++) {
+            printf("─");
+        }
+    }
+    printf("\n  ");
+
+    /* Process names. */
+    for (int i = 0; i < count && i < 15; i++) {
+        int width = gantt[i].end_time - gantt[i].start_time;
+        int chars = (width < 3) ? 3 : width;
+        printf("|%-*.*s", chars + 1, chars + 1, gantt[i].name);
+    }
+    printf("|\n  ");
+
+    /* Bottom border. */
+    for (int i = 0; i < count && i < 15; i++) {
+        int width = gantt[i].end_time - gantt[i].start_time;
+        int chars = (width < 3) ? 3 : width;
+        for (int j = 0; j < chars + 2; j++) {
+            printf("─");
+        }
+    }
+    printf("\n  ");
+
+    /* Time markers. */
+    printf("%d", gantt[0].start_time);
+    for (int i = 0; i < count && i < 15; i++) {
+        int width = gantt[i].end_time - gantt[i].start_time;
+        int chars = (width < 3) ? 3 : width;
+        printf("%*d", chars + 2, gantt[i].end_time);
+    }
+
+    if (count > 15) {
+        printf("\n  ... (%d more entries)", count - 15);
+    }
+
     printf("\n\n");
 }
 
-/**
- * TODO 10: Print final statistics
- *
- * @param processes  Array of processes (with computed times)
- * @param count      Number of processes
- *
- * Display a table with:
- *   - PID, Name, Burst, Completion, Turnaround, Waiting times
- *   - Average turnaround and waiting times
- */
-void print_statistics(const Process processes[], int count) {
+static void print_statistics(const Process processes[], int count) {
     printf("  === Process Statistics ===\n");
     printf("  ┌─────┬────────────────┬───────┬────────┬─────────┬────────┐\n");
     printf("  │ PID │ Name           │ Burst │ Finish │   TAT   │  Wait  │\n");
     printf("  ├─────┼────────────────┼───────┼────────┼─────────┼────────┤\n");
-    
+
     float total_tat = 0;
     float total_wait = 0;
-    
-    /* YOUR CODE HERE */
-    /* Print statistics for each process */
-    /* Calculate totals for averages */
-    
+
+    for (int i = 0; i < count; i++) {
+        printf("  │ %3d │ %-14s │  %3d  │  %4d  │   %3d   │  %3d   │\n",
+               processes[i].pid,
+               processes[i].name,
+               processes[i].burst_time,
+               processes[i].completion_time,
+               processes[i].turnaround_time,
+               processes[i].waiting_time);
+
+        total_tat += processes[i].turnaround_time;
+        total_wait += processes[i].waiting_time;
+    }
+
     printf("  └─────┴────────────────┴───────┴────────┴─────────┴────────┘\n\n");
-    
+
     if (count > 0) {
         printf("  Average Turnaround Time: %.2f ms\n", total_tat / count);
         printf("  Average Waiting Time:    %.2f ms\n", total_wait / count);
     }
 }
 
+static void print_averages_only(const Process processes[], int count) {
+    double total_tat = 0.0;
+    double total_wait = 0.0;
+
+    for (int i = 0; i < count; i++) {
+        total_tat += processes[i].turnaround_time;
+        total_wait += processes[i].waiting_time;
+    }
+
+    if (count > 0) {
+        printf("  Average Turnaround Time: %.2f ms\n", total_tat / (double)count);
+        printf("  Average Waiting Time:    %.2f ms\n", total_wait / (double)count);
+    }
+}
+
 /* =============================================================================
- * HELPER FUNCTIONS
+ * HELPERS
  * =============================================================================
  */
 
-/**
- * Compare processes by arrival time for sorting.
- */
-int compare_by_arrival(const void *a, const void *b) {
+static int compare_by_arrival_then_pid(const void *a, const void *b) {
     const Process *p1 = (const Process *)a;
     const Process *p2 = (const Process *)b;
-    return p1->arrival_time - p2->arrival_time;
+
+    if (p1->arrival_time < p2->arrival_time) {
+        return -1;
+    }
+    if (p1->arrival_time > p2->arrival_time) {
+        return 1;
+    }
+
+    if (p1->pid < p2->pid) {
+        return -1;
+    }
+    if (p1->pid > p2->pid) {
+        return 1;
+    }
+
+    return 0;
 }
 
-/**
- * Print usage information.
- */
-void print_usage(const char *program_name) {
-    printf("Usage: %s <process_file> <time_quantum>\n", program_name);
+static void print_usage(const char *program_name) {
+    printf("Usage: %s <process_file> <time_quantum> [--test]\n", program_name);
     printf("\nArguments:\n");
     printf("  process_file   Path to file containing process definitions\n");
     printf("  time_quantum   Time slice in milliseconds (positive integer)\n");
+    printf("  --test         Emit minimal deterministic output for automation\n");
     printf("\nExample:\n");
     printf("  %s ../data/processes.txt 3\n", program_name);
 }
@@ -455,78 +465,71 @@ void print_usage(const char *program_name) {
  */
 
 int main(int argc, char *argv[]) {
-    printf("\n");
-    printf("╔═══════════════════════════════════════════════════════════════╗\n");
-    printf("║     EXERCISE 2: ROUND-ROBIN TASK SCHEDULER                    ║\n");
-    printf("╚═══════════════════════════════════════════════════════════════╝\n");
-    
-    /* Check command line arguments */
-    if (argc != 3) {
+    bool test_mode = false;
+
+    if (argc == 4 && strcmp(argv[3], "--test") == 0) {
+        test_mode = true;
+    }
+
+    if (argc != 3 && argc != 4) {
+        if (!test_mode) {
+            printf("\n");
+            printf("╔═══════════════════════════════════════════════════════════════╗\n");
+            printf("║     EXERCISE 2: ROUND-ROBIN TASK SCHEDULER                    ║\n");
+            printf("╚═══════════════════════════════════════════════════════════════╝\n");
+        }
         print_usage(argv[0]);
         return 1;
     }
-    
+
     const char *filename = argv[1];
     int quantum = atoi(argv[2]);
-    
+
     if (quantum <= 0) {
         fprintf(stderr, "Error: Time quantum must be a positive integer\n");
         return 1;
     }
-    
-    /* Load processes from file */
+
     Process processes[MAX_PROCESSES];
     int process_count = load_processes(filename, processes);
-    
+
     if (process_count <= 0) {
         fprintf(stderr, "Error: No processes loaded\n");
         return 1;
     }
-    
-    printf("\n  Loaded %d processes from '%s'\n", process_count, filename);
-    printf("  Time Quantum: %d ms\n", quantum);
-    
-    /* Sort by arrival time */
-    qsort(processes, process_count, sizeof(Process), compare_by_arrival);
-    
-    /* Display loaded processes */
+
+    if (!test_mode) {
+        printf("\n");
+        printf("╔═══════════════════════════════════════════════════════════════╗\n");
+        printf("║     EXERCISE 2: ROUND-ROBIN TASK SCHEDULER                    ║\n");
+        printf("╚═══════════════════════════════════════════════════════════════╝\n");
+
+        printf("\n  Loaded %d processes from '%s'\n", process_count, filename);
+        printf("  Time Quantum: %d ms\n", quantum);
+    } else {
+        /* In test mode we avoid a leading blank line or decorative banners. */
+        printf("  Loaded %d processes from '%s'\n", process_count, filename);
+        printf("  Time Quantum: %d ms\n", quantum);
+    }
+
+    /* Deterministic ordering: sort by arrival time then by PID. */
+    qsort(processes, (size_t)process_count, sizeof(Process), compare_by_arrival_then_pid);
+
     print_process_table(processes, process_count);
-    
-    /* Run the scheduler */
+
     GanttEntry gantt[MAX_GANTT_ENTRIES];
     int gantt_count = 0;
-    
-    run_scheduler(processes, process_count, quantum, gantt, &gantt_count);
-    
-    /* Print Gantt chart */
+
+    if (test_mode) {
+        run_scheduler(processes, process_count, quantum, gantt, &gantt_count, false, false);
+        print_averages_only(processes, process_count);
+        return 0;
+    }
+
+    run_scheduler(processes, process_count, quantum, gantt, &gantt_count, true, true);
     print_gantt_chart(gantt, gantt_count);
-    
-    /* Print statistics */
     print_statistics(processes, process_count);
-    
+
     printf("\n");
     return 0;
 }
-
-/* =============================================================================
- * BONUS CHALLENGES (Optional)
- * =============================================================================
- *
- * 1. Add support for process priorities. Implement a multi-level feedback
- *    queue where processes can move between priority levels based on their
- *    behaviour.
- *
- * 2. Implement dynamic process arrival. Allow new processes to be added
- *    from stdin during simulation by checking for input between time slices.
- *
- * 3. Add preemption support. When a higher-priority process arrives, it
- *    should interrupt the current process immediately.
- *
- * 4. Implement different scheduling algorithms (FCFS, SJF, Priority) and
- *    allow the user to choose which one to use via command line.
- *
- * 5. Add a graphical timeline output that shows parallel execution on
- *    multiple CPUs (simulate multi-core scheduling).
- *
- * =============================================================================
- */

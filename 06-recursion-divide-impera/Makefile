@@ -132,26 +132,48 @@ demo-all: all
 
 test: test-ex1 test-ex2
 	@echo ""
-	@echo "$(GREEN)✓ All tests completed$(NC)"
+	@echo "$(GREEN)✓ All tests passed$(NC)"
 
-test-ex1: exercise1_sol
+test-ex1: exercise1
 	@echo ""
-	@echo "$(YELLOW)Testing Exercise 1...$(NC)"
-	@./exercise1_sol < $(TEST_DIR)/test1_input.txt > /tmp/test1_output.txt 2>&1 || true
-	@if grep -q "Enqueued: 10" /tmp/test1_output.txt && grep -q "Dequeued: 10" /tmp/test1_output.txt; then \
-		echo "$(GREEN)  ✓ Exercise 1 basic tests passed$(NC)"; \
+	@echo "$(YELLOW)Testing Exercise 1 (student implementation)...$(NC)"
+	@./exercise1 --test < $(TEST_DIR)/test1_input.txt > /tmp/test1_output.txt 2>&1 || true
+	@if diff -u $(TEST_DIR)/test1_expected.txt /tmp/test1_output.txt > /tmp/test1_diff.txt 2>&1; then \
+		echo "$(GREEN)  ✓ Exercise 1 passed (golden diff)$(NC)"; \
 	else \
-		echo "$(RED)  ✗ Exercise 1 tests failed$(NC)"; \
+		echo "$(RED)  ✗ Exercise 1 failed$(NC)"; \
+		cat /tmp/test1_diff.txt; \
+		exit 1; \
 	fi
 
-test-ex2: exercise2_sol
+test-ex2: exercise2
 	@echo ""
-	@echo "$(YELLOW)Testing Exercise 2...$(NC)"
-	@./exercise2_sol $(TEST_DIR)/test2_input.txt 2 > /tmp/test2_output.txt 2>&1 || true
-	@if grep -q "Loaded 3 processes" /tmp/test2_output.txt; then \
-		echo "$(GREEN)  ✓ Exercise 2 basic tests passed$(NC)"; \
+	@echo "$(YELLOW)Testing Exercise 2 (student implementation)...$(NC)"
+	@./exercise2 $(TEST_DIR)/test2_input.txt 2 --test > /tmp/test2_output.txt 2>&1 || true
+	@if diff -u $(TEST_DIR)/test2_expected.txt /tmp/test2_output.txt > /tmp/test2_diff.txt 2>&1; then \
+		echo "$(GREEN)  ✓ Exercise 2 passed (golden diff)$(NC)"; \
 	else \
-		echo "$(RED)  ✗ Exercise 2 tests failed$(NC)"; \
+		echo "$(RED)  ✗ Exercise 2 failed$(NC)"; \
+		cat /tmp/test2_diff.txt; \
+		exit 1; \
+	fi
+
+# ----------------------------------------------------------------------------
+# Optional instructor-only smoke tests.
+# These do not diff against a golden file because the solution binaries are
+# designed for interactive exposition as well as correctness.
+# ----------------------------------------------------------------------------
+
+test-solutions: $(SOL_TARGETS)
+	@echo ""
+	@echo "$(MAGENTA)Running solution smoke tests...$(NC)"
+	@./exercise1_sol < $(TEST_DIR)/test1_input.txt > /tmp/sol1_out.txt 2>&1 || true
+	@./exercise2_sol $(TEST_DIR)/test2_input.txt 2 > /tmp/sol2_out.txt 2>&1 || true
+	@if grep -q "Loaded 3 processes" /tmp/sol2_out.txt; then \
+		echo "$(GREEN)  ✓ Solutions executed (basic smoke)$(NC)"; \
+	else \
+		echo "$(RED)  ✗ Solution smoke test failed$(NC)"; \
+		exit 1; \
 	fi
 
 # =============================================================================
@@ -257,5 +279,5 @@ help:
 # PHONY DECLARATIONS
 # =============================================================================
 
-.PHONY: all clean run run-ex1 run-ex2 demo-all test test-ex1 test-ex2
+.PHONY: all clean run run-ex1 run-ex2 demo-all test test-ex1 test-ex2 test-solutions
 .PHONY: valgrind valgrind-ex1 valgrind-ex2 solutions slides slides-compare help

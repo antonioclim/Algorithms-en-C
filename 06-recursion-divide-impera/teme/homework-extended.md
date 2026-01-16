@@ -1,261 +1,229 @@
-# Extended Challenges - Week 06: Queues
+# Extended challenges: Week 06 (Queues)
 
-## 🚀 Advanced Challenges (Optional)
+## 1. Rationale
 
-Each correctly solved challenge earns **+10 bonus points** (maximum +50 total).
+The extended challenges are optional and are intended to deepen conceptual understanding beyond the minimum laboratory outcomes. In each task the queue discipline is not an incidental implementation detail but the organising principle of the solution. Correctness therefore depends on articulating the queue invariants and then designing algorithms that preserve them under all input schedules.
 
-These challenges are designed for students who want to deepen their understanding of queue data structures and explore advanced applications.
+Unless stated otherwise the implementation language is ISO C11 and external libraries are discouraged. Where a task references a deque you should interpret this as a double-ended queue with O(1) amortised operations at both ends.
 
----
+Each correctly solved challenge is worth **+10 bonus points** up to a maximum of +50.
 
-## ⭐ Challenge 1: Sliding Window Maximum (Difficulty: Medium)
+## 2. Challenge 1: Sliding-window maximum via a deque
 
-### Description
+### 2.1 Problem statement
 
-Given an array of integers and a window size `k`, find the maximum element in each sliding window as it moves from left to right across the array.
+Given an integer array `A[0..n-1]` and a window size `k` (1 ≤ k ≤ n) compute the maximum value for every contiguous window of length `k`.
 
-**Twist:** You must solve this in O(n) time using a **deque** (double-ended queue).
+### 2.2 Required complexity
 
-### Requirements
+- Time: **O(n)**
+- Space: **O(k)** auxiliary (beyond input and output)
 
-1. Implement a deque data structure from scratch (not using linked list)
-2. Support `push_front`, `push_back`, `pop_front`, `pop_back` operations
-3. Use the deque to maintain candidates for the maximum
-4. Process an array of up to 100,000 elements efficiently
+### 2.3 Core invariant and algorithmic idea
 
-### Example
+Maintain a deque of indices such that:
+
+- Indices are increasing from front to back (they remain in array order).
+- Values `A[idx]` are **strictly decreasing** from front to back.
+
+Consequently the front always holds the index of the maximum in the current window.
+
+### 2.4 Pseudocode
 
 ```
-Input:  arr = [1, 3, -1, -3, 5, 3, 6, 7], k = 3
-Output: [3, 3, 5, 5, 6, 7]
+procedure SLIDING_WINDOW_MAX(A, n, k):
+    D := empty deque  // stores indices
+    for i in 0 .. n-1:
+        // 1) expire indices that fall out of the window
+        while D not empty and D.front <= i-k:
+            D.pop_front()
 
-Explanation:
-Window [1, 3, -1]    -> max = 3
-Window [3, -1, -3]   -> max = 3
-Window [-1, -3, 5]   -> max = 5
-Window [-3, 5, 3]    -> max = 5
-Window [5, 3, 6]     -> max = 6
-Window [3, 6, 7]     -> max = 7
+        // 2) maintain decreasing values
+        while D not empty and A[D.back] <= A[i]:
+            D.pop_back()
+
+        // 3) append current index
+        D.push_back(i)
+
+        // 4) emit answer once the first window closes
+        if i >= k-1:
+            output A[D.front]
 ```
 
-### Hints
+### 2.5 Implementation sketch in C
 
-- The deque should store indices, not values
-- Remove elements from back if they are smaller than current element
-- Remove elements from front if they are outside the current window
-
-### Bonus Points: +10
-
----
-
-## ⭐ Challenge 2: Queue Using Two Stacks (Difficulty: Medium)
-
-### Description
-
-Implement a queue data structure using **only two stacks**. You cannot use any array indexing or direct queue operations.
-
-This is a classic interview question that tests understanding of both stacks and queues.
-
-### Requirements
-
-1. Implement a `Stack` structure with `push`, `pop`, `peek`, `isEmpty`
-2. Implement `QueueFromStacks` using exactly two Stack instances
-3. Support `enqueue`, `dequeue`, `peek`, `isEmpty` operations
-4. Achieve amortised O(1) time for all operations
-
-### Algorithm Hint
-
-- Use one stack for enqueue operations
-- Use another stack for dequeue operations
-- Transfer elements between stacks when necessary
-
-### Example
+A fixed-capacity circular deque is adequate because the deque holds at most `k` indices.
 
 ```c
-QueueFromStacks q;
-qfs_init(&q);
+typedef struct {
+    int *idx;          /* indices into A */
+    int front, rear;   /* modulo capacity */
+    int count;
+    int capacity;
+} Deque;
 
-qfs_enqueue(&q, 1);
-qfs_enqueue(&q, 2);
-qfs_enqueue(&q, 3);
-
-printf("%d\n", qfs_dequeue(&q));  // Output: 1
-printf("%d\n", qfs_dequeue(&q));  // Output: 2
-
-qfs_enqueue(&q, 4);
-
-printf("%d\n", qfs_dequeue(&q));  // Output: 3
-printf("%d\n", qfs_dequeue(&q));  // Output: 4
+/* push_back, pop_back, push_front, pop_front are O(1) with modulo arithmetic */
 ```
 
-### Bonus Points: +10
+### 2.6 Edge cases
 
----
+- `k = 1` yields the original array.
+- Arrays with repeated values require a consistent tie rule. The pseudocode uses `<=` so newer equal values replace older ones which avoids unnecessary growth.
 
-## ⭐ Challenge 3: Snake Game Simulation (Difficulty: Medium-Hard)
+## 3. Challenge 2: Queue implemented with two stacks
 
-### Description
+### 3.1 Target interface
 
-Implement the classic Snake game using a queue to represent the snake's body. The queue naturally models the snake: new positions are enqueued at the head, and old positions are dequeued from the tail.
+Support `enqueue(x)`, `dequeue()`, `peek()` and `is_empty()`.
 
-### Requirements
+### 3.2 Amortised analysis
 
-1. Create a 20x20 game board
-2. Use a queue of (x, y) coordinate pairs for the snake body
-3. Implement movement in four directions (W, A, S, D keys)
-4. Generate food at random positions
-5. Grow the snake when food is eaten (don't dequeue tail)
-6. Detect collisions with walls and self
-7. Display the game state after each move
+Use two stacks:
 
-### Game Mechanics
+- `S_in` collects enqueued elements.
+- `S_out` serves dequeues.
 
-- Snake starts with length 3 at position (10, 10)
-- Food appears at random empty positions
-- Eating food increases score and snake length
-- Game ends on collision
+When `S_out` becomes empty move all elements from `S_in` to `S_out` which reverses order and exposes the oldest element on top.
 
-### Example Output
+### 3.3 Pseudocode
 
 ```
-Score: 5  Length: 8
+procedure ENQUEUE(x):
+    S_in.push(x)
 
-┌────────────────────┐
-│                    │
-│     ●              │
-│    ████            │
-│       █            │
-│       █            │
-│       █            │
-│       █            │
-│                    │
-│              *     │
-│                    │
-└────────────────────┘
+procedure TRANSFER_IF_NEEDED():
+    if S_out.empty():
+        while not S_in.empty():
+            S_out.push(S_in.pop())
 
-Move (WASD): 
+procedure DEQUEUE():
+    TRANSFER_IF_NEEDED()
+    if S_out.empty(): error underflow
+    return S_out.pop()
+
+procedure PEEK():
+    TRANSFER_IF_NEEDED()
+    if S_out.empty(): error underflow
+    return S_out.top()
 ```
 
-### Bonus Points: +10
+The amortised O(1) bound follows from a potential argument: each element is moved from `S_in` to `S_out` at most once.
 
----
+### 3.4 C implementation notes
 
-## ⭐ Challenge 4: Bank Queue Simulation with Multiple Counters (Difficulty: Hard)
+If your stack is a dynamic array you should double capacity on overflow. You should also expose a `stack_destroy` function to release memory.
 
-### Description
+## 4. Challenge 3: Snake simulation as a queue of coordinates
 
-Simulate a bank with multiple service counters. Customers arrive randomly and are served by available counters. Implement queue balancing and statistics tracking.
+### 4.1 Queue interpretation
 
-### Requirements
+Represent the snake body as an ordered sequence of grid cells. Each tick:
 
-1. Support N configurable service counters (each with its own queue)
-2. Implement customer arrival with Poisson-like distribution
-3. Implement service time with exponential-like distribution
-4. Customer joins the shortest queue
-5. Track comprehensive statistics:
-   - Average waiting time
-   - Counter utilisation rates
-   - Maximum queue lengths
-   - Customer throughput
+- The new head cell is enqueued.
+- The tail cell is dequeued unless food was consumed.
 
-### Configuration
+### 4.2 Correctness invariant
 
-```c
-#define NUM_COUNTERS 3
-#define SIMULATION_TIME 480  // 8 hours in minutes
-#define AVG_ARRIVAL_RATE 2   // customers per minute
-#define AVG_SERVICE_TIME 5   // minutes per customer
-```
+The queue contains the snake cells in spatial order from tail (front) to head (rear-1). No cell may appear twice.
 
-### Expected Output
+### 4.3 Pseudocode
 
 ```
-=== Bank Simulation Results ===
-Duration: 480 minutes
-Customers served: 187
+procedure STEP(direction):
+    new_head := head + delta(direction)
+    if new_head hits wall: terminate
+    if new_head in body: terminate
 
-Counter Statistics:
-  Counter 1: 65 customers, 89% utilisation, max queue: 7
-  Counter 2: 62 customers, 85% utilisation, max queue: 6
-  Counter 3: 60 customers, 82% utilisation, max queue: 5
+    enqueue(new_head)
 
-Overall:
-  Average waiting time: 4.3 minutes
-  Maximum waiting time: 18 minutes
-  Customers still waiting at close: 3
+    if new_head == food:
+        spawn new food
+    else:
+        dequeue(tail)
 ```
 
-### Bonus Points: +10
+### 4.4 Practical considerations
 
----
+- Membership tests `new_head in body` are O(length) if performed naively. For acceptable performance maintain an auxiliary boolean grid `occupied[x][y]`.
+- Food generation should sample uniformly from the free cells.
 
-## ⭐ Challenge 5: Lock-Free Queue (Difficulty: Expert)
+## 5. Challenge 4: Bank simulation with multiple counters
 
-### Description
+### 5.1 Model
 
-Implement a thread-safe queue that does not use mutexes. Instead, use atomic operations (compare-and-swap) to ensure thread safety.
+Each counter has its own FIFO queue. Arrivals join the shortest queue. Service times are random.
 
-**Warning:** This is an advanced systems programming challenge. Only attempt if you are comfortable with concurrent programming concepts.
+### 5.2 Distributions
 
-### Requirements
+You do not need to implement exact Poisson or exponential processes but you should approximate the intended behaviour.
 
-1. Use `<stdatomic.h>` for atomic operations
-2. Implement using the Michael-Scott algorithm or similar
-3. Support multiple producers and multiple consumers
-4. No data races or undefined behaviour
-5. Provide proof of correctness via stress testing
+- Inter-arrival times can be generated by a geometric distribution in discrete time.
+- Service times can be generated similarly.
 
-### Key Concepts
+### 5.3 Key algorithmic problem
 
-- Atomic compare-and-swap (CAS)
-- ABA problem and solutions
-- Memory ordering (acquire/release semantics)
-- Hazard pointers or epoch-based reclamation
+This is a discrete-event simulation with competing events:
 
-### Testing
+- Customer arrivals
+- Service completion at each counter
 
-```c
-// Launch 4 producer threads, 4 consumer threads
-// Each producer enqueues 100,000 items
-// Verify all items are dequeued exactly once
+A priority queue is the canonical solution but a sufficiently small number of counters permits an O(N) scan per event.
+
+## 6. Challenge 5: Lock-free queue
+
+### 6.1 Scope warning
+
+A correct lock-free queue is an advanced concurrency exercise. If you attempt it you must specify:
+
+- The memory model assumptions
+- The atomic primitives used
+- The correctness criterion (linearizability)
+
+### 6.2 Suggested reference design
+
+The Michael–Scott queue is a standard baseline. It uses a linked list with a dummy node and two atomic pointers `Head` and `Tail` updated via compare-and-swap.
+
+High-level pseudocode:
+
+```
+procedure ENQ(x):
+    node := new Node(x)
+    loop:
+        tail := Tail
+        next := tail.next
+        if tail == Tail:
+            if next == null:
+                if CAS(tail.next, null, node):
+                    CAS(Tail, tail, node)
+                    return
+            else:
+                CAS(Tail, tail, next)
 ```
 
-### Bonus Points: +10
+This task is assessed primarily on correctness reasoning rather than raw throughput.
 
----
+## 7. References
 
-## 📊 Bonus Point System
+| APA (7th ed) reference | DOI |
+|---|---|
+| Little, J. D. C. (1961). A proof for the queuing formula: L = λW. *Operations Research, 9*(3), 383–387. | https://doi.org/10.1287/opre.9.3.383 citeturn0search0 |
+| Michael, M. M., & Scott, M. L. (1996). Simple, fast and practical non-blocking and blocking concurrent queue algorithms. In *Proceedings of the Fifteenth Annual ACM Symposium on Principles of Distributed Computing* (pp. 267–275). ACM. | https://doi.org/10.1145/248052.248106 citeturn0search1 |
 
-| Challenges Completed | Total Bonus |
-|---------------------|-------------|
-| 1 | +10 points |
-| 2 | +20 points |
-| 3 | +30 points |
-| 4 | +40 points |
-| All 5 | +50 points + "Queue Master" badge 🏆 |
+## 7. Methodological appendix: proving performance claims
 
----
+When an extended challenge specifies an asymptotic bound (for example O(n) for the sliding-window maximum) the expectation is not merely that the final programme appears to run quickly on small inputs but that you can justify the bound from first principles.
 
-## 📤 Submission Requirements
+A minimal proof sketch should contain:
 
-1. Submit each challenge as a separate `.c` file
-2. Name files: `bonus1_sliding.c`, `bonus2_twostack.c`, etc.
-3. Include time complexity analysis in comments
-4. Provide test cases demonstrating correctness
-5. Challenges must compile without warnings
+1. **A counting argument** that bounds the number of deque operations by a linear function of n.
+2. **An explicit statement of the potential function** or amortisation invariant if the argument is amortised.
+3. **A space bound** expressed in terms of the maximal queue occupancy and the representation used.
 
----
+Example: in the monotone deque method, each index is inserted once and removed at most once from the front and at most once from the back. Therefore the total number of deque mutations is O(n) even though a single iteration may perform multiple pops.
 
-## 🎯 Learning Outcomes
+## 8. References
 
-Completing these challenges will help you:
-
-- Master circular buffer and deque implementations
-- Understand stack-queue relationships
-- Apply queues to game development
-- Learn discrete event simulation
-- Explore lock-free concurrent programming
-
----
-
-*These challenges go beyond the standard curriculum. Attempting them demonstrates initiative and deeper understanding.*
+| APA (7th ed) reference | DOI |
+|---|---|
+| Little, J. D. C. (1961). A proof for the queuing formula: L = λW. *Operations Research, 9*(3), 383–387. | https://doi.org/10.1287/opre.9.3.383 citeturn0search0 |
+| Michael, M. M., & Scott, M. L. (1996). Simple, fast and practical non-blocking and blocking concurrent queue algorithms. In *Proceedings of the Fifteenth Annual ACM Symposium on Principles of Distributed Computing* (pp. 267–275). ACM. | https://doi.org/10.1145/248052.248106 citeturn0search1 |

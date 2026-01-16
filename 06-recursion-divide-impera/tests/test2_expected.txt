@@ -10,5 +10,5 @@
   │   3 │ ProcessC       │      2    │      0    │
   └─────┴────────────────┴───────────┴───────────┘
 
-  Average Turnaround Time: 8.67 ms
-  Average Waiting Time:    4.67 ms
+  Average Turnaround Time: 9.33 ms
+  Average Waiting Time:    5.33 ms

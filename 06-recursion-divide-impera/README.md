@@ -1,454 +1,551 @@
-# Week 06: Queues
+# Week 06: Queues in C
 
-## 🎯 Learning Objectives
+## 1. Purpose and scope
 
-Upon completion of this laboratory, students will be able to:
+This laboratory unit consolidates the queue abstract data type (ADT) as a first-class modelling device for *ordered, single-ended admission* and *single-ended service*. The focus is deliberately twofold:
 
-1. **Remember** the fundamental characteristics of the queue abstract data type, including FIFO ordering, front and rear pointers and the core operations of enqueue and dequeue
-2. **Understand** the behavioural differences between array-based and linked-list implementations, particularly regarding memory allocation strategies and pointer manipulation
-3. **Apply** queue data structures to solve practical problems such as task scheduling, breadth-first traversal and buffer management in producer-consumer scenarios
-4. **Analyse** the time and space complexity of queue operations across different implementations, recognising the trade-offs between static array bounds and dynamic memory allocation
-5. **Evaluate** the suitability of circular buffer implementations versus linear arrays, considering cache locality, memory fragmentation and wraparound overhead
-6. **Create** custom queue implementations tailored to specific application requirements, including priority queues, double-ended queues (deques) and bounded blocking queues
+1. A **circular buffer queue** in which FIFO semantics are realised over a bounded array by modular arithmetic and a carefully maintained representation invariant.
+2. A **round-robin scheduler simulation** in which a queue becomes a concrete operational model of a ready list under preemptive time-slicing.
 
----
+The repository therefore serves both as an algorithms-and-data-structures artefact and as a bridge to systems thinking: queues are not only containers but also *policies expressed in state transitions*.
 
-## 📜 Historical Context
+## 2. Learning outcomes
 
-The queue data structure emerged from the theoretical foundations of automata theory and formal language processing during the mid-twentieth century. The concept of ordered, sequential access—where elements depart in the same order they arrive—mirrors countless natural phenomena: customers awaiting service, messages traversing network routers and processes competing for CPU time.
+After completing the material and exercises you should be able to:
 
-Alan Turing's seminal 1936 paper on computable numbers established the tape-based model of computation that implicitly relied on sequential access patterns. However, the explicit formalisation of queues as abstract data types crystallised during the 1960s alongside the development of ALGOL and early operating systems. Edsger Dijkstra's work on the THE multiprogramming system (1968) demonstrated how queues could coordinate concurrent processes, whilst Tony Hoare's subsequent research on communicating sequential processes (1978) elevated message queues to a fundamental synchronisation primitive.
+- Specify the queue ADT by behaviour and invariants rather than by implementation details.
+- Implement a bounded queue as a ring buffer with strict O(1) enqueue and dequeue in C.
+- Justify the correctness of circular indexing by maintaining an explicit state invariant.
+- Analyse the time and space complexity of queue operations in array-based and pointer-based designs.
+- Use a queue as the central structure in a discrete-event simulation of round-robin CPU scheduling.
+- Produce deterministic, testable output by separating algorithmic state evolution from presentation.
 
-The circular buffer—a memory-efficient queue variant—gained prominence in embedded systems and real-time signal processing during the 1970s. Its elegant solution to the "false overflow" problem (where a linear array appears exhausted despite containing unused space) became standard practice in audio codecs, network interface cards and kernel-level buffer caches.
-
-### Key Figure: Edsger W. Dijkstra (1930–2002)
-
-Edsger Wybe Dijkstra was a Dutch computer scientist whose contributions shaped nearly every aspect of modern programming. At the Technische Hogeschool Eindhoven, he developed the THE operating system—one of the first to employ layered abstraction and structured synchronisation primitives including semaphores and process queues.
-
-His shortest path algorithm (1956) revolutionised graph theory and network routing, whilst his later advocacy for structured programming and formal verification established rigorous standards for software correctness. Dijkstra received the Turing Award in 1972 for his fundamental contributions to programming as a high, intellectual challenge.
-
-> *"Computer Science is no more about computers than astronomy is about telescopes."*
-> — Edsger W. Dijkstra
-
----
-
-## 📚 Theoretical Foundations
-
-### 1. The Queue Abstract Data Type
-
-A queue is a linear collection that enforces First-In-First-Out (FIFO) ordering: elements are inserted at one end (the **rear**) and removed from the opposite end (the **front**). This discipline ensures that the earliest arrival is always the next departure.
+## 3. Repository structure
 
 ```
-                    QUEUE OPERATIONS
-    
-         enqueue(x)                    dequeue()
-              │                             │
-              ▼                             ▼
-    ┌─────────────────────────────────────────────┐
-    │  A  │  B  │  C  │  D  │  E  │     │     │   │
-    └─────────────────────────────────────────────┘
-           ▲                       ▲
-         front                   rear
-    
-    peek() returns A without removal
-    isEmpty() returns false
-    size() returns 5
+06-recursion-divide-impera/
+├── README.md
+├── Makefile
+├── src/
+│   ├── example1.c        # Fully worked demonstrations
+│   ├── exercise1.c       # Circular buffer queue (student implementation)
+│   └── exercise2.c       # Round-robin scheduler (student implementation)
+├── solution/
+│   ├── exercise1_sol.c
+│   ├── exercise2_sol.c
+│   ├── homework1_sol.c
+│   └── homework2_sol.c
+├── data/
+│   ├── commands.txt      # Interactive command sequence for Exercise 1
+│   └── processes.txt     # Process set for Exercise 2
+├── tests/
+│   ├── test1_input.txt
+│   ├── test1_expected.txt
+│   ├── test2_input.txt
+│   └── test2_expected.txt
+├── teme/
+│   ├── homework-requirements.md
+│   └── homework-extended.md
+└── slides/
+    ├── presentation-week06.html
+    └── presentation-comparativ.html
 ```
 
-**Core Operations:**
+The directory name is historical. The technical content of this week is **queues**.
 
-| Operation | Description | Time Complexity |
-|-----------|-------------|-----------------|
-| `enqueue(item)` | Insert item at rear | O(1) |
-| `dequeue()` | Remove and return front item | O(1) |
-| `peek()` / `front()` | Return front item without removal | O(1) |
-| `isEmpty()` | Test whether queue contains no elements | O(1) |
-| `size()` | Return count of elements | O(1) |
+## 4. The queue ADT as a behavioural contract
 
-### 2. Array-Based Implementation
+### 4.1 Abstract specification
 
-The simplest queue implementation uses a contiguous array with two index variables tracking the front and rear positions. However, naïve implementations suffer from **queue drift**: as elements are dequeued, the front index advances, leaving unusable space at the array's beginning.
+Let a queue contain a finite sequence \(Q = \langle q_0, q_1, \dots, q_{n-1} \rangle\) where \(q_0\) is the element at the **front** and \(q_{n-1}\) is the element at the **rear**.
+
+The core operations may be specified as partial functions:
+
+- **enqueue**: \(\text{enqueue}(Q, x) = \langle q_0, \dots, q_{n-1}, x \rangle\)
+- **dequeue**: \(\text{dequeue}(Q) = (q_0, \langle q_1, \dots, q_{n-1} \rangle)\) provided \(n > 0\)
+- **peek**: \(\text{peek}(Q) = q_0\) provided \(n > 0\)
+
+A crucial point in robust implementation is that this specification does **not** mention memory layout, indices or pointers. Those are *representation choices* that must be shown to preserve the contract.
+
+### 4.2 Representation invariants
+
+In this week’s bounded implementation, the queue state is represented by a 5-tuple:
+
+\[
+(data, front, rear, count, capacity)
+\]
+
+with the invariants:
+
+1. \(0 \le front < capacity\)
+2. \(0 \le rear < capacity\)
+3. \(0 \le count \le capacity\)
+4. **Empty condition**: \(count = 0\)
+5. **Full condition**: \(count = capacity\)
+6. **Index semantics**:
+   - `front` indexes the next element to be dequeued
+   - `rear` indexes the next slot to be written by enqueue
+
+The use of `count` eliminates the classic ambiguity in circular buffers where `(front == rear)` can mean either empty or full.
+
+## 5. Circular buffers and modular arithmetic
+
+### 5.1 The algorithmic idea
+
+A circular buffer treats an array as a ring. If \(i\) is an index then its successor under wraparound is:
+
+\[
+\text{next}(i) = (i + 1) \bmod capacity
+\]
+
+This simple recurrence is the entire reason the data structure is attractive: it provides a *constant-time pointer movement* without shifting elements.
+
+### 5.2 Pseudocode
+
+#### Enqueue
+
+```
+procedure ENQUEUE(Q, x)
+    if Q.count = Q.capacity then
+        report OVERFLOW
+        return false
+    end if
+
+    Q.data[Q.rear] ← x
+    Q.rear ← (Q.rear + 1) mod Q.capacity
+    Q.count ← Q.count + 1
+    return true
+end procedure
+```
+
+#### Dequeue
+
+```
+procedure DEQUEUE(Q)
+    if Q.count = 0 then
+        report UNDERFLOW
+        return (false, ⊥)
+    end if
+
+    x ← Q.data[Q.front]
+    Q.front ← (Q.front + 1) mod Q.capacity
+    Q.count ← Q.count − 1
+    return (true, x)
+end procedure
+```
+
+#### Peek
+
+```
+procedure PEEK(Q)
+    if Q.count = 0 then
+        return (false, ⊥)
+    end if
+    return (true, Q.data[Q.front])
+end procedure
+```
+
+### 5.3 Language mapping examples
+
+The algorithm above is language-agnostic. The following snippets show the same invariant and update pattern expressed in several common languages.
+
+#### C (bounded ring buffer)
 
 ```c
-typedef struct {
-    int *data;
-    int front;
-    int rear;
-    int capacity;
-    int count;
-} ArrayQueue;
-
-void enqueue(ArrayQueue *q, int item) {
-    if (q->count == q->capacity) {
-        /* Queue is full - cannot insert */
-        return;
-    }
-    q->data[q->rear] = item;
-    q->rear = (q->rear + 1) % q->capacity;  /* Circular wraparound */
-    q->count++;
-}
-
-int dequeue(ArrayQueue *q) {
-    if (q->count == 0) {
-        /* Queue is empty - underflow */
-        return -1;
-    }
-    int item = q->data[q->front];
-    q->front = (q->front + 1) % q->capacity;
-    q->count--;
-    return item;
-}
+q->data[q->rear] = item;
+q->rear = (q->rear + 1) % q->capacity;
+q->count++;
 ```
 
-### 3. Circular Buffer (Ring Buffer)
+#### C++ (same logic with RAII container)
 
-The circular buffer elegantly solves queue drift by treating the underlying array as a logical ring. When indices reach the array boundary, they wrap around to position zero via modular arithmetic.
-
-```
-              CIRCULAR BUFFER MECHANICS
-    
-    Linear View:    [0] [1] [2] [3] [4] [5] [6] [7]
-                         ▲               ▲
-                       front           rear
-    
-    Circular View:
-    
-                         ┌───┐
-                    ┌────┤ 2 ├────┐
-                    │    └───┘    │
-                 ┌──┴─┐        ┌──┴─┐
-                 │ 1  │        │ 3  │
-                 └──┬─┘        └──┬─┘
-                    │            │
-    Empty ──►   ┌───┴──┐    ┌───┴──┐
-                │  0   │    │  4   │   ◄── rear (next insert)
-                └───┬──┘    └───┬──┘
-                    │            │
-                 ┌──┴─┐        ┌──┴─┐
-                 │ 7  │        │ 5  │
-                 └──┬─┘        └──┬─┘
-                    │    ┌───┐    │
-                    └────┤ 6 ├────┘
-                         └───┘
-    
-    front points to oldest element
-    rear points to next available slot
-    Size = (rear - front + capacity) % capacity
+```cpp
+buffer[rear] = item;
+rear = (rear + 1) % capacity;
+++count;
 ```
 
-**Complexity Analysis:**
+#### Java (typical array-backed queue skeleton)
 
-| Implementation | Enqueue | Dequeue | Space | Cache Locality |
-|----------------|---------|---------|-------|----------------|
-| Linear Array | O(1) amortised | O(n)* | O(n) | Excellent |
-| Circular Buffer | O(1) | O(1) | O(n) | Excellent |
-| Linked List | O(1) | O(1) | O(n) + pointers | Poor |
-
-*Linear dequeue requires shifting all elements
-
----
-
-## 🏭 Industrial Applications
-
-### 1. Operating System Process Scheduling
-
-Modern operating systems maintain ready queues to schedule processes for CPU execution. The completely fair scheduler (CFS) in Linux employs red-black trees, but simpler round-robin schedulers use circular queues.
-
-```c
-/* Simplified round-robin scheduler */
-typedef struct {
-    pid_t processes[MAX_PROCESSES];
-    int front, rear;
-    int time_quantum;
-} ReadyQueue;
-
-void schedule_next(ReadyQueue *rq) {
-    if (!is_empty(rq)) {
-        pid_t current = dequeue(rq);
-        execute_for(current, rq->time_quantum);
-        if (process_remaining(current)) {
-            enqueue(rq, current);  /* Re-queue if not finished */
-        }
-    }
-}
+```java
+array[rear] = item;
+rear = (rear + 1) % capacity;
+count++;
 ```
 
-### 2. Network Packet Buffering
+#### Python (explicit indices, not `collections.deque`)
 
-Network interface cards and routers employ queues to buffer incoming packets during traffic bursts. Quality of Service (QoS) mechanisms often use multiple priority queues.
-
-```c
-/* Priority queue for network packets */
-typedef struct {
-    Queue high_priority;    /* VoIP, video conferencing */
-    Queue medium_priority;  /* HTTP, general traffic */
-    Queue low_priority;     /* Background downloads */
-} QoSBuffer;
-
-Packet *get_next_packet(QoSBuffer *buf) {
-    if (!is_empty(&buf->high_priority))
-        return dequeue(&buf->high_priority);
-    if (!is_empty(&buf->medium_priority))
-        return dequeue(&buf->medium_priority);
-    return dequeue(&buf->low_priority);
-}
+```python
+data[rear] = item
+rear = (rear + 1) % capacity
+count += 1
 ```
 
-### 3. Print Spooler Systems
+The essential pedagogical point is that the *proof obligations* remain the same: the invariants must be preserved after each operation, regardless of syntax.
 
-Print spoolers queue documents awaiting output to physical printers, enabling asynchronous job submission and fair resource allocation.
+## 6. Exercise 1: `src/exercise1.c` (interactive circular queue)
 
-```c
-/* Print job spooler */
-typedef struct {
-    char filename[256];
-    int pages;
-    int copies;
-    time_t submitted;
-} PrintJob;
+### 6.1 Functional overview
 
-typedef struct {
-    PrintJob jobs[MAX_JOBS];
-    int front, rear, count;
-} PrintQueue;
+The program implements a dynamic circular queue of integers and exposes it through a small command language:
+
+- `ENQUEUE n`
+- `DEQUEUE`
+- `PEEK`
+- `SIZE`
+- `DISPLAY` (linear view)
+- `CIRCULAR` (ring view)
+- `STATS`
+- `QUIT`
+
+The internal queue operations are strictly O(1). The display procedures are O(capacity) by design because they render the entire ring for conceptual clarity.
+
+### 6.2 Deterministic test behaviour
+
+The program distinguishes **interactive mode** from **scripted mode**:
+
+- In interactive mode the programme prints a banner and a command prompt.
+- In scripted mode (stdin is redirected or `--test` is passed) the programme prints only the semantic results of commands.
+
+This separation prevents the frequent failure mode in automated marking where prompts and decorative output pollute golden files.
+
+### 6.3 Correctness argument sketch
+
+A minimal correctness argument can be organised around invariant preservation.
+
+- Base case: at creation `front = rear = 0` and `count = 0` so all invariants hold.
+- Enqueue step: if not full then the write at `rear` is within bounds and `rear ← next(rear)` remains within bounds. Incrementing `count` preserves `0 ≤ count ≤ capacity`.
+- Dequeue step: if not empty then the read at `front` is within bounds and `front ← next(front)` remains within bounds. Decrementing `count` preserves `0 ≤ count`.
+
+FIFO ordering follows because the only removal point is `front` and `front` advances exactly once per successful dequeue, while enqueued elements are written at successive `rear` positions.
+
+## 7. Exercise 2: `src/exercise2.c` (round-robin scheduler)
+
+### 7.1 Process model
+
+Each process is represented by:
+
+- `pid` and `name` for identification
+- `burst_time` and `remaining_time` to model required CPU service
+- `arrival_time` to model release into the ready set
+- `start_time`, `completion_time`, `turnaround_time`, `waiting_time` as derived metrics
+
+The simulation is discrete in units of milliseconds. The quantum is a positive integer number of milliseconds.
+
+### 7.2 Scheduler as a queue-driven state machine
+
+Round-robin scheduling can be described as repeated application of a transition rule over the global state:
+
+\[
+(t, Ready, P) \rightarrow (t', Ready', P')
+\]
+
+where `Ready` is a FIFO queue of process indices.
+
+A single scheduling step performs:
+
+1. Admit all processes with `arrival_time ≤ t` that are not yet completed.
+2. If the queue is empty but there exists a future arrival then jump time to the next arrival.
+3. Dequeue the front process.
+4. Run it for `min(quantum, remaining_time)`.
+5. Update `t` and `remaining_time`.
+6. If unfinished then re-enqueue it, otherwise finalise metrics.
+
+### 7.3 Pseudocode
+
+```
+procedure ROUND_ROBIN(processes, quantum)
+    sort processes by (arrival_time, pid)
+
+    Ready ← empty queue
+    t ← 0
+    completed ← 0
+    next ← 0
+
+    while completed < N do
+        while next < N and processes[next].arrival_time ≤ t do
+            Ready.enqueue(next)
+            next ← next + 1
+        end while
+
+        if Ready.empty() then
+            if next < N then
+                t ← processes[next].arrival_time
+                continue
+            else
+                break
+            end if
+        end if
+
+        i ← Ready.dequeue()
+        p ← processes[i]
+
+        if p.start_time = −1 then
+            p.start_time ← t
+        end if
+
+        slice ← min(quantum, p.remaining_time)
+        t ← t + slice
+        p.remaining_time ← p.remaining_time − slice
+
+        while next < N and processes[next].arrival_time ≤ t do
+            Ready.enqueue(next)
+            next ← next + 1
+        end while
+
+        if p.remaining_time > 0 then
+            Ready.enqueue(i)
+        else
+            p.completion_time ← t
+            p.turnaround_time ← t − p.arrival_time
+            p.waiting_time ← p.turnaround_time − p.burst_time
+            completed ← completed + 1
+        end if
+    end while
+end procedure
 ```
 
-### 4. Breadth-First Search (BFS)
+Two implementation choices in this repository are worth noticing:
 
-The BFS algorithm relies fundamentally on a queue to explore graph vertices level by level, ensuring the shortest path discovery in unweighted graphs.
+- The ready queue stores **indices**, not pointers. This avoids ownership ambiguity and makes it easy to store processes in a fixed array.
+- Sorting ties by PID ensures deterministic behaviour when multiple processes arrive at the same time. A stable result matters for reproducible tests.
 
-```c
-void bfs(Graph *g, int start) {
-    bool visited[g->vertices];
-    memset(visited, false, sizeof(visited));
-    
-    Queue q;
-    init_queue(&q);
-    
-    visited[start] = true;
-    enqueue(&q, start);
-    
-    while (!is_empty(&q)) {
-        int current = dequeue(&q);
-        printf("Visited: %d\n", current);
-        
-        for (int i = 0; i < g->adj_count[current]; i++) {
-            int neighbour = g->adj_list[current][i];
-            if (!visited[neighbour]) {
-                visited[neighbour] = true;
-                enqueue(&q, neighbour);
-            }
-        }
-    }
-}
-```
+### 7.4 Test mode
 
-### 5. Message Queues in Distributed Systems
-
-Enterprise systems like Apache Kafka, RabbitMQ and Amazon SQS use persistent message queues for asynchronous communication between microservices.
-
-```c
-/* Producer-consumer pattern */
-typedef struct {
-    Message buffer[BUFFER_SIZE];
-    int front, rear, count;
-    pthread_mutex_t lock;
-    pthread_cond_t not_empty;
-    pthread_cond_t not_full;
-} BlockingQueue;
-```
-
----
-
-## 💻 Laboratory Exercises
-
-### Exercise 1: Circular Buffer Implementation
-
-Implement a complete circular buffer queue supporting integers with the following requirements:
-
-1. Create the `CircularQueue` structure with appropriate fields
-2. Implement `cq_init()` to initialise a queue with given capacity
-3. Implement `cq_enqueue()` with overflow detection
-4. Implement `cq_dequeue()` with underflow detection
-5. Implement `cq_peek()` to view the front element
-6. Implement `cq_is_empty()` and `cq_is_full()` predicates
-7. Implement `cq_size()` to return current element count
-8. Implement `cq_destroy()` to release allocated memory
-9. Create a visualisation function showing queue state
-
-**Input:** Commands from stdin (ENQUEUE n, DEQUEUE, PEEK, SIZE, DISPLAY)  
-**Output:** Operation results and queue visualisation
-
-### Exercise 2: Task Scheduler Simulation
-
-Build a round-robin task scheduler using a queue of process structures:
-
-1. Define `Process` structure with pid, name, burst_time and remaining_time
-2. Implement queue operations for Process pointers
-3. Create `load_processes()` to read from file
-4. Implement `run_scheduler()` with configurable time quantum
-5. Track and display completion times, turnaround times and waiting times
-6. Generate Gantt chart visualisation of execution order
-7. Calculate average turnaround and waiting times
-8. Support adding new processes during simulation
-
-**Input:** Process file and time quantum  
-**Output:** Execution trace, statistics and Gantt chart
-
----
-
-## 🔧 Compilation and Execution
+`exercise2` supports a minimal mode:
 
 ```bash
-# Build all targets
+./exercise2 tests/test2_input.txt 2 --test
+```
+
+In this mode it prints the loaded processes and average statistics only. It still runs the full scheduler internally, therefore correctness is unchanged. Only the presentation layer is reduced.
+
+## 8. Build, run and test
+
+### 8.1 Compilation
+
+```bash
 make
+```
 
-# Build individual files
-make example1
-make exercise1
-make exercise2
+### 8.2 Interactive execution
 
-# Run the complete demonstration
-make run
+```bash
+make run-ex1
+make run-ex2
+```
 
-# Execute automated tests
+### 8.3 Automated tests
+
+The `Makefile` implements golden-file tests:
+
+```bash
 make test
+```
 
-# Check for memory leaks
+Exercise 1 uses redirected stdin and compares output against `tests/test1_expected.txt`.
+
+Exercise 2 runs in `--test` mode and compares output against `tests/test2_expected.txt`.
+
+### 8.4 Memory checking
+
+If you have `valgrind` installed:
+
+```bash
 make valgrind
-
-# Clean build artifacts
-make clean
-
-# Display help
-make help
+make valgrind-ex1
+make valgrind-ex2
 ```
 
-**Compiler Flags:**
-- `-Wall` : Enable all warnings
-- `-Wextra` : Enable extra warnings
-- `-std=c11` : Use C11 standard
-- `-g` : Include debugging symbols
+## 9. Notes on the slide decks
 
----
+The HTML slide decks are teaching artefacts rather than executable programmes. They provide:
 
-## 📁 Directory Structure
+- A conceptual explanation of FIFO discipline and its contrast with LIFO.
+- A comparison between array-backed and linked-list-backed queues.
+- A worked round-robin scheduling trace that links the abstract queue to a systems application.
+
+For reproducibility, prefer the code in `src/` as the reference implementation.
+
+## 9.1 Analytical appendix: representation invariants and correctness arguments
+
+### 9.1.1 Algebraic view of the queue ADT
+
+The queue can be described as an abstract sequence Q = ⟨q0, q1, …, q{n-1}⟩ with the following partial operations:
+
+- `enqueue(Q, x)` yields Q′ = ⟨q0, …, q{n-1}, x⟩
+- `dequeue(Q)` yields (q0, ⟨q1, …, q{n-1}⟩) when n > 0
+- `peek(Q)` yields q0 when n > 0
+- `size(Q)` yields n
+
+A correct concrete implementation must establish a simulation relation between (front, rear, count, data[]) and the abstract sequence. In this laboratory unit the relation is most conveniently expressed by a derived indexing function:
+
+- `abs_index(i) = (front + i) mod capacity` for i ∈ [0, count)
+- `Q[i] = data[abs_index(i)]`
+
+The *representation invariants* then become the proof obligations that must hold after every operation:
+
+1. `0 ≤ count ≤ capacity`
+2. `0 ≤ front < capacity` and `0 ≤ rear < capacity`
+3. `rear = (front + count) mod capacity`
+4. For all i in [0, count) the element at `data[abs_index(i)]` equals the abstract element Q[i]
+
+The use of an explicit `count` field is not cosmetic. It provides an unambiguous empty state (`count = 0`) and an unambiguous full state (`count = capacity`) without reserving a sentinel slot. Alternative designs exist but they move the ambiguity elsewhere.
+
+### 9.1.2 Inductive proof sketch for circular enqueue and dequeue
+
+A suitable correctness argument for `enqueue` and `dequeue` is an induction over the length of an operation trace. The inductive hypothesis is that the representation invariants hold before an operation. The step case then shows they hold afterwards.
+
+For `enqueue` with item x:
+
+- Precondition: `count < capacity`.
+- Store: `data[rear] ← x`.
+- Update: `rear ← (rear + 1) mod capacity` and `count ← count + 1`.
+
+Invariant (3) after the update follows from algebra:
+
+- Old: `rear_old = (front + count_old) mod capacity`.
+- New: `rear_new = (rear_old + 1) mod capacity = (front + count_old + 1) mod capacity = (front + count_new) mod capacity`.
+
+For `dequeue`:
+
+- Precondition: `count > 0`.
+- Read: `x ← data[front]`.
+- Update: `front ← (front + 1) mod capacity` and `count ← count - 1`.
+
+Invariant (3) holds because the new rear remains the end of the abstract sequence and the new front points to the former second element.
+
+These sketches are short because the data representation is intentionally simple. In more elaborate designs (for example queues with resizing) the invariants become richer and the proof requires a stronger simulation relation.
+
+### 9.1.3 Alternative ring-buffer designs and when to use them
+
+The present code uses (front, rear, count). Two common alternatives appear frequently in systems code:
+
+1. **One-slot-empty convention**
+   - Maintain front and rear only.
+   - Declare the buffer full when `(rear + 1) mod capacity == front`.
+   - Effective capacity becomes `capacity - 1`.
+
+2. **Monotone indices with masking**
+   - Maintain `front` and `rear` as monotonically increasing unsigned integers.
+   - Let the physical index be `front & (capacity - 1)` when capacity is a power of two.
+   - This avoids the modulo operator and can be beneficial in high-rate producer–consumer code but it imposes a strong constraint on the chosen capacity.
+
+Each alternative is a trade-off between conceptual simplicity, throughput, memory footprint and debuggability. For an introductory course the (front, rear, count) model provides the most direct correspondence with the ADT specification.
+
+## 9.2 Cross-language correspondences
+
+The laboratory exercises are implemented in C to make memory layout, pointer discipline and invariants explicit. Conceptually the same designs exist in higher-level languages though the failure modes change.
+
+### 9.2.1 Python
+
+Python’s `collections.deque` implements a double-ended queue with amortised O(1) insertion and removal at both ends. A FIFO queue is therefore immediate:
+
+```python
+from collections import deque
+
+q = deque()
+q.append(10)      # enqueue
+x = q.popleft()   # dequeue
+```
+
+If one insists on an explicit circular buffer for didactic symmetry, the structure mirrors the C version:
+
+```python
+class CircularQueue:
+    def __init__(self, capacity: int):
+        self.data = [None] * capacity
+        self.front = 0
+        self.rear = 0
+        self.count = 0
+        self.capacity = capacity
+
+    def enqueue(self, x):
+        if self.count == self.capacity:
+            raise OverflowError
+        self.data[self.rear] = x
+        self.rear = (self.rear + 1) % self.capacity
+        self.count += 1
+
+    def dequeue(self):
+        if self.count == 0:
+            raise IndexError
+        x = self.data[self.front]
+        self.front = (self.front + 1) % self.capacity
+        self.count -= 1
+        return x
+```
+
+### 9.2.2 C++
+
+The standard library provides `std::queue` (typically backed by `std::deque`). The key conceptual point is that the interface enforces FIFO but does not expose the representation:
+
+```cpp
+#include <queue>
+
+std::queue<int> q;
+q.push(10);
+int x = q.front();
+q.pop();
+```
+
+### 9.2.3 Java
+
+`ArrayDeque<E>` is the canonical non-concurrent FIFO structure in modern Java. It is array-backed and uses an internal circular buffer:
+
+```java
+import java.util.ArrayDeque;
+
+ArrayDeque<Integer> q = new ArrayDeque<>();
+q.addLast(10);   // enqueue
+int x = q.removeFirst();  // dequeue
+```
+
+The pedagogical point is not that one should reimplement `ArrayDeque` in production but that the invariants studied here are exactly the invariants that make library implementations reliable.
+
+## 9.3 BFS as a queue-first graph traversal
+
+The complete example includes a BFS demonstration to emphasise that the FIFO discipline is not an arbitrary choice but a correctness condition: the queue realises exploration in non-decreasing distance from the start vertex.
+
+Pseudocode (parent pointers omitted for brevity):
 
 ```
-week-06-queues/
-├── README.md                           # This documentation
-├── Makefile                            # Build automation
-│
-├── slides/
-│   ├── presentation-week06.html        # Main lecture (40 slides)
-│   └── presentation-comparativ.html    # Language comparison (12 slides)
-│
-├── src/
-│   ├── example1.c                      # Complete queue demonstration
-│   ├── exercise1.c                     # Circular buffer exercise
-│   └── exercise2.c                     # Task scheduler exercise
-│
-├── data/
-│   ├── processes.txt                   # Sample process data
-│   └── commands.txt                    # Queue command sequence
-│
-├── tests/
-│   ├── test1_input.txt                 # Test input for exercise 1
-│   ├── test1_expected.txt              # Expected output for exercise 1
-│   ├── test2_input.txt                 # Test input for exercise 2
-│   └── test2_expected.txt              # Expected output for exercise 2
-│
-├── teme/
-│   ├── homework-requirements.md        # Homework assignments
-│   └── homework-extended.md            # Bonus challenges
-│
-└── solution/
-    ├── exercise1_sol.c                 # Exercise 1 solution
-    ├── exercise2_sol.c                 # Exercise 2 solution
-    ├── homework1_sol.c                 # Homework 1 solution
-    └── homework2_sol.c                 # Homework 2 solution
+BFS(G, s):
+    for each vertex v in G:
+        visited[v] = false
+    Q = empty queue
+    visited[s] = true
+    enqueue(Q, s)
+
+    while Q not empty:
+        v = dequeue(Q)
+        for each neighbour w of v:
+            if not visited[w]:
+                visited[w] = true
+                enqueue(Q, w)
 ```
 
----
+The complexity is O(|V| + |E|) when adjacency lists are used and each vertex is enqueued at most once. A queue that violates FIFO can break the layer-by-layer invariant and therefore destroy shortest-path guarantees in unweighted graphs.
 
-## 📖 Recommended Reading
+## 9.4 Test design notes
 
-### Essential
+The `tests/` directory contains *golden files* rather than property tests. This is intentional. For an introductory laboratory the most common failure modes are formatting mistakes, off-by-one errors in wraparound logic and incorrect handling of empty or full states. Golden tests detect these failures early and deterministically.
 
-- Cormen, T.H., Leiserson, C.E., Rivest, R.L. & Stein, C. (2022). *Introduction to Algorithms* (4th ed.). MIT Press. Chapter 10: Elementary Data Structures
-- Sedgewick, R. & Wayne, K. (2011). *Algorithms* (4th ed.). Addison-Wesley. Section 1.3: Bags, Queues, and Stacks
-- Kernighan, B.W. & Ritchie, D.M. (1988). *The C Programming Language* (2nd ed.). Prentice Hall
+A robust personal test suite should additionally include:
 
-### Advanced
+- **Wraparound stress**: enqueue to capacity, dequeue half, enqueue again and confirm index arithmetic wraps correctly.
+- **Underflow and overflow accounting**: issue invalid operations and verify that counters change but the queue state does not.
+- **Scheduler tie cases**: processes with identical arrival times, identical burst times and identical PIDs should still yield deterministic output. This is why the implementation sorts by arrival time and then PID.
 
-- Herlihy, M. & Shavit, N. (2012). *The Art of Multiprocessor Programming*. Morgan Kaufmann. Chapter 10: Concurrent Queues
-- Tanenbaum, A.S. & Bos, H. (2014). *Modern Operating Systems* (4th ed.). Pearson. Chapter 2: Processes and Threads
+If you extend the scheduler to accept dynamic arrivals from stdin, introduce a fixed seed for random arrivals during testing and record the seed in the output so that a trace is reproducible.
 
-### Online Resources
+## 10. References
 
-- [GeeksforGeeks: Queue Data Structure](https://www.geeksforgeeks.org/queue-data-structure/)
-- [Visualgo: Queue Visualisation](https://visualgo.net/en/list)
-- [Linux Kernel Circular Buffer](https://www.kernel.org/doc/html/latest/core-api/circular-buffers.html)
+| APA (7th ed) reference | DOI |
+|---|---|
+| Dijkstra, E. W. (1968). The structure of the “THE”-multiprogramming system. *Communications of the ACM, 11*(5), 341–346. | https://doi.org/10.1145/363095.363143 citeturn0search2turn0search13 |
+| Hoare, C. A. R. (1978). Communicating sequential processes. *Communications of the ACM, 21*(8), 666–677. | https://doi.org/10.1145/359576.359585 citeturn1search0 |
+| Lee, C. Y. (1961). An algorithm for path connections and its applications. *IRE Transactions on Electronic Computers, EC-10*(3), 346–365. | https://doi.org/10.1109/TEC.1961.5219222 citeturn1search8 |
+| Little, J. D. C. (1961). A proof for the queuing formula: L = λW. *Operations Research, 9*(3), 383–387. | https://doi.org/10.1287/opre.9.3.383 citeturn0search0 |
+| Michael, M. M., & Scott, M. L. (1996). Simple, fast and practical non-blocking and blocking concurrent queue algorithms. In *Proceedings of the Fifteenth Annual ACM Symposium on Principles of Distributed Computing* (pp. 267–275). ACM. | https://doi.org/10.1145/248052.248106 citeturn0search1 |
 
----
-
-## ✅ Self-Assessment Checklist
-
-Before submitting your work, verify that you can:
-
-- [ ] Explain the FIFO principle and contrast it with LIFO (stack) behaviour
-- [ ] Implement a queue using both arrays and linked lists
-- [ ] Describe the circular buffer technique and its advantages
-- [ ] Calculate the number of elements using front and rear indices with modular arithmetic
-- [ ] Distinguish between queue full and queue empty conditions in circular implementations
-- [ ] Apply queues to solve BFS traversal problems
-- [ ] Analyse the time complexity of all queue operations
-- [ ] Implement a producer-consumer pattern using queues
-- [ ] Debug common queue errors: off-by-one, boundary wraparound and memory leaks
-- [ ] Design a priority queue using multiple standard queues
-
----
-
-## 💼 Interview Preparation
-
-### Common Interview Questions
-
-1. **"Implement a queue using two stacks."**
-   
-   *Hint:* Use one stack for enqueue operations and another for dequeue. Transfer elements between stacks when necessary.
-
-2. **"How would you implement a circular queue? What are the edge cases?"**
-   
-   *Key points:* Wraparound with modulo operator, distinguishing empty vs full (use count or waste one slot), handling capacity of 1.
-
-3. **"Design a queue that supports getMin() in O(1) time."**
-   
-   *Hint:* Maintain an auxiliary data structure (deque) tracking minimum candidates.
-
-4. **"Explain the difference between a blocking queue and a non-blocking queue."**
-   
-   *Key concepts:* Thread synchronisation, condition variables, lock-free algorithms.
-
-5. **"How would you implement a queue with a maximum size that discards the oldest elements when full?"**
-   
-   *Approach:* Circular buffer with automatic overwrite when rear catches front.
-
----
-
-## 🔗 Next Week Preview
-
-**Week 07: Binary Trees**
-
-Next week introduces hierarchical data structures through binary trees. You will learn about tree terminology (root, leaf, height, depth), traversal algorithms (preorder, inorder, postorder and level-order) and recursive tree construction. This builds directly upon queue knowledge, as level-order traversal uses BFS with a queue.
-
-Key topics include:
-- Binary tree node structure and memory layout
-- Recursive vs iterative traversal implementations
-- Tree height and balance calculations
-- Expression tree construction and evaluation
-
----
-
-*Prepared for ATP - Algorithms and Programming Techniques*  
-*Academy of Economic Studies, Bucharest*  
-*Week 06: Queues*

@@ -1,134 +1,219 @@
-# Week 06 Homework: Queues
+# Week 06 Homework: Queue-Centred Design Tasks
 
-## 📋 General Information
+## 1. Administrative frame
 
-- **Deadline:** End of Week 07
-- **Points:** 100 (10% of final grade)
-- **Language:** C (C11 standard)
-- **Compiler:** GCC with `-Wall -Wextra -std=c11`
-- **Submission:** Single `.c` file per homework via university portal
+- **Submission horizon:** End of Week 07 (local course calendar)
+- **Maximum score:** 100 points (10% of the overall module mark)
+- **Implementation language:** ISO C11
+- **Toolchain expectation:** GCC or Clang with `-Wall -Wextra -std=c11` and no warnings
+- **Deliverable granularity:** One `.c` source file per homework task
+- **Integrity requirements:** Original work only; any form of unauthorised code reuse is treated as academic misconduct
 
----
-
-## 📝 Homework 1: Hot Potato Game Simulation (50 points)
-
-### Description
-
-Implement a simulation of the "Hot Potato" children's game using a circular queue. In this game, players stand in a circle and pass an object (the "hot potato") around. When the music stops (after a random number of passes), the player holding the potato is eliminated. The game continues until only one player remains.
-
-### Requirements
-
-1. **Player Structure (5p)**
-   - Define a `Player` structure with fields: `id` (int), `name` (char[32]) and `is_active` (bool)
-   - Support at least 20 players
-
-2. **Queue Implementation (15p)**
-   - Implement a circular queue for player IDs
-   - Must use circular buffer (array-based) implementation
-   - Support `enqueue`, `dequeue`, `peek` and `size` operations
-   - Handle the circular nature correctly with modulo arithmetic
-
-3. **Game Logic (15p)**
-   - Read player names from a file or command line
-   - Simulate passing the potato with a random count (1-10) each round
-   - Remove the eliminated player and continue
-   - Display each round's result
-
-4. **Output (10p)**
-   - Print the elimination order
-   - Announce the winner
-   - Show statistics: total rounds, total passes
-
-5. **Error Handling (5p)**
-   - Handle file errors gracefully
-   - Validate input data
-   - Prevent memory leaks
-
-### Example Usage
-
-```bash
-./homework1_hotpotato players.txt
-```
-
-**players.txt:**
-```
-Alice
-Bob
-Charlie
-Diana
-Eve
-```
-
-**Expected Output:**
-```
-=== Hot Potato Game ===
-Players: Alice, Bob, Charlie, Diana, Eve
-
-Round 1: Passed 7 times - Diana eliminated!
-Round 2: Passed 3 times - Bob eliminated!
-Round 3: Passed 9 times - Eve eliminated!
-Round 4: Passed 5 times - Alice eliminated!
-
-Winner: Charlie!
-
-Statistics:
-  Total rounds: 4
-  Total passes: 24
-```
-
-### File: `homework1_hotpotato.c`
+The homework set is designed to force an explicit mapping between an *abstract specification* (queue ADT and its invariants) and a *concrete program* that is testable, memory-safe and deterministic under controlled inputs.
 
 ---
 
-## 📝 Homework 2: Print Queue Manager (50 points)
+## 2. Shared technical constraints
 
-### Description
+### 2.1 Queue implementation constraints
 
-Implement a print queue management system that handles print jobs with different priorities. The system should use multiple queues (high, medium, low priority) and process jobs in order of priority whilst maintaining FIFO within each priority level.
+You must implement the queue as an array-backed circular buffer. Linked lists are not permitted for the core queue used for scoring, even if you implement a linked list version as an auxiliary structure for exploratory purposes.
 
-### Requirements
+A recommended representation is the familiar five-tuple:
 
-1. **PrintJob Structure (5p)**
-   - Define a `PrintJob` structure with:
-     - `job_id` (int) - unique identifier
-     - `filename` (char[64]) - document name
-     - `pages` (int) - number of pages
-     - `priority` (enum: HIGH, MEDIUM, LOW)
-     - `submitted_time` (int) - simulation time unit when submitted
-     - `started_time` (int) - when printing began
-     - `completed_time` (int) - when printing finished
+- `data`: dynamically allocated array of elements
+- `front`: index of the element that would be returned by `dequeue`
+- `rear`: index of the next free slot for `enqueue`
+- `count`: number of elements currently stored
+- `capacity`: maximum number of elements addressable by the queue
 
-2. **Multi-Queue System (15p)**
-   - Implement three separate queues (one per priority level)
-   - Each queue must be a proper circular buffer implementation
-   - Implement `add_job()` which routes to appropriate queue
-   - Implement `get_next_job()` which returns highest priority available job
+This representation is advantageous because it yields a crisp invariant and a constant-time method to disambiguate empty from full:
 
-3. **Simulation (15p)**
-   - Read jobs from file (with arrival times)
-   - Simulate printing at 1 page per time unit
-   - Process jobs in priority order
-   - Handle jobs arriving during printing of another job
+- **Empty:** `count == 0`
+- **Full:** `count == capacity`
 
-4. **Statistics (10p)**
-   - Calculate average waiting time per priority level
-   - Calculate total simulation time
-   - Display job completion order
-   - Show queue utilisation statistics
+### 2.2 Mandatory robustness properties
 
-5. **Interactive Mode (5p)**
-   - Support adding jobs during simulation via stdin
-   - Support `STATUS` command to show current queue states
-   - Support `QUIT` command to end simulation
+Your programme must satisfy all of the following:
 
-### Example Usage
+- **Total correctness for valid inputs:** For all inputs that satisfy the stated format constraints your programme must terminate and produce the stated outputs.
+- **Graceful failure for invalid inputs:** If input files cannot be opened or are malformed the programme must exit with a non-zero status and a short diagnostic on `stderr`.
+- **No memory leaks:** Your programme must be clean under Valgrind with `--leak-check=full`.
+- **Deterministic behaviour under test mode:** If randomness is required you must provide a deterministic override (see §3.3).
+
+### 2.3 Required documentation inside source files
+
+At the top of each `.c` file include a comment header containing:
+
+- Your name and student identifier
+- A concise specification of the implemented algorithm
+- Representation invariants for your queue
+- A description of worst-case time complexity for the principal operations
+
+---
+
+## 3. Homework 1: Hot Potato elimination simulation (50 points)
+
+### 3.1 Problem statement
+
+Simulate the children’s game “Hot Potato” using a circular queue. Players form a conceptual ring. In each round the potato is passed a number of times. The player who ends up holding it is eliminated. The game continues until one player remains.
+
+The goal is not a graphical interface but a well-specified state machine whose evolution can be audited via printed traces.
+
+### 3.2 Functional requirements
+
+1. **Player model (5 points)**
+   - Define a `Player` structure containing an `id` (integer) and a `name` (fixed-length character array, at least 32 bytes).
+   - Provide a stable mapping between player identifiers and names.
+
+2. **Queue model (15 points)**
+   - The queue stores *player identifiers* or indices into a player array.
+   - `enqueue` and `dequeue` must be O(1) in the worst case.
+   - Passing the potato is represented by repeated `dequeue` followed by `enqueue`.
+
+3. **Simulation core (15 points)**
+   - Read player names from a file or from command-line arguments.
+   - For each round choose a pass count `k` in the range `[1, 10]`.
+   - Execute exactly `k - 1` passes, then eliminate the next dequeued player.
+   - Print a clear trace line per round.
+
+4. **Reporting (10 points)**
+   - Print the elimination order.
+   - Print the winner.
+   - Print at least: number of rounds, total passes.
+
+5. **Error handling and memory safety (5 points)**
+   - Invalid empty player sets are rejected.
+   - Queue underflow must never occur under valid inputs.
+
+### 3.3 Deterministic testing interface
+
+Randomness is pedagogically useful but makes automated marking fragile. You must therefore support a deterministic override, for example:
+
+- An optional command-line argument `--seed <integer>` that seeds a pseudo-random generator
+- An optional command-line argument `--passes <file>` that provides an explicit pass count per round
+
+Any one of these is acceptable provided it allows exact reproduction of a run.
+
+### 3.4 Reference pseudocode
+
+```text
+HOT_POTATO(names[0..n-1])
+    Q <- new queue of capacity n
+    for i in 0..n-1
+        enqueue(Q, i)
+
+    round <- 0
+    total_passes <- 0
+    while size(Q) > 1
+        round <- round + 1
+        k <- next_pass_count()          // in [1, 10]
+
+        for t in 1..(k-1)
+            x <- dequeue(Q)
+            enqueue(Q, x)
+            total_passes <- total_passes + 1
+
+        eliminated <- dequeue(Q)
+        print(round, names[eliminated], k)
+
+    winner <- dequeue(Q)
+    print(winner, round, total_passes)
+```
+
+### 3.5 Example invocation
 
 ```bash
-./homework2_printqueue jobs.txt
+./homework1_hotpotato players.txt --seed 12345
 ```
 
-**jobs.txt format:**
+---
+
+## 4. Homework 2: Priority-aware print queue manager (50 points)
+
+### 4.1 Problem statement
+
+Implement a print service that receives print jobs over time and processes them according to a strict priority policy. The policy is:
+
+1. Always process the highest priority queue that is non-empty.
+2. Within a priority level preserve FIFO order.
+
+This is a minimal model of real print spooling systems where fairness is constrained by service class.
+
+### 4.2 Functional requirements
+
+1. **Job representation (5 points)**
+   - Define a `PrintJob` structure containing:
+     - `job_id` (unique integer)
+     - `filename` (string buffer)
+     - `pages` (positive integer)
+     - `priority` (enumeration with at least HIGH, MEDIUM and LOW)
+     - `arrival_time`, `start_time`, `completion_time`
+
+2. **Multi-queue architecture (15 points)**
+   - Maintain three circular queues, one per priority.
+   - `add_job` routes to the correct queue.
+   - `get_next_job` selects the correct queue under the priority policy.
+
+3. **Discrete-time simulation (15 points)**
+   - Input file lines define arriving jobs including arrival times.
+   - Printing consumes one page per time unit.
+   - Jobs can arrive while another job is printing.
+   - The simulation terminates when all jobs have been processed.
+
+4. **Statistics (10 points)**
+   - Mean waiting time per priority level.
+   - Total completion time.
+   - Completion order.
+   - At least one queue utilisation statistic such as average queue length.
+
+5. **Interactive interface (5 points)**
+   - Support adding jobs during simulation via `stdin`.
+   - Support `STATUS` to print queue states.
+   - Support `QUIT` to terminate early.
+
+### 4.3 Algorithmic outline
+
+The simulation is an event loop over discrete time. At each time step:
+
+1. Add all jobs whose `arrival_time == current_time` into their priority queue.
+2. If no job is currently printing select the next job by priority.
+3. Decrement the remaining pages of the current job.
+4. If it reaches zero set its completion time and mark the printer as idle.
+
+### 4.4 Reference pseudocode
+
+```text
+PRINT_MANAGER(jobs)
+    sort jobs by arrival_time then by job_id
+    QH, QM, QL <- three circular queues
+    t <- 0
+    i <- 0                      // next job to arrive
+    current <- NONE
+
+    while i < |jobs| or current != NONE or not empty(QH) or not empty(QM) or not empty(QL)
+        while i < |jobs| and jobs[i].arrival_time == t
+            enqueue(queue_for_priority(jobs[i]), jobs[i])
+            i <- i + 1
+
+        if current == NONE
+            current <- dequeue_first_non_empty(QH, QM, QL)
+            if current != NONE and current.start_time is unset
+                current.start_time <- t
+
+        if current != NONE
+            current.pages_remaining <- current.pages_remaining - 1
+            if current.pages_remaining == 0
+                current.completion_time <- t + 1
+                record_completion(current)
+                current <- NONE
+
+        t <- t + 1
 ```
+
+### 4.5 Example file format
+
+```text
 # JobID Filename Pages Priority ArrivalTime
 1 report.pdf 10 HIGH 0
 2 image.png 2 LOW 0
@@ -136,98 +221,25 @@ Implement a print queue management system that handles print jobs with different
 4 urgent.doc 5 HIGH 8
 ```
 
-**Expected Output:**
-```
-=== Print Queue Manager ===
-
-[Time 0] Job 1 (report.pdf) arrived - Priority: HIGH
-[Time 0] Job 2 (image.png) arrived - Priority: LOW
-[Time 0] Started printing Job 1 (report.pdf)
-[Time 5] Job 3 (thesis.pdf) arrived - Priority: MEDIUM
-[Time 8] Job 4 (urgent.doc) arrived - Priority: HIGH
-[Time 10] Completed Job 1 (report.pdf)
-[Time 10] Started printing Job 4 (urgent.doc)
-[Time 15] Completed Job 4 (urgent.doc)
-[Time 15] Started printing Job 3 (thesis.pdf)
-[Time 65] Completed Job 3 (thesis.pdf)
-[Time 65] Started printing Job 2 (image.png)
-[Time 67] Completed Job 2 (image.png)
-
-=== Statistics ===
-Total simulation time: 67 units
-Jobs processed: 4
-
-Average wait time by priority:
-  HIGH:   2.5 units
-  MEDIUM: 10.0 units
-  LOW:    65.0 units
-```
-
-### File: `homework2_printqueue.c`
-
 ---
 
-## 📊 Evaluation Criteria
+## 5. Evaluation rubric
 
 | Criterion | Points |
-|-----------|--------|
-| Functional correctness | 40 |
-| Proper queue implementation (circular buffer) | 25 |
-| Edge case handling | 15 |
-| Code quality and documentation | 10 |
-| No compiler warnings | 10 |
+|---|---:|
+| Functional correctness (conformance to specification) | 40 |
+| Queue design quality (correct invariants and O(1) operations) | 25 |
+| Edge case handling and robustness | 15 |
+| Code clarity and internal documentation | 10 |
+| Clean compilation and memory safety | 10 |
 
-### Automatic Deductions
-
-| Issue | Penalty |
-|-------|---------|
-| Compiler warnings | -10p |
-| Memory leaks (Valgrind) | -20p |
-| Crashes on valid input | -30p |
-| Does not compile | -50p |
-| Plagiarism | -100p + disciplinary action |
+Automatic deductions may be applied for compiler warnings, memory leaks, crashes on valid inputs or failure to compile.
 
 ---
 
-## 📤 Submission Guidelines
+## 6. References
 
-1. Submit **one** `.c` file per homework
-2. Include your name and student ID in a comment at the top
-3. Ensure code compiles with: `gcc -Wall -Wextra -std=c11 -o output homework.c`
-4. Test with Valgrind before submission: `valgrind --leak-check=full ./output`
-5. Submit via university portal before deadline
-
----
-
-## 💡 Tips for Success
-
-1. **Start with the queue implementation** - get it working perfectly before adding game/simulation logic
-
-2. **Test incrementally** - verify each function works before moving to the next
-
-3. **Use descriptive variable names** - `front_index` is clearer than `f`
-
-4. **Draw diagrams** - sketch out the circular buffer states to understand wraparound
-
-5. **Handle edge cases explicitly:**
-   - Empty queue operations
-   - Full queue operations
-   - Single element scenarios
-   - Wraparound scenarios
-
-6. **Comment your code** - explain the circular buffer mathematics
-
-7. **Use `const` appropriately** - mark read-only parameters as `const`
-
----
-
-## 📚 Reference Materials
-
-- Week 06 lecture slides
-- `example1.c` - complete queue implementation examples
-- Cormen et al., "Introduction to Algorithms", Chapter 10
-- Online: [Visualgo Queue Animation](https://visualgo.net/en/list)
-
----
-
-*Good luck! Remember: understanding queues thoroughly will help with BFS, scheduling and many interview problems.*
+| APA (7th ed) reference | DOI |
+|---|---|
+| Little, J. D. C. (1961). A proof for the queuing formula: L = λW. *Operations Research, 9*(3), 383–387. | https://doi.org/10.1287/opre.9.3.383 citeturn0search0 |
+| Michael, M. M., & Scott, M. L. (1996). Simple, fast and practical non-blocking and blocking concurrent queue algorithms. In *Proceedings of the Fifteenth Annual ACM Symposium on Principles of Distributed Computing* (pp. 267–275). ACM. | https://doi.org/10.1145/248052.248106 citeturn0search1 |
