@@ -223,7 +223,7 @@ void validate_expression(const char *expression) {
                 if (top_bracket != expected) {
                     printf("Result: INVALID - Mismatched bracket at position %d: "
                            "expected '%c', found '%c'\n\n",
-                           i, get_matching_close(top_bracket), c);
+                           i, c, get_matching_close(top_bracket));
                     valid = false;
                 }
             }

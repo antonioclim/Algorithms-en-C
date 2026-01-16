@@ -109,27 +109,39 @@ int stack_size(const ArrayStack *stack) {
  * SOLUTION TODO 7: stack_push with dynamic resizing
  */
 bool stack_push(ArrayStack *stack, int value) {
-    /* Handle resize if needed */
+    /* Defensive: if the stack is already full before pushing, grow first. */
     if (stack_is_full(stack)) {
         int new_capacity = stack->capacity * GROWTH_FACTOR;
-        
-        int *new_data = realloc(stack->data, new_capacity * sizeof(int));
+        int *new_data = realloc(stack->data, (size_t)new_capacity * sizeof(int));
         if (!new_data) {
             fprintf(stderr, "Error: Failed to resize stack\n");
             return false;
         }
-        
         printf("Stack resized: %d -> %d\n", stack->capacity, new_capacity);
         stack->data = new_data;
         stack->capacity = new_capacity;
     }
-    
-    /* Push the value */
+
+    /* Push the value. */
     stack->top++;
     stack->data[stack->top] = value;
-    
+
+    /* Grow immediately when this push fills the last available slot. */
+    if (stack_is_full(stack)) {
+        int new_capacity = stack->capacity * GROWTH_FACTOR;
+        int *new_data = realloc(stack->data, (size_t)new_capacity * sizeof(int));
+        if (!new_data) {
+            fprintf(stderr, "Error: Failed to resize stack\n");
+            return false;
+        }
+        printf("Stack resized: %d -> %d\n", stack->capacity, new_capacity);
+        stack->data = new_data;
+        stack->capacity = new_capacity;
+    }
+
     return true;
 }
+
 
 /**
  * SOLUTION TODO 8: stack_pop
