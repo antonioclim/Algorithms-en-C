@@ -44,20 +44,17 @@
  */
 
 /**
- * TODO 1: Complete the Binary Tree Node structure
+ * Binary Tree Node Structure
  *
- * A binary tree node should contain:
- *   - An integer data field to store the value
- *   - A pointer to the left child node
- *   - A pointer to the right child node
- *
- * Hint: Use 'struct TreeNode' for the self-referential pointers
+ * A binary tree node contains:
+ *   - an integer payload
+ *   - a pointer to the left child (NULL if absent)
+ *   - a pointer to the right child (NULL if absent)
  */
 typedef struct TreeNode {
-    /* YOUR CODE HERE */
-    
-    
-    
+    int data;
+    struct TreeNode *left;
+    struct TreeNode *right;
 } TreeNode;
 
 /* =============================================================================
@@ -66,28 +63,19 @@ typedef struct TreeNode {
  */
 
 /**
- * TODO 2: Implement node creation function
- *
- * This function should:
- *   1. Allocate memory for a new TreeNode using malloc
- *   2. Check if allocation succeeded (exit if not)
- *   3. Initialise data field with the given value
- *   4. Set both child pointers to NULL
- *   5. Return the pointer to the new node
- *
- * @param value The integer value to store in the node
- * @return Pointer to the newly created node
- *
- * Hint: sizeof(TreeNode) gives the size needed for allocation
+ * Create and initialise a new node.
  */
 TreeNode* create_node(int value) {
-    /* YOUR CODE HERE */
-    
-    
-    
-    
-    
-    return NULL;  /* Replace this */
+    TreeNode *node = malloc(sizeof(TreeNode));
+    if (node == NULL) {
+        fprintf(stderr, "Error: Memory allocation failed\n");
+        exit(EXIT_FAILURE);
+    }
+
+    node->data = value;
+    node->left = NULL;
+    node->right = NULL;
+    return node;
 }
 
 /* =============================================================================
@@ -96,66 +84,42 @@ TreeNode* create_node(int value) {
  */
 
 /**
- * TODO 3: Implement Preorder traversal
- *
- * Preorder visits nodes in the order: Node -> Left -> Right
- *
- * Steps:
- *   1. Check if node is NULL (base case - just return)
- *   2. Print the current node's data followed by a space
- *   3. Recursively traverse the left subtree
- *   4. Recursively traverse the right subtree
- *
- * @param node The current node being visited
+ * Preorder traversal: Node -> Left -> Right
  */
 void preorder(TreeNode *node) {
-    /* YOUR CODE HERE */
-    
-    
-    
-    
+    if (node == NULL) {
+        return;
+    }
+
+    printf("%d ", node->data);
+    preorder(node->left);
+    preorder(node->right);
 }
 
 /**
- * TODO 4: Implement Inorder traversal
- *
- * Inorder visits nodes in the order: Left -> Node -> Right
- *
- * Steps:
- *   1. Check if node is NULL (base case - just return)
- *   2. Recursively traverse the left subtree
- *   3. Print the current node's data followed by a space
- *   4. Recursively traverse the right subtree
- *
- * @param node The current node being visited
+ * Inorder traversal: Left -> Node -> Right
  */
 void inorder(TreeNode *node) {
-    /* YOUR CODE HERE */
-    
-    
-    
-    
+    if (node == NULL) {
+        return;
+    }
+
+    inorder(node->left);
+    printf("%d ", node->data);
+    inorder(node->right);
 }
 
 /**
- * TODO 5: Implement Postorder traversal
- *
- * Postorder visits nodes in the order: Left -> Right -> Node
- *
- * Steps:
- *   1. Check if node is NULL (base case - just return)
- *   2. Recursively traverse the left subtree
- *   3. Recursively traverse the right subtree
- *   4. Print the current node's data followed by a space
- *
- * @param node The current node being visited
+ * Postorder traversal: Left -> Right -> Node
  */
 void postorder(TreeNode *node) {
-    /* YOUR CODE HERE */
-    
-    
-    
-    
+    if (node == NULL) {
+        return;
+    }
+
+    postorder(node->left);
+    postorder(node->right);
+    printf("%d ", node->data);
 }
 
 /* =============================================================================
@@ -164,94 +128,56 @@ void postorder(TreeNode *node) {
  */
 
 /**
- * TODO 6: Implement tree height calculation
+ * Height of a (sub)tree.
  *
- * The height of a tree is the longest path from root to any leaf.
- * Convention: empty tree (NULL) has height -1
- *
- * Steps:
- *   1. Base case: if node is NULL, return -1
- *   2. Recursively calculate height of left subtree
- *   3. Recursively calculate height of right subtree
- *   4. Return 1 + maximum of the two heights
- *
- * @param node The root of the tree/subtree
- * @return Height of the tree
- *
- * Hint: Use a conditional expression or if-else to find maximum
+ * Convention: the empty tree has height -1.
  */
 int tree_height(TreeNode *node) {
-    /* YOUR CODE HERE */
-    
-    
-    
-    
-    
-    return 0;  /* Replace this */
+    if (node == NULL) {
+        return -1;
+    }
+
+    int left_height = tree_height(node->left);
+    int right_height = tree_height(node->right);
+
+    return 1 + ((left_height > right_height) ? left_height : right_height);
 }
 
 /**
- * TODO 7: Implement total node counting
- *
- * Count all nodes in the tree.
- *
- * Steps:
- *   1. Base case: if node is NULL, return 0
- *   2. Return 1 (for current node) plus count of left subtree
- *      plus count of right subtree
- *
- * @param node The root of the tree/subtree
- * @return Total number of nodes
+ * Count total nodes in the tree.
  */
 int count_nodes(TreeNode *node) {
-    /* YOUR CODE HERE */
-    
-    
-    
-    return 0;  /* Replace this */
+    if (node == NULL) {
+        return 0;
+    }
+
+    return 1 + count_nodes(node->left) + count_nodes(node->right);
 }
 
 /**
- * TODO 8: Implement leaf node counting
- *
- * A leaf is a node with NO children (both left and right are NULL).
- *
- * Steps:
- *   1. Base case: if node is NULL, return 0
- *   2. If both children are NULL, return 1 (it's a leaf)
- *   3. Otherwise, return sum of leaves in left and right subtrees
- *
- * @param node The root of the tree/subtree
- * @return Number of leaf nodes
+ * Count leaf nodes (nodes with no children).
  */
 int count_leaves(TreeNode *node) {
-    /* YOUR CODE HERE */
-    
-    
-    
-    
-    
-    return 0;  /* Replace this */
+    if (node == NULL) {
+        return 0;
+    }
+
+    if (node->left == NULL && node->right == NULL) {
+        return 1;
+    }
+
+    return count_leaves(node->left) + count_leaves(node->right);
 }
 
 /**
- * TODO 9: Implement sum of all node values
- *
- * Calculate the sum of all data values in the tree.
- *
- * Steps:
- *   1. Base case: if node is NULL, return 0
- *   2. Return current node's data + sum of left subtree + sum of right subtree
- *
- * @param node The root of the tree/subtree
- * @return Sum of all values
+ * Sum of all node values.
  */
 int tree_sum(TreeNode *node) {
-    /* YOUR CODE HERE */
-    
-    
-    
-    return 0;  /* Replace this */
+    if (node == NULL) {
+        return 0;
+    }
+
+    return node->data + tree_sum(node->left) + tree_sum(node->right);
 }
 
 /* =============================================================================
@@ -260,27 +186,16 @@ int tree_sum(TreeNode *node) {
  */
 
 /**
- * TODO 10: Implement tree deallocation (CRITICAL!)
- *
- * Free all memory allocated for the tree.
- * MUST use POSTORDER traversal - children must be freed before parent!
- *
- * Steps:
- *   1. Base case: if node is NULL, return
- *   2. Recursively free the left subtree
- *   3. Recursively free the right subtree
- *   4. Free the current node
- *
- * @param node The root of the tree to free
- *
- * WARNING: Freeing parent before children causes memory leaks!
+ * Free all nodes using postorder discipline.
  */
 void free_tree(TreeNode *node) {
-    /* YOUR CODE HERE */
-    
-    
-    
-    
+    if (node == NULL) {
+        return;
+    }
+
+    free_tree(node->left);
+    free_tree(node->right);
+    free(node);
 }
 
 /* =============================================================================
@@ -289,37 +204,27 @@ void free_tree(TreeNode *node) {
  */
 
 /**
- * TODO 11: Build a sample tree for testing
- *
- * Construct the following tree structure:
+ * Build the sample tree required by the tests.
  *
  *              50
  *            /    \
  *           30     70
  *          / \    /  \
  *         20  40 60   80
- *
- * Steps:
- *   1. Create the root node with value 50
- *   2. Create and attach left child (30) to root
- *   3. Create and attach right child (70) to root
- *   4. Create and attach children to node 30 (20 and 40)
- *   5. Create and attach children to node 70 (60 and 80)
- *   6. Return the root pointer
- *
- * @return Pointer to the root of the constructed tree
  */
 TreeNode* build_sample_tree(void) {
-    /* YOUR CODE HERE */
-    
-    
-    
-    
-    
-    
-    
-    
-    return NULL;  /* Replace this */
+    TreeNode *root = create_node(50);
+
+    root->left = create_node(30);
+    root->right = create_node(70);
+
+    root->left->left = create_node(20);
+    root->left->right = create_node(40);
+
+    root->right->left = create_node(60);
+    root->right->right = create_node(80);
+
+    return root;
 }
 
 /* =============================================================================
@@ -351,52 +256,37 @@ int main(void) {
     printf("╔═══════════════════════════════════════════════════════════════╗\n");
     printf("║     EXERCISE 1: Binary Tree Construction and Traversal        ║\n");
     printf("╚═══════════════════════════════════════════════════════════════╝\n");
-    
-    /**
-     * TODO 12: Complete the main function
-     *
-     * Steps:
-     *   1. Call build_sample_tree() to create the tree
-     *   2. Print the traversal results (preorder, inorder, postorder)
-     *   3. Print the statistics using print_statistics()
-     *   4. Free the tree using free_tree()
-     *   5. Set root to NULL after freeing
-     */
-    
-    /* YOUR CODE HERE - Build the tree */
-    TreeNode *root = NULL;  /* Replace NULL with build_sample_tree() call */
-    
-    
+
+    /* Build the tree */
+    TreeNode *root = build_sample_tree();
+
     /* Print traversals */
     printf("\nTraversal Results:\n");
     printf("─────────────────────────────────────────\n");
-    
+
     printf("Preorder:  ");
-    /* YOUR CODE HERE - Call preorder(root) */
-    
+    preorder(root);
     printf("\n");
-    
+
     printf("Inorder:   ");
-    /* YOUR CODE HERE - Call inorder(root) */
-    
+    inorder(root);
     printf("\n");
-    
+
     printf("Postorder: ");
-    /* YOUR CODE HERE - Call postorder(root) */
-    
+    postorder(root);
     printf("\n");
-    
+
     /* Print statistics */
     printf("\nTree Statistics:");
     print_statistics(root);
-    
+
     /* Clean up */
     printf("\nFreeing tree memory...\n");
-    /* YOUR CODE HERE - Free the tree and set root to NULL */
-    
-    
+    free_tree(root);
+    root = NULL;
+
     printf("Done. Run with Valgrind to verify no memory leaks.\n\n");
-    
+
     return 0;
 }
 

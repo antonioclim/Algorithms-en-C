@@ -1,275 +1,263 @@
-# Week 07 Homework: Binary Trees
+# Week 07 Homework Specification: Binary Trees
 
-## 📋 General Information
+## 1. Administrative information
 
-- **Deadline:** End of Week 08 (submit before laboratory)
-- **Total Points:** 100 (10% of final grade)
-- **Language:** C (C11 standard)
-- **Compiler:** GCC with `-Wall -Wextra -std=c11`
-- **Memory:** All solutions must pass Valgrind without leaks
+- **Submission window:** the laboratory session of Week 08.
+- **Assessed weight:** 100 points.
+- **Implementation language:** ISO C11.
+- **Toolchain expectations:** GCC with `-Wall -Wextra -std=c11` and a zero-warning policy.
+- **Memory discipline:** every dynamically allocated object must be freed exactly once and no use-after-free or out-of-bounds access is acceptable.
 
----
+This document specifies two programming assignments whose purpose is to move from syntactic familiarity with tree traversals to **specification-driven implementation**. Each task is stated with explicit preconditions and postconditions. You are expected to justify complexity claims concisely in comments and to demonstrate correctness through targeted tests.
 
-## 📝 Homework 1: Binary Tree Serialisation (50 points)
+## 2. Shared definitions and conventions
 
-### Description
+### 2.1. Base data structure
 
-Implement functions to **serialise** a binary tree to a string and **deserialise** it back to a tree. This is a common interview question and fundamental for tree persistence.
-
-**Serialisation** converts a tree structure to a linear string format.
-**Deserialisation** reconstructs the original tree from the string.
-
-### Serialisation Format
-
-Use **preorder traversal** with a special marker for NULL nodes:
-- Numbers are separated by commas
-- NULL nodes are represented by `#`
-
-**Example:**
-```
-Tree:        Serialised: "1,2,#,#,3,4,#,#,5,#,#"
-    1
-   / \
-  2   3
-     / \
-    4   5
-```
-
-### Requirements
-
-1. **TreeNode Structure** (5 points)
-   - Standard binary tree node with integer data
-
-2. **`char* serialise(TreeNode *root)`** (20 points)
-   - Convert tree to string using preorder with NULL markers
-   - Handle empty tree (return "#")
-   - Dynamically allocate result string
-   - Handle multi-digit and negative numbers
-
-3. **`TreeNode* deserialise(char *data)`** (20 points)
-   - Reconstruct tree from serialised string
-   - Handle empty tree input ("#")
-   - Use recursive approach with index tracking
-   - Properly allocate all nodes
-
-4. **Memory Management** (5 points)
-   - Free serialised string after use
-   - Free reconstructed tree after use
-   - No memory leaks (Valgrind clean)
-
-### Example Usage
+Unless the problem statement explicitly requires a different payload type, the canonical node definition is:
 
 ```c
-/* Original tree */
-TreeNode *root = create_node(1);
-root->left = create_node(2);
-root->right = create_node(3);
-root->right->left = create_node(4);
-root->right->right = create_node(5);
-
-/* Serialise */
-char *data = serialise(root);
-printf("Serialised: %s\n", data);  /* "1,2,#,#,3,4,#,#,5,#,#" */
-
-/* Deserialise */
-TreeNode *reconstructed = deserialise(data);
-
-/* Verify trees are identical */
-assert(trees_identical(root, reconstructed));
-
-/* Clean up */
-free(data);
-free_tree(root);
-free_tree(reconstructed);
+typedef struct TreeNode {
+    int data;
+    struct TreeNode *left;
+    struct TreeNode *right;
+} TreeNode;
 ```
 
-### File: `homework1_serialisation.c`
+Interpretation:
+
+- `NULL` denotes the empty tree.
+- A node with `left == NULL` and `right == NULL` is a leaf.
+- The representation must remain acyclic.
+
+### 2.2. Defensive programming requirements
+
+1. All public functions must handle `NULL` inputs gracefully.
+2. All allocations must be checked for failure.
+3. All output must be deterministic.
+4. All helper routines must be declared `static` unless explicitly required elsewhere.
+
+### 2.3. Complexity reporting
+
+For each homework, include in a header comment:
+
+- worst-case time complexity in Θ-notation
+- auxiliary space complexity excluding the tree itself
+
+Do not conflate recursion depth with constant space.
 
 ---
 
-## 📝 Homework 2: Lowest Common Ancestor (50 points)
+## 3. Homework 1: Binary tree serialisation and deserialisation (50 points)
 
-### Description
+### 3.1. Problem statement
 
-Implement the **Lowest Common Ancestor (LCA)** algorithm for a binary tree. The LCA of two nodes p and q is the deepest node that has both p and q as descendants (a node can be a descendant of itself).
+Design a reversible mapping between a binary tree and a textual representation.
 
-This is a classic interview question asked at companies like Google, Amazon and Meta.
+- **Serialisation** converts a tree into a string.
+- **Deserialisation** reconstructs a tree from that string.
 
-### Requirements
+The mapping must be **lossless**: for any finite tree `T`, `deserialise(serialise(T))` must yield a tree that is structurally identical to `T` and has identical payload values at corresponding nodes.
 
-1. **TreeNode Structure** (5 points)
-   - Standard binary tree node with integer data
+### 3.2. Required format
 
-2. **`TreeNode* find_lca(TreeNode *root, int p, int q)`** (25 points)
-   - Find the lowest common ancestor of nodes with values p and q
-   - Return NULL if either p or q is not in the tree
-   - Handle edge cases:
-     - One node is ancestor of the other
-     - Both nodes are the same
-     - Nodes in different subtrees
+Use preorder traversal with an explicit marker for empty subtrees.
 
-3. **`bool path_to_node(TreeNode *root, int target, int *path, int *len)`** (10 points)
-   - Find the path from root to a node with given value
-   - Store node values in the path array
-   - Update len with path length
-   - Return true if found, false otherwise
+- Integers are printed in base 10.
+- Tokens are separated by a comma.
+- The marker for the empty subtree is `#`.
 
-4. **`void print_path(TreeNode *root, int p, int q)`** (5 points)
-   - Print the path from node p to node q through LCA
-   - Format: "p -> ... -> LCA -> ... -> q"
+Example:
 
-5. **Memory Management** (5 points)
-   - No memory leaks
-   - Valgrind clean
+```
+            1
+           / \
+          2   3
+             / \
+            4   5
 
-### Algorithm Hint
+serialise(T) = "1,2,#,#,3,4,#,#,5,#,#"
+```
 
-**Recursive approach:**
+### 3.3. Required API
+
+Implement the following functions:
+
+1. `char* serialise(const TreeNode *root)`
+2. `TreeNode* deserialise(const char *data)`
+3. `void free_tree(TreeNode *root)`
+4. `int trees_identical(const TreeNode *a, const TreeNode *b)` (a small test helper is sufficient)
+
+### 3.4. Specification
+
+#### 3.4.1. `serialise`
+
+- **Precondition:** `root` is either `NULL` or points to the root of an acyclic binary tree.
+- **Postcondition:** returns a heap-allocated, NUL-terminated string that encodes the tree.
+- **Memory contract:** the caller owns the returned string and must `free` it.
+
+A correct implementation must handle:
+
+- the empty tree (must return `"#"`)
+- single-node trees
+- multi-digit and negative integers
+
+#### 3.4.2. `deserialise`
+
+- **Precondition:** `data` is a NUL-terminated string in the specified format.
+- **Postcondition:** returns the root of a newly allocated tree that decodes `data`.
+- **Memory contract:** the caller owns the tree and must free it.
+
+If you choose to implement input validation, invalid encodings may return `NULL` but must not leak memory.
+
+### 3.5. Algorithmic guidance
+
+#### 3.5.1. Serialisation pseudocode
+
+```
+SERIALISE(node):
+    if node == NULL:
+        emit("#")
+        return
+
+    emit(to_string(node.data))
+    emit(",")
+    SERIALISE(node.left)
+    emit(",")
+    SERIALISE(node.right)
+```
+
+In C, direct repeated concatenation is inefficient. A robust approach is a two-pass strategy:
+
+1. compute an upper bound for output length
+2. allocate once
+3. write into the buffer with an index
+
+#### 3.5.2. Deserialisation pseudocode
+
+A standard technique is to scan tokens left-to-right while carrying a mutable cursor.
+
+```
+DESERIALISE(tokens, i):
+    if tokens[i] == "#":
+        i = i + 1
+        return (NULL, i)
+
+    x = parse_int(tokens[i])
+    i = i + 1
+    (L, i) = DESERIALISE(tokens, i)
+    (R, i) = DESERIALISE(tokens, i)
+    return (new_node(x, L, R), i)
+```
+
+The recursion works because preorder with null markers is a complete description of the tree.
+
+### 3.6. Marking scheme
+
+- Correctness of serialisation output: 20 points
+- Correctness of reconstruction: 20 points
+- Memory and ownership correctness: 10 points
+
+---
+
+## 4. Homework 2: Lowest Common Ancestor in a binary tree (50 points)
+
+### 4.1. Problem statement
+
+Given a binary tree and two target values `p` and `q`, compute their **lowest common ancestor** (LCA): the deepest node that lies on both root-to-`p` and root-to-`q` paths.
+
+A node may be a descendant of itself which implies that if `p` is an ancestor of `q` then `LCA(p, q) = p`.
+
+### 4.2. Required API
+
+Implement:
+
+1. `TreeNode* find_lca(TreeNode *root, int p, int q)`
+2. `int contains_value(const TreeNode *root, int target)` (or an equivalent helper)
+3. `void print_path_between(const TreeNode *root, int p, int q)`
+
+You may choose between two families of approaches:
+
+- a single-pass recursive LCA computation combined with membership checks
+- explicit path construction followed by path comparison
+
+Your code must return `NULL` when either `p` or `q` is absent.
+
+### 4.3. Algorithmic guidance
+
+#### 4.3.1. Canonical recursive LCA
+
 ```
 LCA(root, p, q):
-    if root is NULL: return NULL
+    if root == NULL: return NULL
     if root.data == p or root.data == q: return root
-    
-    left_lca = LCA(root.left, p, q)
-    right_lca = LCA(root.right, p, q)
-    
-    if both left_lca and right_lca are non-NULL:
-        return root  // p and q are in different subtrees
-    
-    return whichever is non-NULL (or NULL if both NULL)
+
+    left = LCA(root.left, p, q)
+    right = LCA(root.right, p, q)
+
+    if left != NULL and right != NULL:
+        return root
+    else:
+        return (left if left != NULL else right)
 ```
 
-### Example Usage
+To satisfy the requirement to return `NULL` when either value is absent, combine the above with membership checks or carry presence information in the recursion.
 
-```c
-/*
-        3
-       / \
-      5   1
-     / \ / \
-    6  2 0  8
-      / \
-     7   4
-*/
+#### 4.3.2. Path-based strategy
 
-TreeNode *root = build_example_tree();
+Compute explicit root-to-node paths, then identify the last common prefix.
 
-TreeNode *lca1 = find_lca(root, 5, 1);
-printf("LCA(5, 1) = %d\n", lca1->data);  /* 3 */
+```
+PATH(root, target, out):
+    if root == NULL: return false
+    append(out, root)
+    if root.data == target: return true
+    if PATH(root.left, target, out): return true
+    if PATH(root.right, target, out): return true
+    remove_last(out)
+    return false
 
-TreeNode *lca2 = find_lca(root, 5, 4);
-printf("LCA(5, 4) = %d\n", lca2->data);  /* 5 */
+LCA_BY_PATH(root, p, q):
+    P = []
+    Q = []
+    if not PATH(root, p, P): return NULL
+    if not PATH(root, q, Q): return NULL
 
-TreeNode *lca3 = find_lca(root, 6, 4);
-printf("LCA(6, 4) = %d\n", lca3->data);  /* 5 */
-
-print_path(root, 6, 4);  /* "6 -> 5 -> 2 -> 4" */
+    i = 0
+    while i < len(P) and i < len(Q) and P[i] == Q[i]:
+        i = i + 1
+    return P[i-1]
 ```
 
-### File: `homework2_lca.c`
+This approach is easy to reason about and is often acceptable for educational work. Its auxiliary space is linear in height.
+
+### 4.4. Marking scheme
+
+- Correctness on representative cases: 35 points
+- Correct handling of absence and ancestor cases: 10 points
+- Memory correctness and code quality: 5 points
 
 ---
 
-## 📊 Evaluation Criteria
+## 5. Submission and reproducibility requirements
 
-| Criterion | Homework 1 | Homework 2 |
-|-----------|------------|------------|
-| **Functional Correctness** | 35 pts | 35 pts |
-| **Edge Case Handling** | 5 pts | 5 pts |
-| **Code Quality** | 5 pts | 5 pts |
-| **Memory Management** | 5 pts | 5 pts |
-| **Total** | 50 pts | 50 pts |
+1. One `.c` file per homework as specified in the assignment brief.
+2. A `main()` function that executes at least five test cases per homework.
+3. Compilation must succeed without warnings.
+4. The programme output should be stable between runs.
 
-### Detailed Breakdown
+Suggested compilation commands:
 
-**Functional Correctness:**
-- Serialise produces correct output (15 pts)
-- Deserialise reconstructs correctly (15 pts)
-- Round-trip works (serialise → deserialise = original) (5 pts)
+```bash
+gcc -Wall -Wextra -std=c11 -O2 -o hw1 homework1_serialisation.c
+gcc -Wall -Wextra -std=c11 -O2 -o hw2 homework2_lca.c
+```
 
-**Edge Cases:**
-- Empty tree (1 pt)
-- Single node (1 pt)
-- Left/right-only paths (1 pt)
-- Negative numbers (1 pt)
-- Large trees (1 pt)
+## 6. References
 
-**Code Quality:**
-- Clear variable names (1 pt)
-- Proper comments (2 pts)
-- Consistent formatting (1 pt)
-- No magic numbers (1 pt)
+The following references are provided for scholarly completeness and to encourage engagement with primary sources.
 
-### Penalties
-
-| Issue | Penalty |
-|-------|---------|
-| Compiler warnings | -5 pts |
-| Memory leaks (Valgrind) | -10 pts |
-| Crashes on valid input | -15 pts |
-| Incorrect output format | -5 pts |
-| Late submission (per day) | -10 pts |
-| Plagiarism | -100% + disciplinary |
-
----
-
-## 📤 Submission Instructions
-
-1. **File Naming:**
-   - `homework1_serialisation.c`
-   - `homework2_lca.c`
-
-2. **Header Comment:**
-   ```c
-   /**
-    * Week 07 Homework X: [Title]
-    * Student: [Your Name]
-    * Group: [Your Group]
-    * Date: [Submission Date]
-    */
-   ```
-
-3. **Compilation Test:**
-   ```bash
-   gcc -Wall -Wextra -std=c11 -o hw1 homework1_serialisation.c
-   gcc -Wall -Wextra -std=c11 -o hw2 homework2_lca.c
-   ```
-
-4. **Memory Test:**
-   ```bash
-   valgrind --leak-check=full ./hw1
-   valgrind --leak-check=full ./hw2
-   ```
-
-5. **Submit via:** University portal before deadline
-
----
-
-## 💡 Tips for Success
-
-1. **Start with the structure:** Define TreeNode and helper functions first
-
-2. **Test incrementally:** Test serialise before deserialise
-
-3. **Draw trees:** Visualise your test cases on paper
-
-4. **Use Valgrind early:** Don't wait until the end to check memory
-
-5. **Handle edge cases:** Empty tree, single node, degenerate trees
-
-6. **Read the examples carefully:** They clarify the expected behaviour
-
-7. **Ask questions:** Use the forum or office hours if stuck
-
----
-
-## 📚 Recommended Resources
-
-- Knuth, TAOCP Vol. 1, §2.3 (Tree traversals)
-- LeetCode #297 (Serialise and Deserialise Binary Tree)
-- LeetCode #236 (Lowest Common Ancestor of a Binary Tree)
-- GeeksforGeeks: Tree Serialisation, LCA algorithms
-
----
-
-*Good luck! Remember: clean code and zero memory leaks are as important as correct output.*
+| Reference (APA 7th ed) | DOI |
+|---|---|
+| Bayer, R., & McCreight, E. (1972). Organization and maintenance of large ordered indexes. *Acta Informatica, 1*, 173–189. | `https://doi.org/10.1007/BF00288683` |
+| Sethi, R., & Ullman, J. D. (1970). The generation of optimal code for arithmetic expressions. *Journal of the ACM, 17*(4), 715–728. | `https://doi.org/10.1145/321607.321620` |

@@ -315,7 +315,7 @@ int main(void) {
     ExprNode *tree1 = build_from_postfix(expr1);
     
     printf("\nTree Structure:\n");
-    print_expr_tree(tree1, 0);
+    print_expr_tree(tree1, 1);
     
     printf("\nEvaluation: %d\n", evaluate(tree1));
     
@@ -340,7 +340,7 @@ int main(void) {
     ExprNode *tree2 = build_from_postfix(expr2);
     
     printf("\nTree Structure:\n");
-    print_expr_tree(tree2, 0);
+    print_expr_tree(tree2, 1);
     
     printf("\nEvaluation: %d\n", evaluate(tree2));
     
@@ -365,7 +365,7 @@ int main(void) {
     ExprNode *tree3 = build_from_postfix(expr3);
     
     printf("\nTree Structure:\n");
-    print_expr_tree(tree3, 0);
+    print_expr_tree(tree3, 1);
     
     printf("\nEvaluation: %d\n", evaluate(tree3));
     

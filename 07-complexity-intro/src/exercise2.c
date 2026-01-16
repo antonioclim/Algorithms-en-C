@@ -53,28 +53,22 @@
  */
 
 /**
- * TODO 1: Complete the Expression Node structure
+ * Expression tree node.
  *
- * An expression tree node should contain:
- *   - A character 'op' for the operator (+, -, *, /)
- *   - An integer 'value' for operand nodes
- *   - A boolean 'is_operator' to distinguish operators from operands
- *   - Pointers to left and right children
- *
- * Hint: Operators have children, operands (leaves) don't
+ * In this representation, each node is either:
+ *   - an operand node (leaf) with is_operator = 0 and a defined value
+ *   - an operator node (internal) with is_operator = 1 and defined op
  */
 typedef struct ExprNode {
     char op;              /* Operator: '+', '-', '*', '/' */
     int value;            /* Operand value (only for leaves) */
     int is_operator;      /* 1 if operator, 0 if operand */
-    
-    /* YOUR CODE HERE - Add left and right child pointers */
-    
-    
+    struct ExprNode *left;
+    struct ExprNode *right;
 } ExprNode;
 
 /**
- * Stack structure for building the expression tree.
+ * Stack for building the expression tree.
  * Stores pointers to ExprNode.
  */
 typedef struct Stack {
@@ -87,87 +81,38 @@ typedef struct Stack {
  * =============================================================================
  */
 
-/**
- * TODO 2: Implement stack initialisation
- *
- * Create a new empty stack.
- *
- * Steps:
- *   1. Allocate memory for Stack structure
- *   2. Check allocation success
- *   3. Set top to -1 (empty stack)
- *   4. Return stack pointer
- *
- * @return Pointer to new stack
- */
 Stack* stack_create(void) {
-    /* YOUR CODE HERE */
-    
-    
-    
-    
-    return NULL;  /* Replace this */
+    Stack *s = malloc(sizeof(Stack));
+    if (s == NULL) {
+        fprintf(stderr, "Error: Stack allocation failed\n");
+        exit(EXIT_FAILURE);
+    }
+    s->top = -1;
+    return s;
 }
 
-/**
- * TODO 3: Implement stack empty check
- *
- * @param s Pointer to stack
- * @return true if stack is empty
- */
 bool stack_is_empty(Stack *s) {
-    /* YOUR CODE HERE */
-    
-    return true;  /* Replace this */
+    return s->top == -1;
 }
 
-/**
- * TODO 4: Implement stack push operation
- *
- * Add a node to the top of the stack.
- *
- * Steps:
- *   1. Check for stack overflow
- *   2. Increment top
- *   3. Store node at items[top]
- *
- * @param s Pointer to stack
- * @param node Node to push
- */
 void stack_push(Stack *s, ExprNode *node) {
-    /* YOUR CODE HERE */
-    
-    
-    
-    
+    if (s->top >= MAX_STACK_SIZE - 1) {
+        fprintf(stderr, "Error: Stack overflow\n");
+        return;
+    }
+    s->top++;
+    s->items[s->top] = node;
 }
 
-/**
- * TODO 5: Implement stack pop operation
- *
- * Remove and return the top node.
- *
- * Steps:
- *   1. Check for stack underflow (return NULL)
- *   2. Get node from items[top]
- *   3. Decrement top
- *   4. Return node
- *
- * @param s Pointer to stack
- * @return Top node (or NULL if empty)
- */
 ExprNode* stack_pop(Stack *s) {
-    /* YOUR CODE HERE */
-    
-    
-    
-    
-    return NULL;  /* Replace this */
+    if (stack_is_empty(s)) {
+        return NULL;
+    }
+    ExprNode *node = s->items[s->top];
+    s->top--;
+    return node;
 }
 
-/**
- * Destroy the stack (free memory).
- */
 void stack_destroy(Stack *s) {
     free(s);
 }
@@ -177,61 +122,34 @@ void stack_destroy(Stack *s) {
  * =============================================================================
  */
 
-/**
- * TODO 6: Create an operand (leaf) node
- *
- * Create a node representing a number.
- *
- * Steps:
- *   1. Allocate memory for ExprNode
- *   2. Set is_operator to 0 (false)
- *   3. Set value to the given number
- *   4. Set op to '\0' (no operator)
- *   5. Set left and right to NULL
- *   6. Return node pointer
- *
- * @param value The numeric value
- * @return Pointer to new operand node
- */
 ExprNode* create_operand(int value) {
-    /* YOUR CODE HERE */
-    
-    
-    
-    
-    
-    
-    return NULL;  /* Replace this */
+    ExprNode *node = malloc(sizeof(ExprNode));
+    if (node == NULL) {
+        fprintf(stderr, "Error: Node allocation failed\n");
+        exit(EXIT_FAILURE);
+    }
+
+    node->is_operator = 0;
+    node->value = value;
+    node->op = '\0';
+    node->left = NULL;
+    node->right = NULL;
+    return node;
 }
 
-/**
- * TODO 7: Create an operator (internal) node
- *
- * Create a node representing an operator with children.
- *
- * Steps:
- *   1. Allocate memory for ExprNode
- *   2. Set is_operator to 1 (true)
- *   3. Set op to the given operator character
- *   4. Set value to 0 (not used)
- *   5. Set left and right to the given children
- *   6. Return node pointer
- *
- * @param op The operator character (+, -, *, /)
- * @param left Left child (first operand)
- * @param right Right child (second operand)
- * @return Pointer to new operator node
- */
 ExprNode* create_operator(char op, ExprNode *left, ExprNode *right) {
-    /* YOUR CODE HERE */
-    
-    
-    
-    
-    
-    
-    
-    return NULL;  /* Replace this */
+    ExprNode *node = malloc(sizeof(ExprNode));
+    if (node == NULL) {
+        fprintf(stderr, "Error: Node allocation failed\n");
+        exit(EXIT_FAILURE);
+    }
+
+    node->is_operator = 1;
+    node->op = op;
+    node->value = 0;
+    node->left = left;
+    node->right = right;
+    return node;
 }
 
 /* =============================================================================
@@ -239,69 +157,39 @@ ExprNode* create_operator(char op, ExprNode *left, ExprNode *right) {
  * =============================================================================
  */
 
-/**
- * Check if a character is an operator.
- */
 bool is_operator(char c) {
     return c == '+' || c == '-' || c == '*' || c == '/';
 }
 
-/**
- * TODO 8: Build expression tree from postfix notation
- *
- * Algorithm:
- *   For each token in the postfix expression:
- *     - If it's a number: create operand node, push to stack
- *     - If it's an operator: pop two nodes, create operator node
- *       with them as children, push result to stack
- *   At the end, stack contains the root of the expression tree.
- *
- * Example: "3 4 + 5 *"
- *   1. Push operand(3)
- *   2. Push operand(4)
- *   3. '+': pop 4 and 3, push operator('+', 3, 4)
- *   4. Push operand(5)
- *   5. '*': pop 5 and (+,3,4), push operator('*', (+,3,4), 5)
- *   6. Return root
- *
- * @param postfix The postfix expression string (space-separated)
- * @return Root of the expression tree
- *
- * Hint: Use strtok() to split by spaces, atoi() to convert numbers
- * Hint: When popping for operator, first pop is RIGHT, second is LEFT
- */
 ExprNode* build_from_postfix(char *postfix) {
     Stack *stack = stack_create();
-    
-    /* Make a copy since strtok modifies the string */
+
+    /* strtok modifies its input, so copy into a local buffer */
     char expr[MAX_EXPR_LEN];
     strncpy(expr, postfix, MAX_EXPR_LEN - 1);
     expr[MAX_EXPR_LEN - 1] = '\0';
-    
-    /* Tokenise by spaces */
+
     char *token = strtok(expr, " ");
-    
     while (token != NULL) {
-        /* YOUR CODE HERE */
-        
-        /* Check if token is an operator or a number */
-        /* If operator: pop two nodes, create operator node, push */
-        /* If number: create operand node, push */
-        
-        
-        
-        
-        
-        
-        
-        
-        token = strtok(NULL, " ");  /* Get next token */
+        if (strlen(token) == 1 && is_operator(token[0])) {
+            /* Operator: the first pop is the right operand */
+            ExprNode *right = stack_pop(stack);
+            ExprNode *left = stack_pop(stack);
+            ExprNode *node = create_operator(token[0], left, right);
+            stack_push(stack, node);
+        } else {
+            /* Operand: atoi handles multi-digit numbers, including negative */
+            int value = atoi(token);
+            ExprNode *node = create_operand(value);
+            stack_push(stack, node);
+        }
+
+        token = strtok(NULL, " ");
     }
-    
-    /* The final item on stack is the root */
+
     ExprNode *root = stack_pop(stack);
     stack_destroy(stack);
-    
+
     return root;
 }
 
@@ -310,39 +198,31 @@ ExprNode* build_from_postfix(char *postfix) {
  * =============================================================================
  */
 
-/**
- * TODO 9: Evaluate the expression tree
- *
- * Use postorder traversal logic: evaluate children first, then apply operator.
- *
- * Steps:
- *   1. Base case: if node is an operand (not operator), return its value
- *   2. Recursively evaluate left subtree
- *   3. Recursively evaluate right subtree
- *   4. Apply the operator to the two results
- *   5. Return the result
- *
- * @param node Root of the expression tree
- * @return The computed result
- *
- * Hint: Use a switch statement for the four operators
- * Note: For division, use integer division (/)
- */
 int evaluate(ExprNode *node) {
-    /* YOUR CODE HERE */
-    
-    /* Base case: operand node */
-    
-    
-    /* Recursive case: operator node */
-    
-    
-    
-    
-    
-    
-    
-    return 0;  /* Replace this */
+    if (node == NULL) {
+        return 0;
+    }
+
+    if (!node->is_operator) {
+        return node->value;
+    }
+
+    int left_val = evaluate(node->left);
+    int right_val = evaluate(node->right);
+
+    switch (node->op) {
+        case '+': return left_val + right_val;
+        case '-': return left_val - right_val;
+        case '*': return left_val * right_val;
+        case '/':
+            if (right_val == 0) {
+                fprintf(stderr, "Error: Division by zero\n");
+                return 0;
+            }
+            return left_val / right_val;
+        default:
+            return 0;
+    }
 }
 
 /* =============================================================================
@@ -350,90 +230,51 @@ int evaluate(ExprNode *node) {
  * =============================================================================
  */
 
-/**
- * TODO 10: Convert to infix notation with parentheses
- *
- * Inorder traversal with parentheses around each operator expression.
- *
- * Steps:
- *   1. If node is NULL, return
- *   2. If operand: print the value
- *   3. If operator:
- *      a. Print '('
- *      b. Recursively print left subtree (infix)
- *      c. Print ' ', operator, ' '
- *      d. Recursively print right subtree (infix)
- *      e. Print ')'
- *
- * @param node Root of the expression tree
- *
- * Example: Tree for "3 4 + 5 *" prints "((3 + 4) * 5)"
- */
 void to_infix(ExprNode *node) {
-    /* YOUR CODE HERE */
-    
-    
-    
-    
-    
-    
-    
-    
-    
+    if (node == NULL) {
+        return;
+    }
+
+    if (!node->is_operator) {
+        printf("%d", node->value);
+        return;
+    }
+
+    printf("(");
+    to_infix(node->left);
+    printf(" %c ", node->op);
+    to_infix(node->right);
+    printf(")");
 }
 
-/**
- * TODO 11: Convert to prefix notation
- *
- * Preorder traversal: operator first, then operands.
- *
- * Steps:
- *   1. If node is NULL, return
- *   2. If operand: print value followed by space
- *   3. If operator:
- *      a. Print operator followed by space
- *      b. Recursively print left subtree (prefix)
- *      c. Recursively print right subtree (prefix)
- *
- * @param node Root of the expression tree
- *
- * Example: Tree for "3 4 + 5 *" prints "* + 3 4 5"
- */
 void to_prefix(ExprNode *node) {
-    /* YOUR CODE HERE */
-    
-    
-    
-    
-    
-    
+    if (node == NULL) {
+        return;
+    }
+
+    if (!node->is_operator) {
+        printf("%d ", node->value);
+        return;
+    }
+
+    printf("%c ", node->op);
+    to_prefix(node->left);
+    to_prefix(node->right);
 }
 
-/**
- * TODO 12: Convert to postfix notation
- *
- * Postorder traversal: operands first, then operator.
- *
- * Steps:
- *   1. If node is NULL, return
- *   2. If operand: print value followed by space
- *   3. If operator:
- *      a. Recursively print left subtree (postfix)
- *      b. Recursively print right subtree (postfix)
- *      c. Print operator followed by space
- *
- * @param node Root of the expression tree
- *
- * Example: Tree for "3 4 + 5 *" prints "3 4 + 5 *"
- */
 void to_postfix(ExprNode *node) {
-    /* YOUR CODE HERE */
-    
-    
-    
-    
-    
-    
+    if (node == NULL) {
+        return;
+    }
+
+    if (!node->is_operator) {
+        printf("%d ", node->value);
+        return;
+    }
+
+    to_postfix(node->left);
+    to_postfix(node->right);
+    printf("%c ", node->op);
 }
 
 /* =============================================================================
@@ -441,25 +282,14 @@ void to_postfix(ExprNode *node) {
  * =============================================================================
  */
 
-/**
- * TODO 13: Free the expression tree
- *
- * Use postorder traversal to free all nodes.
- *
- * Steps:
- *   1. If node is NULL, return
- *   2. Recursively free left subtree
- *   3. Recursively free right subtree
- *   4. Free current node
- *
- * @param node Root of the tree to free
- */
 void free_expr_tree(ExprNode *node) {
-    /* YOUR CODE HERE */
-    
-    
-    
-    
+    if (node == NULL) {
+        return;
+    }
+
+    free_expr_tree(node->left);
+    free_expr_tree(node->right);
+    free(node);
 }
 
 /* =============================================================================
@@ -472,19 +302,19 @@ void free_expr_tree(ExprNode *node) {
  */
 void print_expr_tree(ExprNode *node, int level) {
     if (node == NULL) return;
-    
+
     print_expr_tree(node->right, level + 1);
-    
+
     for (int i = 0; i < level; i++) {
         printf("    ");
     }
-    
+
     if (node->is_operator) {
         printf("[%c]\n", node->op);
     } else {
         printf("%d\n", node->value);
     }
-    
+
     print_expr_tree(node->left, level + 1);
 }
 
@@ -498,78 +328,91 @@ int main(void) {
     printf("╔═══════════════════════════════════════════════════════════════╗\n");
     printf("║     EXERCISE 2: Expression Tree Evaluator                     ║\n");
     printf("╚═══════════════════════════════════════════════════════════════╝\n");
-    
-    /**
-     * TODO 14: Complete the main function
-     *
-     * Test with multiple expressions:
-     *   1. "3 4 + 5 *"      Expected: 35
-     *   2. "10 2 / 3 +"     Expected: 8
-     *   3. "5 1 2 + 4 * + 3 -"  Expected: 14
-     */
-    
+
     /* Test expressions */
     char expr1[] = "3 4 + 5 *";
     char expr2[] = "10 2 / 3 +";
     char expr3[] = "5 1 2 + 4 * + 3 -";
-    
+
+    /* Expression 1 */
     printf("\n═══════════════════════════════════════════════════════════════\n");
     printf("Expression 1: %s\n", expr1);
     printf("═══════════════════════════════════════════════════════════════\n");
-    
-    /* YOUR CODE HERE */
-    /* 1. Build tree: ExprNode *tree1 = build_from_postfix(expr1); */
-    /* 2. Print tree structure */
-    /* 3. Evaluate and print result */
-    /* 4. Print all three notations */
-    /* 5. Free the tree */
-    
-    ExprNode *tree1 = NULL;  /* Replace with build_from_postfix(expr1) */
-    
+
+    ExprNode *tree1 = build_from_postfix(expr1);
+
     printf("\nTree Structure:\n");
-    print_expr_tree(tree1, 0);
-    
-    printf("\nEvaluation: ");
-    /* YOUR CODE HERE - Print evaluate(tree1) */
-    
-    printf("\n\nNotations:\n");
+    /* Start at level 1 to match the expected reference output */
+    print_expr_tree(tree1, 1);
+
+    printf("\nEvaluation: %d\n", evaluate(tree1));
+
+    printf("\nNotations:\n");
     printf("  Infix:   ");
-    /* YOUR CODE HERE - Call to_infix(tree1) */
-    
+    to_infix(tree1);
     printf("\n");
     printf("  Prefix:  ");
-    /* YOUR CODE HERE - Call to_prefix(tree1) */
-    
+    to_prefix(tree1);
     printf("\n");
     printf("  Postfix: ");
-    /* YOUR CODE HERE - Call to_postfix(tree1) */
-    
+    to_postfix(tree1);
     printf("\n");
-    
-    /* Free tree1 */
-    /* YOUR CODE HERE */
-    
-    
+
+    free_expr_tree(tree1);
+
+    /* Expression 2 */
     printf("\n═══════════════════════════════════════════════════════════════\n");
     printf("Expression 2: %s\n", expr2);
     printf("═══════════════════════════════════════════════════════════════\n");
-    
-    /* YOUR CODE HERE - Repeat for expr2 */
-    
-    
-    
+
+    ExprNode *tree2 = build_from_postfix(expr2);
+
+    printf("\nTree Structure:\n");
+    print_expr_tree(tree2, 1);
+
+    printf("\nEvaluation: %d\n", evaluate(tree2));
+
+    printf("\nNotations:\n");
+    printf("  Infix:   ");
+    to_infix(tree2);
+    printf("\n");
+    printf("  Prefix:  ");
+    to_prefix(tree2);
+    printf("\n");
+    printf("  Postfix: ");
+    to_postfix(tree2);
+    printf("\n");
+
+    free_expr_tree(tree2);
+
+    /* Expression 3 */
     printf("\n═══════════════════════════════════════════════════════════════\n");
     printf("Expression 3: %s\n", expr3);
     printf("═══════════════════════════════════════════════════════════════\n");
-    
-    /* YOUR CODE HERE - Repeat for expr3 */
-    
-    
-    
+
+    ExprNode *tree3 = build_from_postfix(expr3);
+
+    printf("\nTree Structure:\n");
+    print_expr_tree(tree3, 1);
+
+    printf("\nEvaluation: %d\n", evaluate(tree3));
+
+    printf("\nNotations:\n");
+    printf("  Infix:   ");
+    to_infix(tree3);
     printf("\n");
-    printf("All expression trees processed.\n");
+    printf("  Prefix:  ");
+    to_prefix(tree3);
+    printf("\n");
+    printf("  Postfix: ");
+    to_postfix(tree3);
+    printf("\n");
+
+    free_expr_tree(tree3);
+
+    printf("\nAll expression trees processed.\n");
     printf("Run with Valgrind to verify no memory leaks.\n\n");
-    
+
     return 0;
 }
 

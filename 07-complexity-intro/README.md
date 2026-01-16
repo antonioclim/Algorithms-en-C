@@ -1,550 +1,532 @@
-# Week 07: Binary Trees
+# Week 07: Binary Trees and Expression Trees
 
-## 🎯 Learning Objectives
+## Abstract
 
-Upon completion of this laboratory, students will be able to:
+This laboratory unit consolidates three tightly coupled strands of algorithmic literacy: (i) the **structural** view of computation in which recursive data define recursive algorithms, (ii) the **operational** view in which tree traversals are analysed as disciplined state transitions and (iii) the **complexity** view in which every design choice is justified in asymptotic and constant-factor terms. Concretely, the repository provides a complete worked example of binary-tree manipulation (`src/example1.c`) and two assessed exercises: a pointer-based binary tree with classical traversals and statistics (`src/exercise1.c`) and an expression tree constructed from postfix notation using a stack (`src/exercise2.c`).
 
-1. **Remember** the fundamental terminology of binary trees including nodes, edges, root, leaves, depth, height and subtrees
-2. **Understand** the recursive nature of tree structures and how this property enables elegant algorithmic solutions
-3. **Apply** the three classical traversal algorithms (preorder, inorder, postorder) to process tree nodes systematically
-4. **Analyse** the time and space complexity of tree operations, recognising O(n) traversal and O(h) search characteristics
-5. **Evaluate** different tree representations (pointer-based vs array-based) for specific problem domains
-6. **Create** complete binary tree implementations with insertion, deletion, search and traversal capabilities
+The material is written for C11 and assumes a disciplined memory model: **every dynamic allocation has a single, explicit owner and every owned allocation is eventually released**. Where recursion is used, the call stack is treated as an algorithmic resource and not as an unbounded convenience.
 
----
+## Learning outcomes
 
-## 📜 Historical Context
+On completion, a student should be able to:
 
-The binary tree data structure emerged from the pioneering work in computer science during the 1950s and 1960s, a period when researchers were formalising the mathematical foundations of algorithms and data organisation. The concept draws from graph theory, which itself originated with Leonhard Euler's solution to the Seven Bridges of Königsberg problem in 1736.
+1. Define a binary tree formally and implement it in C using a self-referential structure.
+2. Derive preorder, inorder and postorder traversals from the recursive definition of a tree.
+3. Implement level-order traversal as a breadth-first search using a FIFO queue.
+4. Compute canonical tree statistics (height, size, leaf count and sum) and justify their asymptotic bounds.
+5. Construct an expression tree from postfix (Reverse Polish) notation using a stack-based algorithm and prove that the resulting tree is unique for well-formed binary operators.
+6. Evaluate an expression tree and perform notation conversions (prefix, infix with parentheses and postfix) as direct instances of traversal schemes.
 
-Binary trees gained prominence through the work of several key figures. John McCarthy's development of LISP in 1958 demonstrated the power of recursive data structures, whilst Donald Knuth's magisterial treatise *The Art of Computer Programming* (Volume 1, 1968) provided the definitive formalisation of tree algorithms. The notation and terminology we use today—preorder, inorder, postorder—were standardised during this era.
-
-The recursive decomposition principle underlying binary trees—that a complex structure can be expressed as simpler instances of itself—represents one of the most profound insights in computer science. This principle connects binary trees to diverse domains: expression parsing, decision systems, hierarchical databases and the very structure of programming language syntax itself.
-
-### Key Figure: Donald E. Knuth (1938–)
-
-Donald Ervin Knuth, Professor Emeritus at Stanford University, stands as one of the most influential figures in the history of computer science. His multi-volume work *The Art of Computer Programming*, begun in 1962 and still ongoing, established rigorous mathematical analysis as the foundation of algorithm study. Knuth invented the TeX typesetting system and developed the concept of literate programming.
-
-> *"An algorithm must be seen to be believed."* — Donald E. Knuth
-
-Knuth's treatment of tree structures in TAOCP Volume 1 remains the authoritative reference, introducing the standard traversal algorithms and establishing the asymptotic analysis techniques now universal in the field.
-
----
-
-## 📚 Theoretical Foundations
-
-### 1. Binary Tree Terminology and Structure
-
-A **binary tree** is a hierarchical data structure wherein each node contains at most two children, conventionally designated as the *left child* and *right child*. This constraint distinguishes binary trees from general trees, enabling specialised algorithms of remarkable elegance.
+## Repository layout
 
 ```
-                    ┌───────────────────────────────────────┐
-                    │           BINARY TREE ANATOMY         │
-                    └───────────────────────────────────────┘
-
-                                    ┌───┐
-                           Root ──▶ │ A │ ◀── Level 0
-                                    └─┬─┘
-                           ┌──────────┴──────────┐
-                           ▼                     ▼
-                        ┌───┐                 ┌───┐
-                        │ B │                 │ C │ ◀── Level 1
-                        └─┬─┘                 └─┬─┘
-                     ┌────┴────┐           ┌────┴────┐
-                     ▼         ▼           ▼         ▼
-                  ┌───┐     ┌───┐       ┌───┐     ┌───┐
-                  │ D │     │ E │       │ F │     │ G │ ◀── Level 2
-                  └───┘     └───┘       └───┘     └───┘
-                    │                     │
-                 Leaves ───────────────── Leaves
-
-        Height = 2 (longest path from root to leaf)
-        Size = 7 (total number of nodes)
-        
-        Parent of E: B          Children of C: F, G
-        Siblings: (D,E), (F,G)  Ancestors of G: C, A
-        Subtree rooted at B: {B, D, E}
+07-complexity-intro/
+├── README.md
+├── Makefile
+├── src/
+│   ├── example1.c
+│   ├── exercise1.c
+│   └── exercise2.c
+├── solution/
+│   ├── exercise1_sol.c
+│   ├── exercise2_sol.c
+│   ├── homework1_sol.c
+│   └── homework2_sol.c
+├── data/
+│   ├── tree_data.txt
+│   └── expressions.txt
+├── tests/
+│   ├── test1_input.txt
+│   ├── test1_expected.txt
+│   ├── test2_input.txt
+│   └── test2_expected.txt
+├── teme/
+│   ├── homework-requirements.md
+│   └── homework-extended.md
+└── slides/
+    ├── presentation-week07.html
+    └── presentation-comparativ.html
 ```
 
-**Key Properties:**
+The `solution/` directory contains instructor reference implementations that mirror the student-facing specifications. The `tests/` directory implements **golden-output regression tests** for the student binaries.
 
-| Property | Definition | Example (above tree) |
-|----------|------------|---------------------|
-| **Root** | The topmost node with no parent | Node A |
-| **Leaf** | A node with no children | Nodes D, E, F, G |
-| **Internal node** | A node with at least one child | Nodes A, B, C |
-| **Depth** | Distance from root to node | Depth of E = 2 |
-| **Height** | Longest path from node to leaf | Height of tree = 2 |
-| **Degree** | Number of children | Degree of B = 2 |
+## Build and test workflow
 
-### 2. The Recursive Nature of Trees
-
-The fundamental insight enabling elegant tree algorithms is the **recursive definition**:
-
-> A binary tree is either **empty** (NULL) or consists of a **root node** with two binary trees as its **left subtree** and **right subtree**.
-
-This self-referential structure means every subtree is itself a valid binary tree. Consequently, any operation on a tree can be expressed as:
-
-1. Handle the base case (empty tree)
-2. Process the current node
-3. Recursively process left and right subtrees
-
-```c
-/* The canonical recursive tree structure in C */
-typedef struct TreeNode {
-    int data;                    /* Node payload */
-    struct TreeNode *left;       /* Left subtree (may be NULL) */
-    struct TreeNode *right;      /* Right subtree (may be NULL) */
-} TreeNode;
-
-/* Recursive pattern template */
-ReturnType tree_operation(TreeNode *node) {
-    /* Base case: empty tree */
-    if (node == NULL) {
-        return BASE_VALUE;
-    }
-    
-    /* Recursive case: combine results from subtrees */
-    ReturnType left_result = tree_operation(node->left);
-    ReturnType right_result = tree_operation(node->right);
-    
-    return combine(node->data, left_result, right_result);
-}
-```
-
-### 3. The Three Classical Traversals
-
-Traversal algorithms visit every node exactly once in a systematic order. The three fundamental traversals differ only in *when* they process the current node relative to its subtrees:
-
-```
-        ┌────────────────────────────────────────────────────────────┐
-        │              THE THREE TRAVERSALS VISUALISED               │
-        └────────────────────────────────────────────────────────────┘
-
-                                    ┌───┐
-                                    │ 1 │
-                                    └─┬─┘
-                             ┌────────┴────────┐
-                             ▼                 ▼
-                          ┌───┐             ┌───┐
-                          │ 2 │             │ 3 │
-                          └─┬─┘             └─┬─┘
-                       ┌────┴────┐       ┌────┴────┐
-                       ▼         ▼       ▼         ▼
-                    ┌───┐     ┌───┐   ┌───┐     ┌───┐
-                    │ 4 │     │ 5 │   │ 6 │     │ 7 │
-                    └───┘     └───┘   └───┘     └───┘
-
-        ╔════════════════╦═══════════════════════╦════════════════════╗
-        ║   TRAVERSAL    ║        ORDER          ║      SEQUENCE      ║
-        ╠════════════════╬═══════════════════════╬════════════════════╣
-        ║   Preorder     ║  Node → Left → Right  ║  1, 2, 4, 5, 3, 6, 7 ║
-        ║   Inorder      ║  Left → Node → Right  ║  4, 2, 5, 1, 6, 3, 7 ║
-        ║   Postorder    ║  Left → Right → Node  ║  4, 5, 2, 6, 7, 3, 1 ║
-        ╚════════════════╩═══════════════════════╩════════════════════╝
-
-        Mnemonic: "Pre" = node first, "Post" = node last, "In" = node in middle
-```
-
-**Traversal Implementations:**
-
-```c
-/* Preorder: process node BEFORE children */
-void preorder(TreeNode *node) {
-    if (node == NULL) return;
-    process(node->data);        /* Node first */
-    preorder(node->left);       /* Then left */
-    preorder(node->right);      /* Then right */
-}
-
-/* Inorder: process node BETWEEN children */
-void inorder(TreeNode *node) {
-    if (node == NULL) return;
-    inorder(node->left);        /* Left first */
-    process(node->data);        /* Node in middle */
-    inorder(node->right);       /* Right last */
-}
-
-/* Postorder: process node AFTER children */
-void postorder(TreeNode *node) {
-    if (node == NULL) return;
-    postorder(node->left);      /* Left first */
-    postorder(node->right);     /* Right second */
-    process(node->data);        /* Node last */
-}
-```
-
-### 4. Complexity Analysis
-
-| Operation | Time Complexity | Space Complexity | Notes |
-|-----------|-----------------|------------------|-------|
-| Traversal | O(n) | O(h) | h = height, stack frames |
-| Search | O(n) | O(h) | Worst case for general tree |
-| Insertion | O(1) | O(1) | After finding position |
-| Height calculation | O(n) | O(h) | Must visit all nodes |
-| Node counting | O(n) | O(h) | Must visit all nodes |
-
-**Space Complexity Insight:** Recursive traversals consume O(h) stack space where h is the tree height. For a balanced tree, h = O(log n); for a degenerate tree (linked-list-like), h = O(n).
-
-```
-    ┌────────────────────────────────────────────────────────────────┐
-    │                  TREE SHAPE AND COMPLEXITY                     │
-    └────────────────────────────────────────────────────────────────┘
-
-    BALANCED (h = log n)              DEGENERATE (h = n)
-    
-           ○                                 ○
-          / \                                 \
-         ○   ○                                 ○
-        / \ / \                                 \
-       ○  ○ ○  ○                                 ○
-                                                 \
-    Height = 2 for 7 nodes                        ○
-    Operations: O(log n)
-                                         Height = 3 for 4 nodes
-                                         Operations: O(n)
-```
-
----
-
-## 🏭 Industrial Applications
-
-### 1. Expression Trees (Compilers)
-
-Compilers represent mathematical expressions as binary trees, enabling evaluation and optimisation:
-
-```c
-/* Expression tree for: (3 + 4) * 5 */
-/*
-           *
-          / \
-         +   5
-        / \
-       3   4
-       
-   Inorder:  3 + 4 * 5  (ambiguous without parentheses)
-   Postorder: 3 4 + 5 * (Reverse Polish Notation)
-   Preorder:  * + 3 4 5 (Polish Notation)
-*/
-
-typedef struct ExprNode {
-    char operator;
-    int value;
-    int is_operator;
-    struct ExprNode *left, *right;
-} ExprNode;
-
-int evaluate(ExprNode *node) {
-    if (!node->is_operator) return node->value;
-    
-    int left = evaluate(node->left);
-    int right = evaluate(node->right);
-    
-    switch (node->operator) {
-        case '+': return left + right;
-        case '-': return left - right;
-        case '*': return left * right;
-        case '/': return left / right;
-    }
-    return 0;
-}
-```
-
-### 2. DOM Tree (Web Browsers)
-
-Web browsers parse HTML into a binary tree structure (first-child/next-sibling representation):
-
-```c
-/* Simplified DOM node structure */
-typedef struct DOMNode {
-    char tag[32];
-    char *content;
-    struct DOMNode *first_child;
-    struct DOMNode *next_sibling;
-} DOMNode;
-
-/* Recursive rendering */
-void render(DOMNode *node, int indent) {
-    if (node == NULL) return;
-    
-    for (int i = 0; i < indent; i++) printf("  ");
-    printf("<%s>\n", node->tag);
-    
-    render(node->first_child, indent + 1);
-    render(node->next_sibling, indent);
-}
-```
-
-### 3. File System Hierarchy (Unix/Linux)
-
-Directory structures form trees, traversed recursively:
-
-```c
-/* Recursive directory size calculation */
-#include <dirent.h>
-#include <sys/stat.h>
-
-long calculate_size(const char *path) {
-    struct stat st;
-    if (stat(path, &st) != 0) return 0;
-    
-    if (!S_ISDIR(st.st_mode)) return st.st_size;
-    
-    long total = st.st_size;
-    DIR *dir = opendir(path);
-    struct dirent *entry;
-    
-    while ((entry = readdir(dir)) != NULL) {
-        if (strcmp(entry->d_name, ".") == 0 || 
-            strcmp(entry->d_name, "..") == 0) continue;
-        
-        char child_path[PATH_MAX];
-        snprintf(child_path, sizeof(child_path), "%s/%s", path, entry->d_name);
-        total += calculate_size(child_path);  /* Recursive call */
-    }
-    closedir(dir);
-    return total;
-}
-```
-
-### 4. Decision Trees (Machine Learning)
-
-Classification algorithms use binary trees for decision making:
-
-```c
-typedef struct DecisionNode {
-    char feature[64];
-    double threshold;
-    char *classification;  /* NULL if not leaf */
-    struct DecisionNode *yes_branch;
-    struct DecisionNode *no_branch;
-} DecisionNode;
-
-const char* classify(DecisionNode *node, double *features, int feature_count) {
-    if (node->classification != NULL) {
-        return node->classification;  /* Leaf: return class */
-    }
-    
-    /* Internal node: descend based on feature value */
-    int feature_idx = get_feature_index(node->feature);
-    if (features[feature_idx] <= node->threshold) {
-        return classify(node->yes_branch, features, feature_count);
-    } else {
-        return classify(node->no_branch, features, feature_count);
-    }
-}
-```
-
-### 5. GTK+ Widget Hierarchy
-
-GUI frameworks organise widgets in tree structures:
-
-```c
-/* GTK widget tree traversal example */
-void print_widget_tree(GtkWidget *widget, int depth) {
-    for (int i = 0; i < depth; i++) printf("  ");
-    printf("%s\n", G_OBJECT_TYPE_NAME(widget));
-    
-    if (GTK_IS_CONTAINER(widget)) {
-        GList *children = gtk_container_get_children(GTK_CONTAINER(widget));
-        for (GList *l = children; l != NULL; l = l->next) {
-            print_widget_tree(GTK_WIDGET(l->data), depth + 1);
-        }
-        g_list_free(children);
-    }
-}
-```
-
----
-
-## 💻 Laboratory Exercises
-
-### Exercise 1: Tree Construction and Traversal
-
-Implement a complete binary tree with the following capabilities:
-
-**Requirements:**
-1. Define a `TreeNode` structure with integer data and left/right pointers
-2. Implement `create_node()` to allocate and initialise a new node
-3. Implement all three traversals: `preorder()`, `inorder()`, `postorder()`
-4. Implement `count_nodes()` to return total node count
-5. Implement `calculate_height()` to determine tree height
-6. Implement `count_leaves()` to count leaf nodes
-7. Implement `tree_sum()` to calculate sum of all node values
-8. Implement `free_tree()` to properly deallocate memory
-
-**Input:** Series of integers to insert into the tree
-**Output:** Traversal sequences, statistics and verification of correct deallocation
-
-### Exercise 2: Expression Tree Evaluator
-
-Build an expression tree from postfix notation and evaluate it:
-
-**Requirements:**
-1. Parse postfix expressions (e.g., "3 4 + 5 *")
-2. Construct expression tree using stack-based algorithm
-3. Implement `evaluate()` using postorder traversal
-4. Implement `to_infix()` to convert back to infix notation with parentheses
-5. Implement `to_prefix()` to generate prefix notation
-6. Handle the four basic operators: +, -, *, /
-7. Detect and report division by zero
-8. Support multi-digit integers
-
-**Input:** Postfix expression string
-**Output:** Expression tree visualisation, evaluation result and alternative notations
-
----
-
-## 🔧 Compilation and Execution
+### Compilation
 
 ```bash
-# Build all targets
 make
+```
 
-# Build specific target
-make example1
-make exercise1
-make exercise2
+The default target builds:
 
-# Run example demonstration
-make run
+- `example1` – comprehensive demonstration of binary trees
+- `exercise1` – tree traversals and statistics
+- `exercise2` – expression tree construction and evaluation
 
-# Execute automated tests
+### Automated tests
+
+```bash
 make test
-
-# Check for memory leaks
-make valgrind
-
-# Clean build artefacts
-make clean
-
-# Display help
-make help
 ```
 
-**Compiler flags explained:**
-- `-Wall` : Enable all standard warnings
-- `-Wextra` : Enable additional warnings
-- `-std=c11` : Use C11 standard
-- `-g` : Include debugging symbols (for GDB/Valgrind)
+The tests run the student binaries and compare their complete standard output against reference files in `tests/` using `diff`. Output determinism is therefore part of the correctness contract.
 
----
+If you change any formatting or add diagnostic prints, you must also decide whether the change is pedagogically justified and whether the test oracle should be regenerated. The intended discipline is:
 
-## 📁 Directory Structure
+- **Do not** modify `tests/*_expected.txt` in order to hide a bug.
+- **Do** regenerate `tests/*_expected.txt` when a previously incorrect oracle has been corrected, after validating the new behaviour against the formal specification.
 
-```
-week-07-binary-trees/
-├── README.md                           # This documentation
-├── Makefile                            # Build automation
-│
-├── slides/
-│   ├── presentation-week07.html        # Main lecture (37 slides)
-│   └── presentation-comparativ.html    # Pseudocode → C → Python comparison
-│
-├── src/
-│   ├── example1.c                      # Complete binary tree demonstration
-│   ├── exercise1.c                     # Tree construction exercise (12 TODOs)
-│   └── exercise2.c                     # Expression tree exercise (14 TODOs)
-│
-├── data/
-│   ├── tree_data.txt                   # Sample tree construction data
-│   └── expressions.txt                 # Sample postfix expressions
-│
-├── tests/
-│   ├── test1_input.txt                 # Test input for exercise 1
-│   ├── test1_expected.txt              # Expected output for exercise 1
-│   ├── test2_input.txt                 # Test input for exercise 2
-│   └── test2_expected.txt              # Expected output for exercise 2
-│
-├── teme/
-│   ├── homework-requirements.md        # 2 homework assignments (50 pts each)
-│   └── homework-extended.md            # 5 bonus challenges (+10 pts each)
-│
-└── solution/
-    ├── exercise1_sol.c                 # Complete solution for exercise 1
-    ├── exercise2_sol.c                 # Complete solution for exercise 2
-    ├── homework1_sol.c                 # Solution for homework 1
-    └── homework2_sol.c                 # Solution for homework 2
+### Static compilation checks
+
+```bash
+make check
 ```
 
----
+This target invokes the compiler in syntax-only mode and is a lightweight guard against accidental non-C11 features and uninitialised identifiers.
 
-## 📖 Recommended Reading
+## Conceptual foundations
 
-### Essential
-- Knuth, D.E. (1997). *The Art of Computer Programming, Volume 1: Fundamental Algorithms*, 3rd ed., §2.3 "Trees"
-- Cormen, T.H. et al. (2022). *Introduction to Algorithms*, 4th ed., Chapter 12 "Binary Search Trees"
-- Sedgewick, R. & Wayne, K. (2011). *Algorithms*, 4th ed., §3.2 "Binary Search Trees"
+### 1. Formal definition of a binary tree
 
-### Advanced
-- Tarjan, R.E. (1983). *Data Structures and Network Algorithms*, SIAM
-- Aho, A.V., Lam, M.S., Sethi, R. & Ullman, J.D. (2006). *Compilers: Principles, Techniques, and Tools*, 2nd ed. (expression trees)
-- Skiena, S.S. (2020). *The Algorithm Design Manual*, 3rd ed., §3.4 "Binary Search Trees"
+A **binary tree** is a finite set of nodes defined inductively.
 
-### Online Resources
-- Visualgo.net - Binary Tree Visualisation: https://visualgo.net/en/bst
-- NIST Dictionary of Algorithms - Binary Tree: https://xlinux.nist.gov/dads/HTML/binarytree.html
-- GeeksforGeeks Tree Traversals: https://www.geeksforgeeks.org/tree-traversals-inorder-preorder-and-postorder/
+- The empty tree is a binary tree.
+- If `L` and `R` are binary trees and `x` is a value then the triple `(x, L, R)` is a binary tree.
 
----
+This definition is not decorative. It is the template from which correct algorithms follow. In C, the definition is represented as a tagged pointer structure where the empty tree is `NULL`.
 
-## ✅ Self-Assessment Checklist
+```c
+typedef struct TreeNode {
+    int data;
+    struct TreeNode *left;
+    struct TreeNode *right;
+} TreeNode;
+```
 
-Before submitting your work, verify that you can:
+The key invariant is structural: every `TreeNode` either has a `NULL` child pointer (representing an empty subtree) or a pointer to a valid `TreeNode` that is itself the root of a subtree.
 
-- [ ] Define a binary tree node structure with appropriate fields
-- [ ] Implement recursive tree creation with proper memory allocation
-- [ ] Write correct base cases for recursive tree functions
-- [ ] Implement preorder, inorder and postorder traversals
-- [ ] Calculate tree height using recursion
-- [ ] Count total nodes, leaves and internal nodes
-- [ ] Properly deallocate tree memory without leaks
-- [ ] Build an expression tree from postfix notation
-- [ ] Evaluate expression trees using recursive descent
-- [ ] Convert between prefix, infix and postfix notations
+### 2. Traversals as recursion schemes
 
----
+A traversal is a total function from nodes to an output sequence such that each node is visited exactly once. The difference between preorder, inorder and postorder is the location of the visit action relative to the recursive descent.
 
-## 💼 Interview Preparation
+Let `visit(n)` denote the action performed at node `n`.
 
-### Common Binary Tree Interview Questions
+- **Preorder**: `visit` then traverse left then traverse right.
+- **Inorder**: traverse left then `visit` then traverse right.
+- **Postorder**: traverse left then traverse right then `visit`.
 
-1. **Implement level-order (breadth-first) traversal**
-   - Requires: Queue data structure
-   - Key insight: Process nodes level by level using FIFO ordering
+#### Traversal pseudocode
 
-2. **Find the lowest common ancestor of two nodes**
-   - Requires: Understanding of tree paths
-   - Key insight: Traverse from root, split point is LCA
+```
+TRAVERSE(node, order):
+    if node == NULL:
+        return
 
-3. **Check if a binary tree is balanced**
-   - Definition: Heights of subtrees differ by at most 1
-   - Key insight: Recursive height check with early termination
+    if order == PRE:
+        visit(node)
 
-4. **Serialise and deserialise a binary tree**
-   - Requires: Preorder with NULL markers
-   - Key insight: Preorder uniquely identifies structure with NULLs
+    TRAVERSE(node.left, order)
 
-5. **Mirror (invert) a binary tree**
-   - Classic recursive swap problem
-   - Key insight: Swap children recursively at each node
+    if order == IN:
+        visit(node)
 
----
+    TRAVERSE(node.right, order)
 
-## 🔗 Next Week Preview
+    if order == POST:
+        visit(node)
+```
 
-**Week 08: Binary Search Trees (BST)**
+This generic scheme becomes a concrete C function once `visit` is instantiated, typically as a `printf` or an accumulator update.
 
-Building upon the binary tree foundation, we shall explore the *ordered* binary tree variant that enables O(log n) search, insertion and deletion. Topics include:
+#### Complexity of traversal
 
-- BST property: left < node < right
-- Search, insertion and deletion algorithms
-- In-order traversal yields sorted sequence
-- Balancing considerations and degenerate cases
+For any traversal:
 
-The BST represents the gateway to self-balancing trees (AVL, Red-Black) covered in subsequent weeks.
+- Time: **O(n)**, because each node is processed once.
+- Auxiliary space: **O(h)** for recursion depth, where `h` is tree height.
 
----
+The distinction between `n` and `h` is essential. A balanced tree has `h = Θ(log n)` while a degenerate tree has `h = Θ(n)`.
 
-*Laboratory materials prepared for ASE-CSIE Algorithms and Programming Techniques course.*
-*Week 07 of 14 | Binary Trees | British English Edition*
+### 3. Height, size and leaf count
+
+The statistics functions in `exercise1.c` are direct corollaries of the recursive definition.
+
+#### Height
+
+Adopting the convention that the empty tree has height `-1` makes the recurrence algebraically clean:
+
+- `height(NULL) = -1`
+- `height(node) = 1 + max(height(node.left), height(node.right))`
+
+Pseudocode:
+
+```
+HEIGHT(node):
+    if node == NULL:
+        return -1
+    return 1 + max(HEIGHT(node.left), HEIGHT(node.right))
+```
+
+#### Size (node count)
+
+- `size(NULL) = 0`
+- `size(node) = 1 + size(left) + size(right)`
+
+#### Leaf count
+
+A leaf is characterised by the predicate `node.left == NULL and node.right == NULL`.
+
+- `leaves(NULL) = 0`
+- `leaves(leaf) = 1`
+- `leaves(internal) = leaves(left) + leaves(right)`
+
+### 4. Level-order traversal as BFS
+
+Level-order traversal is not naturally expressed as a simple recursion scheme because it is fundamentally **queue-driven**.
+
+Pseudocode:
+
+```
+LEVEL_ORDER(root):
+    if root == NULL:
+        return
+
+    Q = empty queue
+    enqueue(Q, root)
+
+    while Q not empty:
+        u = dequeue(Q)
+        visit(u)
+        if u.left  != NULL: enqueue(Q, u.left)
+        if u.right != NULL: enqueue(Q, u.right)
+```
+
+Time is **O(n)** and the additional space is **O(w)** where `w` is the maximum width of the tree, bounded by `O(n)` and equal to `Θ(n)` in the worst case.
+
+## Expression trees
+
+### 1. Postfix notation and uniqueness
+
+For binary operators, a well-formed postfix expression defines a unique binary tree because token order determines a unique pairing of operator nodes with their left and right operand subtrees. The construction algorithm is stack-based and deterministic.
+
+### 2. Construction algorithm from postfix
+
+Given a space-separated postfix string where tokens are either integers or one-character operators `+ - * /`:
+
+- If the token is an operand, create a leaf and push it.
+- If the token is an operator, pop the right subtree then pop the left subtree, create a new operator node and push it.
+- After consuming all tokens, the stack contains exactly one item, the root.
+
+Pseudocode:
+
+```
+BUILD_FROM_POSTFIX(tokens):
+    S = empty stack
+
+    for t in tokens:
+        if t is integer:
+            push(S, new_operand(t))
+        else if t is operator:
+            R = pop(S)
+            L = pop(S)
+            push(S, new_operator(t, L, R))
+        else:
+            error
+
+    return pop(S)
+```
+
+#### Correctness sketch
+
+Maintain the invariant that after processing the first `k` tokens, the stack contains roots of exactly those partial expression trees whose postfix serialisations are a partition of the first `k` tokens. An operand adds a new singleton tree. An operator merges the two most recent trees, matching the semantics of postfix evaluation.
+
+#### Complexity
+
+Let `m` be the number of tokens.
+
+- Time: **O(m)**
+- Space: **O(m)** in the worst case for the stack and the tree nodes
+
+### 3. Evaluation and conversions
+
+Evaluation is a postorder computation.
+
+- Leaf: return its numeric value.
+- Internal operator: evaluate left and right and apply the operator.
+
+Prefix and postfix prints are preorder and postorder traversals respectively. Infix print is inorder with explicit parentheses to disambiguate operator precedence.
+
+## File-by-file implementation notes
+
+### `Makefile`
+
+The build system defines a compact correctness pipeline: compile with warnings enabled, run golden tests with `diff` and provide a static syntax check. The `test` target asserts textual determinism which is desirable in an instructional setting because it makes regressions observable.
+
+### `src/example1.c`
+
+A fully worked demonstration that includes:
+
+- recursive traversals
+- queue-based level-order traversal
+- structural statistics (height, size, leaves, internal nodes, sum, min, max)
+- mirroring (tree inversion)
+- deep copy and structural equality
+- rotated and connector-based visualisations
+- disciplined postorder deallocation
+
+The file is intentionally verbose because it is a lecture artefact.
+
+### `src/exercise1.c`
+
+Implements the canonical tree from the specification:
+
+```
+              50
+            /    \
+           30     70
+          / \    /  \
+         20  40 60   80
+```
+
+and prints traversals and statistics in a strict format required by `tests/test1_expected.txt`.
+
+### `src/exercise2.c`
+
+Constructs three expression trees from postfix strings, prints each tree rotated, evaluates it and prints infix, prefix and postfix notations. Output is defined exactly by `tests/test2_expected.txt`.
+
+The printing routine is a structural visualisation and is not a semantic requirement. It should be treated as a debugging aid whose role is to make the tree shape legible.
+
+### `solution/*.c`
+
+Instructor implementations that can be used as ground truth during marking and as reference during self-study.
+
+## Cross-language correspondences
+
+The algorithms are language-agnostic. Only memory management and representation syntax change.
+
+### Python
+
+```python
+class Node:
+    def __init__(self, x, left=None, right=None):
+        self.x = x
+        self.left = left
+        self.right = right
+
+def preorder(node):
+    if node is None:
+        return
+    print(node.x, end=" ")
+    preorder(node.left)
+    preorder(node.right)
+```
+
+### C++
+
+```cpp
+struct Node {
+    int x;
+    std::unique_ptr<Node> left;
+    std::unique_ptr<Node> right;
+};
+
+void preorder(const Node* n) {
+    if (!n) return;
+    std::cout << n->x << ' ';
+    preorder(n->left.get());
+    preorder(n->right.get());
+}
+```
+
+The algorithm is identical to C. The ownership model changes because `std::unique_ptr` encodes deallocation in the type system.
+
+### Java
+
+```java
+final class Node {
+    final int x;
+    Node left;
+    Node right;
+    Node(int x) { this.x = x; }
+}
+
+static void preorder(Node n) {
+    if (n == null) return;
+    System.out.print(n.x + " ");
+    preorder(n.left);
+    preorder(n.right);
+}
+```
+
+Java removes explicit deallocation but does not remove the need to reason about reachability and recursion depth.
+
+
+## Engineering considerations
+
+### 1. Representation choices and invariants
+
+This repository adopts a **pointer-based** representation because it exposes the memory model explicitly which is pedagogically essential in C. It is nevertheless important to understand that the same abstract data type admits multiple concrete representations whose asymptotic bounds can be identical while constant factors and failure modes differ materially.
+
+**Pointer-based representation (used here).** Each node stores payload and two child pointers. The empty tree is represented by the null pointer. The fundamental invariants are:
+
+- **Reachability invariant:** every non-NULL child pointer must either point to a valid allocated node or be NULL.
+- **Acyclicity invariant:** following left or right pointers repeatedly must never return to a previously visited node.
+- **Ownership invariant:** each allocated node is owned by exactly one parent edge or by a designated root variable and ownership is not aliased as mutable shared state.
+
+The third invariant is a software engineering constraint rather than a mathematical necessity. It simplifies deallocation and makes reasoning about lifetime tractable.
+
+**Array-based representation (not implemented).** For complete or nearly complete trees an array representation can be preferable. Using 0-based indexing, a node at index `i` has children at `2*i + 1` and `2*i + 2` when those indices are within bounds. This representation has excellent cache locality and eliminates pointer chasing. Its weakness is sparsity: a degenerate tree wastes memory because indices grow exponentially relative to the number of occupied nodes.
+
+A precise way to state the trade-off is:
+
+- Pointer-based: space is Θ(n) nodes plus pointer overhead with no wasted structural slots.
+- Array-based: space is Θ(m) where `m` is the largest occupied index plus one which can be Θ(2^h) even when `n` is small.
+
+### 2. Recursion as a resource and iterative variants
+
+Recursive tree algorithms are conceptually aligned with the inductive definition of a tree. In C, recursion consumes call frames and can fail by stack exhaustion when `h` is large. This is not an abstract concern: a degenerate tree can force `h = n`.
+
+An iterative traversal replaces the implicit call stack with an explicit stack. The trade is explicit bookkeeping in exchange for predictable memory usage patterns.
+
+**Iterative preorder (explicit stack).**
+
+```
+PREORDER_ITER(root):
+    if root == NULL: return
+    S = empty stack
+    push(S, root)
+    while S not empty:
+        u = pop(S)
+        visit(u)
+        if u.right != NULL: push(S, u.right)
+        if u.left  != NULL: push(S, u.left)
+```
+
+Right is pushed before left so that left is processed first under LIFO discipline.
+
+**Iterative inorder (explicit stack).**
+
+```
+INORDER_ITER(root):
+    S = empty stack
+    u = root
+    while u != NULL or S not empty:
+        while u != NULL:
+            push(S, u)
+            u = u.left
+        u = pop(S)
+        visit(u)
+        u = u.right
+```
+
+This algorithm is a canonical example of a loop invariant: at each iteration, `S` contains exactly the ancestors of `u` whose left subtree has been fully processed while their own visit has not yet occurred.
+
+### 3. Queue design in `example1.c`
+
+The queue used for breadth-first traversal is implemented as a fixed-size circular buffer. The circular design ensures that enqueue and dequeue are constant-time operations with no shifting.
+
+Let the queue state be `(front, rear, count)`. The implementation maintains the invariants:
+
+- `0 ≤ front < MAX_QUEUE_SIZE` and `-1 ≤ rear < MAX_QUEUE_SIZE`
+- `0 ≤ count ≤ MAX_QUEUE_SIZE`
+- after each enqueue: `rear = (rear + 1) mod MAX_QUEUE_SIZE`
+- after each dequeue: `front = (front + 1) mod MAX_QUEUE_SIZE`
+
+This is sufficient to prove that the queue forms a correct FIFO discipline provided that overflow is prevented. The current implementation emits an error message on overflow which is appropriate for a teaching example. In production code one would typically reallocate to a larger buffer or refuse the operation as a recoverable error.
+
+### 4. Deterministic testing and golden files
+
+The `tests/` directory implements a lightweight regression framework based on **golden outputs**. Each programme is executed and its combined standard output and standard error are redirected to a temporary file. The file is compared to the expected output using `diff`.
+
+This style of testing is deliberately strict and has three consequences:
+
+1. Output formatting becomes part of the public interface of the programme.
+2. Refactors that change formatting require an explicit update of the expected outputs.
+3. Hidden nondeterminism (for example printing pointer addresses, time stamps or locale-dependent representations) is rejected automatically.
+
+If a change is intended, regenerate the expected output in a controlled manner. For `exercise2` this is as simple as:
+
+```bash
+./exercise2 > tests/test2_expected.txt
+```
+
+A rigorous workflow treats the expected file as an artefact requiring review, not as an automatic by-product.
+
+### 5. Common failure modes and how the code prevents them
+
+The exercises embody a small set of deliberate defensive choices.
+
+- **Dangling pointers after deallocation:** `exercise1.c` assigns `root = NULL` after freeing. This does not prevent all lifetime errors but it prevents accidental reuse of a freed root.
+- **Memory leaks:** deallocation is implemented as a postorder traversal. This is not stylistic. If a parent node were freed before its children, the only remaining references to the children would be lost and the heap allocations would become unreachable.
+- **Incorrect operand ordering in expression trees:** when processing an operator token in postfix, the first pop is the right subtree and the second pop is the left subtree. Reversing this produces a syntactically valid but semantically incorrect tree for non-commutative operators.
+- **Operator precedence in infix printing:** infix output is fully parenthesised. This avoids the need for precedence tables and guarantees that the printed string represents exactly the same tree.
+
+### 6. Extension tasks and research-grade questions
+
+Once the baseline algorithms are mastered, the natural next step is to state and prove properties rather than merely implement functions.
+
+Examples:
+
+- Prove by structural induction that preorder, inorder and postorder visit each node exactly once.
+- Prove that `tree_height` terminates for all finite trees and characterise its worst-case recursion depth.
+- Characterise the set of postfix strings that yield well-formed binary expression trees in terms of a stack-height invariant: scanning left to right, let `s` be operands minus operators, then the expression is well formed if `s` never falls below 1 and ends at 1.
+
+These questions are small but genuinely mathematical. They sharpen the distinction between an implementation that works empirically and an implementation that is correct by construction.
+
+
+### 7. Tokenisation and numeric corner cases in `exercise2.c`
+
+The postfix parser is intentionally minimalistic yet its design still illustrates several non-obvious points about turning a character stream into a sequence of semantic tokens.
+
+1. **Token boundary definition.** The current implementation treats a single ASCII space as a separator because test inputs are provided in this format. For general use, `strtok(expr, " \t\n\r")` would be preferable because it accepts any run of whitespace.
+2. **Ambiguity of '-'.** A hyphen can denote unary negation in an integer literal (for example `-5`) or the binary subtraction operator. Disambiguation is achieved here by a simple syntactic rule: a token is treated as an operator only if it has length exactly one and that character is in `{+, -, *, /}`. Under this rule, `-5` is unambiguously a number.
+3. **Conversion to integer.** `atoi` is used for clarity. A production-grade implementation would prefer `strtol` so that overflow and conversion failure can be detected without invoking undefined behaviour.
+
+A robust specification for conversion can be stated as a contract.
+
+- **Precondition:** token matches the regular language `[+-]?[0-9]+`.
+- **Postcondition:** result equals the integer denoted by the token if it lies within representable range otherwise an error is reported.
+
+### 8. Integer overflow, division semantics and defined behaviour
+
+The evaluation routine uses the built-in integer operators of C. This has two important consequences.
+
+- **Division truncates toward zero** for C99 and later. This matters if negative operands are admitted.
+- **Signed overflow is undefined behaviour** in ISO C. If expressions can exceed `INT_MAX` in magnitude then either a wider integer type must be used (for example `int64_t`) or overflow must be detected and handled.
+
+In a teaching setting, these points are often omitted. In an academic setting they are part of the model: algorithmic correctness is defined relative to a machine semantics.
+
+### 9. From demonstration code to library-quality code
+
+The code is intentionally executable as standalone programmes. Turning it into a reusable library would require at least:
+
+- a public header that exposes the abstract data type while hiding representation details
+- explicit error reporting contracts rather than `fprintf` plus `exit`
+- separation of parsing from evaluation so that expressions can be provided as streams rather than fixed strings
+- tests that validate properties rather than exact formatting, for example a traversal that returns a list rather than printing
+
+A useful intermediate step is to keep the existing programmes as integration tests while also writing unit tests for each function.
+
+### 10. Minimal formal proof obligations
+
+For each core function it is possible to write a compact proof obligation that can be checked by structural induction.
+
+- `count_nodes`: prove that for every finite tree `T`, `count_nodes(T)` equals the cardinality of the node set of `T`.
+- `free_tree`: prove that every allocated node is freed exactly once assuming the acyclicity invariant.
+- `build_from_postfix`: prove that the algorithm terminates and that the produced tree's postfix traversal equals the input token sequence.
+
+These are not merely theoretical exercises. They force the developer to identify hidden assumptions such as acyclicity, token well-formedness and bounded recursion depth.
+
+## References
+
+The following primary sources and archival publications underpin the theory used in this laboratory. DOI links are given as canonical resolvers.
+
+| Reference (APA 7th ed) | DOI |
+|---|---|
+| Bayer, R., & McCreight, E. (1972). Organization and maintenance of large ordered indexes. *Acta Informatica, 1*, 173–189. | `https://doi.org/10.1007/BF00288683` |
+| Dijkstra, E. W. (1968). The structure of the “THE”-multiprogramming system. *Communications of the ACM, 11*(5), 341–346. | `https://doi.org/10.1145/363095.363143` |
+| Hoare, C. A. R. (1969). An axiomatic basis for computer programming. *Communications of the ACM, 12*(10), 576–580. | `https://doi.org/10.1145/363235.363259` |
+| Pugh, W. (1990). Skip lists: A probabilistic alternative to balanced trees. *Communications of the ACM, 33*(6), 668–676. | `https://doi.org/10.1145/78973.78977` |
+| Sethi, R., & Ullman, J. D. (1970). The generation of optimal code for arithmetic expressions. *Journal of the ACM, 17*(4), 715–728. | `https://doi.org/10.1145/321607.321620` |
+
