@@ -1,0 +1,39 @@
+[2026-01-15 10:15:32] [DEBUG] Application starting, loading configuration...
+[2026-01-15 10:15:33] [INFO] Database connection established successfully
+[2026-01-15 10:15:34] [DEBUG] Cache initialised with 256MB capacity
+[2026-01-15 10:15:35] [INFO] HTTP server listening on port 8080
+[2026-01-15 10:15:36] [WARN] Slow query detected: SELECT * FROM users took 1523ms
+[2026-01-15 10:15:37] [DEBUG] Request processed: GET /api/users (12ms)
+[2026-01-15 10:15:38] [INFO] User authentication successful: user_id=42
+[2026-01-15 10:15:39] [ERROR] Failed to connect to external API: timeout after 5000ms
+[2026-01-15 10:15:40] [DEBUG] Retrying external API connection (attempt 1/3)
+[2026-01-15 10:15:41] [WARN] Memory usage above 80% threshold: 82.3%
+[2026-01-15 10:15:42] [INFO] Background task completed: cleanup_sessions
+[2026-01-15 10:15:43] [DEBUG] Cache hit ratio: 94.2%
+[2026-01-15 10:15:44] [ERROR] Database query failed: deadlock detected
+[2026-01-15 10:15:45] [WARN] Request rate limiting triggered for IP: 192.168.1.100
+[2026-01-15 10:15:46] [INFO] Configuration reloaded without restart
+[2026-01-15 10:15:47] [DEBUG] WebSocket connections active: 127
+[2026-01-15 10:15:48] [ERROR] File not found: /static/missing.js
+[2026-01-15 10:15:49] [INFO] Scheduled task started: daily_report_generation
+[2026-01-15 10:15:50] [DEBUG] Thread pool utilisation: 73%
+[2026-01-15 10:15:51] [WARN] SSL certificate expires in 14 days
+[2026-01-15 10:15:52] [INFO] New user registered: user_id=1543
+[2026-01-15 10:15:53] [DEBUG] Request processed: POST /api/order (45ms)
+[2026-01-15 10:15:54] [ERROR] Payment gateway error: invalid_card_number
+[2026-01-15 10:15:55] [WARN] Disk space below 20%: 18.5% remaining
+[2026-01-15 10:15:56] [INFO] Email notification sent: order_confirmation
+[2026-01-15 10:15:57] [DEBUG] Session cleanup: removed 42 expired sessions
+[2026-01-15 10:15:58] [INFO] API rate limit reset for all clients
+[2026-01-15 10:15:59] [DEBUG] Health check passed: all services operational
+[2026-01-15 10:16:00] [WARN] High CPU usage detected: 91.2%
+[2026-01-15 10:16:01] [ERROR] Connection refused: redis://localhost:6379
+[2026-01-15 10:16:02] [INFO] Failover to backup Redis instance successful
+[2026-01-15 10:16:03] [DEBUG] Request queue depth: 23 pending
+[2026-01-15 10:16:04] [WARN] Response time exceeded SLA: /api/search (3200ms)
+[2026-01-15 10:16:05] [INFO] Garbage collection completed: freed 128MB
+[2026-01-15 10:16:06] [DEBUG] Active transactions: 15
+[2026-01-15 10:16:07] [ERROR] Authentication failed: invalid_token for user_id=999
+[2026-01-15 10:16:08] [INFO] Audit log entry created: config_change
+[2026-01-15 10:16:09] [DEBUG] Load balancer health: 4/4 backends healthy
+[2026-01-15 10:16:10] [WARN] Deprecated API endpoint accessed: /v1/legacy

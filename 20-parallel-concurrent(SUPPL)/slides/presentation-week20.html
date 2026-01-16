@@ -1,0 +1,1869 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Week 20: Parallel and Concurrent Programming | ATP Course</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/c.min.js"></script>
+    <style>
+        /* ================================================================
+           CSS VARIABLES - DARK THEME
+           ================================================================ */
+        :root {
+            --bg-primary: #0d1117;
+            --bg-secondary: #161b22;
+            --bg-tertiary: #21262d;
+            --accent-blue: #58a6ff;
+            --accent-green: #3fb950;
+            --accent-orange: #d29922;
+            --accent-red: #f85149;
+            --accent-purple: #a371f7;
+            --accent-cyan: #39c5cf;
+            --text-primary: #e6edf3;
+            --text-secondary: #8b949e;
+            --text-muted: #6e7681;
+            --border-color: #30363d;
+            --code-bg: #161b22;
+            --highlight-bg: rgba(88, 166, 255, 0.1);
+        }
+
+        /* ================================================================
+           BASE STYLES
+           ================================================================ */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans', Helvetica, Arial, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.6;
+            overflow: hidden;
+        }
+
+        /* ================================================================
+           PROGRESS BAR
+           ================================================================ */
+        #progress-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: var(--bg-tertiary);
+            z-index: 1000;
+        }
+
+        #progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, var(--accent-blue), var(--accent-purple));
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        /* ================================================================
+           SLIDE CONTAINER
+           ================================================================ */
+        #slide-container {
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+        }
+
+        .slide {
+            display: none;
+            width: 100%;
+            max-width: 1200px;
+            max-height: 90vh;
+            overflow-y: auto;
+            padding: 2rem;
+            animation: fadeIn 0.5s ease;
+        }
+
+        .slide.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* ================================================================
+           TYPOGRAPHY
+           ================================================================ */
+        h1 {
+            font-size: 2.5rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 1rem;
+            border-bottom: 2px solid var(--accent-blue);
+            padding-bottom: 0.5rem;
+        }
+
+        h2 {
+            font-size: 2rem;
+            font-weight: 600;
+            color: var(--accent-blue);
+            margin-bottom: 1.5rem;
+        }
+
+        h3 {
+            font-size: 1.5rem;
+            font-weight: 500;
+            color: var(--accent-green);
+            margin: 1.5rem 0 1rem;
+        }
+
+        h4 {
+            font-size: 1.25rem;
+            font-weight: 500;
+            color: var(--accent-orange);
+            margin: 1rem 0 0.5rem;
+        }
+
+        p {
+            font-size: 1.1rem;
+            margin-bottom: 1rem;
+            color: var(--text-secondary);
+        }
+
+        ul, ol {
+            margin: 1rem 0 1rem 2rem;
+            color: var(--text-secondary);
+        }
+
+        li {
+            margin-bottom: 0.5rem;
+            font-size: 1.1rem;
+        }
+
+        strong {
+            color: var(--text-primary);
+            font-weight: 600;
+        }
+
+        em {
+            color: var(--accent-cyan);
+            font-style: italic;
+        }
+
+        /* ================================================================
+           CODE BLOCKS
+           ================================================================ */
+        pre {
+            background: var(--code-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 1rem;
+            margin: 1rem 0;
+            overflow-x: auto;
+            font-size: 0.9rem;
+        }
+
+        code {
+            font-family: 'JetBrains Mono', 'Fira Code', 'Consolas', monospace;
+        }
+
+        :not(pre) > code {
+            background: var(--bg-tertiary);
+            padding: 0.2rem 0.4rem;
+            border-radius: 4px;
+            font-size: 0.9em;
+            color: var(--accent-orange);
+        }
+
+        /* ================================================================
+           BOXES AND CALLOUTS
+           ================================================================ */
+        .info-box {
+            background: var(--highlight-bg);
+            border-left: 4px solid var(--accent-blue);
+            padding: 1rem;
+            margin: 1rem 0;
+            border-radius: 0 8px 8px 0;
+        }
+
+        .warning-box {
+            background: rgba(210, 153, 34, 0.1);
+            border-left: 4px solid var(--accent-orange);
+            padding: 1rem;
+            margin: 1rem 0;
+            border-radius: 0 8px 8px 0;
+        }
+
+        .danger-box {
+            background: rgba(248, 81, 73, 0.1);
+            border-left: 4px solid var(--accent-red);
+            padding: 1rem;
+            margin: 1rem 0;
+            border-radius: 0 8px 8px 0;
+        }
+
+        .success-box {
+            background: rgba(63, 185, 80, 0.1);
+            border-left: 4px solid var(--accent-green);
+            padding: 1rem;
+            margin: 1rem 0;
+            border-radius: 0 8px 8px 0;
+        }
+
+        /* ================================================================
+           DIAGRAMS (ASCII)
+           ================================================================ */
+        .diagram {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 1rem;
+            margin: 1rem 0;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.85rem;
+            line-height: 1.4;
+            white-space: pre;
+            overflow-x: auto;
+            color: var(--accent-cyan);
+        }
+
+        /* ================================================================
+           TABLES
+           ================================================================ */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+            font-size: 0.95rem;
+        }
+
+        th, td {
+            padding: 0.75rem;
+            text-align: left;
+            border: 1px solid var(--border-color);
+        }
+
+        th {
+            background: var(--bg-tertiary);
+            color: var(--accent-blue);
+            font-weight: 600;
+        }
+
+        tr:nth-child(even) {
+            background: var(--bg-secondary);
+        }
+
+        /* ================================================================
+           TWO-COLUMN LAYOUT
+           ================================================================ */
+        .two-columns {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            margin: 1rem 0;
+        }
+
+        .column {
+            padding: 1rem;
+            background: var(--bg-secondary);
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+        }
+
+        /* ================================================================
+           QUOTE
+           ================================================================ */
+        blockquote {
+            border-left: 4px solid var(--accent-purple);
+            padding-left: 1rem;
+            margin: 1.5rem 0;
+            font-style: italic;
+            color: var(--text-secondary);
+        }
+
+        blockquote cite {
+            display: block;
+            margin-top: 0.5rem;
+            color: var(--accent-purple);
+            font-style: normal;
+        }
+
+        /* ================================================================
+           TITLE SLIDE
+           ================================================================ */
+        .title-slide {
+            text-align: center;
+            padding: 4rem 2rem;
+        }
+
+        .title-slide h1 {
+            font-size: 3rem;
+            border-bottom: none;
+            margin-bottom: 0.5rem;
+        }
+
+        .title-slide .subtitle {
+            font-size: 1.5rem;
+            color: var(--accent-blue);
+            margin-bottom: 2rem;
+        }
+
+        .title-slide .meta {
+            color: var(--text-muted);
+            font-size: 1rem;
+        }
+
+        /* ================================================================
+           NAVIGATION
+           ================================================================ */
+        #nav-container {
+            position: fixed;
+            bottom: 2rem;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 1rem;
+            z-index: 100;
+        }
+
+        .nav-btn {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: all 0.2s ease;
+        }
+
+        .nav-btn:hover {
+            background: var(--accent-blue);
+            border-color: var(--accent-blue);
+        }
+
+        .nav-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        #slide-counter {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            z-index: 100;
+        }
+
+        /* ================================================================
+           KEYBOARD HINTS
+           ================================================================ */
+        #keyboard-hints {
+            position: fixed;
+            bottom: 2rem;
+            left: 2rem;
+            color: var(--text-muted);
+            font-size: 0.8rem;
+            z-index: 100;
+        }
+
+        kbd {
+            background: var(--bg-tertiary);
+            padding: 0.2rem 0.5rem;
+            border-radius: 4px;
+            border: 1px solid var(--border-color);
+            font-family: inherit;
+        }
+
+        /* ================================================================
+           RESPONSIVE
+           ================================================================ */
+        @media (max-width: 768px) {
+            .two-columns {
+                grid-template-columns: 1fr;
+            }
+            
+            h1 { font-size: 2rem; }
+            h2 { font-size: 1.5rem; }
+            h3 { font-size: 1.25rem; }
+            
+            .title-slide h1 { font-size: 2rem; }
+        }
+
+        /* Timeline */
+        .timeline {
+            position: relative;
+            padding-left: 2rem;
+            margin: 1rem 0;
+        }
+
+        .timeline::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: var(--accent-blue);
+        }
+
+        .timeline-item {
+            position: relative;
+            margin-bottom: 1.5rem;
+            padding-left: 1rem;
+        }
+
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            left: -2rem;
+            top: 0.5rem;
+            width: 12px;
+            height: 12px;
+            background: var(--accent-blue);
+            border-radius: 50%;
+            transform: translateX(-50%);
+        }
+
+        .timeline-year {
+            color: var(--accent-orange);
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body>
+    <!-- Progress Bar -->
+    <div id="progress-container">
+        <div id="progress-bar"></div>
+    </div>
+
+    <!-- Slide Container -->
+    <div id="slide-container">
+
+        <!-- ============================================================
+             SLIDE 1: Title
+             ============================================================ -->
+        <div class="slide title-slide active" data-slide="1">
+            <h1>Week 20: Parallel and Concurrent Programming</h1>
+            <p class="subtitle">Threads, Synchronisation and Lock-Free Algorithms</p>
+            <p class="meta">
+                ATP Course - Algorithms and Programming Techniques<br>
+                Academy of Economic Studies Bucharest - CSIE<br>
+                <br>
+                <em>Alternative Learning Kit for Non-Formal Education</em>
+            </p>
+        </div>
+
+        <!-- ============================================================
+             SLIDE 2: Learning Objectives
+             ============================================================ -->
+        <div class="slide" data-slide="2">
+            <h2>🎯 Learning Objectives</h2>
+            <p>Upon completion of this laboratory session, students will be able to:</p>
+            <ol>
+                <li><strong>Remember</strong> the fundamental concepts of concurrency: threads, processes, race conditions</li>
+                <li><strong>Understand</strong> synchronisation primitives: mutex, semaphore, condition variables</li>
+                <li><strong>Apply</strong> POSIX threads (pthreads) API for parallel programming</li>
+                <li><strong>Analyse</strong> concurrent programmes for correctness and deadlock potential</li>
+                <li><strong>Evaluate</strong> parallel algorithm performance using Amdahl's Law</li>
+                <li><strong>Create</strong> thread-safe data structures and parallel algorithms</li>
+            </ol>
+        </div>
+
+        <!-- ============================================================
+             SLIDE 3: Historical Context
+             ============================================================ -->
+        <div class="slide" data-slide="3">
+            <h2>📜 Historical Context</h2>
+            <div class="timeline">
+                <div class="timeline-item">
+                    <span class="timeline-year">1962</span> - Dijkstra introduces the concept of <em>mutual exclusion</em>
+                </div>
+                <div class="timeline-item">
+                    <span class="timeline-year">1965</span> - Dijkstra proposes <em>semaphores</em> for synchronisation
+                </div>
+                <div class="timeline-item">
+                    <span class="timeline-year">1967</span> - Amdahl publishes his law on parallel speedup limits
+                </div>
+                <div class="timeline-item">
+                    <span class="timeline-year">1971</span> - Dijkstra presents the <em>Dining Philosophers</em> problem
+                </div>
+                <div class="timeline-item">
+                    <span class="timeline-year">1974</span> - Hoare introduces <em>monitors</em> and <em>condition variables</em>
+                </div>
+                <div class="timeline-item">
+                    <span class="timeline-year">1978</span> - Lamport's <em>Bakery Algorithm</em> for mutual exclusion
+                </div>
+                <div class="timeline-item">
+                    <span class="timeline-year">1995</span> - POSIX threads (pthreads) standardised in IEEE 1003.1c
+                </div>
+            </div>
+        </div>
+
+        <!-- ============================================================
+             SLIDE 4: Key Figures
+             ============================================================ -->
+        <div class="slide" data-slide="4">
+            <h2>👤 Key Figures</h2>
+            <div class="two-columns">
+                <div class="column">
+                    <h3>Edsger W. Dijkstra (1930–2002)</h3>
+                    <p>Dutch computer scientist who pioneered concurrent programming concepts.</p>
+                    <ul>
+                        <li>Invented semaphores (1965)</li>
+                        <li>Created Dining Philosophers problem</li>
+                        <li>Turing Award 1972</li>
+                    </ul>
+                    <blockquote>
+                        "The question of whether machines can think is about as relevant as the question of whether submarines can swim."
+                        <cite>— E.W. Dijkstra</cite>
+                    </blockquote>
+                </div>
+                <div class="column">
+                    <h3>C.A.R. Hoare (1934–)</h3>
+                    <p>British computer scientist who formalised concurrent programming.</p>
+                    <ul>
+                        <li>Developed monitors and CSP</li>
+                        <li>Invented Quicksort</li>
+                        <li>Turing Award 1980</li>
+                    </ul>
+                    <blockquote>
+                        "There are two ways of constructing software: make it so simple there are obviously no bugs, or make it so complicated there are no obvious bugs."
+                        <cite>— C.A.R. Hoare</cite>
+                    </blockquote>
+                </div>
+            </div>
+        </div>
+
+        <!-- ============================================================
+             SLIDE 5: Concurrency vs Parallelism
+             ============================================================ -->
+        <div class="slide" data-slide="5">
+            <h2>Concurrency vs Parallelism</h2>
+            <div class="two-columns">
+                <div class="column">
+                    <h3>Concurrency</h3>
+                    <p><em>Dealing with</em> multiple things at once</p>
+                    <ul>
+                        <li>Structure of the programme</li>
+                        <li>Can exist on single-core CPU</li>
+                        <li>Time-slicing / interleaving</li>
+                        <li>About correctness</li>
+                    </ul>
+                    <div class="diagram">
+Task A: ████░░░░████░░░░████
+Task B: ░░░░████░░░░████░░░░
+        ─────────────────────►
+               Time (1 CPU)
+                    </div>
+                </div>
+                <div class="column">
+                    <h3>Parallelism</h3>
+                    <p><em>Doing</em> multiple things at once</p>
+                    <ul>
+                        <li>Execution of the programme</li>
+                        <li>Requires multiple cores/CPUs</li>
+                        <li>Simultaneous execution</li>
+                        <li>About performance</li>
+                    </ul>
+                    <div class="diagram">
+CPU 0: ████████████████████
+CPU 1: ████████████████████
+CPU 2: ████████████████████
+CPU 3: ████████████████████
+       ─────────────────────►
+              Time (4 CPUs)
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ============================================================
+             SLIDE 6: Processes vs Threads
+             ============================================================ -->
+        <div class="slide" data-slide="6">
+            <h2>Processes vs Threads</h2>
+            <div class="diagram">
+┌─────────────────────────────────────────────────────────────────────┐
+│                              PROCESS                                 │
+├─────────────────────────────────────────────────────────────────────┤
+│  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐                  │
+│  │   Thread 1  │  │   Thread 2  │  │   Thread 3  │                  │
+│  ├─────────────┤  ├─────────────┤  ├─────────────┤                  │
+│  │   Stack 1   │  │   Stack 2   │  │   Stack 3   │   (Separate)     │
+│  │   Registers │  │   Registers │  │   Registers │                  │
+│  │   PC        │  │   PC        │  │   PC        │                  │
+│  └─────────────┘  └─────────────┘  └─────────────┘                  │
+│                                                                      │
+│  ┌──────────────────────────────────────────────────────────────┐   │
+│  │                     SHARED MEMORY                             │   │
+│  │  ┌────────────┐  ┌────────────┐  ┌────────────┐              │   │
+│  │  │ Code (Text)│  │    Heap    │  │Global Data │              │   │
+│  │  └────────────┘  └────────────┘  └────────────┘              │   │
+│  └──────────────────────────────────────────────────────────────┘   │
+└─────────────────────────────────────────────────────────────────────┘
+            </div>
+            <table>
+                <tr><th>Aspect</th><th>Process</th><th>Thread</th></tr>
+                <tr><td>Memory space</td><td>Separate</td><td>Shared</td></tr>
+                <tr><td>Creation cost</td><td>High</td><td>Low</td></tr>
+                <tr><td>Context switch</td><td>Expensive</td><td>Cheap</td></tr>
+                <tr><td>Communication</td><td>IPC (pipes, sockets)</td><td>Shared memory</td></tr>
+                <tr><td>Isolation</td><td>Strong</td><td>Weak</td></tr>
+            </table>
+        </div>
+
+        <!-- ============================================================
+             SLIDE 7: Race Conditions
+             ============================================================ -->
+        <div class="slide" data-slide="7">
+            <h2>Race Conditions</h2>
+            <p>A <strong>race condition</strong> occurs when the programme behaviour depends on the relative timing of events (e.g., thread scheduling).</p>
+            <div class="two-columns">
+                <div class="column">
+                    <h4>❌ Unsafe Code</h4>
+                    <pre><code class="language-c">int counter = 0;
+
+void* increment(void* arg) {
+    for (int i = 0; i < 1000000; i++) {
+        counter++;  // NOT ATOMIC!
+    }
+    return NULL;
+}
+
+// counter++ compiles to:
+// LOAD  counter -> reg
+// ADD   reg, 1
+// STORE reg -> counter</code></pre>
+                </div>
+                <div class="column">
+                    <h4>Interleaving Problem</h4>
+                    <div class="diagram">
+Thread 1         Thread 2
+─────────        ─────────
+LOAD counter=0
+                 LOAD counter=0
+ADD reg=1
+                 ADD reg=1
+STORE counter=1
+                 STORE counter=1
+
+Expected: 2, Actual: 1 (LOST UPDATE!)
+                    </div>
+                </div>
+            </div>
+            <div class="danger-box">
+                <strong>Critical:</strong> Even simple operations like <code>counter++</code> are not atomic and require synchronisation!
+            </div>
+        </div>
+
+        <!-- ============================================================
+             SLIDE 8: pthread Basics
+             ============================================================ -->
+        <div class="slide" data-slide="8">
+            <h2>POSIX Threads (pthreads) Basics</h2>
+            <pre><code class="language-c">#include &lt;pthread.h&gt;
+
+void* worker(void* arg) {
+    int id = *(int*)arg;
+    printf("Thread %d running\n", id);
+    return NULL;
+}
+
+int main(void) {
+    pthread_t threads[4];
+    int ids[4] = {0, 1, 2, 3};
+    
+    // Create threads
+    for (int i = 0; i < 4; i++) {
+        pthread_create(&threads[i], NULL, worker, &ids[i]);
+    }
+    
+    // Wait for threads to complete
+    for (int i = 0; i < 4; i++) {
+        pthread_join(threads[i], NULL);
+    }
+    
+    return 0;
+}</code></pre>
+            <div class="info-box">
+                <strong>Compilation:</strong> <code>gcc -Wall -pthread program.c -o program</code>
+            </div>
+        </div>
+
+        <!-- ============================================================
+             SLIDE 9: pthread API Overview
+             ============================================================ -->
+        <div class="slide" data-slide="9">
+            <h2>pthread API Overview</h2>
+            <table>
+                <tr><th>Function</th><th>Purpose</th></tr>
+                <tr><td><code>pthread_create()</code></td><td>Create a new thread</td></tr>
+                <tr><td><code>pthread_join()</code></td><td>Wait for thread termination</td></tr>
+                <tr><td><code>pthread_detach()</code></td><td>Mark thread as detached (no join needed)</td></tr>
+                <tr><td><code>pthread_exit()</code></td><td>Terminate calling thread</td></tr>
+                <tr><td><code>pthread_self()</code></td><td>Get calling thread's ID</td></tr>
+                <tr><td><code>pthread_equal()</code></td><td>Compare two thread IDs</td></tr>
+                <tr><td><code>pthread_cancel()</code></td><td>Request thread cancellation</td></tr>
+            </table>
+            <pre><code class="language-c">// Thread function signature
+void* thread_function(void* argument);
+
+// Returns pointer that can be retrieved via pthread_join()
+pthread_join(thread, &return_value);</code></pre>
+        </div>
+
+        <!-- ============================================================
+             SLIDE 10: Mutex Introduction
+             ============================================================ -->
+        <div class="slide" data-slide="10">
+            <h2>Mutex (Mutual Exclusion)</h2>
+            <p>A <strong>mutex</strong> ensures only one thread can access a critical section at a time.</p>
+            <div class="diagram">
+┌─────────────────────────────────────────────────────────┐
+│                    CRITICAL SECTION                      │
+│                                                          │
+│    Thread 1 ──► [LOCK] ──► [ACCESS] ──► [UNLOCK]        │
+│                                                          │
+│    Thread 2 ──► [WAIT...] ──► [LOCK] ──► [ACCESS] ──►   │
+│                                                          │
+│    Thread 3 ──► [WAIT...........] ──► [LOCK] ──►        │
+│                                                          │
+└─────────────────────────────────────────────────────────┘
+            </div>
+            <pre><code class="language-c">pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
+
+void* safe_increment(void* arg) {
+    for (int i = 0; i < 1000000; i++) {
+        pthread_mutex_lock(&mutex);   // Enter critical section
+        counter++;                     // Safe access
+        pthread_mutex_unlock(&mutex); // Exit critical section
+    }
+    return NULL;
+}</code></pre>
+        </div>
+
+        <!-- ============================================================
+             SLIDE 11: Mutex API
+             ============================================================ -->
+        <div class="slide" data-slide="11">
+            <h2>Mutex API</h2>
+            <table>
+                <tr><th>Function</th><th>Purpose</th></tr>
+                <tr><td><code>pthread_mutex_init()</code></td><td>Initialise mutex (dynamic)</td></tr>
+                <tr><td><code>pthread_mutex_destroy()</code></td><td>Destroy mutex</td></tr>
+                <tr><td><code>pthread_mutex_lock()</code></td><td>Acquire mutex (blocking)</td></tr>
+                <tr><td><code>pthread_mutex_trylock()</code></td><td>Try to acquire (non-blocking)</td></tr>
+                <tr><td><code>pthread_mutex_unlock()</code></td><td>Release mutex</td></tr>
+            </table>
+            <pre><code class="language-c">// Static initialisation
+pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
+
+// Dynamic initialisation
+pthread_mutex_t mutex;
+pthread_mutex_init(&mutex, NULL);  // Default attributes
+
+// Always unlock in the same thread that locked!
+// Always destroy when done
+pthread_mutex_destroy(&mutex);</code></pre>
+            <div class="warning-box">
+                <strong>Rule:</strong> The thread that locks a mutex must be the one to unlock it!
+            </div>
+        </div>
+
+        <!-- ============================================================
+             SLIDE 12: Semaphores
+             ============================================================ -->
+        <div class="slide" data-slide="12">
+            <h2>Semaphores</h2>
+            <p>A <strong>semaphore</strong> is a signalling mechanism with an integer counter.</p>
+            <div class="two-columns">
+                <div class="column">
+                    <h4>Operations</h4>
+                    <ul>
+                        <li><strong>wait()</strong> (P operation): Decrement. Block if counter is 0.</li>
+                        <li><strong>post()</strong> (V operation): Increment. Wake waiting thread.</li>
+                    </ul>
+                    <div class="info-box">
+                        <strong>Binary semaphore</strong> (initial value 1) works like a mutex.<br>
+                        <strong>Counting semaphore</strong> limits concurrent access to N resources.
+                    </div>
+                </div>
+                <div class="column">
+                    <pre><code class="language-c">#include &lt;semaphore.h&gt;
+
+sem_t sem;
+
+// Initialise with value 3
+sem_init(&sem, 0, 3);
+
+// Wait (decrement)
+sem_wait(&sem);
+
+// Critical section
+// (max 3 threads here)
+
+// Post (increment)
+sem_post(&sem);
+
+// Cleanup
+sem_destroy(&sem);</code></pre>
+                </div>
+            </div>
+        </div>
+
+        <!-- ============================================================
+             SLIDE 13: Condition Variables
+             ============================================================ -->
+        <div class="slide" data-slide="13">
+            <h2>Condition Variables</h2>
+            <p>Condition variables allow threads to wait for a condition to become true.</p>
+            <div class="diagram">
+┌─────────────────────────────────────────────────────────────┐
+│                   CONDITION VARIABLE FLOW                    │
+│                                                              │
+│   WAITER                            SIGNALLER                │
+│   ──────                            ─────────                │
+│                                                              │
+│   lock(mutex)                       lock(mutex)              │
+│        │                                 │                   │
+│        ▼                                 ▼                   │
+│   while (!condition)                condition = true         │
+│       cond_wait(cond, mutex)             │                   │
+│        │                                 ▼                   │
+│        │◄─────────────────────── cond_signal(cond)          │
+│        │                                 │                   │
+│        ▼                                 ▼                   │
+│   // condition is true              unlock(mutex)            │
+│   unlock(mutex)                                              │
+│                                                              │
+└─────────────────────────────────────────────────────────────┘
+            </div>
+            <div class="danger-box">
+                <strong>Always use <code>while</code>, not <code>if</code></strong> — spurious wakeups can occur!
+            </div>
+        </div>
+
+        <!-- ============================================================
+             SLIDE 14: Condition Variables Code
+             ============================================================ -->
+        <div class="slide" data-slide="14">
+            <h2>Condition Variables Code</h2>
+            <pre><code class="language-c">pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
+pthread_cond_t cond = PTHREAD_COND_INITIALIZER;
+bool data_ready = false;
+
+void* producer(void* arg) {
+    // Produce data...
+    pthread_mutex_lock(&mutex);
+    data_ready = true;
+    pthread_cond_signal(&cond);  // Wake one waiter
+    pthread_mutex_unlock(&mutex);
+    return NULL;
+}
+
+void* consumer(void* arg) {
+    pthread_mutex_lock(&mutex);
+    while (!data_ready) {              // Loop for spurious wakeups!
+        pthread_cond_wait(&cond, &mutex); // Atomically unlocks, waits, relocks
+    }
+    // Consume data...
+    pthread_mutex_unlock(&mutex);
+    return NULL;
+}</code></pre>
+            <div class="info-box">
+                <code>pthread_cond_broadcast(&cond)</code> wakes <em>all</em> waiting threads.
+            </div>
+        </div>
+
+        <!-- ============================================================
+             SLIDE 15: Producer-Consumer Pattern
+             ============================================================ -->
+        <div class="slide" data-slide="15">
+            <h2>Producer-Consumer Pattern</h2>
+            <div class="diagram">
+┌─────────────────────────────────────────────────────────────────────┐
+│                      BOUNDED BUFFER PATTERN                          │
+│                                                                      │
+│    PRODUCERS                                          CONSUMERS      │
+│    ─────────                                          ─────────      │
+│                                                                      │
+│    [P1]─────┐                                    ┌─────[C1]          │
+│             │    ┌───┬───┬───┬───┬───┬───┐     │                    │
+│    [P2]─────┼───►│ 5 │ 2 │ 8 │   │   │   │─────┼────►[C2]           │
+│             │    └───┴───┴───┴───┴───┴───┘     │                    │
+│    [P3]─────┘         BOUNDED BUFFER           └─────[C3]           │
+│                       (capacity = 6)                                 │
+│                                                                      │
+│    Wait if FULL ◄─────────────────────────► Wait if EMPTY           │
+│                                                                      │
+└─────────────────────────────────────────────────────────────────────┘
+            </div>
+            <p>Key synchronisation requirements:</p>
+            <ul>
+                <li>Producers must wait when buffer is <strong>full</strong></li>
+                <li>Consumers must wait when buffer is <strong>empty</strong></li>
+                <li>Only one thread modifies buffer at a time (mutual exclusion)</li>
+            </ul>
+        </div>
+
+        <!-- ============================================================
+             SLIDE 16: Producer-Consumer Implementation
+             ============================================================ -->
+        <div class="slide" data-slide="16">
+            <h2>Bounded Buffer Implementation</h2>
+            <pre><code class="language-c">typedef struct {
+    int *buffer;
+    int capacity, count, head, tail;
+    pthread_mutex_t mutex;
+    pthread_cond_t not_full, not_empty;
+} BoundedBuffer;
+
+void buffer_put(BoundedBuffer *b, int item) {
+    pthread_mutex_lock(&b->mutex);
+    while (b->count == b->capacity) {          // Full?
+        pthread_cond_wait(&b->not_full, &b->mutex);
+    }
+    b->buffer[b->tail] = item;
+    b->tail = (b->tail + 1) % b->capacity;
+    b->count++;
+    pthread_cond_signal(&b->not_empty);        // Wake consumer
+    pthread_mutex_unlock(&b->mutex);
+}
+
+int buffer_get(BoundedBuffer *b) {
+    pthread_mutex_lock(&b->mutex);
+    while (b->count == 0) {                    // Empty?
+        pthread_cond_wait(&b->not_empty, &b->mutex);
+    }
+    int item = b->buffer[b->head];
+    b->head = (b->head + 1) % b->capacity;
+    b->count--;
+    pthread_cond_signal(&b->not_full);         // Wake producer
+    pthread_mutex_unlock(&b->mutex);
+    return item;
+}</code></pre>
+        </div>
+
+        <!-- ============================================================
+             SLIDE 17: Thread Pool Pattern
+             ============================================================ -->
+        <div class="slide" data-slide="17">
+            <h2>Thread Pool Pattern</h2>
+            <div class="diagram">
+┌─────────────────────────────────────────────────────────────────────┐
+│                         THREAD POOL                                  │
+│                                                                      │
+│   ┌─────────┐                    ┌─────────────────────────────┐    │
+│   │  Task   │                    │        WORKER THREADS        │    │
+│   │ Submit  │    ┌──────────┐    │  ┌────┐ ┌────┐ ┌────┐ ┌────┐│    │
+│   │─────────│───►│  TASK    │───►│  │ W1 │ │ W2 │ │ W3 │ │ W4 ││    │
+│   │         │    │  QUEUE   │    │  └────┘ └────┘ └────┘ └────┘│    │
+│   │ task1   │    │ ┌──┬──┬──┤    │     │      │      │      │  │    │
+│   │ task2   │    │ │T5│T6│T7│    │     ▼      ▼      ▼      ▼  │    │
+│   │ task3   │    │ └──┴──┴──┘    │   [T1]   [T2]   [T3]   [T4] │    │
+│   └─────────┘    └──────────┘    │   (running tasks)           │    │
+│                                   └─────────────────────────────┘    │
+└─────────────────────────────────────────────────────────────────────┘
+            </div>
+            <p><strong>Benefits:</strong></p>
+            <ul>
+                <li>Amortises thread creation cost</li>
+                <li>Limits concurrent threads (resource control)</li>
+                <li>Enables work stealing and load balancing</li>
+                <li>Clean shutdown semantics</li>
+            </ul>
+        </div>
+
+        <!-- ============================================================
+             SLIDE 18: C11 Atomics Introduction
+             ============================================================ -->
+        <div class="slide" data-slide="18">
+            <h2>C11 Atomics</h2>
+            <p>C11 introduced <code>&lt;stdatomic.h&gt;</code> for lock-free programming.</p>
+            <pre><code class="language-c">#include &lt;stdatomic.h&gt;
+
+atomic_int counter = 0;
+
+void* increment(void* arg) {
+    for (int i = 0; i < 1000000; i++) {
+        atomic_fetch_add(&counter, 1);  // Atomic increment
+    }
+    return NULL;
+}
+
+// Other atomic operations:
+atomic_load(&var);                      // Read atomically
+atomic_store(&var, value);              // Write atomically
+atomic_exchange(&var, new_value);       // Swap and return old
+atomic_compare_exchange_weak(&var,      // CAS operation
+                             &expected,
+                             desired);</code></pre>
+            <div class="success-box">
+                <strong>Advantage:</strong> No mutex needed for simple operations — much faster!
+            </div>
+        </div>
+
+        <!-- ============================================================
+             SLIDE 19: Compare-and-Swap (CAS)
+             ============================================================ -->
+        <div class="slide" data-slide="19">
+            <h2>Compare-and-Swap (CAS)</h2>
+            <p>The fundamental building block of lock-free algorithms.</p>
+            <div class="diagram">
+CAS(address, expected, desired):
+    atomically {
+        if (*address == expected) {
+            *address = desired;
+            return true;   // Success
+        } else {
+            return false;  // Failure - value changed
+        }
+    }
+            </div>
+            <pre><code class="language-c">// Lock-free increment using CAS
+void atomic_increment(atomic_int *counter) {
+    int expected, desired;
+    do {
+        expected = atomic_load(counter);
+        desired = expected + 1;
+    } while (!atomic_compare_exchange_weak(counter, &expected, desired));
+    // Retry if another thread modified counter between load and CAS
+}</code></pre>
+            <div class="info-box">
+                <code>_weak</code> may fail spuriously (faster on some architectures).<br>
+                <code>_strong</code> only fails if values differ.
+            </div>
+        </div>
+
+        <!-- ============================================================
+             SLIDE 20: Deadlock
+             ============================================================ -->
+        <div class="slide" data-slide="20">
+            <h2>Deadlock</h2>
+            <p>A <strong>deadlock</strong> occurs when threads are waiting for each other indefinitely.</p>
+            <div class="diagram">
+┌─────────────────────────────────────────────────────────────┐
+│                    DEADLOCK SITUATION                        │
+│                                                              │
+│     Thread A                        Thread B                 │
+│     ────────                        ────────                 │
+│                                                              │
+│     lock(mutex1) ✓                  lock(mutex2) ✓          │
+│          │                               │                   │
+│          ▼                               ▼                   │
+│     lock(mutex2) ◄──── WAITING ────► lock(mutex1)           │
+│          │                               │                   │
+│          └───────────── DEADLOCK ────────┘                   │
+│                                                              │
+└─────────────────────────────────────────────────────────────┘
+            </div>
+            <h4>Coffman Conditions (all four required):</h4>
+            <ol>
+                <li><strong>Mutual Exclusion:</strong> Resources cannot be shared</li>
+                <li><strong>Hold and Wait:</strong> Hold one resource while waiting for another</li>
+                <li><strong>No Preemption:</strong> Resources cannot be forcibly taken</li>
+                <li><strong>Circular Wait:</strong> Circular chain of waiting threads</li>
+            </ol>
+        </div>
+
+        <!-- ============================================================
+             SLIDE 21: Deadlock Prevention
+             ============================================================ -->
+        <div class="slide" data-slide="21">
+            <h2>Deadlock Prevention</h2>
+            <p>Break any one of the Coffman conditions:</p>
+            <div class="two-columns">
+                <div class="column">
+                    <h4>Lock Ordering</h4>
+                    <p>Always acquire locks in a consistent global order.</p>
+                    <pre><code class="language-c">// Rule: always lock lower address first
+void safe_transfer(Account *a, Account *b) {
+    Account *first = (a < b) ? a : b;
+    Account *second = (a < b) ? b : a;
+    
+    pthread_mutex_lock(&first->lock);
+    pthread_mutex_lock(&second->lock);
+    // Transfer...
+    pthread_mutex_unlock(&second->lock);
+    pthread_mutex_unlock(&first->lock);
+}</code></pre>
+                </div>
+                <div class="column">
+                    <h4>Try-Lock with Backoff</h4>
+                    <p>Don't wait indefinitely — back off and retry.</p>
+                    <pre><code class="language-c">bool try_both_locks(void) {
+    pthread_mutex_lock(&mutex1);
+    if (pthread_mutex_trylock(&mutex2) != 0) {
+        // Failed - back off
+        pthread_mutex_unlock(&mutex1);
+        usleep(rand() % 1000);  // Random delay
+        return false;  // Retry later
+    }
+    return true;  // Success!
+}</code></pre>
+                </div>
+            </div>
+        </div>
+
+        <!-- ============================================================
+             SLIDE 22: Dining Philosophers
+             ============================================================ -->
+        <div class="slide" data-slide="22">
+            <h2>Dining Philosophers Problem</h2>
+            <div class="diagram">
+                              [P0]
+                            /      \
+                       (F4)          (F0)
+                        /              \
+                     [P4]              [P1]
+                       |                |
+                    (F3)              (F1)
+                       |                |
+                     [P3]──────(F2)──[P2]
+
+    5 philosophers, 5 forks
+    Each needs 2 forks to eat
+    Can only pick up adjacent forks
+            </div>
+            <p><strong>Deadlock scenario:</strong> Each philosopher picks up left fork, then waits for right fork → all blocked!</p>
+            <h4>Solutions:</h4>
+            <ul>
+                <li><strong>Resource ordering:</strong> Pick up lower-numbered fork first</li>
+                <li><strong>Arbitrator:</strong> Central mutex to request both forks</li>
+                <li><strong>Chandy/Misra:</strong> Dirty/clean fork algorithm</li>
+            </ul>
+        </div>
+
+        <!-- ============================================================
+             SLIDE 23: Parallel Merge Sort
+             ============================================================ -->
+        <div class="slide" data-slide="23">
+            <h2>Parallel Merge Sort</h2>
+            <div class="diagram">
+                         [8,3,5,1,7,2,6,4]
+                               │
+              ┌────────────────┴────────────────┐
+              ▼                                 ▼
+        [8,3,5,1]                         [7,2,6,4]
+      Thread 1 │                           │ Thread 2
+    ┌─────┴─────┐                     ┌────┴────┐
+    ▼           ▼                     ▼         ▼
+ [8,3]       [5,1]                 [7,2]     [6,4]
+    │           │                     │         │
+    ▼           ▼                     ▼         ▼
+ [3,8]       [1,5]                 [2,7]     [4,6]
+    └─────┬─────┘                     └────┬────┘
+          ▼                                ▼
+      [1,3,5,8]                        [2,4,6,7]
+              └────────────┬───────────────┘
+                           ▼
+                   [1,2,3,4,5,6,7,8]
+            </div>
+            <div class="info-box">
+                <strong>Key insight:</strong> Limit parallelism depth to avoid thread explosion!<br>
+                Below threshold, use sequential sort.
+            </div>
+        </div>
+
+        <!-- ============================================================
+             SLIDE 24: Amdahl's Law
+             ============================================================ -->
+        <div class="slide" data-slide="24">
+            <h2>Amdahl's Law</h2>
+            <p>Maximum speedup is limited by the sequential portion of a programme.</p>
+            <div class="diagram">
+                    1
+    Speedup = ─────────────────
+              (1 - P) + P/N
+
+    Where:
+      P = Parallelisable fraction (0 to 1)
+      N = Number of processors
+      1-P = Sequential fraction
+            </div>
+            <table>
+                <tr><th>P (Parallel %)</th><th>N=2</th><th>N=4</th><th>N=8</th><th>N=∞</th></tr>
+                <tr><td>50%</td><td>1.33×</td><td>1.60×</td><td>1.78×</td><td>2.00×</td></tr>
+                <tr><td>75%</td><td>1.60×</td><td>2.29×</td><td>2.91×</td><td>4.00×</td></tr>
+                <tr><td>90%</td><td>1.82×</td><td>3.08×</td><td>4.71×</td><td>10.00×</td></tr>
+                <tr><td>95%</td><td>1.90×</td><td>3.48×</td><td>5.93×</td><td>20.00×</td></tr>
+                <tr><td>99%</td><td>1.98×</td><td>3.88×</td><td>7.48×</td><td>100.00×</td></tr>
+            </table>
+            <div class="warning-box">
+                Even with infinite processors, 10% sequential code limits speedup to 10×!
+            </div>
+        </div>
+
+        <!-- ============================================================
+             SLIDE 25: Memory Ordering
+             ============================================================ -->
+        <div class="slide" data-slide="25">
+            <h2>Memory Ordering</h2>
+            <p>Compilers and CPUs may reorder operations for performance. Atomics specify ordering constraints.</p>
+            <table>
+                <tr><th>Memory Order</th><th>Guarantee</th><th>Performance</th></tr>
+                <tr><td><code>memory_order_relaxed</code></td><td>Atomicity only</td><td>Fastest</td></tr>
+                <tr><td><code>memory_order_acquire</code></td><td>No reads/writes move before</td><td>Fast</td></tr>
+                <tr><td><code>memory_order_release</code></td><td>No reads/writes move after</td><td>Fast</td></tr>
+                <tr><td><code>memory_order_acq_rel</code></td><td>Both acquire + release</td><td>Medium</td></tr>
+                <tr><td><code>memory_order_seq_cst</code></td><td>Total ordering (default)</td><td>Slowest</td></tr>
+            </table>
+            <pre><code class="language-c">// Typical pattern: producer-consumer with flag
+atomic_store_explicit(&data, value, memory_order_release);
+atomic_store_explicit(&flag, true, memory_order_release);
+
+// Consumer
+while (!atomic_load_explicit(&flag, memory_order_acquire));
+int val = atomic_load_explicit(&data, memory_order_acquire);</code></pre>
+        </div>
+
+        <!-- ============================================================
+             SLIDE 26: False Sharing
+             ============================================================ -->
+        <div class="slide" data-slide="26">
+            <h2>False Sharing</h2>
+            <p>Performance degradation when threads modify independent variables on the same cache line.</p>
+            <div class="diagram">
+┌─────────────────────────────────────────────────────────┐
+│                  CACHE LINE (64 bytes)                   │
+│  ┌──────────────┬──────────────┬──────────────────────┐ │
+│  │   counter1   │   counter2   │      padding...      │ │
+│  │  (Thread 1)  │  (Thread 2)  │                      │ │
+│  └──────────────┴──────────────┴──────────────────────┘ │
+│                                                          │
+│  Thread 1 writes counter1 → Invalidates entire line      │
+│  Thread 2's cache must reload → SLOW!                    │
+└─────────────────────────────────────────────────────────┘
+            </div>
+            <pre><code class="language-c">// BAD: False sharing
+int counters[NUM_THREADS];  // Adjacent in memory
+
+// GOOD: Pad to cache line boundary
+struct __attribute__((aligned(64))) {
+    int counter;
+    char padding[60];  // Fill rest of cache line
+} counters[NUM_THREADS];</code></pre>
+        </div>
+
+        <!-- ============================================================
+             SLIDE 27: Thread Safety Levels
+             ============================================================ -->
+        <div class="slide" data-slide="27">
+            <h2>Thread Safety Levels</h2>
+            <table>
+                <tr><th>Level</th><th>Description</th><th>Example</th></tr>
+                <tr>
+                    <td><strong>Thread-safe</strong></td>
+                    <td>Can be called from multiple threads simultaneously</td>
+                    <td><code>printf()</code>, atomic operations</td>
+                </tr>
+                <tr>
+                    <td><strong>Conditionally safe</strong></td>
+                    <td>Safe if different threads use different instances</td>
+                    <td><code>FILE*</code> operations</td>
+                </tr>
+                <tr>
+                    <td><strong>Not thread-safe</strong></td>
+                    <td>Must use external synchronisation</td>
+                    <td><code>strtok()</code>, <code>localtime()</code></td>
+                </tr>
+            </table>
+            <pre><code class="language-c">// strtok is NOT thread-safe (uses static buffer)
+// Use strtok_r instead:
+char *saveptr;
+char *token = strtok_r(str, delim, &saveptr);
+
+// Similarly:
+// localtime() → localtime_r()
+// rand() → rand_r()
+// gethostbyname() → getaddrinfo()</code></pre>
+        </div>
+
+        <!-- ============================================================
+             SLIDE 28: Read-Write Locks
+             ============================================================ -->
+        <div class="slide" data-slide="28">
+            <h2>Read-Write Locks</h2>
+            <p>Allow multiple concurrent readers OR one exclusive writer.</p>
+            <div class="diagram">
+┌─────────────────────────────────────────────────────────┐
+│            READ-WRITE LOCK STATES                        │
+│                                                          │
+│   UNLOCKED ──┬──► READ LOCKED ──► more readers OK       │
+│              │    (N readers)                            │
+│              │                                           │
+│              └──► WRITE LOCKED ──► exclusive access     │
+│                   (1 writer)                             │
+│                                                          │
+│   Readers can share, writers need exclusive access       │
+└─────────────────────────────────────────────────────────┘
+            </div>
+            <pre><code class="language-c">pthread_rwlock_t rwlock = PTHREAD_RWLOCK_INITIALIZER;
+
+void reader(void) {
+    pthread_rwlock_rdlock(&rwlock);  // Multiple readers OK
+    // Read shared data...
+    pthread_rwlock_unlock(&rwlock);
+}
+
+void writer(void) {
+    pthread_rwlock_wrlock(&rwlock);  // Exclusive access
+    // Modify shared data...
+    pthread_rwlock_unlock(&rwlock);
+}</code></pre>
+        </div>
+
+        <!-- ============================================================
+             SLIDE 29: Barriers
+             ============================================================ -->
+        <div class="slide" data-slide="29">
+            <h2>Barriers</h2>
+            <p>A <strong>barrier</strong> synchronises threads at a specific point — all must arrive before any proceed.</p>
+            <div class="diagram">
+Thread 1: ════════════════╗
+                          ║
+Thread 2: ══════════╗     ║
+                    ║     ║
+Thread 3: ══════╗   ║     ║
+                ║   ║     ║   BARRIER
+Thread 4: ══╗   ║   ║     ║
+            ║   ║   ║     ║
+            ▼   ▼   ▼     ▼
+          ════════════════════ (all arrive)
+            │   │   │     │
+            ▼   ▼   ▼     ▼
+          (all continue together)
+            </div>
+            <pre><code class="language-c">pthread_barrier_t barrier;
+
+// Initialise for N threads
+pthread_barrier_init(&barrier, NULL, NUM_THREADS);
+
+void* worker(void* arg) {
+    // Phase 1 work...
+    
+    pthread_barrier_wait(&barrier);  // Wait for all threads
+    
+    // Phase 2 work (all threads proceed together)
+    
+    return NULL;
+}</code></pre>
+        </div>
+
+        <!-- ============================================================
+             SLIDE 30: Spinlocks
+             ============================================================ -->
+        <div class="slide" data-slide="30">
+            <h2>Spinlocks</h2>
+            <p>A <strong>spinlock</strong> busy-waits instead of sleeping. Useful for very short critical sections.</p>
+            <div class="two-columns">
+                <div class="column">
+                    <h4>Mutex (Sleep)</h4>
+                    <ul>
+                        <li>Thread goes to sleep if lock unavailable</li>
+                        <li>Context switch overhead</li>
+                        <li>Good for long critical sections</li>
+                        <li>Fair (queue-based)</li>
+                    </ul>
+                </div>
+                <div class="column">
+                    <h4>Spinlock (Busy-wait)</h4>
+                    <ul>
+                        <li>Thread loops checking lock</li>
+                        <li>No context switch</li>
+                        <li>Good for very short sections</li>
+                        <li>Wastes CPU cycles</li>
+                    </ul>
+                </div>
+            </div>
+            <pre><code class="language-c">// Simple spinlock using atomics
+typedef atomic_flag spinlock_t;
+
+void spin_lock(spinlock_t *lock) {
+    while (atomic_flag_test_and_set(lock)) {
+        // Spin (busy wait)
+    }
+}
+
+void spin_unlock(spinlock_t *lock) {
+    atomic_flag_clear(lock);
+}</code></pre>
+        </div>
+
+        <!-- ============================================================
+             SLIDE 31: Common Pitfalls
+             ============================================================ -->
+        <div class="slide" data-slide="31">
+            <h2>Common Pitfalls</h2>
+            <div class="danger-box">
+                <h4>1. Forgetting to unlock</h4>
+                <pre><code class="language-c">pthread_mutex_lock(&mutex);
+if (error) return;  // BUG: mutex still locked!
+pthread_mutex_unlock(&mutex);</code></pre>
+            </div>
+            <div class="danger-box">
+                <h4>2. Using <code>if</code> instead of <code>while</code> with condition variables</h4>
+                <pre><code class="language-c">if (!ready) {  // BUG: spurious wakeup!
+    pthread_cond_wait(&cond, &mutex);
+}</code></pre>
+            </div>
+            <div class="danger-box">
+                <h4>3. Passing local variables to threads</h4>
+                <pre><code class="language-c">for (int i = 0; i < N; i++) {
+    pthread_create(&t[i], NULL, func, &i);  // BUG: i may change!
+}</code></pre>
+            </div>
+        </div>
+
+        <!-- ============================================================
+             SLIDE 32: Thread Sanitiser
+             ============================================================ -->
+        <div class="slide" data-slide="32">
+            <h2>Thread Sanitiser (TSan)</h2>
+            <p>Compile-time instrumentation to detect race conditions.</p>
+            <pre><code class="language-c">// Compile with ThreadSanitizer
+gcc -fsanitize=thread -g program.c -o program -lpthread
+
+// Example output:
+==================
+WARNING: ThreadSanitizer: data race (pid=12345)
+  Write of size 4 at 0x7f... by thread T1:
+    #0 increment example.c:15 (program+0x...)
+  Previous read of size 4 at 0x7f... by thread T2:
+    #0 increment example.c:15 (program+0x...)
+  Location is global 'counter' of size 4 at 0x7f...
+==================</code></pre>
+            <div class="info-box">
+                <strong>Also useful:</strong><br>
+                • <code>valgrind --tool=helgrind</code> — Race detection<br>
+                • <code>valgrind --tool=drd</code> — Thread error detection
+            </div>
+        </div>
+
+        <!-- ============================================================
+             SLIDE 33: Exercise 1 Overview
+             ============================================================ -->
+        <div class="slide" data-slide="33">
+            <h2>Exercise 1: Parallel Log Processor</h2>
+            <p>Implement a multi-threaded log processing system.</p>
+            <div class="diagram">
+┌─────────────────────────────────────────────────────────┐
+│              PARALLEL LOG PROCESSOR                      │
+│                                                          │
+│   ┌────────┐      ┌─────────────┐      ┌──────────┐    │
+│   │ File 1 │─────►│             │      │          │    │
+│   └────────┘      │   BOUNDED   │      │ Consumer │    │
+│   ┌────────┐      │   BUFFER    │─────►│ Thread 1 │    │
+│   │ File 2 │─────►│             │      │          │    │
+│   └────────┘      │  (mutex +   │      └──────────┘    │
+│   ┌────────┐      │  cond vars) │      ┌──────────┐    │
+│   │ File 3 │─────►│             │─────►│ Consumer │    │
+│   └────────┘      └─────────────┘      │ Thread 2 │    │
+│                                         └──────────┘    │
+│  Producer Threads                     Consumer Threads  │
+└─────────────────────────────────────────────────────────┘
+            </div>
+            <p><strong>Requirements:</strong></p>
+            <ul>
+                <li>Multiple producer threads read log files</li>
+                <li>Bounded buffer with proper synchronisation</li>
+                <li>Consumer threads categorise by log level</li>
+                <li>Track statistics using atomic counters</li>
+            </ul>
+        </div>
+
+        <!-- ============================================================
+             SLIDE 34: Exercise 2 Overview
+             ============================================================ -->
+        <div class="slide" data-slide="34">
+            <h2>Exercise 2: Parallel Quick Sort</h2>
+            <p>Implement parallel sorting with task-based parallelism.</p>
+            <pre><code class="language-c">typedef struct {
+    int *array;
+    int left, right;
+    int depth;        // Current recursion depth
+    int max_threads;  // Thread limit
+} SortTask;
+
+void* parallel_quicksort(void* arg) {
+    SortTask *task = (SortTask*)arg;
+    
+    if (task->right - task->left < THRESHOLD) {
+        insertion_sort(task->array, task->left, task->right);
+        return NULL;
+    }
+    
+    int pivot = partition(task->array, task->left, task->right);
+    
+    if (task->depth < MAX_DEPTH && current_threads < task->max_threads) {
+        // Spawn thread for left partition
+        pthread_create(&thread, NULL, parallel_quicksort, &left_task);
+        parallel_quicksort(&right_task);  // Right in current thread
+        pthread_join(thread, NULL);
+    } else {
+        // Sequential below threshold
+        sequential_quicksort(task->array, task->left, pivot - 1);
+        sequential_quicksort(task->array, pivot + 1, task->right);
+    }
+    return NULL;
+}</code></pre>
+        </div>
+
+        <!-- ============================================================
+             SLIDE 35: Homework 1: Thread Pool with Futures
+             ============================================================ -->
+        <div class="slide" data-slide="35">
+            <h2>Homework 1: Thread Pool with Futures (50 pts)</h2>
+            <p>Implement a production-quality thread pool with future handles.</p>
+            <div class="two-columns">
+                <div class="column">
+                    <h4>Required Features</h4>
+                    <ul>
+                        <li>Submit task → receive Future handle</li>
+                        <li><code>future_get()</code> blocks until complete</li>
+                        <li><code>future_get_timeout()</code> with deadline</li>
+                        <li><code>future_cancel()</code> for pending tasks</li>
+                        <li>Graceful shutdown (finish running tasks)</li>
+                        <li>Immediate shutdown (cancel pending)</li>
+                    </ul>
+                </div>
+                <div class="column">
+                    <h4>Interface</h4>
+                    <pre><code class="language-c">typedef struct Future Future;
+
+ThreadPool* pool_create(int n);
+Future* pool_submit(ThreadPool*,
+                    void* (*fn)(void*),
+                    void* arg);
+int future_get(Future*, void** result);
+int future_get_timeout(Future*,
+                       void** result,
+                       int timeout_ms);
+bool future_cancel(Future*);
+void pool_shutdown(ThreadPool*);
+void pool_destroy(ThreadPool*);</code></pre>
+                </div>
+            </div>
+        </div>
+
+        <!-- ============================================================
+             SLIDE 36: Homework 2: Map-Reduce
+             ============================================================ -->
+        <div class="slide" data-slide="36">
+            <h2>Homework 2: Map-Reduce in C (50 pts)</h2>
+            <div class="diagram">
+┌─────────────────────────────────────────────────────────────┐
+│                    MAP-REDUCE PIPELINE                       │
+│                                                              │
+│   INPUT         MAP            SHUFFLE          REDUCE       │
+│   ─────         ───            ───────          ──────       │
+│                                                              │
+│  ┌─────┐    ┌────────┐                                       │
+│  │File1│───►│Mapper 1│──┐                                    │
+│  └─────┘    └────────┘  │    ┌─────────┐    ┌─────────┐     │
+│  ┌─────┐    ┌────────┐  ├───►│Partition│───►│Reducer 1│     │
+│  │File2│───►│Mapper 2│──┤    │  A-M    │    └─────────┘     │
+│  └─────┘    └────────┘  │    └─────────┘                     │
+│  ┌─────┐    ┌────────┐  │    ┌─────────┐    ┌─────────┐     │
+│  │File3│───►│Mapper 3│──┴───►│Partition│───►│Reducer 2│     │
+│  └─────┘    └────────┘       │  N-Z    │    └─────────┘     │
+│                              └─────────┘                     │
+└─────────────────────────────────────────────────────────────┘
+            </div>
+            <p><strong>Requirements:</strong></p>
+            <ul>
+                <li>Configurable number of mappers and reducers</li>
+                <li>Hash-based key partitioning</li>
+                <li>Apply to word count on large text file</li>
+                <li>Output top-N most frequent words</li>
+            </ul>
+        </div>
+
+        <!-- ============================================================
+             SLIDE 37: Industrial Applications
+             ============================================================ -->
+        <div class="slide" data-slide="37">
+            <h2>🏭 Industrial Applications</h2>
+            <div class="two-columns">
+                <div class="column">
+                    <h4>Database Systems</h4>
+                    <ul>
+                        <li>Connection pooling</li>
+                        <li>Parallel query execution</li>
+                        <li>Lock managers</li>
+                        <li>Write-ahead logging</li>
+                    </ul>
+                    <h4>Web Servers</h4>
+                    <ul>
+                        <li>Thread-per-request (Apache)</li>
+                        <li>Event loop + worker pool (Nginx)</li>
+                        <li>Async I/O with threads</li>
+                    </ul>
+                </div>
+                <div class="column">
+                    <h4>Operating Systems</h4>
+                    <ul>
+                        <li>Process scheduling</li>
+                        <li>File system caching</li>
+                        <li>Device driver I/O</li>
+                        <li>Memory management</li>
+                    </ul>
+                    <h4>Financial Systems</h4>
+                    <ul>
+                        <li>High-frequency trading</li>
+                        <li>Lock-free order books</li>
+                        <li>Parallel risk calculations</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- ============================================================
+             SLIDE 38: Best Practices
+             ============================================================ -->
+        <div class="slide" data-slide="38">
+            <h2>Best Practices</h2>
+            <div class="success-box">
+                <h4>✓ Do</h4>
+                <ul>
+                    <li>Minimise shared state</li>
+                    <li>Keep critical sections short</li>
+                    <li>Use RAII patterns for lock management</li>
+                    <li>Prefer higher-level abstractions (thread pools)</li>
+                    <li>Test with ThreadSanitizer</li>
+                    <li>Document synchronisation requirements</li>
+                </ul>
+            </div>
+            <div class="danger-box">
+                <h4>✗ Don't</h4>
+                <ul>
+                    <li>Hold locks while doing I/O</li>
+                    <li>Call unknown functions while holding locks</li>
+                    <li>Assume operations are atomic</li>
+                    <li>Use global mutable state</li>
+                    <li>Ignore race condition warnings</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- ============================================================
+             SLIDE 39: Self-Assessment
+             ============================================================ -->
+        <div class="slide" data-slide="39">
+            <h2>✅ Self-Assessment Checklist</h2>
+            <p>After completing this laboratory, verify that you can:</p>
+            <ul>
+                <li>☐ Create and join threads using pthreads API</li>
+                <li>☐ Use mutex to protect critical sections</li>
+                <li>☐ Implement producer-consumer with condition variables</li>
+                <li>☐ Detect and prevent deadlocks</li>
+                <li>☐ Use semaphores for resource limiting</li>
+                <li>☐ Apply C11 atomics for lock-free programming</li>
+                <li>☐ Calculate theoretical speedup using Amdahl's Law</li>
+                <li>☐ Design thread-safe data structures</li>
+                <li>☐ Use Thread Sanitizer to find race conditions</li>
+                <li>☐ Implement a thread pool pattern</li>
+            </ul>
+        </div>
+
+        <!-- ============================================================
+             SLIDE 40: Recommended Reading
+             ============================================================ -->
+        <div class="slide" data-slide="40">
+            <h2>📖 Recommended Reading</h2>
+            <div class="two-columns">
+                <div class="column">
+                    <h4>Essential</h4>
+                    <ul>
+                        <li>CLRS Chapter 27: Multithreaded Algorithms</li>
+                        <li>Butenhof: <em>Programming with POSIX Threads</em></li>
+                        <li>Herlihy & Shavit: <em>The Art of Multiprocessor Programming</em></li>
+                    </ul>
+                    <h4>Papers</h4>
+                    <ul>
+                        <li>Dijkstra (1965): "Cooperating Sequential Processes"</li>
+                        <li>Lamport (1974): "A New Solution to the Mutual Exclusion Problem"</li>
+                        <li>Amdahl (1967): "Validity of the Single Processor Approach"</li>
+                    </ul>
+                </div>
+                <div class="column">
+                    <h4>Online Resources</h4>
+                    <ul>
+                        <li><a href="https://man7.org/linux/man-pages/man7/pthreads.7.html" style="color: var(--accent-blue);">pthreads man page</a></li>
+                        <li><a href="https://en.cppreference.com/w/c/atomic" style="color: var(--accent-blue);">C11 Atomics Reference</a></li>
+                        <li>MIT 6.824: Distributed Systems (parallel concepts)</li>
+                    </ul>
+                    <h4>Tools</h4>
+                    <ul>
+                        <li>ThreadSanitizer (TSan)</li>
+                        <li>Valgrind Helgrind/DRD</li>
+                        <li>Intel Inspector</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- ============================================================
+             SLIDE 41: Summary
+             ============================================================ -->
+        <div class="slide" data-slide="41">
+            <h2>📝 Summary</h2>
+            <table>
+                <tr><th>Concept</th><th>Purpose</th><th>API</th></tr>
+                <tr><td>Thread</td><td>Unit of execution</td><td><code>pthread_create/join</code></td></tr>
+                <tr><td>Mutex</td><td>Mutual exclusion</td><td><code>pthread_mutex_*</code></td></tr>
+                <tr><td>Semaphore</td><td>Resource counting</td><td><code>sem_*</code></td></tr>
+                <tr><td>Condition Var</td><td>Wait for condition</td><td><code>pthread_cond_*</code></td></tr>
+                <tr><td>Barrier</td><td>Synchronise N threads</td><td><code>pthread_barrier_*</code></td></tr>
+                <tr><td>RW Lock</td><td>Multiple readers OR one writer</td><td><code>pthread_rwlock_*</code></td></tr>
+                <tr><td>Atomics</td><td>Lock-free operations</td><td><code>&lt;stdatomic.h&gt;</code></td></tr>
+            </table>
+            <div class="info-box">
+                <strong>Key takeaway:</strong> Concurrent programming is about correctness first, performance second. Always use the simplest synchronisation that works!
+            </div>
+        </div>
+
+        <!-- ============================================================
+             SLIDE 42: End
+             ============================================================ -->
+        <div class="slide title-slide" data-slide="42">
+            <h1>Questions?</h1>
+            <p class="subtitle">Week 20: Parallel and Concurrent Programming</p>
+            <p class="meta">
+                <br>
+                <em>"Premature optimisation is the root of all evil."</em><br>
+                — Donald Knuth<br>
+                <br><br>
+                ATP Course - Academy of Economic Studies Bucharest - CSIE
+            </p>
+        </div>
+
+    </div>
+
+    <!-- Navigation -->
+    <div id="nav-container">
+        <button class="nav-btn" id="prev-btn" onclick="prevSlide()">← Previous</button>
+        <button class="nav-btn" id="next-btn" onclick="nextSlide()">Next →</button>
+    </div>
+
+    <div id="slide-counter"></div>
+    <div id="keyboard-hints">
+        <kbd>←</kbd> <kbd>→</kbd> or <kbd>Space</kbd> to navigate
+    </div>
+
+    <script>
+        // Initialise highlight.js
+        hljs.highlightAll();
+
+        // Slide navigation
+        let currentSlide = 1;
+        const totalSlides = document.querySelectorAll('.slide').length;
+
+        function showSlide(n) {
+            const slides = document.querySelectorAll('.slide');
+            
+            if (n < 1) n = 1;
+            if (n > totalSlides) n = totalSlides;
+            
+            currentSlide = n;
+            
+            slides.forEach(slide => slide.classList.remove('active'));
+            slides[n - 1].classList.add('active');
+            
+            // Update progress bar
+            const progress = ((n - 1) / (totalSlides - 1)) * 100;
+            document.getElementById('progress-bar').style.width = progress + '%';
+            
+            // Update counter
+            document.getElementById('slide-counter').textContent = `${n} / ${totalSlides}`;
+            
+            // Update button states
+            document.getElementById('prev-btn').disabled = (n === 1);
+            document.getElementById('next-btn').disabled = (n === totalSlides);
+            
+            // Update URL hash
+            window.location.hash = `slide-${n}`;
+        }
+
+        function nextSlide() {
+            showSlide(currentSlide + 1);
+        }
+
+        function prevSlide() {
+            showSlide(currentSlide - 1);
+        }
+
+        // Keyboard navigation
+        document.addEventListener('keydown', function(e) {
+            switch(e.key) {
+                case 'ArrowRight':
+                case ' ':
+                case 'PageDown':
+                    e.preventDefault();
+                    nextSlide();
+                    break;
+                case 'ArrowLeft':
+                case 'PageUp':
+                    e.preventDefault();
+                    prevSlide();
+                    break;
+                case 'Home':
+                    e.preventDefault();
+                    showSlide(1);
+                    break;
+                case 'End':
+                    e.preventDefault();
+                    showSlide(totalSlides);
+                    break;
+            }
+        });
+
+        // Handle URL hash on load
+        window.addEventListener('load', function() {
+            const hash = window.location.hash;
+            if (hash && hash.startsWith('#slide-')) {
+                const slideNum = parseInt(hash.replace('#slide-', ''));
+                if (slideNum >= 1 && slideNum <= totalSlides) {
+                    showSlide(slideNum);
+                    return;
+                }
+            }
+            showSlide(1);
+        });
+
+        // Touch support for mobile
+        let touchStartX = 0;
+        let touchEndX = 0;
+
+        document.addEventListener('touchstart', function(e) {
+            touchStartX = e.changedTouches[0].screenX;
+        });
+
+        document.addEventListener('touchend', function(e) {
+            touchEndX = e.changedTouches[0].screenX;
+            handleSwipe();
+        });
+
+        function handleSwipe() {
+            const threshold = 50;
+            const diff = touchStartX - touchEndX;
+            
+            if (Math.abs(diff) > threshold) {
+                if (diff > 0) {
+                    nextSlide();
+                } else {
+                    prevSlide();
+                }
+            }
+        }
+    </script>
+</body>
+</html>

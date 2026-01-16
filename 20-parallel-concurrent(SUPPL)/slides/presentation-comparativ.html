@@ -1,0 +1,1872 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Week 20: Parallel Programming — Comparative View | ATP Course</title>
+    
+    <!-- highlight.js for syntax highlighting -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/c.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/python.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/plaintext.min.js"></script>
+    
+    <style>
+        /* =================================================================
+           CSS VARIABLES — Dark Theme Optimised for Projection
+           ================================================================= */
+        :root {
+            --bg-primary: #0d1117;
+            --bg-secondary: #161b22;
+            --bg-tertiary: #21262d;
+            --bg-code: #1a1f26;
+            
+            --accent-blue: #58a6ff;
+            --accent-green: #3fb950;
+            --accent-orange: #d29922;
+            --accent-red: #f85149;
+            --accent-purple: #a371f7;
+            --accent-cyan: #39c5cf;
+            --accent-yellow: #f0e68c;
+            
+            --text-primary: #e6edf3;
+            --text-secondary: #8b949e;
+            --text-muted: #6e7681;
+            
+            --border-default: #30363d;
+            --border-muted: #21262d;
+            
+            --shadow-medium: 0 8px 24px rgba(0, 0, 0, 0.4);
+            --shadow-large: 0 12px 48px rgba(0, 0, 0, 0.5);
+            
+            --transition-fast: 0.15s ease;
+            --transition-normal: 0.3s ease;
+            
+            /* Column colours for the three-way comparison */
+            --pseudo-bg: #1a2332;
+            --pseudo-accent: #7ee787;
+            --c-bg: #1f2937;
+            --c-accent: #58a6ff;
+            --python-bg: #2d1f3d;
+            --python-accent: #a371f7;
+        }
+        
+        /* =================================================================
+           RESET AND BASE STYLES
+           ================================================================= */
+        *, *::before, *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        
+        html {
+            font-size: 18px;
+            scroll-behavior: smooth;
+        }
+        
+        body {
+            font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, 'Roboto', 'Helvetica Neue', Arial, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.6;
+            overflow: hidden;
+            min-height: 100vh;
+        }
+        
+        /* =================================================================
+           PROGRESS BAR
+           ================================================================= */
+        .progress-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: var(--bg-tertiary);
+            z-index: 1000;
+        }
+        
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, var(--accent-blue), var(--accent-purple));
+            width: 0%;
+            transition: width var(--transition-fast);
+        }
+        
+        /* =================================================================
+           SLIDE COUNTER
+           ================================================================= */
+        .slide-counter {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: var(--bg-secondary);
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-family: 'JetBrains Mono', 'Fira Code', monospace;
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            border: 1px solid var(--border-default);
+            z-index: 1000;
+        }
+        
+        .slide-counter .current {
+            color: var(--accent-blue);
+            font-weight: 600;
+        }
+        
+        /* =================================================================
+           SLIDE CONTAINER
+           ================================================================= */
+        .slides-container {
+            width: 100%;
+            height: 100vh;
+            overflow: hidden;
+            position: relative;
+        }
+        
+        .slide {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            padding: 60px 80px;
+            display: none;
+            flex-direction: column;
+            opacity: 0;
+            transform: translateX(50px);
+            transition: opacity var(--transition-normal), transform var(--transition-normal);
+            overflow-y: auto;
+        }
+        
+        .slide.active {
+            display: flex;
+            opacity: 1;
+            transform: translateX(0);
+        }
+        
+        /* =================================================================
+           TYPOGRAPHY
+           ================================================================= */
+        h1 {
+            font-size: 2.8rem;
+            font-weight: 700;
+            margin-bottom: 1.5rem;
+            background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        h2 {
+            font-size: 2rem;
+            font-weight: 600;
+            color: var(--accent-blue);
+            margin-bottom: 1.2rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid var(--border-default);
+        }
+        
+        h3 {
+            font-size: 1.4rem;
+            font-weight: 600;
+            color: var(--accent-green);
+            margin-bottom: 0.8rem;
+        }
+        
+        p {
+            margin-bottom: 1rem;
+            color: var(--text-secondary);
+            font-size: 1.1rem;
+        }
+        
+        .subtitle {
+            font-size: 1.3rem;
+            color: var(--text-secondary);
+            margin-bottom: 2rem;
+        }
+        
+        /* =================================================================
+           THREE-COLUMN COMPARISON LAYOUT
+           ================================================================= */
+        .comparison-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            flex: 1;
+            margin-top: 1rem;
+        }
+        
+        .comparison-column {
+            background: var(--bg-secondary);
+            border-radius: 12px;
+            border: 1px solid var(--border-default);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .comparison-column.pseudo {
+            border-top: 3px solid var(--pseudo-accent);
+        }
+        
+        .comparison-column.c-lang {
+            border-top: 3px solid var(--c-accent);
+        }
+        
+        .comparison-column.python {
+            border-top: 3px solid var(--python-accent);
+        }
+        
+        .column-header {
+            padding: 12px 16px;
+            font-weight: 600;
+            font-size: 1rem;
+            text-align: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        
+        .comparison-column.pseudo .column-header {
+            background: var(--pseudo-bg);
+            color: var(--pseudo-accent);
+        }
+        
+        .comparison-column.c-lang .column-header {
+            background: var(--c-bg);
+            color: var(--c-accent);
+        }
+        
+        .comparison-column.python .column-header {
+            background: var(--python-bg);
+            color: var(--python-accent);
+        }
+        
+        .column-content {
+            flex: 1;
+            padding: 16px;
+            overflow-y: auto;
+        }
+        
+        .column-content pre {
+            margin: 0;
+            background: var(--bg-code) !important;
+            border-radius: 8px;
+            overflow-x: auto;
+        }
+        
+        .column-content pre code {
+            font-family: 'JetBrains Mono', 'Fira Code', 'Consolas', monospace;
+            font-size: 0.75rem;
+            line-height: 1.5;
+            padding: 12px !important;
+            background: transparent !important;
+        }
+        
+        /* =================================================================
+           TWO-COLUMN COMPARISON
+           ================================================================= */
+        .two-column-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 24px;
+            flex: 1;
+            margin-top: 1rem;
+        }
+        
+        /* =================================================================
+           CODE BLOCKS (STANDALONE)
+           ================================================================= */
+        pre {
+            background: var(--bg-secondary);
+            border-radius: 8px;
+            border: 1px solid var(--border-default);
+            overflow-x: auto;
+            margin: 1rem 0;
+        }
+        
+        pre code {
+            font-family: 'JetBrains Mono', 'Fira Code', 'Consolas', monospace;
+            font-size: 0.85rem;
+            line-height: 1.6;
+            padding: 16px !important;
+            display: block;
+        }
+        
+        code {
+            font-family: 'JetBrains Mono', 'Fira Code', 'Consolas', monospace;
+            background: var(--bg-tertiary);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 0.9em;
+            color: var(--accent-cyan);
+        }
+        
+        /* =================================================================
+           TABLES
+           ================================================================= */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+            font-size: 0.95rem;
+        }
+        
+        th, td {
+            padding: 12px 16px;
+            text-align: left;
+            border: 1px solid var(--border-default);
+        }
+        
+        th {
+            background: var(--bg-tertiary);
+            color: var(--accent-blue);
+            font-weight: 600;
+        }
+        
+        td {
+            background: var(--bg-secondary);
+        }
+        
+        tr:hover td {
+            background: var(--bg-tertiary);
+        }
+        
+        .good {
+            color: var(--accent-green);
+        }
+        
+        .bad {
+            color: var(--accent-red);
+        }
+        
+        .neutral {
+            color: var(--accent-orange);
+        }
+        
+        /* =================================================================
+           INFO BOXES
+           ================================================================= */
+        .info-box {
+            padding: 16px 20px;
+            border-radius: 8px;
+            margin: 1rem 0;
+            border-left: 4px solid;
+        }
+        
+        .info-box.note {
+            background: rgba(88, 166, 255, 0.1);
+            border-color: var(--accent-blue);
+        }
+        
+        .info-box.warning {
+            background: rgba(210, 153, 34, 0.1);
+            border-color: var(--accent-orange);
+        }
+        
+        .info-box.tip {
+            background: rgba(63, 185, 80, 0.1);
+            border-color: var(--accent-green);
+        }
+        
+        .info-box.danger {
+            background: rgba(248, 81, 73, 0.1);
+            border-color: var(--accent-red);
+        }
+        
+        .info-box-title {
+            font-weight: 600;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .info-box.note .info-box-title { color: var(--accent-blue); }
+        .info-box.warning .info-box-title { color: var(--accent-orange); }
+        .info-box.tip .info-box-title { color: var(--accent-green); }
+        .info-box.danger .info-box-title { color: var(--accent-red); }
+        
+        /* =================================================================
+           LISTS
+           ================================================================= */
+        ul, ol {
+            margin: 0.5rem 0 1rem 1.5rem;
+            color: var(--text-secondary);
+        }
+        
+        li {
+            margin-bottom: 0.5rem;
+            font-size: 1rem;
+        }
+        
+        li::marker {
+            color: var(--accent-blue);
+        }
+        
+        /* =================================================================
+           TITLE SLIDE SPECIAL STYLES
+           ================================================================= */
+        .title-slide {
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+        }
+        
+        .title-slide h1 {
+            font-size: 3.5rem;
+            margin-bottom: 1rem;
+        }
+        
+        .title-slide .subtitle {
+            font-size: 1.8rem;
+            color: var(--text-secondary);
+            margin-bottom: 2rem;
+        }
+        
+        .title-slide .meta {
+            color: var(--text-muted);
+            font-size: 1.1rem;
+            margin-top: 3rem;
+        }
+        
+        /* =================================================================
+           ASCII ART CONTAINER
+           ================================================================= */
+        .ascii-art {
+            font-family: 'JetBrains Mono', 'Fira Code', monospace;
+            font-size: 0.7rem;
+            line-height: 1.3;
+            background: var(--bg-code);
+            padding: 16px;
+            border-radius: 8px;
+            border: 1px solid var(--border-default);
+            white-space: pre;
+            overflow-x: auto;
+            color: var(--text-secondary);
+        }
+        
+        /* =================================================================
+           FEATURE COMPARISON CARDS
+           ================================================================= */
+        .feature-cards {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            margin: 1rem 0;
+        }
+        
+        .feature-card {
+            background: var(--bg-secondary);
+            border-radius: 12px;
+            padding: 20px;
+            border: 1px solid var(--border-default);
+        }
+        
+        .feature-card h4 {
+            color: var(--accent-blue);
+            margin-bottom: 0.5rem;
+            font-size: 1.1rem;
+        }
+        
+        .feature-card p {
+            font-size: 0.95rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        /* =================================================================
+           NAVIGATION CONTROLS
+           ================================================================= */
+        .nav-controls {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 16px;
+            z-index: 1000;
+        }
+        
+        .nav-btn {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-default);
+            color: var(--text-primary);
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: all var(--transition-fast);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .nav-btn:hover {
+            background: var(--bg-tertiary);
+            border-color: var(--accent-blue);
+        }
+        
+        .nav-btn:active {
+            transform: scale(0.95);
+        }
+        
+        /* =================================================================
+           PERFORMANCE METER
+           ================================================================= */
+        .perf-meter {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin: 8px 0;
+        }
+        
+        .perf-meter-label {
+            width: 100px;
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+        }
+        
+        .perf-meter-bar {
+            flex: 1;
+            height: 20px;
+            background: var(--bg-tertiary);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        
+        .perf-meter-fill {
+            height: 100%;
+            border-radius: 4px;
+            transition: width 0.5s ease;
+        }
+        
+        .perf-meter-fill.fast {
+            background: linear-gradient(90deg, var(--accent-green), #4ade80);
+        }
+        
+        .perf-meter-fill.medium {
+            background: linear-gradient(90deg, var(--accent-orange), #fbbf24);
+        }
+        
+        .perf-meter-fill.slow {
+            background: linear-gradient(90deg, var(--accent-red), #f87171);
+        }
+        
+        .perf-meter-value {
+            width: 60px;
+            text-align: right;
+            font-family: monospace;
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+        
+        /* =================================================================
+           RESPONSIVE ADJUSTMENTS
+           ================================================================= */
+        @media (max-width: 1200px) {
+            html { font-size: 16px; }
+            .slide { padding: 40px 50px; }
+            .comparison-grid { gap: 12px; }
+            .column-content pre code { font-size: 0.7rem; }
+        }
+        
+        @media (max-width: 900px) {
+            .comparison-grid {
+                grid-template-columns: 1fr;
+            }
+            .two-column-grid {
+                grid-template-columns: 1fr;
+            }
+            .feature-cards {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        /* =================================================================
+           END SLIDE SPECIAL STYLES
+           ================================================================= */
+        .end-slide {
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+        }
+        
+        .end-slide h1 {
+            font-size: 3rem;
+            margin-bottom: 2rem;
+        }
+        
+        .end-slide .summary-points {
+            text-align: left;
+            max-width: 700px;
+            margin: 0 auto;
+        }
+        
+        /* =================================================================
+           HIGHLIGHT CUSTOM OVERRIDES
+           ================================================================= */
+        .hljs {
+            background: transparent !important;
+        }
+    </style>
+</head>
+<body>
+    <!-- Progress Bar -->
+    <div class="progress-container">
+        <div class="progress-bar" id="progressBar"></div>
+    </div>
+    
+    <!-- Slide Counter -->
+    <div class="slide-counter">
+        <span class="current" id="currentSlide">1</span> / <span id="totalSlides">12</span>
+    </div>
+    
+    <!-- Navigation Controls -->
+    <div class="nav-controls">
+        <button class="nav-btn" onclick="prevSlide()">← Previous</button>
+        <button class="nav-btn" onclick="nextSlide()">Next →</button>
+    </div>
+    
+    <!-- Slides Container -->
+    <div class="slides-container">
+        
+        <!-- ============================================================
+             SLIDE 1: Title Slide
+             ============================================================ -->
+        <div class="slide title-slide active" data-slide="1">
+            <h1>Parallel and Concurrent Programming</h1>
+            <p class="subtitle">Comparative Analysis: Pseudocode · C (pthreads) · Python</p>
+            
+            <div class="ascii-art" style="margin-top: 2rem; text-align: left; display: inline-block;">
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                                                                             │
+│    ╔═══════════════╗     ╔═══════════════╗     ╔═══════════════╗           │
+│    ║  PSEUDOCODE   ║     ║       C       ║     ║    PYTHON     ║           │
+│    ║  ───────────  ║     ║  ───────────  ║     ║  ───────────  ║           │
+│    ║  Conceptual   ║ ──► ║   pthreads    ║ ◄── ║   threading   ║           │
+│    ║  Clarity      ║     ║   Performance ║     ║   Simplicity  ║           │
+│    ╚═══════════════╝     ╚═══════════════╝     ╚═══════════════╝           │
+│                                                                             │
+│         Think              Implement              Prototype                 │
+│                                                                             │
+└─────────────────────────────────────────────────────────────────────────────┘
+            </div>
+            
+            <p class="meta">
+                Week 20 — ATP Course<br>
+                Academy of Economic Studies — CSIE Bucharest
+            </p>
+        </div>
+        
+        <!-- ============================================================
+             SLIDE 2: Overview — Why Three Perspectives?
+             ============================================================ -->
+        <div class="slide" data-slide="2">
+            <h2>Why Compare Three Perspectives?</h2>
+            
+            <div class="feature-cards">
+                <div class="feature-card" style="border-top: 3px solid var(--pseudo-accent);">
+                    <h4 style="color: var(--pseudo-accent);">📝 Pseudocode</h4>
+                    <p>Language-agnostic algorithm expression</p>
+                    <ul>
+                        <li>Focus on logic and structure</li>
+                        <li>No syntax distractions</li>
+                        <li>Universal understanding</li>
+                        <li>Design before implementation</li>
+                    </ul>
+                </div>
+                
+                <div class="feature-card" style="border-top: 3px solid var(--c-accent);">
+                    <h4 style="color: var(--c-accent);">⚙️ C (pthreads)</h4>
+                    <p>Industry-standard systems programming</p>
+                    <ul>
+                        <li>Direct hardware control</li>
+                        <li>Maximum performance</li>
+                        <li>POSIX portability</li>
+                        <li>Understanding "the metal"</li>
+                    </ul>
+                </div>
+                
+                <div class="feature-card" style="border-top: 3px solid var(--python-accent);">
+                    <h4 style="color: var(--python-accent);">🐍 Python</h4>
+                    <p>Rapid prototyping and clarity</p>
+                    <ul>
+                        <li>Readable, concise syntax</li>
+                        <li>Rich standard library</li>
+                        <li>Quick experimentation</li>
+                        <li>GIL considerations</li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="info-box tip">
+                <div class="info-box-title">💡 Learning Strategy</div>
+                <p>Understand the concept in pseudocode → Master the implementation in C → Appreciate the abstraction in Python</p>
+            </div>
+        </div>
+        
+        <!-- ============================================================
+             SLIDE 3: Thread Creation — Three-Way Comparison
+             ============================================================ -->
+        <div class="slide" data-slide="3">
+            <h2>Thread Creation</h2>
+            
+            <div class="comparison-grid">
+                <div class="comparison-column pseudo">
+                    <div class="column-header">📝 Pseudocode</div>
+                    <div class="column-content">
+                        <pre><code class="language-plaintext">FUNCTION worker(data):
+    PRINT "Thread executing"
+    result ← process(data)
+    RETURN result
+
+MAIN:
+    // Create thread with function
+    thread ← CREATE_THREAD(worker, data)
+    
+    // Wait for completion
+    result ← JOIN_THREAD(thread)
+    
+    PRINT "Result:", result
+END</code></pre>
+                        <div class="info-box note" style="margin-top: 12px;">
+                            <p style="font-size: 0.85rem; margin: 0;"><strong>Key concepts:</strong> thread creation, argument passing, joining</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="comparison-column c-lang">
+                    <div class="column-header">⚙️ C (pthreads)</div>
+                    <div class="column-content">
+                        <pre><code class="language-c">#include &lt;pthread.h&gt;
+#include &lt;stdio.h&gt;
+
+void *worker(void *arg) {
+    int *data = (int *)arg;
+    printf("Thread: %d\n", *data);
+    int *result = malloc(sizeof(int));
+    *result = (*data) * 2;
+    return result;
+}
+
+int main(void) {
+    pthread_t thread;
+    int data = 42;
+    void *result;
+    
+    pthread_create(&amp;thread, NULL, 
+                   worker, &amp;data);
+    
+    pthread_join(thread, &amp;result);
+    
+    printf("Result: %d\n", 
+           *(int *)result);
+    free(result);
+    return 0;
+}</code></pre>
+                    </div>
+                </div>
+                
+                <div class="comparison-column python">
+                    <div class="column-header">🐍 Python</div>
+                    <div class="column-content">
+                        <pre><code class="language-python">import threading
+
+def worker(data, result):
+    print(f"Thread: {data}")
+    result['value'] = data * 2
+
+def main():
+    data = 42
+    result = {}
+    
+    # Create thread
+    thread = threading.Thread(
+        target=worker,
+        args=(data, result)
+    )
+    
+    # Start and join
+    thread.start()
+    thread.join()
+    
+    print(f"Result: {result['value']}")
+
+if __name__ == "__main__":
+    main()</code></pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- ============================================================
+             SLIDE 4: Mutex / Lock — Three-Way Comparison
+             ============================================================ -->
+        <div class="slide" data-slide="4">
+            <h2>Mutex / Lock — Protecting Shared Data</h2>
+            
+            <div class="comparison-grid">
+                <div class="comparison-column pseudo">
+                    <div class="column-header">📝 Pseudocode</div>
+                    <div class="column-content">
+                        <pre><code class="language-plaintext">SHARED counter ← 0
+MUTEX lock
+
+FUNCTION increment():
+    ACQUIRE(lock)
+    
+    // Critical section
+    counter ← counter + 1
+    
+    RELEASE(lock)
+
+MAIN:
+    threads ← []
+    FOR i ← 1 TO 10:
+        t ← CREATE_THREAD(increment)
+        APPEND(threads, t)
+    
+    FOR EACH t IN threads:
+        JOIN_THREAD(t)
+    
+    PRINT "Counter:", counter
+    // Expected: 10
+END</code></pre>
+                    </div>
+                </div>
+                
+                <div class="comparison-column c-lang">
+                    <div class="column-header">⚙️ C (pthreads)</div>
+                    <div class="column-content">
+                        <pre><code class="language-c">#include &lt;pthread.h&gt;
+#include &lt;stdio.h&gt;
+
+int counter = 0;
+pthread_mutex_t lock = 
+    PTHREAD_MUTEX_INITIALIZER;
+
+void *increment(void *arg) {
+    (void)arg;
+    pthread_mutex_lock(&amp;lock);
+    
+    // Critical section
+    counter++;
+    
+    pthread_mutex_unlock(&amp;lock);
+    return NULL;
+}
+
+int main(void) {
+    pthread_t threads[10];
+    
+    for (int i = 0; i &lt; 10; i++) {
+        pthread_create(&amp;threads[i],
+            NULL, increment, NULL);
+    }
+    
+    for (int i = 0; i &lt; 10; i++) {
+        pthread_join(threads[i], NULL);
+    }
+    
+    printf("Counter: %d\n", counter);
+    pthread_mutex_destroy(&amp;lock);
+    return 0;
+}</code></pre>
+                    </div>
+                </div>
+                
+                <div class="comparison-column python">
+                    <div class="column-header">🐍 Python</div>
+                    <div class="column-content">
+                        <pre><code class="language-python">import threading
+
+counter = 0
+lock = threading.Lock()
+
+def increment():
+    global counter
+    
+    with lock:  # Auto acquire/release
+        # Critical section
+        counter += 1
+
+def main():
+    threads = []
+    
+    for _ in range(10):
+        t = threading.Thread(
+            target=increment
+        )
+        threads.append(t)
+        t.start()
+    
+    for t in threads:
+        t.join()
+    
+    print(f"Counter: {counter}")
+
+if __name__ == "__main__":
+    main()</code></pre>
+                        <div class="info-box tip" style="margin-top: 8px;">
+                            <p style="font-size: 0.8rem; margin: 0;"><code>with lock:</code> is a context manager — automatic release even on exceptions!</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- ============================================================
+             SLIDE 5: Condition Variables — Three-Way Comparison
+             ============================================================ -->
+        <div class="slide" data-slide="5">
+            <h2>Condition Variables — Signalling Between Threads</h2>
+            
+            <div class="comparison-grid">
+                <div class="comparison-column pseudo">
+                    <div class="column-header">📝 Pseudocode</div>
+                    <div class="column-content">
+                        <pre><code class="language-plaintext">SHARED data_ready ← FALSE
+MUTEX lock
+CONDITION cond
+
+FUNCTION producer():
+    // Produce data
+    data ← generate_data()
+    
+    ACQUIRE(lock)
+    shared_data ← data
+    data_ready ← TRUE
+    SIGNAL(cond)
+    RELEASE(lock)
+
+FUNCTION consumer():
+    ACQUIRE(lock)
+    
+    WHILE NOT data_ready:
+        WAIT(cond, lock)  // Releases lock
+    
+    // Consume data
+    result ← process(shared_data)
+    RELEASE(lock)</code></pre>
+                        <div class="info-box warning" style="margin-top: 8px;">
+                            <p style="font-size: 0.8rem; margin: 0;"><strong>WHILE not IF!</strong> Spurious wakeups can occur.</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="comparison-column c-lang">
+                    <div class="column-header">⚙️ C (pthreads)</div>
+                    <div class="column-content">
+                        <pre><code class="language-c">int data_ready = 0;
+int shared_data;
+pthread_mutex_t lock = 
+    PTHREAD_MUTEX_INITIALIZER;
+pthread_cond_t cond = 
+    PTHREAD_COND_INITIALIZER;
+
+void *producer(void *arg) {
+    int data = 42;  // Generate
+    
+    pthread_mutex_lock(&amp;lock);
+    shared_data = data;
+    data_ready = 1;
+    pthread_cond_signal(&amp;cond);
+    pthread_mutex_unlock(&amp;lock);
+    return NULL;
+}
+
+void *consumer(void *arg) {
+    pthread_mutex_lock(&amp;lock);
+    
+    while (!data_ready) {
+        pthread_cond_wait(&amp;cond, 
+                         &amp;lock);
+    }
+    
+    printf("Got: %d\n", shared_data);
+    pthread_mutex_unlock(&amp;lock);
+    return NULL;
+}</code></pre>
+                    </div>
+                </div>
+                
+                <div class="comparison-column python">
+                    <div class="column-header">🐍 Python</div>
+                    <div class="column-content">
+                        <pre><code class="language-python">import threading
+
+data_ready = False
+shared_data = None
+cond = threading.Condition()
+
+def producer():
+    global data_ready, shared_data
+    data = 42  # Generate
+    
+    with cond:
+        shared_data = data
+        data_ready = True
+        cond.notify()  # or notify_all()
+
+def consumer():
+    global data_ready, shared_data
+    
+    with cond:
+        while not data_ready:
+            cond.wait()  # Auto releases
+        
+        print(f"Got: {shared_data}")
+
+# Alternative: cond.wait_for()
+def consumer_v2():
+    with cond:
+        cond.wait_for(
+            lambda: data_ready
+        )
+        print(f"Got: {shared_data}")</code></pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- ============================================================
+             SLIDE 6: Producer-Consumer Pattern — Three-Way Comparison
+             ============================================================ -->
+        <div class="slide" data-slide="6">
+            <h2>Producer-Consumer with Bounded Buffer</h2>
+            
+            <div class="comparison-grid">
+                <div class="comparison-column pseudo">
+                    <div class="column-header">📝 Pseudocode</div>
+                    <div class="column-content">
+                        <pre><code class="language-plaintext">CONSTANT CAPACITY ← 10
+SHARED buffer[CAPACITY]
+SHARED count ← 0
+MUTEX lock
+CONDITION not_full
+CONDITION not_empty
+
+FUNCTION produce(item):
+    ACQUIRE(lock)
+    WHILE count = CAPACITY:
+        WAIT(not_full, lock)
+    
+    buffer[count] ← item
+    count ← count + 1
+    SIGNAL(not_empty)
+    RELEASE(lock)
+
+FUNCTION consume():
+    ACQUIRE(lock)
+    WHILE count = 0:
+        WAIT(not_empty, lock)
+    
+    count ← count - 1
+    item ← buffer[count]
+    SIGNAL(not_full)
+    RELEASE(lock)
+    RETURN item</code></pre>
+                    </div>
+                </div>
+                
+                <div class="comparison-column c-lang">
+                    <div class="column-header">⚙️ C (pthreads)</div>
+                    <div class="column-content">
+                        <pre><code class="language-c">#define CAPACITY 10
+
+typedef struct {
+    int buffer[CAPACITY];
+    int count;
+    pthread_mutex_t lock;
+    pthread_cond_t not_full;
+    pthread_cond_t not_empty;
+} BoundedBuffer;
+
+void produce(BoundedBuffer *bb, 
+             int item) {
+    pthread_mutex_lock(&amp;bb->lock);
+    while (bb->count == CAPACITY)
+        pthread_cond_wait(
+            &amp;bb->not_full, &amp;bb->lock);
+    
+    bb->buffer[bb->count++] = item;
+    pthread_cond_signal(&amp;bb->not_empty);
+    pthread_mutex_unlock(&amp;bb->lock);
+}
+
+int consume(BoundedBuffer *bb) {
+    pthread_mutex_lock(&amp;bb->lock);
+    while (bb->count == 0)
+        pthread_cond_wait(
+            &amp;bb->not_empty, &amp;bb->lock);
+    
+    int item = bb->buffer[--bb->count];
+    pthread_cond_signal(&amp;bb->not_full);
+    pthread_mutex_unlock(&amp;bb->lock);
+    return item;
+}</code></pre>
+                    </div>
+                </div>
+                
+                <div class="comparison-column python">
+                    <div class="column-header">🐍 Python</div>
+                    <div class="column-content">
+                        <pre><code class="language-python">from queue import Queue
+import threading
+
+# Built-in thread-safe queue!
+buffer = Queue(maxsize=10)
+
+def producer():
+    for i in range(20):
+        buffer.put(i)  # Blocks if full
+        print(f"Produced: {i}")
+
+def consumer():
+    while True:
+        item = buffer.get()  # Blocks if empty
+        print(f"Consumed: {item}")
+        buffer.task_done()
+
+# Start threads
+prod = threading.Thread(target=producer)
+cons = threading.Thread(
+    target=consumer, daemon=True
+)
+
+prod.start()
+cons.start()
+prod.join()
+buffer.join()  # Wait until empty</code></pre>
+                        <div class="info-box tip" style="margin-top: 8px;">
+                            <p style="font-size: 0.8rem; margin: 0;"><code>queue.Queue</code> handles all synchronisation internally!</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- ============================================================
+             SLIDE 7: Semaphores — Three-Way Comparison
+             ============================================================ -->
+        <div class="slide" data-slide="7">
+            <h2>Semaphores — Counting and Binary</h2>
+            
+            <div class="comparison-grid">
+                <div class="comparison-column pseudo">
+                    <div class="column-header">📝 Pseudocode</div>
+                    <div class="column-content">
+                        <pre><code class="language-plaintext">// Counting semaphore
+// Limit concurrent access to N
+
+SEMAPHORE resource_sem ← N
+
+FUNCTION worker(id):
+    WAIT(resource_sem)  // Decrement
+    
+    // Access limited resource
+    use_resource(id)
+    
+    POST(resource_sem)  // Increment
+
+// Binary semaphore (mutex-like)
+SEMAPHORE binary_sem ← 1
+
+FUNCTION critical():
+    WAIT(binary_sem)
+    
+    // Critical section
+    do_work()
+    
+    POST(binary_sem)</code></pre>
+                        <div class="info-box note" style="margin-top: 8px;">
+                            <p style="font-size: 0.8rem; margin: 0;"><strong>Semaphore vs Mutex:</strong> Semaphores can be signalled by any thread, mutexes should be unlocked by the same thread that locked them.</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="comparison-column c-lang">
+                    <div class="column-header">⚙️ C (POSIX)</div>
+                    <div class="column-content">
+                        <pre><code class="language-c">#include &lt;semaphore.h&gt;
+#include &lt;pthread.h&gt;
+
+#define MAX_CONNECTIONS 3
+sem_t conn_sem;
+
+void *worker(void *arg) {
+    int id = *(int *)arg;
+    
+    sem_wait(&amp;conn_sem);  // P()
+    
+    printf("Thread %d: connected\n", 
+           id);
+    sleep(1);  // Use resource
+    
+    sem_post(&amp;conn_sem);  // V()
+    printf("Thread %d: released\n", 
+           id);
+    return NULL;
+}
+
+int main(void) {
+    sem_init(&amp;conn_sem, 0, 
+             MAX_CONNECTIONS);
+    
+    pthread_t threads[10];
+    int ids[10];
+    
+    for (int i = 0; i &lt; 10; i++) {
+        ids[i] = i;
+        pthread_create(&amp;threads[i],
+            NULL, worker, &amp;ids[i]);
+    }
+    
+    for (int i = 0; i &lt; 10; i++)
+        pthread_join(threads[i], NULL);
+    
+    sem_destroy(&amp;conn_sem);
+    return 0;
+}</code></pre>
+                    </div>
+                </div>
+                
+                <div class="comparison-column python">
+                    <div class="column-header">🐍 Python</div>
+                    <div class="column-content">
+                        <pre><code class="language-python">import threading
+import time
+
+MAX_CONNECTIONS = 3
+conn_sem = threading.Semaphore(
+    MAX_CONNECTIONS
+)
+
+def worker(id):
+    conn_sem.acquire()  # or: with conn_sem:
+    
+    print(f"Thread {id}: connected")
+    time.sleep(1)
+    
+    conn_sem.release()
+    print(f"Thread {id}: released")
+
+# Bounded semaphore (safer)
+bounded = threading.BoundedSemaphore(3)
+# Raises error if release() called
+# more times than acquire()
+
+threads = []
+for i in range(10):
+    t = threading.Thread(
+        target=worker, args=(i,)
+    )
+    threads.append(t)
+    t.start()
+
+for t in threads:
+    t.join()</code></pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- ============================================================
+             SLIDE 8: Thread Pool Pattern — Three-Way Comparison
+             ============================================================ -->
+        <div class="slide" data-slide="8">
+            <h2>Thread Pool Pattern</h2>
+            
+            <div class="comparison-grid">
+                <div class="comparison-column pseudo">
+                    <div class="column-header">📝 Pseudocode</div>
+                    <div class="column-content">
+                        <pre><code class="language-plaintext">CLASS ThreadPool:
+    workers[N]
+    task_queue
+    running ← TRUE
+    
+    FUNCTION worker_loop():
+        WHILE running:
+            task ← queue.dequeue()  // Blocks
+            IF task ≠ NULL:
+                task.execute()
+    
+    FUNCTION submit(task):
+        queue.enqueue(task)
+    
+    FUNCTION shutdown():
+        running ← FALSE
+        // Signal all workers
+        FOR EACH worker IN workers:
+            queue.enqueue(NULL)  // Poison pill
+        FOR EACH worker IN workers:
+            JOIN(worker)</code></pre>
+                    </div>
+                </div>
+                
+                <div class="comparison-column c-lang">
+                    <div class="column-header">⚙️ C (Manual)</div>
+                    <div class="column-content">
+                        <pre><code class="language-c">typedef struct {
+    void (*func)(void *);
+    void *arg;
+} Task;
+
+typedef struct {
+    pthread_t *threads;
+    size_t num_threads;
+    Task *queue;
+    size_t queue_size, head, tail;
+    pthread_mutex_t lock;
+    pthread_cond_t not_empty;
+    int shutdown;
+} ThreadPool;
+
+void *worker(void *arg) {
+    ThreadPool *pool = arg;
+    
+    while (1) {
+        pthread_mutex_lock(&amp;pool->lock);
+        while (pool->head == pool->tail 
+               &amp;&amp; !pool->shutdown) {
+            pthread_cond_wait(
+                &amp;pool->not_empty, 
+                &amp;pool->lock);
+        }
+        if (pool->shutdown) {
+            pthread_mutex_unlock(&amp;pool->lock);
+            break;
+        }
+        Task task = pool->queue[pool->head++];
+        pthread_mutex_unlock(&amp;pool->lock);
+        task.func(task.arg);
+    }
+    return NULL;
+}</code></pre>
+                    </div>
+                </div>
+                
+                <div class="comparison-column python">
+                    <div class="column-header">🐍 Python</div>
+                    <div class="column-content">
+                        <pre><code class="language-python">from concurrent.futures import (
+    ThreadPoolExecutor
+)
+
+def task(n):
+    return n * n
+
+# Built-in thread pool!
+with ThreadPoolExecutor(
+    max_workers=4
+) as executor:
+    # Submit individual tasks
+    future = executor.submit(task, 5)
+    result = future.result()  # 25
+    
+    # Map over iterable
+    results = executor.map(
+        task, range(10)
+    )
+    print(list(results))
+    # [0, 1, 4, 9, 16, 25, 36, 49, 64, 81]
+
+# Futures for async results
+with ThreadPoolExecutor(4) as ex:
+    futures = [
+        ex.submit(task, i) 
+        for i in range(10)
+    ]
+    for f in futures:
+        print(f.result())</code></pre>
+                        <div class="info-box tip" style="margin-top: 8px;">
+                            <p style="font-size: 0.8rem; margin: 0;"><code>concurrent.futures</code> — unified API for threads and processes!</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- ============================================================
+             SLIDE 9: Atomics and Lock-Free — Two-Way Comparison
+             ============================================================ -->
+        <div class="slide" data-slide="9">
+            <h2>Atomic Operations — C11 vs Python</h2>
+            
+            <div class="two-column-grid">
+                <div class="comparison-column c-lang">
+                    <div class="column-header">⚙️ C11 Atomics</div>
+                    <div class="column-content">
+                        <pre><code class="language-c">#include &lt;stdatomic.h&gt;
+#include &lt;pthread.h&gt;
+
+atomic_int counter = 0;
+
+void *increment(void *arg) {
+    for (int i = 0; i &lt; 100000; i++) {
+        // Atomic increment
+        atomic_fetch_add(&amp;counter, 1);
+    }
+    return NULL;
+}
+
+// Compare-and-swap (CAS)
+int expected = 5;
+int desired = 10;
+if (atomic_compare_exchange_strong(
+        &amp;counter, &amp;expected, desired)) {
+    // Success: counter was 5, now 10
+} else {
+    // Failure: expected now holds actual
+}
+
+// Memory ordering
+atomic_store_explicit(&amp;counter, 0, 
+    memory_order_release);
+int val = atomic_load_explicit(&amp;counter,
+    memory_order_acquire);</code></pre>
+                        <div class="info-box note" style="margin-top: 12px;">
+                            <p style="font-size: 0.85rem; margin: 0;"><strong>Lock-free advantages:</strong> No blocking, no deadlocks, better scalability for simple operations.</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="comparison-column python">
+                    <div class="column-header">🐍 Python (Limited)</div>
+                    <div class="column-content">
+                        <pre><code class="language-python"># Python has NO true atomics due to GIL
+# But some operations are "atomic" 
+# under the GIL:
+
+# GIL-atomic operations:
+# - Single bytecode instructions
+# - list.append(), dict[key] = val
+# - x = y (reference assignment)
+
+# NOT atomic even with GIL:
+# - counter += 1  (read-modify-write)
+# - list.sort()   (multiple bytecodes)
+
+# For true atomic counters, use:
+import threading
+
+counter = 0
+lock = threading.Lock()
+
+def increment():
+    global counter
+    with lock:
+        counter += 1
+
+# Or use queue for coordination
+from queue import Queue
+q = Queue()  # All operations thread-safe</code></pre>
+                        <div class="info-box warning" style="margin-top: 12px;">
+                            <p style="font-size: 0.85rem; margin: 0;"><strong>Python GIL:</strong> Only one thread executes Python bytecode at a time. Use <code>multiprocessing</code> for true parallelism!</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="ascii-art" style="margin-top: 1rem; font-size: 0.65rem;">
+┌──────────────────────────────────────────────────────────────────────────────┐
+│  C11 ATOMIC: atomic_fetch_add(&amp;counter, 1)                                   │
+│                                                                              │
+│  Thread 1          Hardware            Thread 2                              │
+│  ────────          ────────            ────────                              │
+│  Load counter ──►  Atomic Unit    ◄── Load counter                          │
+│                    ┌────────┐                                                │
+│                    │ Lock   │         (Must wait)                            │
+│                    │ Add 1  │                                                │
+│                    │ Store  │                                                │
+│                    │ Unlock │                                                │
+│                    └────────┘                                                │
+│  (Done)       ◄──  Result      ──►    (Now can proceed)                      │
+└──────────────────────────────────────────────────────────────────────────────┘
+            </div>
+        </div>
+        
+        <!-- ============================================================
+             SLIDE 10: Parallel Algorithms — Three-Way Comparison
+             ============================================================ -->
+        <div class="slide" data-slide="10">
+            <h2>Parallel Merge Sort</h2>
+            
+            <div class="comparison-grid">
+                <div class="comparison-column pseudo">
+                    <div class="column-header">📝 Pseudocode</div>
+                    <div class="column-content">
+                        <pre><code class="language-plaintext">FUNCTION parallel_merge_sort(arr, depth):
+    IF length(arr) ≤ 1:
+        RETURN arr
+    
+    mid ← length(arr) / 2
+    left ← arr[0..mid]
+    right ← arr[mid..end]
+    
+    IF depth &lt; MAX_DEPTH:
+        // Parallel recursion
+        t1 ← SPAWN sort(left, depth+1)
+        t2 ← SPAWN sort(right, depth+1)
+        left ← SYNC(t1)
+        right ← SYNC(t2)
+    ELSE:
+        // Sequential below threshold
+        left ← sort(left, depth+1)
+        right ← sort(right, depth+1)
+    
+    RETURN merge(left, right)</code></pre>
+                        <div class="info-box warning" style="margin-top: 8px;">
+                            <p style="font-size: 0.8rem; margin: 0;"><strong>Depth limit:</strong> Prevents thread explosion (2^depth threads at depth d)</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="comparison-column c-lang">
+                    <div class="column-header">⚙️ C (pthreads)</div>
+                    <div class="column-content">
+                        <pre><code class="language-c">#define MAX_DEPTH 3
+
+typedef struct {
+    int *arr, *temp;
+    int left, right, depth;
+} SortArgs;
+
+void *parallel_sort(void *arg) {
+    SortArgs *a = arg;
+    if (a->right - a->left &lt;= 1) return NULL;
+    
+    int mid = (a->left + a->right) / 2;
+    
+    if (a->depth &lt; MAX_DEPTH) {
+        SortArgs larg = {a->arr, a->temp, 
+            a->left, mid, a->depth + 1};
+        SortArgs rarg = {a->arr, a->temp, 
+            mid, a->right, a->depth + 1};
+        
+        pthread_t t1, t2;
+        pthread_create(&amp;t1, NULL, 
+            parallel_sort, &amp;larg);
+        pthread_create(&amp;t2, NULL, 
+            parallel_sort, &amp;rarg);
+        pthread_join(t1, NULL);
+        pthread_join(t2, NULL);
+    } else {
+        // Sequential
+        merge_sort_seq(a->arr, a->temp,
+            a->left, mid);
+        merge_sort_seq(a->arr, a->temp,
+            mid, a->right);
+    }
+    merge(a->arr, a->temp, 
+          a->left, mid, a->right);
+    return NULL;
+}</code></pre>
+                    </div>
+                </div>
+                
+                <div class="comparison-column python">
+                    <div class="column-header">🐍 Python (multiprocessing)</div>
+                    <div class="column-content">
+                        <pre><code class="language-python">from multiprocessing import Pool
+import numpy as np
+
+def merge(left, right):
+    result = []
+    i = j = 0
+    while i &lt; len(left) and j &lt; len(right):
+        if left[i] &lt;= right[j]:
+            result.append(left[i])
+            i += 1
+        else:
+            result.append(right[j])
+            j += 1
+    result.extend(left[i:])
+    result.extend(right[j:])
+    return result
+
+def parallel_sort(arr, pool, depth=0):
+    if len(arr) &lt;= 1:
+        return arr
+    
+    mid = len(arr) // 2
+    
+    if depth &lt; 2:  # Limit parallelism
+        left = pool.apply_async(
+            parallel_sort, 
+            (arr[:mid], pool, depth+1))
+        right = pool.apply_async(
+            parallel_sort,
+            (arr[mid:], pool, depth+1))
+        return merge(left.get(), right.get())
+    else:
+        return merge(
+            sorted(arr[:mid]),
+            sorted(arr[mid:])
+        )</code></pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- ============================================================
+             SLIDE 11: Performance Comparison
+             ============================================================ -->
+        <div class="slide" data-slide="11">
+            <h2>Performance Comparison</h2>
+            
+            <table style="margin-bottom: 1.5rem;">
+                <thead>
+                    <tr>
+                        <th>Aspect</th>
+                        <th style="color: var(--c-accent);">C (pthreads)</th>
+                        <th style="color: var(--python-accent);">Python (threading)</th>
+                        <th style="color: var(--python-accent);">Python (multiprocessing)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>True Parallelism</td>
+                        <td class="good">✓ Yes</td>
+                        <td class="bad">✗ No (GIL)</td>
+                        <td class="good">✓ Yes</td>
+                    </tr>
+                    <tr>
+                        <td>Thread Creation</td>
+                        <td class="good">~10-50 µs</td>
+                        <td class="neutral">~50-100 µs</td>
+                        <td class="bad">~10-50 ms</td>
+                    </tr>
+                    <tr>
+                        <td>Memory Sharing</td>
+                        <td class="good">Direct (fast)</td>
+                        <td class="good">Direct (GIL-safe)</td>
+                        <td class="bad">IPC (slow)</td>
+                    </tr>
+                    <tr>
+                        <td>CPU-Bound Tasks</td>
+                        <td class="good">Excellent</td>
+                        <td class="bad">No speedup</td>
+                        <td class="good">Good</td>
+                    </tr>
+                    <tr>
+                        <td>I/O-Bound Tasks</td>
+                        <td class="good">Excellent</td>
+                        <td class="good">Good</td>
+                        <td class="neutral">Overkill</td>
+                    </tr>
+                    <tr>
+                        <td>Development Time</td>
+                        <td class="bad">Long</td>
+                        <td class="good">Short</td>
+                        <td class="neutral">Medium</td>
+                    </tr>
+                    <tr>
+                        <td>Debug Difficulty</td>
+                        <td class="bad">Hard</td>
+                        <td class="neutral">Medium</td>
+                        <td class="neutral">Medium</td>
+                    </tr>
+                </tbody>
+            </table>
+            
+            <h3>Relative Performance (CPU-Bound, 8 Threads)</h3>
+            
+            <div class="perf-meter">
+                <span class="perf-meter-label">C pthreads</span>
+                <div class="perf-meter-bar">
+                    <div class="perf-meter-fill fast" style="width: 95%;"></div>
+                </div>
+                <span class="perf-meter-value">7.8x</span>
+            </div>
+            
+            <div class="perf-meter">
+                <span class="perf-meter-label">Python mp</span>
+                <div class="perf-meter-bar">
+                    <div class="perf-meter-fill medium" style="width: 70%;"></div>
+                </div>
+                <span class="perf-meter-value">5.5x</span>
+            </div>
+            
+            <div class="perf-meter">
+                <span class="perf-meter-label">Python threads</span>
+                <div class="perf-meter-bar">
+                    <div class="perf-meter-fill slow" style="width: 12%;"></div>
+                </div>
+                <span class="perf-meter-value">0.9x</span>
+            </div>
+            
+            <div class="info-box note" style="margin-top: 1rem;">
+                <div class="info-box-title">📊 Benchmark Note</div>
+                <p>Values are approximate for a typical CPU-bound workload (matrix multiplication, 10M elements). Python threading can actually be <em>slower</em> than sequential due to GIL contention overhead.</p>
+            </div>
+        </div>
+        
+        <!-- ============================================================
+             SLIDE 12: Summary and Recommendations
+             ============================================================ -->
+        <div class="slide end-slide" data-slide="12">
+            <h1>Summary: When to Use What</h1>
+            
+            <div class="summary-points" style="font-size: 1.05rem;">
+                <table style="margin: 1.5rem 0;">
+                    <thead>
+                        <tr>
+                            <th>Use Case</th>
+                            <th>Recommended</th>
+                            <th>Rationale</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>System-level performance</td>
+                            <td style="color: var(--c-accent);">C pthreads</td>
+                            <td>Direct control, minimal overhead</td>
+                        </tr>
+                        <tr>
+                            <td>I/O-bound Python</td>
+                            <td style="color: var(--python-accent);">threading</td>
+                            <td>GIL releases during I/O</td>
+                        </tr>
+                        <tr>
+                            <td>CPU-bound Python</td>
+                            <td style="color: var(--python-accent);">multiprocessing</td>
+                            <td>Bypasses GIL completely</td>
+                        </tr>
+                        <tr>
+                            <td>Quick prototyping</td>
+                            <td style="color: var(--python-accent);">Python</td>
+                            <td>Faster development, easier debugging</td>
+                        </tr>
+                        <tr>
+                            <td>Learning concepts</td>
+                            <td style="color: var(--pseudo-accent);">Pseudocode → C</td>
+                            <td>Understand the fundamentals first</td>
+                        </tr>
+                    </tbody>
+                </table>
+                
+                <div class="info-box tip">
+                    <div class="info-box-title">🎯 Key Takeaway</div>
+                    <p><strong>Start with pseudocode</strong> to understand the algorithm, <strong>implement in C</strong> to master the mechanics, then <strong>appreciate Python's abstractions</strong> knowing what happens underneath.</p>
+                </div>
+            </div>
+            
+            <p class="meta" style="margin-top: 2rem;">
+                Week 20 — Parallel and Concurrent Programming<br>
+                ATP Course — ASE-CSIE Bucharest
+            </p>
+        </div>
+        
+    </div><!-- End slides-container -->
+    
+    <!-- ================================================================
+         JAVASCRIPT — Navigation and Highlighting
+         ================================================================ -->
+    <script>
+        // Initialize highlight.js
+        document.addEventListener('DOMContentLoaded', function() {
+            document.querySelectorAll('pre code').forEach(function(block) {
+                hljs.highlightElement(block);
+            });
+        });
+        
+        // Slide navigation
+        let currentSlide = 1;
+        const totalSlides = document.querySelectorAll('.slide').length;
+        
+        document.getElementById('totalSlides').textContent = totalSlides;
+        
+        function showSlide(n) {
+            const slides = document.querySelectorAll('.slide');
+            
+            if (n < 1) n = 1;
+            if (n > totalSlides) n = totalSlides;
+            
+            currentSlide = n;
+            
+            slides.forEach(function(slide, index) {
+                slide.classList.remove('active');
+                if (index === currentSlide - 1) {
+                    slide.classList.add('active');
+                }
+            });
+            
+            // Update counter
+            document.getElementById('currentSlide').textContent = currentSlide;
+            
+            // Update progress bar
+            const progress = ((currentSlide - 1) / (totalSlides - 1)) * 100;
+            document.getElementById('progressBar').style.width = progress + '%';
+        }
+        
+        function nextSlide() {
+            showSlide(currentSlide + 1);
+        }
+        
+        function prevSlide() {
+            showSlide(currentSlide - 1);
+        }
+        
+        // Keyboard navigation
+        document.addEventListener('keydown', function(e) {
+            switch(e.key) {
+                case 'ArrowRight':
+                case ' ':
+                case 'PageDown':
+                    e.preventDefault();
+                    nextSlide();
+                    break;
+                case 'ArrowLeft':
+                case 'PageUp':
+                    e.preventDefault();
+                    prevSlide();
+                    break;
+                case 'Home':
+                    e.preventDefault();
+                    showSlide(1);
+                    break;
+                case 'End':
+                    e.preventDefault();
+                    showSlide(totalSlides);
+                    break;
+            }
+        });
+        
+        // Touch support for mobile
+        let touchStartX = 0;
+        let touchEndX = 0;
+        
+        document.addEventListener('touchstart', function(e) {
+            touchStartX = e.changedTouches[0].screenX;
+        }, false);
+        
+        document.addEventListener('touchend', function(e) {
+            touchEndX = e.changedTouches[0].screenX;
+            handleSwipe();
+        }, false);
+        
+        function handleSwipe() {
+            const threshold = 50;
+            const diff = touchStartX - touchEndX;
+            
+            if (Math.abs(diff) > threshold) {
+                if (diff > 0) {
+                    nextSlide();
+                } else {
+                    prevSlide();
+                }
+            }
+        }
+        
+        // Initialize first slide
+        showSlide(1);
+    </script>
+</body>
+</html>

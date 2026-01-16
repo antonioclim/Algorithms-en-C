@@ -1,0 +1,26 @@
+╔═══════════════════════════════════════════════════════════════╗
+║              PARALLEL QUICK SORT - RESULTS                    ║
+╚═══════════════════════════════════════════════════════════════╝
+
+Configuration:
+  Array size: 100
+  Thread count: 4
+  Depth limit: 3
+  Insertion threshold: 16
+
+Sorted Array (first 20 elements):
+  149 156 173 182 182 182 183 183 183 193 193 193 284 284 284 285 293 293 293 293
+
+Sorted Array (last 20 elements):
+  748 748 815 815 819 819 819 819 829 829 847 847 849 849 917 917 918 918 927 958
+
+Verification:
+  Array is sorted: YES
+  All elements preserved: YES
+
+Performance:
+  Sequential time: [varies]
+  Parallel time: [varies]
+  Speedup: [varies]
+
+Status: COMPLETE

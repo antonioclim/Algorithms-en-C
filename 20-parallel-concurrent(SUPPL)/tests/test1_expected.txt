@@ -1,0 +1,21 @@
+╔═══════════════════════════════════════════════════════════════╗
+║                LOG PROCESSOR - STATISTICS                     ║
+╚═══════════════════════════════════════════════════════════════╝
+
+Processing Summary:
+  Total entries processed: 70
+  Files processed: 2
+
+Log Level Distribution:
+  DEBUG:  15
+  INFO:   15
+  WARN:    8
+  ERROR:   7
+  HTTP:   25
+
+Processing Statistics:
+  Producers active: 2
+  Consumers active: 4
+  Buffer utilisation: OK
+
+Status: COMPLETE

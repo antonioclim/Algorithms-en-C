@@ -1,0 +1,81 @@
+# =============================================================================
+# DOCKER COMPOSE - Week 20: Parallel and Concurrent Programming
+# =============================================================================
+#
+# Algorithms and Programming Techniques
+# Academy of Economic Studies, Bucharest
+#
+# Usage:
+#   docker-compose up --build        # Build and run
+#   docker-compose up -d             # Run in background
+#   docker-compose down              # Stop and remove
+#   docker-compose logs -f           # Follow logs
+#
+# =============================================================================
+
+version: '3.8'
+
+services:
+  # Main demonstration service
+  parallel-demo:
+    build: .
+    container_name: week20-parallel-demo
+    command: ./example1
+    volumes:
+      - ./data:/app/data:ro
+      - ./output:/app/output
+    environment:
+      - NUM_THREADS=4
+      - BUFFER_SIZE=16
+    restart: "no"
+
+  # Producer-consumer exercise
+  producer-consumer:
+    build: .
+    container_name: week20-producer-consumer
+    command: ./exercise1 data/access.log data/error.log
+    volumes:
+      - ./data:/app/data:ro
+    environment:
+      - NUM_PRODUCERS=2
+      - NUM_CONSUMERS=4
+      - BUFFER_SIZE=32
+    depends_on:
+      - parallel-demo
+    restart: "no"
+
+  # Parallel sort benchmark
+  parallel-sort:
+    build: .
+    container_name: week20-parallel-sort
+    command: ./exercise2 5000000
+    environment:
+      - OMP_NUM_THREADS=4
+    depends_on:
+      - producer-consumer
+    restart: "no"
+
+  # Memory and thread checking
+  validator:
+    build: .
+    container_name: week20-validator
+    command: make valgrind
+    volumes:
+      - ./data:/app/data:ro
+    depends_on:
+      - parallel-sort
+    restart: "no"
+
+# =============================================================================
+# Network configuration (optional, for distributed exercises)
+# =============================================================================
+networks:
+  default:
+    driver: bridge
+
+# =============================================================================
+# Volume configuration
+# =============================================================================
+volumes:
+  output:
+    driver: local

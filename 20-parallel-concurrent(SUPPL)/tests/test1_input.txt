@@ -1,0 +1,8 @@
+# Test input configuration for log processor
+# Processes: data/access.log, data/error.log
+# Expected: Parse logs, count by level, report statistics
+
+input_files: data/access.log data/error.log
+num_producers: 2
+num_consumers: 4
+buffer_size: 10
