@@ -134,8 +134,24 @@ typedef struct {
  * Hint: Use malloc for memory allocation
  */
 Graph *create_graph(int V) {
-    /* YOUR CODE HERE */
-    return NULL;  /* Replace this */
+    if (V <= 0) {
+        return NULL;
+    }
+
+    Graph *g = (Graph *)malloc(sizeof(Graph));
+    if (!g) {
+        return NULL;
+    }
+
+    g->V = V;
+    g->adj = (Edge **)calloc((size_t)V, sizeof(Edge *));
+    if (!g->adj) {
+        free(g);
+        return NULL;
+    }
+
+    return g;
+
 }
 
 /**
@@ -154,7 +170,23 @@ Graph *create_graph(int V) {
  * Hint: New edge's next should point to current adj[u]
  */
 void add_edge(Graph *g, int u, int v, int weight) {
-    /* YOUR CODE HERE */
+    if (!g) {
+        return;
+    }
+    if (u < 0 || u >= g->V || v < 0 || v >= g->V) {
+        return;
+    }
+
+    Edge *e = (Edge *)malloc(sizeof(Edge));
+    if (!e) {
+        return;
+    }
+
+    e->dest = v;
+    e->weight = weight;
+    e->next = g->adj[u];
+    g->adj[u] = e;
+
 }
 
 /**
@@ -194,8 +226,29 @@ void free_graph(Graph *g) {
  *   5. Return the heap pointer
  */
 MinHeap *create_min_heap(int capacity) {
-    /* YOUR CODE HERE */
-    return NULL;  /* Replace this */
+    if (capacity <= 0) {
+        return NULL;
+    }
+
+    MinHeap *heap = (MinHeap *)malloc(sizeof(MinHeap));
+    if (!heap) {
+        return NULL;
+    }
+
+    heap->nodes = (HeapNode *)malloc((size_t)capacity * sizeof(HeapNode));
+    heap->position = (int *)malloc((size_t)capacity * sizeof(int));
+    if (!heap->nodes || !heap->position) {
+        free(heap->nodes);
+        free(heap->position);
+        free(heap);
+        return NULL;
+    }
+
+    heap->size = 0;
+    heap->capacity = capacity;
+
+    return heap;
+
 }
 
 /**
@@ -227,7 +280,32 @@ void swap_nodes(HeapNode *a, HeapNode *b) {
  * Hint: Compare distances to find minimum
  */
 void min_heapify(MinHeap *heap, int idx) {
-    /* YOUR CODE HERE */
+    if (!heap) {
+        return;
+    }
+
+    int smallest = idx;
+    int left = 2 * idx + 1;
+    int right = 2 * idx + 2;
+
+    if (left < heap->size && heap->nodes[left].distance < heap->nodes[smallest].distance) {
+        smallest = left;
+    }
+    if (right < heap->size && heap->nodes[right].distance < heap->nodes[smallest].distance) {
+        smallest = right;
+    }
+
+    if (smallest != idx) {
+        HeapNode smallest_node = heap->nodes[smallest];
+        HeapNode idx_node = heap->nodes[idx];
+
+        heap->position[smallest_node.vertex] = idx;
+        heap->position[idx_node.vertex] = smallest;
+
+        swap_nodes(&heap->nodes[smallest], &heap->nodes[idx]);
+        min_heapify(heap, smallest);
+    }
+
 }
 
 /**
@@ -257,8 +335,27 @@ bool is_empty(MinHeap *heap) {
  */
 HeapNode extract_min(MinHeap *heap) {
     HeapNode empty = {-1, INF};
-    /* YOUR CODE HERE */
-    return empty;  /* Replace this */
+
+    if (!heap || heap->size <= 0) {
+        return empty;
+    }
+
+    HeapNode root = heap->nodes[0];
+    HeapNode last = heap->nodes[heap->size - 1];
+
+    heap->nodes[0] = last;
+
+    heap->position[last.vertex] = 0;
+
+    heap->size--;
+
+    /* Mark extracted vertex as outside the heap */
+    heap->position[root.vertex] = heap->size;
+
+    min_heapify(heap, 0);
+
+    return root;
+
 }
 
 /**
@@ -281,7 +378,30 @@ HeapNode extract_min(MinHeap *heap) {
  * Hint: Parent of index i is at (i-1)/2
  */
 void decrease_key(MinHeap *heap, int vertex, int distance) {
-    /* YOUR CODE HERE */
+    if (!heap) {
+        return;
+    }
+
+    int i = heap->position[vertex];
+    if (i < 0 || i >= heap->size) {
+        return;
+    }
+
+    heap->nodes[i].distance = distance;
+
+    while (i > 0) {
+        int parent = (i - 1) / 2;
+        if (heap->nodes[i].distance >= heap->nodes[parent].distance) {
+            break;
+        }
+
+        heap->position[heap->nodes[i].vertex] = parent;
+        heap->position[heap->nodes[parent].vertex] = i;
+
+        swap_nodes(&heap->nodes[i], &heap->nodes[parent]);
+        i = parent;
+    }
+
 }
 
 /**
@@ -358,7 +478,58 @@ void print_path_recursive(int parent[], int v, int source) {
  * Important: Check dist[u] != INF before relaxing
  */
 void dijkstra(Graph *g, int source, int dist[], int parent[]) {
-    /* YOUR CODE HERE */
+    if (!g || source < 0 || source >= g->V) {
+        return;
+    }
+
+    MinHeap *heap = create_min_heap(g->V);
+    if (!heap) {
+        return;
+    }
+
+    for (int v = 0; v < g->V; v++) {
+        dist[v] = INF;
+        parent[v] = -1;
+    }
+    dist[source] = 0;
+
+    heap->size = g->V;
+    for (int v = 0; v < g->V; v++) {
+        heap->nodes[v].vertex = v;
+        heap->nodes[v].distance = dist[v];
+        heap->position[v] = v;
+    }
+
+    /* Build heap bottom-up */
+    for (int i = (heap->size - 1) / 2; i >= 0; i--) {
+        min_heapify(heap, i);
+        if (i == 0) {
+            break;
+        }
+    }
+
+    while (!is_empty(heap)) {
+        HeapNode min_node = extract_min(heap);
+        int u = min_node.vertex;
+
+        if (u == -1 || min_node.distance == INF) {
+            break;
+        }
+
+        for (Edge *e = g->adj[u]; e != NULL; e = e->next) {
+            int v = e->dest;
+            int w = e->weight;
+
+            if (dist[u] != INF && is_in_heap(heap, v) && dist[u] + w < dist[v]) {
+                dist[v] = dist[u] + w;
+                parent[v] = u;
+                decrease_key(heap, v, dist[v]);
+            }
+        }
+    }
+
+    free_heap(heap);
+
 }
 
 /* =============================================================================
@@ -425,7 +596,17 @@ int main(void) {
      *        Use print_path_recursive for the path
      */
     
-    /* YOUR CODE HERE */
+    dijkstra(g, source, dist, parent);
+
+    for (int v = 0; v < V; v++) {
+        if (dist[v] == INF) {
+            printf("Vertex %d: unreachable\n", v);
+        } else {
+            printf("Vertex %d: distance = %d, path: ", v, dist[v]);
+            print_path_recursive(parent, v, source);
+            printf("\n");
+        }
+    }
     
     /* Cleanup */
     free(dist);

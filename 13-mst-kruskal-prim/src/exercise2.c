@@ -60,6 +60,7 @@
 #define MAX_CURRENCIES 100
 #define MAX_NAME_LEN 16
 #define INF DBL_MAX
+#define EPSILON 1e-12
 
 /* =============================================================================
  * TYPE DEFINITIONS
@@ -125,8 +126,38 @@ typedef struct {
  *   5. Return the graph pointer
  */
 CurrencyGraph *create_currency_graph(int V) {
-    /* YOUR CODE HERE */
-    return NULL;  /* Replace this */
+
+    if (V <= 0 || V > MAX_CURRENCIES) {
+        return NULL;
+    }
+
+    CurrencyGraph *g = (CurrencyGraph *)malloc(sizeof(CurrencyGraph));
+    if (!g) {
+        return NULL;
+    }
+
+    g->V = V;
+    g->E = 0;
+
+    long long max_edges = (long long)V * (long long)(V - 1);
+    if (max_edges <= 0 || max_edges > 10000000) {
+        /* Defensive bound for accidental overflow or unreasonable inputs */
+        free(g);
+        return NULL;
+    }
+
+    g->edges = (Edge *)malloc((size_t)max_edges * sizeof(Edge));
+    if (!g->edges) {
+        free(g);
+        return NULL;
+    }
+
+    /* Names are stored inside the struct so no allocation is required here */
+    for (int i = 0; i < g->V; i++) {
+        g->names[i][0] = '\0';
+    }
+
+    return g;
 }
 
 /**
@@ -149,7 +180,32 @@ CurrencyGraph *create_currency_graph(int V) {
  *       which is what we want to detect as "negative cycle"
  */
 void add_currency_edge(CurrencyGraph *g, int src, int dest, double rate) {
-    /* YOUR CODE HERE */
+
+    if (!g) {
+        return;
+    }
+    if (src < 0 || src >= g->V || dest < 0 || dest >= g->V) {
+        return;
+    }
+    if (src == dest) {
+        return;
+    }
+    if (rate <= 0.0) {
+        return;
+    }
+
+    long long max_edges = (long long)g->V * (long long)(g->V - 1);
+    if (g->E >= max_edges) {
+        return;
+    }
+
+    Edge *e = &g->edges[g->E];
+    e->src = src;
+    e->dest = dest;
+    e->original_rate = rate;
+    e->weight = -log(rate);
+
+    g->E++;
 }
 
 /**
@@ -193,7 +249,37 @@ void free_currency_graph(CurrencyGraph *g) {
  */
 void bellman_ford_distances(CurrencyGraph *g, int source, 
                             double dist[], int parent[]) {
-    /* YOUR CODE HERE */
+
+    if (!g || source < 0 || source >= g->V) {
+        return;
+    }
+
+    for (int i = 0; i < g->V; i++) {
+        dist[i] = INF;
+        parent[i] = -1;
+    }
+    dist[source] = 0.0;
+
+    for (int iter = 0; iter < g->V - 1; iter++) {
+        bool updated = false;
+
+        for (int j = 0; j < g->E; j++) {
+            Edge *e = &g->edges[j];
+            int u = e->src;
+            int v = e->dest;
+            double w = e->weight;
+
+            if (dist[u] != INF && dist[u] + w < dist[v] - EPSILON) {
+                dist[v] = dist[u] + w;
+                parent[v] = u;
+                updated = true;
+            }
+        }
+
+        if (!updated) {
+            break;
+        }
+    }
 }
 
 /**
@@ -219,8 +305,28 @@ void bellman_ford_distances(CurrencyGraph *g, int source,
  */
 bool detect_negative_cycle(CurrencyGraph *g, double dist[], 
                            int parent[], int *cycle_vertex) {
-    /* YOUR CODE HERE */
-    return false;  /* Replace this */
+
+    if (!g || !cycle_vertex) {
+        return false;
+    }
+    *cycle_vertex = -1;
+
+    for (int j = 0; j < g->E; j++) {
+        Edge *e = &g->edges[j];
+        int u = e->src;
+        int v = e->dest;
+        double w = e->weight;
+
+        if (dist[u] != INF && dist[u] + w < dist[v] - EPSILON) {
+            /* Store last relaxation to improve reconstruction quality */
+            dist[v] = dist[u] + w;
+            parent[v] = u;
+            *cycle_vertex = v;
+            return true;
+        }
+    }
+
+    return false;
 }
 
 /**
@@ -247,7 +353,54 @@ bool detect_negative_cycle(CurrencyGraph *g, double dist[],
  */
 void find_cycle(CurrencyGraph *g, int start_vertex, int parent[],
                 int cycle[], int *cycle_len) {
-    /* YOUR CODE HERE */
+
+
+    if (!cycle_len) {
+        return;
+    }
+    *cycle_len = 0;
+
+    if (start_vertex < 0) {
+        return;
+    }
+
+    int v = start_vertex;
+
+    /* Step back V times to ensure we are inside the cycle */
+    for (int i = 0; i < g->V; i++) {
+        if (parent[v] == -1) {
+            return;
+        }
+        v = parent[v];
+    }
+
+    int cycle_start = v;
+
+    int cur = cycle_start;
+    int len = 0;
+    do {
+        if (len >= MAX_CURRENCIES) {
+            /* Defensive stop in pathological cases */
+            break;
+        }
+        cycle[len++] = cur;
+        cur = parent[cur];
+    } while (cur != -1 && cur != cycle_start);
+
+    if (cur != cycle_start) {
+        /* Failed to close the cycle */
+        *cycle_len = 0;
+        return;
+    }
+
+    /* The collected cycle follows parent pointers (reverse direction). */
+    for (int i = 0; i < len / 2; i++) {
+        int tmp = cycle[i];
+        cycle[i] = cycle[len - 1 - i];
+        cycle[len - 1 - i] = tmp;
+    }
+
+    *cycle_len = len;
 }
 
 /* =============================================================================
@@ -276,8 +429,34 @@ void find_cycle(CurrencyGraph *g, int start_vertex, int parent[],
  * Hint: You need to search for the edge with matching src/dest
  */
 double calculate_profit(CurrencyGraph *g, int cycle[], int cycle_len) {
-    /* YOUR CODE HERE */
-    return 0.0;  /* Replace this */
+
+    if (!g || !cycle || cycle_len <= 1) {
+        return 0.0;
+    }
+
+    double product = 1.0;
+
+    for (int i = 0; i < cycle_len; i++) {
+        int u = cycle[i];
+        int v = cycle[(i + 1) % cycle_len];
+
+        bool found = false;
+        for (int j = 0; j < g->E; j++) {
+            Edge *e = &g->edges[j];
+            if (e->src == u && e->dest == v) {
+                product *= e->original_rate;
+                found = true;
+                break;
+            }
+        }
+
+        if (!found) {
+            /* Edge not found: inconsistent graph representation */
+            return 0.0;
+        }
+    }
+
+    return (product - 1.0) * 100.0;
 }
 
 /* =============================================================================
@@ -304,7 +483,39 @@ double calculate_profit(CurrencyGraph *g, int cycle[], int cycle_len) {
  * Hint: Use g->names[vertex] to get currency name
  */
 void print_arbitrage_cycle(CurrencyGraph *g, int cycle[], int cycle_len) {
-    /* YOUR CODE HERE */
+
+    if (!g || !cycle || cycle_len <= 1) {
+        return;
+    }
+
+    printf("Arbitrage opportunity detected!\n");
+
+    /* Rotate cycle to start at vertex 0 if present, else at smallest index. */
+    int start_pos = 0;
+    int best_vertex = cycle[0];
+    for (int i = 0; i < cycle_len; i++) {
+        if (cycle[i] == 0) {
+            start_pos = i;
+            best_vertex = 0;
+            break;
+        }
+        if (cycle[i] < best_vertex) {
+            best_vertex = cycle[i];
+            start_pos = i;
+        }
+    }
+
+    printf("Cycle: ");
+    for (int k = 0; k < cycle_len; k++) {
+        int idx = cycle[(start_pos + k) % cycle_len];
+        printf("%s", g->names[idx]);
+        printf(" -> ");
+    }
+    /* close the cycle */
+    printf("%s\n", g->names[cycle[start_pos]]);
+
+    double profit = calculate_profit(g, cycle, cycle_len);
+    printf("Profit: %.2f%%\n", profit);
 }
 
 /* =============================================================================
@@ -337,8 +548,41 @@ void print_arbitrage_cycle(CurrencyGraph *g, int cycle[], int cycle_len) {
  *       (simplified version: start from vertex 0)
  */
 bool detect_arbitrage(CurrencyGraph *g) {
-    /* YOUR CODE HERE */
-    return false;  /* Replace this */
+
+    if (!g) {
+        return false;
+    }
+
+    double *dist = (double *)malloc((size_t)g->V * sizeof(double));
+    int *parent = (int *)malloc((size_t)g->V * sizeof(int));
+    if (!dist || !parent) {
+        free(dist);
+        free(parent);
+        return false;
+    }
+
+    /* Run Bellman-Ford from vertex 0 (sufficient for complete graphs). */
+    bellman_ford_distances(g, 0, dist, parent);
+
+    int cycle_vertex = -1;
+    if (detect_negative_cycle(g, dist, parent, &cycle_vertex)) {
+        int cycle[MAX_CURRENCIES];
+        int cycle_len = 0;
+        find_cycle(g, cycle_vertex, parent, cycle, &cycle_len);
+
+        if (cycle_len > 0) {
+            print_arbitrage_cycle(g, cycle, cycle_len);
+            free(dist);
+            free(parent);
+            return true;
+        }
+    }
+
+    printf("No arbitrage opportunity found.\n");
+
+    free(dist);
+    free(parent);
+    return false;
 }
 
 /* =============================================================================
@@ -365,8 +609,43 @@ bool detect_arbitrage(CurrencyGraph *g) {
  * Hint: Use scanf for numbers, %s for currency names
  */
 CurrencyGraph *read_currency_graph(void) {
-    /* YOUR CODE HERE */
-    return NULL;  /* Replace this */
+
+    int N;
+    if (scanf("%d", &N) != 1) {
+        return NULL;
+    }
+
+    if (N <= 0 || N > MAX_CURRENCIES) {
+        return NULL;
+    }
+
+    CurrencyGraph *g = create_currency_graph(N);
+    if (!g) {
+        return NULL;
+    }
+
+    for (int i = 0; i < N; i++) {
+        if (scanf("%15s", g->names[i]) != 1) {
+            free_currency_graph(g);
+            return NULL;
+        }
+        g->names[i][MAX_NAME_LEN - 1] = '\0';
+    }
+
+    for (int i = 0; i < N; i++) {
+        for (int j = 0; j < N; j++) {
+            double rate;
+            if (scanf("%lf", &rate) != 1) {
+                free_currency_graph(g);
+                return NULL;
+            }
+            if (i != j) {
+                add_currency_edge(g, i, j, rate);
+            }
+        }
+    }
+
+    return g;
 }
 
 /* =============================================================================
@@ -375,23 +654,21 @@ CurrencyGraph *read_currency_graph(void) {
  */
 
 int main(void) {
+
     printf("╔════════════════════════════════════════════════════════════╗\n");
     printf("║       Currency Arbitrage Detection using Bellman-Ford      ║\n");
     printf("╚════════════════════════════════════════════════════════════╝\n\n");
-    
-    /* TODO 12: Implement main program flow
-     *
-     * Steps:
-     *   1. Call read_currency_graph() to get the graph
-     *   2. Check if graph is valid (not NULL)
-     *   3. Call detect_arbitrage(g)
-     *   4. Free the graph
-     *   5. Return appropriate exit code
-     */
-    
-    /* YOUR CODE HERE */
-    
-    return 0;
+
+    CurrencyGraph *g = read_currency_graph();
+    if (!g) {
+        fprintf(stderr, "Error: Failed to read currency graph\n");
+        return EXIT_FAILURE;
+    }
+
+    (void)detect_arbitrage(g);
+
+    free_currency_graph(g);
+    return EXIT_SUCCESS;
 }
 
 /* =============================================================================

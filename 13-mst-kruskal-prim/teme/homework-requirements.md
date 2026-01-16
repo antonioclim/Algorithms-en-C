@@ -1,202 +1,284 @@
-# Week 13 Homework: Graph Algorithms - Shortest Path
+# Week 13 Homework: Weighted Graph Algorithms and Shortest Paths
 
-## 📋 General Information
+## 1. Administrative information
 
-- **Deadline:** End of Week 14
-- **Points:** 100 (10% of final grade)
-- **Language:** C (C11 standard)
-- **Compiler:** GCC with `-Wall -Wextra -std=c11 -lm`
-- **Memory:** No memory leaks (verified with Valgrind)
+### 1.1 Deliverables and deadline
 
----
+- **Submission window:** end of Week 14 (consult the course platform for the authoritative timestamp)
+- **Total marks:** 100 points
+- **Implementation language:** ISO C11
+- **Compilation environment:** GCC or Clang compatible with `-std=c11 -Wall -Wextra` and `-lm` where required
 
-## 📝 Homework 1: Multi-Source Shortest Paths (50 points)
+You must submit exactly two C source files:
 
-### Description
+- `homework1_multisource.c`
+- `homework2_network.c`
 
-Implement a program that finds the shortest paths from **multiple source vertices** simultaneously. Given a weighted directed graph and a set of source vertices, compute the minimum distance from **any** source to each vertex.
+Each file must compile as a standalone programme.
 
-This is useful in scenarios such as finding the nearest hospital, fire station or warehouse to any location in a city.
+### 1.2 Permitted support code
 
-### Requirements
+You may reuse and adapt data structures developed in the laboratory, including the adjacency list representation and the binary heap priority queue pattern used for Dijkstra. If you reuse code you must:
 
-1. **Read input** (5p)
-   - First line: `V E K` (vertices, edges, number of sources)
-   - Second line: K source vertex indices
-   - Following E lines: `u v w` (directed edge from u to v with weight w)
+- preserve correct memory ownership rules
+- preserve asymptotic guarantees
+- provide clear attribution in comments at the top of your submission
 
-2. **Implement multi-source Dijkstra** (20p)
-   - Initialise all source vertices with distance 0
-   - Use a priority queue (min-heap)
-   - Handle non-negative weights only
+### 1.3 Quality constraints
 
-3. **Track the nearest source** (10p)
-   - For each vertex, record which source it is closest to
-   - Store this in a separate array
+Your submissions are assessed for algorithmic correctness and also for engineering quality.
 
-4. **Output results** (10p)
-   - For each vertex: `Vertex v: distance = d, nearest source = s`
-   - If unreachable: `Vertex v: unreachable`
+Required properties:
 
-5. **Handle edge cases** (5p)
-   - Empty graph
-   - Disconnected components
-   - Invalid input
+- no memory leaks along exercised code paths
+- no undefined behaviour
+- input validation for invalid or inconsistent graph parameters
+- deterministic output formatting that matches the stated specification
 
-### Example Usage
+A programme that produces correct numbers but violates the output specification is not considered correct for the purposes of automated testing.
 
-**Input:**
+### 1.4 Academic integrity
+
+You must implement your own solution. Similarities beyond standard algorithmic structure may be treated as collusion.
+
+## 2. Homework 1: Multi-source shortest paths (50 points)
+
+### 2.1 Problem statement
+
+You are given a weighted directed graph with non-negative edge weights and a set of K source vertices. Your task is to compute, for every vertex v, the shortest distance from any of the sources to v.
+
+In addition, you must report which source is the closest to v under the computed shortest distance. If multiple sources yield the same shortest distance you must break ties deterministically.
+
+### 2.2 Input format
+
+- Line 1: `V E K`
+  - V: number of vertices, labelled 0 to V-1
+  - E: number of directed edges
+  - K: number of sources
+- Line 2: K integers, the source vertices
+- Next E lines: `u v w` describing a directed edge u -> v with weight w
+
+Constraints:
+
+- 1 <= V <= 1000
+- 0 <= E <= 200000 (choose data structures accordingly)
+- 1 <= K <= V
+- w is an integer and w >= 0
+
+### 2.3 Output format
+
+For each vertex v in increasing order:
+
+- If v is unreachable from all sources:
+
 ```
-6 8 2
-0 3
-0 1 5
-0 2 3
-1 3 2
-2 1 1
-2 4 7
-3 4 3
-3 5 1
-4 5 2
-```
-
-**Output:**
-```
-Vertex 0: distance = 0, nearest source = 0
-Vertex 1: distance = 4, nearest source = 0
-Vertex 2: distance = 3, nearest source = 0
-Vertex 3: distance = 0, nearest source = 3
-Vertex 4: distance = 3, nearest source = 3
-Vertex 5: distance = 1, nearest source = 3
-```
-
-### File: `homework1_multisource.c`
-
----
-
-## 📝 Homework 2: Network Delay Time (50 points)
-
-### Description
-
-Implement a program that simulates network packet propagation. Given a network of computers and communication links with latencies (delays), determine:
-
-1. The time for a signal to reach all computers from a source
-2. Which computers are unreachable
-3. The critical path (slowest path that determines total time)
-
-This models real-world scenarios like broadcast storms, network troubleshooting and distributed system synchronisation.
-
-### Requirements
-
-1. **Read network topology** (5p)
-   - First line: `N M S` (computers, links, source computer)
-   - Following M lines: `a b t` (link from a to b with delay t milliseconds)
-   - Links are unidirectional
-
-2. **Compute propagation times** (15p)
-   - Use Dijkstra's algorithm
-   - dist[v] represents time for signal to reach computer v
-
-3. **Find total propagation time** (10p)
-   - Maximum of all distances = time for signal to reach ALL computers
-   - If any computer unreachable, output -1
-
-4. **Identify critical path** (10p)
-   - Find the computer that takes longest to receive the signal
-   - Print the path from source to this computer
-
-5. **Generate timing report** (10p)
-   - List computers in order of signal arrival
-   - Include timestamps and path lengths
-
-### Example Usage
-
-**Input:**
-```
-5 7 0
-0 1 2
-0 2 5
-1 2 1
-1 3 3
-2 3 2
-2 4 8
-3 4 1
+Vertex v: unreachable
 ```
 
-**Output:**
+- Otherwise:
+
+```
+Vertex v: distance = d, nearest source = s
+```
+
+Where d is the shortest distance and s is the selected nearest source.
+
+Tie-breaking rule for s:
+
+- If multiple sources yield the same shortest distance to v you must output the smallest source index.
+
+### 2.4 Required algorithm
+
+You must implement multi-source Dijkstra by initialising the priority queue with all sources.
+
+Conceptual pseudocode:
+
+```
+MULTISOURCE_DIJKSTRA(G, Sources):
+  for each vertex v:
+    dist[v] <- INF
+    nearest[v] <- -1
+  for each s in Sources:
+    dist[s] <- 0
+    nearest[s] <- s
+
+  PQ <- empty min-priority queue ordered by dist
+  for each vertex v:
+    PQ.insert(v, dist[v])
+
+  while PQ not empty:
+    u <- PQ.extract_min()
+    if dist[u] == INF:
+      break
+    for each edge (u -> x) with weight w:
+      cand <- dist[u] + w
+      if cand < dist[x]:
+        dist[x] <- cand
+        nearest[x] <- nearest[u]
+        PQ.decrease_key(x, cand)
+      else if cand == dist[x] and nearest[u] < nearest[x]:
+        nearest[x] <- nearest[u]
+```
+
+Correctness hinge:
+
+- Dijkstra’s greedy selection remains valid because all weights are non-negative.
+- The tie-breaking for `nearest[]` is a secondary selection criterion and must not violate the primary distance optimality.
+
+### 2.5 Edge cases that must be handled
+
+- K = 1 reduces to standard single-source Dijkstra
+- E = 0, graph with isolated vertices
+- duplicated sources in input (treat as a set)
+- self-loops and parallel edges
+- large weights that may overflow 32-bit addition if accumulated naively
+
+Overflow guidance:
+
+- Use a 64-bit accumulator when computing `cand = dist[u] + w` even if final output is within 32-bit range.
+
+### 2.6 Marks breakdown (Homework 1)
+
+- Input parsing and validation: 10
+- Correct multi-source Dijkstra implementation: 20
+- Correct nearest-source tracking with tie-breaking: 10
+- Output specification compliance and determinism: 5
+- Memory safety and code quality: 5
+
+## 3. Homework 2: Network delay analysis (50 points)
+
+### 3.1 Problem statement
+
+You are given a directed network of computers with non-negative link delays. A signal originates at a source computer S and propagates through the network along directed links. Your task is to compute:
+
+1. The earliest arrival time at every computer
+2. Whether the signal can reach all computers
+3. The total propagation time defined as the maximum arrival time among all reachable computers
+4. A critical path for the slowest arrival
+5. A timing report listing computers in order of arrival
+
+### 3.2 Input format
+
+- Line 1: `N M S`
+  - N: number of computers, labelled 0 to N-1
+  - M: number of directed links
+  - S: source computer
+- Next M lines: `a b t` describing a directed link a -> b with delay t milliseconds
+
+Constraints:
+
+- 1 <= N <= 1000
+- 0 <= M <= 200000
+- t is an integer and t >= 0
+
+### 3.3 Output format
+
+The output must contain the following blocks.
+
+#### Header
+
 ```
 Network Delay Analysis
 ======================
-Source: Computer 0
-Total propagation time: 6 ms
+Source: Computer S
+```
 
-Arrival order:
-  Computer 0: 0 ms (source)
-  Computer 1: 2 ms via 0 -> 1
-  Computer 2: 3 ms via 0 -> 1 -> 2
-  Computer 3: 5 ms via 0 -> 1 -> 3
-  Computer 4: 6 ms via 0 -> 1 -> 3 -> 4
+#### Reachability and total time
 
-Critical path: 0 -> 1 -> 3 -> 4 (6 ms)
+If at least one computer is unreachable, print:
+
+```
+Total propagation time: -1
+All computers reachable: NO
+```
+
+Otherwise print:
+
+```
+Total propagation time: T ms
 All computers reachable: YES
 ```
 
-### File: `homework2_network.c`
+Where T is the maximum distance.
 
----
+#### Arrival order report
 
-## 📊 Evaluation Criteria
+You must print computers in non-decreasing order of arrival time. If two computers have the same arrival time you must print the smaller computer index first.
 
-| Criterion | Points |
-|-----------|--------|
-| Functional correctness | 40 |
-| Proper algorithm implementation | 25 |
-| Edge case handling | 15 |
-| Code quality and comments | 10 |
-| No compiler warnings | 5 |
-| No memory leaks | 5 |
+Format:
 
-### Penalties
+```
+Arrival order:
+  Computer v: d ms via path
+```
 
-- **-5p:** Each compiler warning
-- **-10p:** Memory leaks (any leak detected by Valgrind)
-- **-20p:** Crashes on valid input
-- **-30p:** Incorrect algorithm (e.g. using BFS instead of Dijkstra)
-- **-50p:** Plagiarism (automatic zero for all parties involved)
+For the source:
 
----
+```
+  Computer S: 0 ms (source)
+```
 
-## 📤 Submission
+For other reachable computers, `path` must be a sequence such as `0 -> 1 -> 3`.
 
-1. Submit via the university platform
-2. File naming: `homework1_multisource.c` and `homework2_network.c`
-3. Include your name and student ID in file headers
-4. Ensure code compiles without modifications
+#### Critical path
 
----
+If all computers are reachable you must print the critical path and its time:
 
-## 💡 Tips
+```
+Critical path: 0 -> ... -> x (T ms)
+```
 
-1. **Start early** - These assignments require careful thought about data structures
+If not all computers are reachable you must still identify the maximum among the reachable nodes and print:
 
-2. **Test incrementally** - Build and test each component before integration
+```
+Critical path among reachable nodes: 0 -> ... -> x (T ms)
+```
 
-3. **Use the provided test cases** - They cover common edge cases
+### 3.4 Required algorithm
 
-4. **Draw diagrams** - Visualise the graph before coding
+You must use Dijkstra’s algorithm with a heap-based priority queue.
 
-5. **Check memory** - Run Valgrind after every significant change:
-   ```bash
-   valgrind --leak-check=full ./homework1_multisource < test_input.txt
-   ```
+Conceptual pseudocode:
 
-6. **Review Dijkstra's properties** - Remember it only works with non-negative weights
+```
+DIJKSTRA(G, S):
+  for v:
+    dist[v] <- INF
+    parent[v] <- -1
+  dist[S] <- 0
+  PQ <- min-priority queue over vertices by dist
 
-7. **Consider using the heap from class** - The priority queue implementation from Exercise 1 is directly applicable
+  while PQ not empty:
+    u <- extract_min(PQ)
+    if dist[u] == INF:
+      break
+    for each edge (u -> v) with weight w:
+      if dist[u] + w < dist[v]:
+        dist[v] <- dist[u] + w
+        parent[v] <- u
+        decrease_key(PQ, v)
+```
 
----
+The timing report requires you to sort vertices by dist. You may either:
 
-## 🔗 Resources
+- build an array of pairs (vertex, dist) and use `qsort` with a comparator implementing the specified tie-break
+- implement a stable counting method if delays are small, but this is optional
 
-- Course slides: Week 13 presentation
-- CLRS textbook: Chapter 24 (Single-Source Shortest Paths)
-- Visualisation: [https://visualgo.net/en/sssp](https://visualgo.net/en/sssp)
+### 3.5 Marks breakdown (Homework 2)
+
+- Input parsing and validation: 10
+- Correct Dijkstra implementation: 15
+- Correct total time and reachability: 10
+- Correct path reconstruction and critical path reporting: 10
+- Arrival order sorting and output compliance: 5
+
+## 4. Submission checklist
+
+Before submission, confirm all items below:
+
+- both programmes compile with `-Wall -Wextra -std=c11` and link where needed
+- output matches the specification exactly on the provided tests
+- all allocated memory is freed in all normal exit paths
+- integer overflow is handled conservatively
+- files contain a short header comment with your name and student identifier
+

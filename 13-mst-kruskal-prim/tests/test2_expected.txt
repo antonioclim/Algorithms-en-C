@@ -3,5 +3,5 @@
 ╚════════════════════════════════════════════════════════════╝
 
 Arbitrage opportunity detected!
-Cycle: USD -> EUR -> GBP -> USD
-Profit: 41.13%
+Cycle: GBP -> CHF -> GBP
+Profit: 0.30%
