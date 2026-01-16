@@ -1,273 +1,313 @@
-# Extended Challenges - Week 12
+# Extended challenges for Week 12
 
-## 🚀 Advanced Challenges (Optional)
+## Purpose and scope
 
-Each correctly solved challenge: **+10 bonus points**
+The assessed exercises for this week emphasise BFS, DFS, cycle detection and topological sorting. The challenges in this document broaden that surface area in a principled way. Each challenge is designed to force you to articulate a specification, select an appropriate graph representation and defend complexity claims.
 
-These challenges extend beyond the core curriculum and are designed for students seeking deeper understanding of graph algorithms. They require independent research and creative problem-solving.
+These tasks are optional. They are best treated as research-oriented mini-projects: start with a clear statement of inputs and outputs, write invariants before code and validate behaviour on adversarial instances.
 
----
+## Marking policy for optional challenges
 
-## ⭐ Challenge 1: Bipartite Graph Detection (Difficulty: Medium)
+Each fully correct challenge: **+10 bonus points**
 
-### Description
+A solution is considered fully correct only if it:
 
-A bipartite graph is one whose vertices can be divided into two disjoint sets such that every edge connects a vertex in one set to a vertex in the other. Implement a program that determines whether a given undirected graph is bipartite.
-
-### Requirements
-
-1. Read an undirected graph from input
-2. Use BFS-based two-colouring algorithm:
-   - Start from any unvisited vertex, colour it with colour 0
-   - Colour all neighbours with colour 1
-   - Continue alternating colours; if any neighbour has the same colour as current vertex, graph is not bipartite
-3. Handle disconnected graphs (check all components)
-4. If bipartite, output the two vertex sets
-5. If not bipartite, output an odd-length cycle as proof
-
-### Example Output
-```
-Graph is bipartite!
-Set A: {0, 2, 4, 6}
-Set B: {1, 3, 5, 7}
-
--- or --
-
-Graph is NOT bipartite!
-Odd cycle found: 0 -> 1 -> 2 -> 0
-```
-
-### Theoretical Background
-- A graph is bipartite if and only if it contains no odd-length cycles
-- Applications: job assignments, matching problems, conflict-free scheduling
-
-### Bonus Points: +10
+- Compiles cleanly with `-Wall -Wextra -std=c11`
+- Produces correct results on hidden tests
+- Manages memory correctly (no leaks and no invalid accesses)
+- Contains explanatory comments that state invariants and justify key design decisions
 
 ---
 
-## ⭐ Challenge 2: Strongly Connected Components (Difficulty: Hard)
+## Challenge 1: Bipartite detection and odd-cycle certificates
 
-### Description
+### Problem
 
-In a directed graph, a strongly connected component (SCC) is a maximal set of vertices such that there is a path from every vertex to every other vertex within the set. Implement Kosaraju's algorithm or Tarjan's algorithm to find all SCCs.
+Given an undirected graph, determine whether it is bipartite. If it is bipartite, output a two-colouring. If it is not bipartite, output an explicit odd cycle certificate.
 
-### Requirements
+### Core method
 
-1. Implement one of:
-   - **Kosaraju's Algorithm**: Two DFS passes with graph transposition
-   - **Tarjan's Algorithm**: Single DFS with low-link values
-2. Output each SCC as a group of vertices
-3. Construct the condensation graph (DAG of SCCs)
-4. Handle graphs with cycles and multiple SCCs
+The standard approach is BFS-based two-colouring. Each connected component is processed independently.
 
-### Algorithm Sketch (Kosaraju's)
+### Pseudocode
+
+```text
+IS-BIPARTITE(G):
+  colour[v] <- UNCOLOURED for all v
+  parent[v] <- -1 for all v
+
+  for v in V:
+    if colour[v] == UNCOLOURED:
+      colour[v] <- 0
+      BFS-COLOUR(v)
+      if conflict found:
+        return (false, ODD-CYCLE)
+
+  return (true, COLOURING)
+
+BFS-COLOUR(s):
+  Q <- [s]
+  while Q not empty:
+    u <- pop front
+    for w in Adj[u]:
+      if colour[w] == UNCOLOURED:
+        colour[w] <- 1 - colour[u]
+        parent[w] <- u
+        push back w
+      else if colour[w] == colour[u]:
+        record conflict edge (u, w)
+        reconstruct odd cycle using parent pointers
 ```
-1. Perform DFS on original graph, recording finish times
-2. Create transpose graph (reverse all edges)
-3. Perform DFS on transpose in decreasing finish time order
-4. Each DFS tree in step 3 is an SCC
-```
 
-### Example Output
-```
-Found 4 strongly connected components:
-  SCC 1: {0, 1, 2}
-  SCC 2: {3, 4}
-  SCC 3: {5, 6, 7}
-  SCC 4: {8}
+### Notes on odd-cycle reconstruction
 
-Condensation graph edges:
-  SCC1 -> SCC2
-  SCC2 -> SCC3
-  SCC3 -> SCC4
-```
+When the conflict edge (u, w) is found, both u and w are at the same parity level relative to the component root. The odd cycle can be obtained by tracing parent pointers from u and w to their least common ancestor.
 
-### Bonus Points: +10
+### Suggested deliverable
+
+- `challenge1_bipartite.c`
 
 ---
 
-## ⭐ Challenge 3: Articulation Points and Bridges (Difficulty: Hard)
+## Challenge 2: Strongly connected components and condensation graphs
 
-### Description
+### Problem
 
-An articulation point (or cut vertex) is a vertex whose removal disconnects the graph. A bridge is an edge whose removal disconnects the graph. These are critical for analysing network vulnerability.
+Given a directed graph, compute its strongly connected components (SCCs) and build the condensation graph in which each SCC is contracted to a single vertex. The condensation graph must be a DAG.
 
-### Requirements
+### Acceptable algorithms
 
-1. Implement Tarjan's algorithm for finding articulation points
-2. Extend to find all bridges
-3. For each articulation point, report how many components result from its removal
-4. Provide a "network vulnerability score" based on the number of critical points
+- Kosaraju–Sharir (two DFS passes, requires transpose graph)
+- Tarjan (single DFS with lowlink values)
 
-### Key Concepts
-```c
-/*
- * For each vertex u, track:
- *   - disc[u]: Discovery time in DFS
- *   - low[u]: Lowest discovery time reachable from u's subtree
- *
- * u is an articulation point if:
- *   - u is root of DFS tree with 2+ children, OR
- *   - u is not root and has child v where low[v] >= disc[u]
- *
- * Edge (u,v) is a bridge if:
- *   - low[v] > disc[u]
- */
+### Pseudocode sketch: Kosaraju–Sharir
+
+```text
+KOSARAJU(G):
+  S <- empty stack
+  visited[v] <- false
+  for v in V:
+    if not visited[v]:
+      DFS-FINISH(G, v, visited, S)
+
+  GT <- TRANSPOSE(G)
+  visited[v] <- false
+  component_id <- 0
+  while S not empty:
+    v <- pop S
+    if not visited[v]:
+      component_id++
+      DFS-COLLECT(GT, v, visited, component_id)
+
+  return component assignment
 ```
 
-### Example Output
-```
-Articulation points: 2, 5
-  Removing vertex 2 creates 3 components
-  Removing vertex 5 creates 2 components
+### Deliverables
 
-Bridges: (2,3), (5,6)
-
-Network vulnerability: HIGH (2 critical points, 2 bridges)
-```
-
-### Bonus Points: +10
+- `challenge2_scc.c`
 
 ---
 
-## ⭐ Challenge 4: Graph Diameter and Centre (Difficulty: Medium)
+## Challenge 3: Articulation points and bridges in undirected graphs
 
-### Description
+### Problem
 
-The diameter of a graph is the maximum shortest path distance between any two vertices. The centre consists of vertices that minimise the maximum distance to all other vertices (eccentricity).
+Compute all articulation points (cut vertices) and bridges (cut edges). Provide discovery times, low values and a concise explanation of why each reported vertex or edge is critical.
 
-### Requirements
+### Core insight
 
-1. Compute the eccentricity of each vertex (max distance to any other vertex)
-2. Find the diameter (maximum eccentricity)
-3. Find the radius (minimum eccentricity)
-4. Identify all centre vertices (vertices with eccentricity = radius)
-5. Handle disconnected graphs (infinite distances)
+A DFS tree encodes enough information to decide whether an edge is a bridge and whether a vertex is an articulation point via lowlink values.
 
-### Algorithm
-```
-For each vertex u:
-    Run BFS from u
-    eccentricity[u] = max(distance to all v)
+### Key conditions
 
-diameter = max(eccentricity)
-radius = min(eccentricity)
-centre = {v : eccentricity[v] == radius}
-```
+- An edge (u, v) where u is the parent of v in the DFS tree is a bridge if low[v] > disc[u].
+- A non-root vertex u is an articulation point if it has a child v with low[v] >= disc[u].
+- A root vertex is an articulation point if it has at least two DFS tree children.
 
-### Example Output
-```
-Eccentricity of each vertex:
-  Vertex 0: 4
-  Vertex 1: 3
-  Vertex 2: 3
-  Vertex 3: 4
-  Vertex 4: 3
-  Vertex 5: 4
+### Deliverable
 
-Diameter: 4 (between vertices 0 and 5)
-Radius: 3
-Centre vertices: {1, 2, 4}
-
-Peripheral vertices (eccentricity = diameter): {0, 3, 5}
-```
-
-### Bonus Points: +10
+- `challenge3_articulation.c`
 
 ---
 
-## ⭐ Challenge 5: Graph Serialisation and Persistence (Difficulty: Medium)
+## Challenge 4: Graph diameter, radius and centres
 
-### Description
+### Problem
 
-Implement a complete graph persistence system that can save graphs to binary files and reload them efficiently. This simulates real-world scenarios where graph data must be stored and retrieved.
+For an undirected graph, compute eccentricity for every vertex then report the diameter, radius and the set of centre vertices. For disconnected graphs, use an explicit representation of infinity.
 
-### Requirements
+### Algorithmic baseline
 
-1. **Binary Format Design** (define your own format):
-   - Magic number for file identification
-   - Header with metadata (vertex count, edge count, graph type)
-   - Compact edge storage
+The straightforward approach is to run BFS from every vertex. This is O(|V| * (|V| + |E|)) and is acceptable only for modest n. If you want to go beyond, consider heuristics for diameter estimation or multi-source techniques.
 
-2. **Save Function**:
-   - Serialise adjacency list to binary file
-   - Include checksum for data integrity
+### Deliverable
 
-3. **Load Function**:
-   - Deserialise binary file back to adjacency list
-   - Verify checksum and report corruption
-
-4. **Comparison with Text Format**:
-   - Measure file size reduction vs text format
-   - Measure load time improvement
-
-### Example Format
-```
-Bytes 0-3:   Magic number (0x47524150 = "GRAP")
-Bytes 4-7:   Version number
-Bytes 8-11:  Number of vertices (n)
-Bytes 12-15: Number of edges (m)
-Bytes 16-19: Flags (directed=bit0, weighted=bit1)
-Bytes 20+:   Edge data (pairs of 4-byte integers)
-Last 4:      CRC32 checksum
-```
-
-### Example Output
-```
-Saved graph to 'network.grp'
-  Text format size:  145,234 bytes
-  Binary format size: 48,012 bytes
-  Compression ratio: 67% smaller
-
-Loaded graph from 'network.grp'
-  Checksum verified: OK
-  Load time: 0.003s (vs 0.045s for text)
-  Vertices: 10000, Edges: 50000
-```
-
-### Bonus Points: +10
+- `challenge4_diameter.c`
 
 ---
 
-## 📊 Bonus Point System
+## Challenge 5: Graph serialisation, persistence and integrity checking
 
-| Challenges Completed | Total Bonus |
-|---------------------|-------------|
-| 1 | +10 points |
-| 2 | +20 points |
-| 3 | +30 points |
-| 4 | +40 points |
-| All 5 | +50 points + "Graph Master" badge 🏆 |
+### Problem
 
----
+Design a binary file format to store a graph efficiently then implement save and load functions. Include integrity checking via a checksum and validate that corrupted files are detected.
 
-## 📤 Submission Guidelines
+### Minimum format elements
 
-1. Submit each challenge as a separate file:
-   - `challenge1_bipartite.c`
-   - `challenge2_scc.c`
-   - `challenge3_articulation.c`
-   - `challenge4_diameter.c`
-   - `challenge5_serialise.c`
+- Magic number and version
+- Vertex count and edge count
+- Flags for directed or undirected and weighted or unweighted
+- Edge list as pairs (or triples if weighted)
+- CRC32 or another well-specified checksum
 
-2. Include a `README.txt` explaining your approach for each challenge
+### Deliverable
 
-3. Bonus challenges are due one week after the main homework deadline
+- `challenge5_serialise.c`
 
 ---
 
-## 📚 Recommended Resources
+## Challenge 6: Dijkstra's algorithm with path reconstruction
 
-1. **Bipartite Graphs**: CLRS Chapter 22.2, Hungarian Algorithm
-2. **Strongly Connected Components**: CLRS Chapter 22.5, Kosaraju & Tarjan papers
-3. **Articulation Points**: Tarjan's original 1972 paper "Depth-First Search and Linear Graph Algorithms"
-4. **Graph Centre**: Network analysis literature, centrality measures
-5. **Serialisation**: Protocol Buffers documentation, binary file I/O in C
+### Problem
+
+Implement single-source shortest paths on a directed or undirected graph with non-negative edge weights. Output distances and reconstruct one shortest path to each queried target.
+
+This challenge is intentionally aligned with the week theme: Dijkstra is the weighted analogue of BFS.
+
+### Data structure requirement
+
+Use a binary heap (priority queue). You may implement your own heap or use a carefully justified alternative. The key property is extract-min in logarithmic time.
+
+### Pseudocode
+
+```text
+DIJKSTRA(G, s):
+  dist[v] <- +infinity
+  parent[v] <- -1
+  dist[s] <- 0
+  PQ <- heap
+  push (0, s)
+
+  while PQ not empty:
+    (d, u) <- extract-min
+    if d != dist[u]:
+      continue
+    for each (u, v, w) in Adj[u]:
+      if dist[u] + w < dist[v]:
+        dist[v] <- dist[u] + w
+        parent[v] <- u
+        push (dist[v], v)
+
+RECONSTRUCT(parent, s, t):
+  if dist[t] == +infinity:
+    return no path
+  follow parent pointers from t to s
+  reverse the collected sequence
+```
+
+### Deliverable
+
+- `challenge6_dijkstra.c`
 
 ---
 
-## 💪 Motivational Note
 
-These challenges represent algorithms used daily in industry: Google's web graph analysis uses SCCs, network engineers use articulation points for fault tolerance, and social networks compute graph centres for influence measurement.
+---
 
-Completing even one challenge demonstrates advanced algorithmic thinking that employers value highly. Good luck! 🚀
+## Challenge 7: Minimum spanning trees in weighted undirected graphs
+
+### Problem
+
+Given a connected undirected graph with non-negative edge weights, compute a minimum spanning tree (MST) and report its total weight and selected edges. If the graph is disconnected, compute a minimum spanning forest.
+
+### Acceptable algorithms
+
+- Prim using a min-priority queue (conceptually close to Dijkstra)
+- Kruskal using a global edge sort and a disjoint-set union structure
+
+### Pseudocode sketch: Prim
+
+```text
+PRIM(G, r):
+  for each vertex v:
+    key[v] <- +infinity
+    parent[v] <- -1
+  key[r] <- 0
+  PQ <- heap of (key[v], v)
+
+  while PQ not empty:
+    u <- extract-min
+    for each edge (u, v, w):
+      if v still in PQ and w < key[v]:
+        parent[v] <- u
+        key[v] <- w
+        decrease-key(PQ, v, w)
+```
+
+### Deliverable
+
+- `challenge7_mst.c`
+
+---
+
+## Challenge 8: Offline connectivity queries with disjoint-set union
+
+### Problem
+
+You are given an undirected graph that evolves by edge insertions. Between insertions you receive queries of the form CONNECTED(u, v). Answer each query in near-constant amortised time.
+
+This challenge is included because it sharpens the distinction between traversal-based connectivity (BFS or DFS) and structure-maintenance connectivity (union-find). Both are conceptually about components but their algorithmic affordances differ.
+
+### Core data structure
+
+Disjoint-set union with path compression and union by rank or size.
+
+### Pseudocode
+
+```text
+MAKE-SET(x):
+  parent[x] <- x
+  rank[x] <- 0
+
+FIND(x):
+  if parent[x] != x:
+    parent[x] <- FIND(parent[x])
+  return parent[x]
+
+UNION(x, y):
+  rx <- FIND(x)
+  ry <- FIND(y)
+  if rx == ry:
+    return
+  if rank[rx] < rank[ry]:
+    parent[rx] <- ry
+  else if rank[rx] > rank[ry]:
+    parent[ry] <- rx
+  else:
+    parent[ry] <- rx
+    rank[rx] <- rank[rx] + 1
+```
+
+### Deliverable
+
+- `challenge8_unionfind.c`
+
+---
+
+## Recommended reading
+
+If you want a principled path beyond the lecture notes, start with the original papers. They are short, precise and they illustrate how algorithmic ideas were first expressed.
+
+- Dijkstra (shortest paths and the discipline of greedy exploration)
+- Tarjan (DFS as a unifying primitive)
+- Kahn (topological ordering as a practical scheduling procedure)
+
+
+## Submission guidance
+
+Submit each challenge as a separate C file and include a short `README.txt` describing:
+
+- The chosen representation and why it is appropriate
+- Complexity claims in terms of |V| and |E|
+- How you tested the code, including at least one adversarial case
+

@@ -129,13 +129,13 @@ run-ex1: $(EXERCISE1_BIN)
 	@echo ""
 	@echo "$(COLOUR_YELLOW)[RUN]$(COLOUR_RESET) Running Exercise 1 with small graph..."
 	@echo ""
-	@./$(EXERCISE1_BIN) < $(DATA_DIR)/graph_small.txt
+	@./$(EXERCISE1_BIN) < $(TEST_DIR)/test1_input.txt
 
 run-ex2: $(EXERCISE2_BIN)
 	@echo ""
 	@echo "$(COLOUR_YELLOW)[RUN]$(COLOUR_RESET) Running Exercise 2 with small graph..."
 	@echo ""
-	@./$(EXERCISE2_BIN) < $(DATA_DIR)/graph_small.txt
+	@./$(EXERCISE2_BIN) < $(TEST_DIR)/test2_input.txt
 
 demo-all: $(EXAMPLE_BIN) $(EXERCISE1_BIN) $(EXERCISE2_BIN)
 	@echo ""
@@ -149,11 +149,11 @@ demo-all: $(EXAMPLE_BIN) $(EXERCISE1_BIN) $(EXERCISE2_BIN)
 	@echo ""
 	@echo "$(COLOUR_CYAN)[2/3]$(COLOUR_RESET) Exercise 1: BFS"
 	@echo "$(COLOUR_CYAN)──────────────────────────────────────────────────────────$(COLOUR_RESET)"
-	@./$(EXERCISE1_BIN) < $(DATA_DIR)/graph_small.txt || true
+	@./$(EXERCISE1_BIN) < $(TEST_DIR)/test1_input.txt || true
 	@echo ""
 	@echo "$(COLOUR_CYAN)[3/3]$(COLOUR_RESET) Exercise 2: DFS"
 	@echo "$(COLOUR_CYAN)──────────────────────────────────────────────────────────$(COLOUR_RESET)"
-	@./$(EXERCISE2_BIN) < $(DATA_DIR)/graph_small.txt || true
+	@./$(EXERCISE2_BIN) < $(TEST_DIR)/test2_input.txt || true
 	@echo ""
 	@echo "$(COLOUR_GREEN)══════════════════════════════════════════════════════════$(COLOUR_RESET)"
 	@echo "$(COLOUR_GREEN)  DEMONSTRATION COMPLETE$(COLOUR_RESET)"
@@ -173,29 +173,29 @@ test1: $(EXERCISE1_BIN)
 	@echo ""
 	@echo "$(COLOUR_YELLOW)[TEST 1]$(COLOUR_RESET) BFS Shortest Paths"
 	@echo "$(COLOUR_BLUE)────────────────────────────────────────$(COLOUR_RESET)"
-	@echo "$(COLOUR_CYAN)Input:$(COLOUR_RESET)"
-	@cat $(TEST_DIR)/test1_input.txt
-	@echo ""
-	@echo "$(COLOUR_CYAN)Expected output:$(COLOUR_RESET)"
-	@cat $(TEST_DIR)/test1_expected.txt
-	@echo ""
-	@echo "$(COLOUR_CYAN)Actual output:$(COLOUR_RESET)"
-	@./$(EXERCISE1_BIN) < $(TEST_DIR)/test1_input.txt 2>&1 || \
-		echo "$(COLOUR_YELLOW)[INFO]$(COLOUR_RESET) Complete the TODOs to pass this test"
+	@./$(EXERCISE1_BIN) < $(TEST_DIR)/test1_input.txt > $(OUT_DIR)/test1_actual.txt 2> $(OUT_DIR)/test1_stderr.txt
+	@if diff -q $(TEST_DIR)/test1_expected.txt $(OUT_DIR)/test1_actual.txt >/dev/null; then \
+		echo "$(COLOUR_GREEN)[PASS]$(COLOUR_RESET) Output matches $(TEST_DIR)/test1_expected.txt"; \
+	else \
+		echo "$(COLOUR_RED)[FAIL]$(COLOUR_RESET) Output mismatch for Exercise 1"; \
+		echo "$(COLOUR_CYAN)Diff (expected vs actual):$(COLOUR_RESET)"; \
+		diff -u $(TEST_DIR)/test1_expected.txt $(OUT_DIR)/test1_actual.txt || true; \
+		exit 1; \
+	fi
 
 test2: $(EXERCISE2_BIN)
 	@echo ""
 	@echo "$(COLOUR_YELLOW)[TEST 2]$(COLOUR_RESET) DFS Topological Sort"
 	@echo "$(COLOUR_BLUE)────────────────────────────────────────$(COLOUR_RESET)"
-	@echo "$(COLOUR_CYAN)Input:$(COLOUR_RESET)"
-	@cat $(TEST_DIR)/test2_input.txt
-	@echo ""
-	@echo "$(COLOUR_CYAN)Expected output:$(COLOUR_RESET)"
-	@cat $(TEST_DIR)/test2_expected.txt
-	@echo ""
-	@echo "$(COLOUR_CYAN)Actual output:$(COLOUR_RESET)"
-	@./$(EXERCISE2_BIN) < $(TEST_DIR)/test2_input.txt 2>&1 || \
-		echo "$(COLOUR_YELLOW)[INFO]$(COLOUR_RESET) Complete the TODOs to pass this test"
+	@./$(EXERCISE2_BIN) < $(TEST_DIR)/test2_input.txt > $(OUT_DIR)/test2_actual.txt 2> $(OUT_DIR)/test2_stderr.txt
+	@if diff -q $(TEST_DIR)/test2_expected.txt $(OUT_DIR)/test2_actual.txt >/dev/null; then \
+		echo "$(COLOUR_GREEN)[PASS]$(COLOUR_RESET) Output matches $(TEST_DIR)/test2_expected.txt"; \
+	else \
+		echo "$(COLOUR_RED)[FAIL]$(COLOUR_RESET) Output mismatch for Exercise 2"; \
+		echo "$(COLOUR_CYAN)Diff (expected vs actual):$(COLOUR_RESET)"; \
+		diff -u $(TEST_DIR)/test2_expected.txt $(OUT_DIR)/test2_actual.txt || true; \
+		exit 1; \
+	fi
 
 # ==============================================================================
 # VALGRIND MEMORY CHECK
@@ -219,7 +219,7 @@ valgrind-ex1: $(EXERCISE1_BIN)
 	@echo "$(COLOUR_MAGENTA)[VALGRIND]$(COLOUR_RESET) Checking exercise1 for memory leaks..."
 	@echo "$(COLOUR_BLUE)────────────────────────────────────────$(COLOUR_RESET)"
 	@valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes \
-		./$(EXERCISE1_BIN) < $(DATA_DIR)/graph_small.txt 2>&1 | tail -20 || \
+		./$(EXERCISE1_BIN) < $(TEST_DIR)/test1_input.txt 2>&1 | tail -20 || \
 		echo "$(COLOUR_YELLOW)[INFO]$(COLOUR_RESET) Complete TODOs and re-run valgrind"
 	@echo ""
 
@@ -228,7 +228,7 @@ valgrind-ex2: $(EXERCISE2_BIN)
 	@echo "$(COLOUR_MAGENTA)[VALGRIND]$(COLOUR_RESET) Checking exercise2 for memory leaks..."
 	@echo "$(COLOUR_BLUE)────────────────────────────────────────$(COLOUR_RESET)"
 	@valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes \
-		./$(EXERCISE2_BIN) < $(DATA_DIR)/graph_small.txt 2>&1 | tail -20 || \
+		./$(EXERCISE2_BIN) < $(TEST_DIR)/test2_input.txt 2>&1 | tail -20 || \
 		echo "$(COLOUR_YELLOW)[INFO]$(COLOUR_RESET) Complete TODOs and re-run valgrind"
 	@echo ""
 

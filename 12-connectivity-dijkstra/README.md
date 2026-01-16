@@ -1,457 +1,470 @@
-# Week 12: Graph Fundamentals
+# Week 12: Graph Fundamentals, Connectivity and Shortest Paths
 
-## 🎯 Learning Objectives
+## Abstract
 
-Upon completion of this laboratory, students will be able to:
+This laboratory introduces graphs as concrete data structures in C and as abstract objects in discrete mathematics. The focus is deliberately foundational: representation choices, traversal strategies and the inferential tasks that become possible once a graph can be explored systematically. You will implement algorithms that are, in effect, the assembly language of modern graph computation: breadth-first search for level-order exploration and shortest paths in unweighted networks, depth-first search for structural decomposition, cycle detection and topological ordering. The accompanying exercises are engineered to make algorithmic reasoning explicit and to make memory discipline unavoidable.
 
-1. **Remember** the formal definitions and properties of graphs, vertices, edges, degrees and paths
-2. **Understand** the trade-offs between adjacency matrix and adjacency list representations in terms of space and time complexity
-3. **Apply** Breadth-First Search (BFS) and Depth-First Search (DFS) algorithms to traverse arbitrary graphs
-4. **Analyse** the time and space complexity of graph algorithms and select appropriate data structures for specific problem constraints
-5. **Evaluate** different traversal strategies for detecting cycles, finding connected components and computing shortest paths in unweighted graphs
-6. **Create** complete C implementations of graph data structures with full memory management and traversal algorithms
+A secondary aim is methodological. By treating traversal procedures as constructive proofs, you will develop the habit of stating invariants, separating specification from implementation and validating behaviour through regression tests.
 
----
+## Learning outcomes
 
-## 📜 Historical Context
+After completing this week you should be able to:
 
-Graph theory stands as one of the most consequential branches of discrete mathematics, with origins tracing to a deceptively simple puzzle. In 1736, the Swiss mathematician Leonhard Euler addressed the famous "Seven Bridges of Königsberg" problem, asking whether one could traverse each of the city's seven bridges exactly once and return to the starting point. Euler's elegant proof of impossibility—demonstrating that such a walk requires exactly zero or two vertices of odd degree—established the foundational concepts of graph theory and is widely regarded as the birth of topology.
+1. Formalise graphs as ordered pairs \(G = (V, E)\) and reason about paths, cycles and connectedness.
+2. Choose between adjacency matrices and adjacency lists by analysing asymptotic costs and constant factors.
+3. Implement BFS and use its predecessor map to reconstruct shortest paths in unweighted graphs.
+4. Implement DFS and use its recursion stack semantics to detect directed cycles.
+5. Produce a topological ordering of a directed acyclic graph and explain why reverse post-order is sufficient.
+6. Demonstrate correct dynamic memory management in C for pointer-rich graph structures.
 
-The twentieth century witnessed an explosion of graph-theoretic research driven by practical applications. Edsger Dijkstra's 1959 algorithm for shortest paths revolutionised route planning, whilst the development of network flow algorithms by Ford and Fulkerson enabled optimal resource allocation in transportation and communication networks. The emergence of social network analysis in the 1990s and 2000s, coupled with the exponential growth of the World Wide Web, transformed graph algorithms from academic curiosities into essential tools powering modern infrastructure.
+## Repository map
 
-Contemporary applications span virtually every domain of computer science: compiler optimisation relies on control flow graphs, database query optimisation employs dependency graphs, machine learning utilises graph neural networks, and cybersecurity analysis examines network topology for vulnerability detection. The algorithms you will implement this week—BFS and DFS—remain the workhorses of graph computation, serving as building blocks for hundreds of more sophisticated techniques.
+The directory layout is deliberately simple so that attention stays on algorithmic structure rather than build tooling.
 
-### Key Figure: Edsger W. Dijkstra (1930–2002)
+- `src/`
+  - `example1.c` — complete reference demonstration covering representations, BFS, DFS, connected components, cycle detection and topological sorting.
+  - `exercise1.c` — BFS shortest-path queries on an undirected graph.
+  - `exercise2.c` — DFS traversal, cycle detection and topological sort on a directed graph.
+- `data/`
+  - `graph_small.txt`, `graph_medium.txt` — small undirected graphs for exploratory runs and debugging.
+- `tests/`
+  - `test1_input.txt`, `test1_expected.txt` — regression test for Exercise 1.
+  - `test2_input.txt`, `test2_expected.txt` — regression test for Exercise 2.
+- `teme/`
+  - `homework-requirements.md` — assessed specifications for two homework problems.
+  - `homework-extended.md` — optional extension challenges.
+- `slides/`
+  - `presentation-week12.html`, `presentation-comparativ.html` — lecture slides in HTML.
 
-Edsger Wybe Dijkstra was a Dutch computer scientist whose contributions fundamentally shaped the discipline. Beyond his eponymous shortest-path algorithm, Dijkstra pioneered structured programming, invented the semaphore synchronisation primitive, and contributed the shunting-yard algorithm for expression parsing. His famous "Go To Statement Considered Harmful" letter (1968) sparked a paradigm shift in programming methodology. Dijkstra received the Turing Award in 1972 "for fundamental contributions to programming as a high, intellectual challenge."
+## Mathematical preliminaries
 
-> *"Computer Science is no more about computers than astronomy is about telescopes."*
-> — Edsger W. Dijkstra
+### Graph models
 
----
+A graph is a pair \(G = (V, E)\) where \(V\) is a finite set of vertices and \(E\) is a set of edges.
 
-## 📚 Theoretical Foundations
+- **Undirected graph:** each edge is an unordered pair \(\{u, v\}\).
+- **Directed graph:** each edge is an ordered pair \((u, v)\) which may be read as a one-way dependency.
 
-### 1. Graph Definitions and Terminology
+A **walk** is a sequence \(v_0, v_1, \dots, v_k\) such that each consecutive pair is linked by an edge. A **path** is a walk with no repeated vertices. A **cycle** is a non-empty walk where \(v_0 = v_k\) and all other vertices are distinct.
 
-A **graph** G = (V, E) consists of a finite set V of **vertices** (or nodes) and a set E of **edges** (or arcs) connecting pairs of vertices.
+Connectivity is defined for undirected graphs: a graph is connected if every pair of vertices is linked by at least one path. A **connected component** is a maximal connected subgraph.
 
-```
-Undirected Graph Example:           Directed Graph Example:
-        
-     A -------- B                      A -------→ B
-     |  \      /|                      ↑  \      ↗|
-     |   \    / |                      |   ↘    / |
-     |    \  /  |                      |    ↘  ↗  ↓
-     |     \/   |                      |     \/   |
-     |     /\   |                      |     /\   |
-     |    /  \  |                      |    ↗  ↘  |
-     |   /    \ |                      |   /    ↘ ↓
-     |  /      \|                      |  ↗      ↘|
-     D -------- C                      D ←------- C
-```
+For directed graphs, the analogous notion is strong connectivity. This laboratory uses directed graphs primarily for dependency structures where cycles represent contradictions.
 
-**Key terminology:**
-- **Degree**: Number of edges incident to a vertex (in-degree and out-degree for directed graphs)
-- **Path**: Sequence of vertices where consecutive vertices share an edge
-- **Cycle**: Path that begins and ends at the same vertex
-- **Connected**: An undirected graph where a path exists between every pair of vertices
-- **Strongly connected**: A directed graph where paths exist in both directions between every pair
+### Representations
 
-### 2. Graph Representations
+Two representations dominate introductory implementations.
 
-#### Adjacency Matrix
+#### Adjacency matrix
 
-An adjacency matrix A is a |V| × |V| matrix where A[i][j] = 1 if edge (i,j) exists, 0 otherwise.
+An adjacency matrix is a \(|V| \times |V|\) array \(A\) where \(A[u][v] = 1\) if an edge exists from \(u\) to \(v\) and \(0\) otherwise.
 
-```
-Graph:                  Adjacency Matrix:
-                        
-    0 --- 1                 0  1  2  3
-    |   / |             0 [ 0  1  0  1 ]
-    |  /  |             1 [ 1  0  1  1 ]
-    | /   |             2 [ 0  1  0  1 ]
-    3 --- 2             3 [ 1  1  1  0 ]
-```
+- Space: \(\Theta(|V|^2)\)
+- Edge query: \(\Theta(1)\)
+- Neighbour iteration: \(\Theta(|V|)\)
 
-**Properties:**
-- Space complexity: O(|V|²)
-- Edge lookup: O(1)
-- Iterate neighbours: O(|V|)
-- Best for: Dense graphs where |E| ≈ |V|²
+This representation is conceptually clean and constant-time for adjacency tests but becomes prohibitive for sparse graphs.
 
-#### Adjacency List
+#### Adjacency list
 
-An adjacency list stores, for each vertex, a linked list of its neighbours.
+An adjacency list stores, for each vertex \(u\), a list of neighbours \(N(u)\). In C this laboratory represents lists as singly linked lists.
 
-```
-Graph:                  Adjacency List:
-                        
-    0 --- 1             0 → [1] → [3]
-    |   / |             1 → [0] → [2] → [3]
-    |  /  |             2 → [1] → [3]
-    | /   |             3 → [0] → [1] → [2]
-    3 --- 2
-```
+- Space: \(\Theta(|V| + |E|)\)
+- Edge query: \(\Theta(\deg(u))\) in the worst case
+- Neighbour iteration: \(\Theta(\deg(u))\)
 
-**Properties:**
-- Space complexity: O(|V| + |E|)
-- Edge lookup: O(degree)
-- Iterate neighbours: O(degree)
-- Best for: Sparse graphs where |E| << |V|²
+The list representation is typically superior for sparse graphs and is therefore used in the exercise code.
 
-### 3. Traversal Algorithms: Complexity Analysis
+### Complexity conventions
 
-| Operation                    | BFS         | DFS         |
-|------------------------------|-------------|-------------|
-| Time complexity              | O(V + E)    | O(V + E)    |
-| Space complexity             | O(V)        | O(V)        |
-| Data structure               | Queue       | Stack       |
-| Shortest path (unweighted)   | ✓ Yes       | ✗ No        |
-| Topological sort             | ✗ No        | ✓ Yes       |
-| Cycle detection              | ✓ Yes       | ✓ Yes       |
-| Connected components         | ✓ Yes       | ✓ Yes       |
+Throughout, \(|V|\) denotes the number of vertices and \(|E|\) the number of edges. When adjacency lists are used, BFS and DFS run in \(\Theta(|V| + |E|)\) time because each vertex is enqueued or pushed a bounded number of times and each adjacency list edge is scanned once.
 
----
+## Exercise 1: BFS shortest paths in an unweighted undirected graph
 
-## 🔬 Algorithm Deep Dive
+### Specification
 
-### Breadth-First Search (BFS)
+You are given an undirected graph and a set of queries \((s, t)\). For each query you must print one shortest path from \(s\) to \(t\) measured in number of edges.
 
-BFS explores vertices level by level, visiting all neighbours of a vertex before moving deeper. This produces a **shortest-path tree** in unweighted graphs.
+The key requirement is not merely distance computation but path recovery.
 
-```
-BFS Traversal Order (starting from 0):
+### BFS as a shortest-path algorithm
 
-Level 0:    [0]
-             ↓
-Level 1:    [1, 3]
-             ↓
-Level 2:    [2]
+In an unweighted graph, every edge has the same cost. BFS explores vertices in non-decreasing distance from the source. This is precisely the condition needed for shortest paths.
 
-Visit order: 0 → 1 → 3 → 2
+#### Pseudocode
+
+```text
+BFS-SHORTEST-PATHS(G, s):
+  for each vertex v in V:
+    dist[v]   <- +infinity
+    parent[v] <- -1
+
+  dist[s] <- 0
+  Q <- empty queue
+  enqueue(Q, s)
+
+  while Q is not empty:
+    u <- dequeue(Q)
+    for each v in Adj[u]:
+      if dist[v] == +infinity:
+        dist[v]   <- dist[u] + 1
+        parent[v] <- u
+        enqueue(Q, v)
+
+  return (dist, parent)
 ```
 
-**Algorithm pseudocode:**
-```
-BFS(G, source):
-    create queue Q
-    mark source as visited
-    enqueue source into Q
-    
-    while Q is not empty:
-        v = dequeue from Q
-        process(v)
-        
-        for each neighbour u of v:
-            if u is not visited:
-                mark u as visited
-                enqueue u into Q
-```
+The algorithm yields a BFS tree rooted at \(s\) where `parent[v]` is the predecessor of `v` on a shortest path.
 
-### Depth-First Search (DFS)
+#### Path reconstruction
 
-DFS explores as deeply as possible along each branch before backtracking, naturally producing a **spanning tree** with discovery and finishing times useful for many applications.
+```text
+RECONSTRUCT-PATH(parent, s, t):
+  if parent[t] == -1 and t != s:
+    return "no path"
 
-```
-DFS Traversal Order (starting from 0):
+  path <- empty list
+  x <- t
+  while x != -1:
+    append x to path
+    x <- parent[x]
 
-    0 → 1 → 2 → 3 (backtrack) → (backtrack) → (backtrack) → done
-    
-         0
-        /
-       1
-      /
-     2
-    /
-   3
-
-Visit order: 0 → 1 → 2 → 3
+  reverse(path)
+  return path
 ```
 
-**Algorithm pseudocode:**
-```
-DFS(G, v, visited):
-    mark v as visited
-    process(v)
-    
-    for each neighbour u of v:
-        if u is not visited:
-            DFS(G, u, visited)
-```
+### Implementation notes
 
----
+- The queue is implemented as a fixed-capacity array sized to `MAX_VERTICES`. Under BFS, each vertex is enqueued at most once so the queue cannot overflow if the input respects the vertex bound.
+- Adjacency lists are built by inserting each new neighbour at the head. This makes the implementation compact and deterministic which is important for regression tests that validate not only distances but also the exact printed path.
 
-## 🏭 Industrial Applications
+### Complexity
 
-### 1. Social Network Analysis (Facebook, LinkedIn)
+- Time: \(\Theta(|V| + |E|)\) per distinct source vertex used in queries.
+- Space: \(\Theta(|V| + |E|)\) for the adjacency lists plus \(\Theta(|V|)\) for `dist`, `parent` and queue.
+
+### Language sketches
+
+The core algorithm is language-agnostic. The following sketches exist purely to reinforce the idea that correctness lives at the level of invariants.
+
+#### C (schematic)
 
 ```c
-// Finding degrees of separation between users
-typedef struct {
-    int user_id;
-    int *friends;
-    int friend_count;
-} UserNode;
-
-int degrees_of_separation(UserNode *network, int n, int user_a, int user_b) {
-    // BFS from user_a, counting levels until user_b is reached
-    int *distance = calloc(n, sizeof(int));
-    int *visited = calloc(n, sizeof(int));
-    // ... BFS implementation returning distance[user_b]
+void bfs(const Graph *g, int s, int dist[], int parent[]) {
+    for (int v = 0; v < g->n; v++) { dist[v] = INF; parent[v] = -1; }
+    Queue q; queue_init(&q);
+    dist[s] = 0;
+    queue_enqueue(&q, s);
+    while (!queue_empty(&q)) {
+        int u = queue_dequeue(&q);
+        for (AdjNode *p = g->adj[u]; p; p = p->next) {
+            int v = p->vertex;
+            if (dist[v] == INF) {
+                dist[v] = dist[u] + 1;
+                parent[v] = u;
+                queue_enqueue(&q, v);
+            }
+        }
+    }
 }
 ```
 
-### 2. Web Crawlers (Google, Bing)
+#### Python (schematic)
 
-```c
-// URL frontier using BFS for breadth-first crawling
-typedef struct URLNode {
-    char url[2048];
-    int depth;
-    struct URLNode *next;
-} URLNode;
+```python
+from collections import deque
 
-void crawl_bfs(const char *seed_url, int max_depth) {
-    Queue *frontier = queue_create();
-    HashSet *visited = hashset_create();
-    // BFS traversal of web pages
+def bfs(adj, s):
+    n = len(adj)
+    dist = [None] * n
+    parent = [-1] * n
+    q = deque([s])
+    dist[s] = 0
+    while q:
+        u = q.popleft()
+        for v in adj[u]:
+            if dist[v] is None:
+                dist[v] = dist[u] + 1
+                parent[v] = u
+                q.append(v)
+    return dist, parent
+```
+
+#### C++ (schematic)
+
+```cpp
+vector<int> dist(n, INF), parent(n, -1);
+queue<int> q;
+dist[s] = 0;
+q.push(s);
+while (!q.empty()) {
+    int u = q.front(); q.pop();
+    for (int v : adj[u]) {
+        if (dist[v] == INF) {
+            dist[v] = dist[u] + 1;
+            parent[v] = u;
+            q.push(v);
+        }
+    }
 }
 ```
 
-### 3. GPS Navigation (Google Maps, Waze)
+#### Java (schematic)
 
-```c
-// Road network as weighted graph
-typedef struct {
-    int intersection_id;
-    double latitude, longitude;
-    Edge *roads;  // Adjacency list of connected roads
-} Intersection;
-
-// Dijkstra's algorithm builds upon BFS concepts
-Path *find_shortest_route(RoadNetwork *network, int start, int dest);
+```java
+int[] dist = new int[n];
+int[] parent = new int[n];
+Arrays.fill(dist, INF);
+Arrays.fill(parent, -1);
+ArrayDeque<Integer> q = new ArrayDeque<>();
+dist[s] = 0;
+q.add(s);
+while (!q.isEmpty()) {
+    int u = q.remove();
+    for (int v : adj.get(u)) {
+        if (dist[v] == INF) {
+            dist[v] = dist[u] + 1;
+            parent[v] = u;
+            q.add(v);
+        }
+    }
+}
 ```
 
-### 4. Compiler Optimisation (GCC, LLVM)
+## Exercise 2: DFS traversal, cycle detection and topological sorting
 
-```c
-// Control flow graph for basic blocks
-typedef struct BasicBlock {
-    Instruction *instructions;
-    struct BasicBlock **successors;
-    int successor_count;
-    int visited;  // For DFS-based analyses
-} BasicBlock;
+### DFS traversal as a graph decomposition
 
-// Dominance analysis uses DFS
-void compute_dominators(BasicBlock *entry);
+DFS constructs a forest of depth-first trees by exploring each vertex as deeply as possible before backtracking.
+
+#### Pseudocode
+
+```text
+DFS-FULL(G):
+  visited[v] <- false for all v
+  for v from 0 to |V|-1:
+    if not visited[v]:
+      DFS-VISIT(G, v)
+
+DFS-VISIT(G, v):
+  visited[v] <- true
+  output v
+  for each u in Adj[v]:
+    if not visited[u]:
+      DFS-VISIT(G, u)
 ```
 
-### 5. Network Routing (Cisco IOS, Linux Kernel)
+### Cycle detection via the three-colour method
 
-```c
-// OSPF routing protocol uses Dijkstra's algorithm
-typedef struct RouterNode {
-    uint32_t router_id;
-    struct Link {
-        uint32_t neighbour_id;
-        uint32_t cost;
-    } *links;
-    int link_count;
-} RouterNode;
+For directed graphs, DFS carries an additional semantic layer: the recursion stack represents the current dependency chain. A back edge to an ancestor signals a cycle.
+
+Colour states:
+
+- `WHITE`: undiscovered
+- `GREY`: discovered and currently active on the recursion stack
+- `BLACK`: fully processed
+
+#### Pseudocode
+
+```text
+HAS-CYCLE(G):
+  colour[v] <- WHITE for all v
+  parent[v] <- -1 for all v
+  for v from 0 to |V|-1:
+    if colour[v] == WHITE:
+      if VISIT-CYCLE(G, v):
+        return true
+  return false
+
+VISIT-CYCLE(G, v):
+  colour[v] <- GREY
+  for each u in Adj[v]:
+    if colour[u] == GREY:
+      report cycle by walking parent pointers from v back to u
+      return true
+    if colour[u] == WHITE:
+      parent[u] <- v
+      if VISIT-CYCLE(G, u):
+        return true
+  colour[v] <- BLACK
+  return false
 ```
 
----
+### Topological sorting by reverse post-order
 
-## 💻 Laboratory Exercises
+A topological ordering exists if and only if the directed graph is acyclic. In a DAG, if DFS pushes a vertex onto a stack after exploring all its descendants then popping the stack yields a valid topological ordering.
 
-### Exercise 1: Graph Representation and BFS
+#### Pseudocode
 
-**Objective:** Implement a complete graph library supporting both adjacency matrix and adjacency list representations, with BFS traversal.
+```text
+TOPOLOGICAL-SORT(G):
+  if HAS-CYCLE(G):
+    return failure
+  visited[v] <- false for all v
+  S <- empty stack
+  for v from 0 to |V|-1:
+    if not visited[v]:
+      TOPO-VISIT(G, v, visited, S)
+  return pop-all(S)
 
-**Requirements:**
-1. Define `Graph` structure supporting both representations
-2. Implement `graph_create()`, `graph_destroy()`, `graph_add_edge()`
-3. Implement `bfs_traversal()` that prints vertices in BFS order
-4. Implement `bfs_shortest_path()` returning distance array
-5. Implement `bfs_connected_components()` for undirected graphs
-6. Handle memory allocation failures gracefully
-7. Support both directed and undirected graphs
-8. Test with provided sample data
-
-**Input format:**
-```
-5 6          # vertices edges
-0 1          # edge list
-0 4
-1 2
-1 3
-2 3
-3 4
+TOPO-VISIT(G, v, visited, S):
+  visited[v] <- true
+  for each u in Adj[v]:
+    if not visited[u]:
+      TOPO-VISIT(G, u, visited, S)
+  push(S, v)
 ```
 
-### Exercise 2: DFS and Applications
+### Complexity
 
-**Objective:** Implement DFS traversal with applications including cycle detection, topological sorting and strongly connected components.
+- DFS traversal: \(\Theta(|V| + |E|)\)
+- Cycle detection: \(\Theta(|V| + |E|)\)
+- Topological sort: \(\Theta(|V| + |E|)\)
 
-**Requirements:**
-1. Implement iterative DFS using explicit stack
-2. Implement recursive DFS with discovery/finish times
-3. Implement `dfs_has_cycle()` for directed graphs
-4. Implement `dfs_topological_sort()` for DAGs
-5. Implement `dfs_path_exists()` between two vertices
-6. Track parent pointers for path reconstruction
-7. Handle disconnected graphs correctly
-8. Produce correctly formatted output matching expected files
+## Example programme
 
----
+`src/example1.c` is a complete, runnable demonstration. It builds small graphs in memory, prints both matrix and list representations and then illustrates the algorithms in a narrative order suitable for live teaching.
 
-## 🔧 Compilation and Execution
+## Building and testing
 
-```bash
-# Build all targets
+The Makefile aims to be explicit rather than clever.
+
+```sh
 make
-
-# Build specific target
-make example1
-make exercise1
-make exercise2
-
-# Run the complete example
-make run
-
-# Execute automated tests
-make test
-
-# Check for memory leaks
-make valgrind
-
-# Clean build artefacts
-make clean
-
-# Display help
-make help
+make run        # demonstration programme
+make run-ex1     # Exercise 1 using regression input
+make run-ex2     # Exercise 2 using regression input
+make test        # regression tests with diffs
 ```
 
-**Compiler flags used:**
-- `-Wall`: Enable all standard warnings
-- `-Wextra`: Enable additional warnings
-- `-std=c11`: Use C11 standard
-- `-g`: Include debugging symbols
+The regression tests are intentionally strict. They validate not only correctness of distances and acyclicity but also output formatting and the determinism of the recovered path.
 
----
+## Engineering notes: correctness and memory
 
-## 📁 Directory Structure
+### Determinism
 
+Traversal order in adjacency-list graphs depends on neighbour list order. This repository inserts new neighbours at the head of each list, so the neighbour order is the reverse of the input edge order. The tests are written with that convention in mind.
+
+### Memory discipline
+
+Every adjacency list node is allocated exactly once and freed exactly once. The destroy routines traverse each list, free each node and reset pointers to `NULL`. You should treat these routines as part of the functional specification, not as an afterthought.
+
+
+## Correctness sketches
+
+### Breadth-first search and shortest paths
+
+BFS is often presented as a traversal routine yet for unweighted graphs it is also a shortest-path algorithm. The point is not that BFS happens to work but that its control structure enforces a discipline on discovery that mirrors the structure of shortest paths.
+
+Key invariants (informal but operational):
+
+1. When a vertex v is first discovered, dist[v] is assigned exactly once and it is equal to dist[parent[v]] + 1.
+2. The queue always contains vertices in non-decreasing dist order. More precisely, if x appears in the queue before y then dist[x] <= dist[y].
+3. When a vertex u is dequeued, dist[u] is final: no later discovery can produce a strictly shorter path to u.
+
+Correctness argument sketch:
+
+- Existence: For every discovered vertex v, the parent pointers define a concrete path from the source s to v whose length equals dist[v]. This follows by construction because parent pointers decrease distance by exactly 1.
+- Optimality: Suppose, for contradiction, that v is first discovered with dist[v] > delta(s, v) where delta is the true shortest path length. Consider a shortest path P from s to v and let w be the predecessor of v on P. Then delta(s, w) = delta(s, v) - 1. By induction on path length, w must be discovered with dist[w] = delta(s, w). When w is dequeued, the algorithm inspects edge (w, v) and would discover v with dist[w] + 1 = delta(s, v), contradicting the assumption that v was first discovered with a larger value.
+
+These two steps jointly show dist[v] = delta(s, v) for all reachable vertices and that the reconstructed path is a shortest path.
+
+### Cycle detection with the three-colour method
+
+The three-colour method should be read as a formalisation of the recursion stack.
+
+- WHITE vertices have not been visited.
+- GREY vertices are precisely those that are on the active call stack of DFS-VISIT.
+- BLACK vertices have returned from DFS-VISIT, meaning all outgoing edges have been explored.
+
+Invariant: At any moment during the DFS, the GREY vertices form a simple directed path in the DFS tree rooted at the current DFS start vertex. Each GREY vertex (except the root of that DFS tree) has a well-defined parent pointer to the caller.
+
+When an edge v -> u is scanned and u is GREY, u is an ancestor of v in the active recursion chain so there exists a directed path u -> ... -> v via parent pointers and v -> u closes a directed cycle. Conversely, if the graph contains a directed cycle then a DFS starting from any vertex on the cycle will eventually expose a back edge to a GREY ancestor, because one vertex on the cycle must be revisited before the cycle has been fully unwound.
+
+### Topological ordering by reverse post-order
+
+Let G be a directed acyclic graph. Consider a DFS that pushes each vertex onto a stack after exploring all descendants. When there is an edge u -> v, DFS cannot finish u before it finishes v, because exploring u entails exploring v unless v has already been finished in an earlier DFS tree. In either case, the finishing time of u is later than the finishing time of v. Therefore, if vertices are listed in decreasing finishing time then u appears before v for every edge u -> v which is exactly the definition of a topological ordering.
+
+## Worked trace: BFS on the regression graph
+
+The regression instance for Exercise 1 contains vertices 0..5 and edges:
+
+- 0-1, 0-2
+- 1-2, 1-3
+- 2-4
+- 3-4, 3-5
+
+A BFS from source 0 proceeds as follows when adjacency lists are built by head insertion:
+
+1. Start: dist[0] = 0, queue = [0]
+2. Dequeue 0: discover 2 then 1, queue = [2, 1]
+3. Dequeue 2: discover 4, queue = [1, 4]
+4. Dequeue 1: discover 3, queue = [4, 3]
+5. Dequeue 4: no new discoveries, queue = [3]
+6. Dequeue 3: discover 5, queue = [5]
+7. Dequeue 5: done
+
+The parent pointers yield:
+
+- parent[1] = 0, parent[3] = 1, parent[5] = 3 so path 0 -> 1 -> 3 -> 5
+- parent[4] = 2, parent[2] = 0 so path 0 -> 2 -> 4
+
+This trace clarifies a subtle but important point: BFS may discover vertices in many orders yet the distance labels are forced by the queue discipline.
+
+## Common implementation pitfalls
+
+1. Forgetting to reinitialise dist and parent arrays when the BFS source changes.
+2. Using an adjacency matrix and then forgetting that neighbour iteration is Theta(|V|) per vertex, which becomes quadratic even for sparse graphs.
+3. Printing paths in reverse because parent pointers point towards the source.
+4. Treating the GREY state as equivalent to visited and thereby losing the ability to distinguish tree edges from back edges.
+5. Omitting graph destruction routines, which hides memory leaks until the code is executed under a leak checker.
+
+## Appendix: Dijkstra as the weighted analogue of BFS
+
+BFS is sufficient for unweighted graphs because all edges contribute the same increment to path length. For weighted graphs with non-negative weights, the appropriate generalisation is Dijkstra's algorithm.
+
+Conceptual shift:
+
+- BFS maintains a FIFO queue and expands vertices in increasing number of edges.
+- Dijkstra maintains a min-priority queue keyed by tentative distance and expands vertices in increasing current best distance.
+
+Pseudocode (non-negative weights):
+
+```text
+DIJKSTRA(G, s):
+  for each vertex v:
+    dist[v] <- +infinity
+    parent[v] <- -1
+  dist[s] <- 0
+  PQ <- min-priority-queue of (dist[v], v)
+  insert (0, s) into PQ
+
+  while PQ not empty:
+    (d, u) <- extract-min(PQ)
+    if d > dist[u]:
+      continue
+    for each edge (u, v) with weight w:
+      if dist[u] + w < dist[v]:
+        dist[v] <- dist[u] + w
+        parent[v] <- u
+        insert (dist[v], v) into PQ
+
+  return (dist, parent)
 ```
-week-12-graph-fundamentals/
-├── README.md                           # This documentation
-├── Makefile                            # Build automation
-│
-├── slides/
-│   ├── presentation-week12.html        # Main lecture (38 slides)
-│   └── presentation-comparativ.html    # Pseudocode/C/Python comparison
-│
-├── src/
-│   ├── example1.c                      # Complete working demonstration
-│   ├── exercise1.c                     # BFS implementation exercise
-│   └── exercise2.c                     # DFS applications exercise
-│
-├── data/
-│   ├── graph_small.txt                 # Small test graph (5 vertices)
-│   └── graph_medium.txt                # Medium test graph (10 vertices)
-│
-├── tests/
-│   ├── test1_input.txt                 # Test input for exercise 1
-│   ├── test1_expected.txt              # Expected BFS output
-│   ├── test2_input.txt                 # Test input for exercise 2
-│   └── test2_expected.txt              # Expected DFS output
-│
-├── teme/
-│   ├── homework-requirements.md        # 2 homework assignments
-│   └── homework-extended.md            # 5 bonus challenges
-│
-└── solution/
-    ├── exercise1_sol.c                 # BFS exercise solution
-    ├── exercise2_sol.c                 # DFS exercise solution
-    ├── homework1_sol.c                 # Homework 1 solution
-    └── homework2_sol.c                 # Homework 2 solution
-```
 
----
+The algorithm is structurally similar to BFS: a frontier data structure, a discovery rule and a parent map for reconstruction. The difference is the ordering discipline enforced by the data structure.
 
-## 📖 Recommended Reading
+## Further directions
 
-### Essential
-- Cormen, T. H., et al. *Introduction to Algorithms* (4th ed.), Chapters 20–22: Elementary Graph Algorithms
-- Sedgewick, R. & Wayne, K. *Algorithms* (4th ed.), Chapter 4: Graphs
-- Skiena, S. S. *The Algorithm Design Manual* (3rd ed.), Chapter 7: Graph Traversal
+- Weighted shortest paths require relaxation rather than level-order exploration. Dijkstra's algorithm can be viewed as BFS generalised from unit weights to non-negative weights by replacing the FIFO queue with a priority queue and by relaxing edges in increasing tentative distance order.
+- For DAG scheduling problems, longest-path computations become tractable via dynamic programming in topological order.
+- Strongly connected components, articulation points and bridges arise naturally once you begin to ask what structural information DFS discovery times encode.
 
-### Advanced
-- Tarjan, R. E. "Depth-First Search and Linear Graph Algorithms" (1972) — Original DFS applications paper
-- Hopcroft, J. & Tarjan, R. "Algorithm 447: Efficient Algorithms for Graph Manipulation" (1973)
-- Even, S. *Graph Algorithms* (2nd ed.) — Comprehensive theoretical treatment
+## References
 
-### Online Resources
-- Visualgo Graph Traversal: https://visualgo.net/en/dfsbfs
-- CP-Algorithms Graph Theory: https://cp-algorithms.com/graph/
-- MIT OpenCourseWare 6.006: https://ocw.mit.edu/courses/6-006-introduction-to-algorithms-spring-2020/
-
----
-
-## ✅ Self-Assessment Checklist
-
-Before submitting, ensure you can:
-
-- [ ] Explain the difference between adjacency matrix and adjacency list representations
-- [ ] State the time complexity of BFS and DFS for both representations
-- [ ] Implement BFS using a queue data structure
-- [ ] Implement DFS both recursively and iteratively
-- [ ] Use BFS to find shortest paths in unweighted graphs
-- [ ] Use DFS to detect cycles in directed graphs
-- [ ] Perform topological sorting on a DAG using DFS
-- [ ] Identify connected components in undirected graphs
-- [ ] Analyse memory usage of graph representations for given V and E
-- [ ] Debug graph algorithms using GDB and Valgrind
-
----
-
-## 💼 Interview Preparation
-
-**Common technical interview questions on graphs:**
-
-1. **"How would you detect a cycle in an undirected graph?"**
-   - Use DFS with parent tracking; a back edge to a visited non-parent indicates a cycle
-
-2. **"What is the difference between BFS and DFS? When would you use each?"**
-   - BFS: level-order, shortest paths, closer solutions first
-   - DFS: deeper exploration, topological sort, uses less memory for wide graphs
-
-3. **"How do you find the shortest path between two nodes?"**
-   - Unweighted: BFS; Weighted non-negative: Dijkstra; Negative weights: Bellman-Ford
-
-4. **"Implement a function to clone a graph."**
-   - Use BFS/DFS with a hash map to track original→clone node mappings
-
-5. **"How would you determine if a graph is bipartite?"**
-   - BFS/DFS with two-colouring; graph is bipartite iff no odd-length cycles exist
-
----
-
-## 🔗 Next Week Preview
-
-**Week 13: Advanced Graph Algorithms**
-
-Building upon this week's foundations, we will explore:
-- **Dijkstra's Algorithm**: Shortest paths in weighted graphs with non-negative edges
-- **Bellman-Ford Algorithm**: Handling negative edge weights and detecting negative cycles
-- **Minimum Spanning Trees**: Prim's and Kruskal's algorithms
-- **Network Flow**: Introduction to max-flow/min-cut problems
-
-Ensure mastery of BFS and DFS before proceeding, as all advanced algorithms build upon these traversal techniques.
-
----
-
-*Laboratory materials prepared for ATP Course, Computer Science Department*
-*Week 12 of 14 — Graph Fundamentals*
+| Reference (APA 7th) | DOI |
+|---|---|
+| Dijkstra, E. W. (1959). A note on two problems in connexion with graphs. *Numerische Mathematik, 1*(1), 269–271. | https://doi.org/10.1007/BF01386390 |
+| Tarjan, R. E. (1972). Depth-first search and linear graph algorithms. *SIAM Journal on Computing, 1*(2), 146–160. | https://doi.org/10.1137/0201010 |
+| Kahn, A. B. (1962). Topological sorting of large networks. *Communications of the ACM, 5*(11), 558–562. | https://doi.org/10.1145/368996.369025 |
+| Lee, C. Y. (1961). An algorithm for path connections and its applications. *IRE Transactions on Electronic Computers, EC-10*(3), 346–365. | https://doi.org/10.1109/TEC.1961.5219222 |

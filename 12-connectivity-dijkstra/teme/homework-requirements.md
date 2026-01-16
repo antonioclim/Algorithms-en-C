@@ -1,181 +1,320 @@
 # Week 12 Homework: Graph Fundamentals
 
-## 📋 General Information
-- **Deadline:** End of week 13
-- **Points:** 100 (10% of final grade)
-- **Language:** C (C11 standard)
-- **Compiler:** GCC with `-Wall -Wextra -std=c11`
+## Administrative details
 
----
+- **Deadline:** End of Week 13
+- **Weight:** 100 points (10% of final grade)
+- **Implementation language:** C (C11)
+- **Compiler:** GCC
+- **Expected flags:** `-Wall -Wextra -std=c11`
 
-## 📝 Homework 1: Social Network Analysis (50 points)
+The homework consists of two independent programmes that target the same conceptual material but with different modelling choices: an undirected graph for a social network and a directed graph for task dependencies.
 
-### Description
+## Submission artefacts
 
-You are tasked with analysing a simplified social network. Given a list of friendships (undirected edges), implement a program that can answer queries about the network's structure, including finding mutual friends, degrees of separation and connected communities.
+Submit **exactly two C source files**:
 
-### Requirements
+1. `homework1_social.c`
+2. `homework2_scheduler.c`
 
-1. **Graph Construction** (10p)
-   - Read the network from a file (adjacency list format)
-   - Support up to 10,000 users (vertices)
-   - Validate input and handle errors gracefully
+Each file must include, at minimum:
 
-2. **Friend Recommendations** (15p)
-   - Implement a function that suggests friends based on mutual connections
-   - For a given user, find all users who share at least 2 mutual friends but are not already connected
-   - Sort recommendations by number of mutual friends (descending)
+- A header comment stating your name, your student ID and the compilation command you used.
+- A short description of the approach and the asymptotic complexity of the main operations.
+- Robust input validation and deterministic output formatting.
 
-3. **Degrees of Separation** (15p)
-   - Implement BFS to find the shortest path between any two users
-   - Report the chain of connections (e.g., "Alice → Bob → Charlie")
-   - Handle disconnected users appropriately
+No additional libraries are permitted beyond the C standard library.
 
-4. **Community Detection** (10p)
-   - Identify all connected components in the network
-   - Report the size of each community
-   - Find the largest community
+## Shared constraints and design expectations
 
-### Input Format
+### Graph size bounds
+
+- Homework 1: up to 10,000 vertices and up to 200,000 edges.
+- Homework 2: up to 10,000 vertices and up to 200,000 dependencies.
+
+Your representation must therefore be adjacency list based. An adjacency matrix would require on the order of 10,000^2 integers which is not acceptable for memory.
+
+### Memory management
+
+The marking scheme assumes that your submission is valgrind-clean.
+
+- Every allocation must have a corresponding free.
+- Destroy routines must be reachable from all error paths.
+- Programmes must not leak memory when they terminate early due to invalid input.
+
+### Output determinism
+
+If multiple correct answers exist, your output must still be deterministic. For example, when sorting recommendations you must define a tie-breaker.
+
+## Homework 1: Social Network Analysis (50 points)
+
+### Problem model
+
+Users are vertices. Friendships are undirected edges. A query workload is executed against a fixed network.
+
+### Input format
+
 ```
 n m
-user1 user2
-user1 user3
+u1 v1
+u2 v2
 ...
 q
 RECOMMEND user_id
-DISTANCE user1 user2
+DISTANCE s t
 COMMUNITIES
 ```
 
-### Example Usage
-```c
-/* Expected output for RECOMMEND query */
-Recommendations for user 5:
-  User 12 (4 mutual friends)
-  User 8 (3 mutual friends)
-  User 15 (2 mutual friends)
+- `n` is the number of users (vertices) labelled `0..n-1`.
+- `m` is the number of friendships.
+- Each friendship line `u v` indicates an undirected connection.
+- `q` is the number of queries.
 
-/* Expected output for DISTANCE query */
-Distance from 0 to 42: 3
-Path: 0 → 7 → 23 → 42
+### Required queries and semantics
 
-/* Expected output for COMMUNITIES query */
-Found 3 communities:
-  Community 1: 156 users
-  Community 2: 42 users
-  Community 3: 2 users
+#### 1. RECOMMEND user_id (15 points)
+
+For a given user `u`, produce friend recommendations based on mutual friends.
+
+- A candidate `c` is recommendable if:
+  - `c != u`
+  - `c` is not already a friend of `u`
+  - `u` and `c` have at least **two** mutual friends
+- Recommendations are sorted by:
+  1. Mutual friend count descending
+  2. Candidate id ascending (tie-breaker)
+
+Suggested algorithmic pattern (two-hop counting)
+
+Rather than computing set intersections for every candidate, count candidates reachable by two steps:
+
+```text
+RECOMMEND(u):
+  mark all neighbours of u in isFriend[ ]
+  mutualCount[ ] <- 0
+
+  for each friend f in Adj[u]:
+    for each candidate c in Adj[f]:
+      if c == u: continue
+      if isFriend[c]: continue
+      mutualCount[c]++
+
+  output all c with mutualCount[c] >= 2
+  sort by (-mutualCount[c], c)
 ```
 
-### File: `homework1_social.c`
+Complexity discussion
 
----
+- Let deg(x) denote the degree of vertex x.
+- The two-hop counting loop costs Theta(sum_{f in N(u)} deg(f)).
+- This is typically far smaller than Theta(n * deg(u)) for sparse graphs.
 
-## 📝 Homework 2: Task Scheduler with Dependencies (50 points)
+Practical engineering note
 
-### Description
+- `isFriend` can be a temporary boolean array of length `n` that you reset by storing visited indices in a list.
 
-Implement a task scheduling system that respects dependencies between tasks. This is a classic application of topological sorting on directed acyclic graphs (DAGs). Your scheduler must detect circular dependencies and produce a valid execution order when possible.
+#### 2. DISTANCE s t (15 points)
 
-### Requirements
+Compute degrees of separation using BFS.
 
-1. **Task Graph Construction** (10p)
-   - Each task has a unique ID and optional name
-   - Support directed edges representing "must complete before" relationships
-   - Validate that task IDs are within bounds
+- Output both the shortest distance and a concrete path.
+- If `t` is unreachable from `s`, output a clear statement and omit the path.
 
-2. **Cycle Detection** (15p)
-   - Implement the three-colour DFS algorithm
-   - If a cycle is detected, report all tasks involved in the cycle
-   - Provide a clear error message explaining why scheduling is impossible
+Required output format (illustrative)
 
-3. **Topological Sort** (15p)
-   - If the graph is acyclic, produce a valid execution order
-   - Implement using DFS-based approach (post-order reversal)
-   - Handle multiple valid orderings (any valid order is acceptable)
+```text
+Distance from 0 to 42: 3
+Path: 0 -> 7 -> 23 -> 42
+```
 
-4. **Critical Path Analysis** (10p)
-   - Assuming each task takes 1 time unit
-   - Calculate the minimum total time to complete all tasks
-   - Identify which tasks are on the critical path (cannot be delayed)
+Suggested BFS with predecessor reconstruction
 
-### Input Format
+```text
+BFS-PATH(s, t):
+  dist[ ] <- +infinity
+  parent[ ] <- -1
+  dist[s] <- 0
+  queue <- [s]
+
+  while queue not empty:
+    u <- pop front
+    if u == t: break
+    for v in Adj[u]:
+      if dist[v] == +infinity:
+        dist[v] <- dist[u] + 1
+        parent[v] <- u
+        push back v
+
+  if dist[t] == +infinity:
+    report unreachable
+  else:
+    reconstruct by walking parent[t] back to s
+```
+
+#### 3. COMMUNITIES (10 points)
+
+Identify connected components in the undirected network.
+
+Minimum requirements
+
+- Output the number of components.
+- Output the size of each component.
+- Identify the largest component.
+
+Suggested approach
+
+Run BFS or DFS from each unvisited vertex and assign a component id.
+
+```text
+COMPONENTS():
+  compId[ ] <- 0
+  k <- 0
+  for v in 0..n-1:
+    if compId[v] == 0:
+      k++
+      BFS-MARK(v, k)
+  return k
+```
+
+### Marking breakdown
+
+- Graph construction and input validation: 10 points
+- Friend recommendations: 15 points
+- Distances and path reconstruction: 15 points
+- Communities and reporting: 10 points
+
+## Homework 2: Task Scheduler with Dependencies (50 points)
+
+### Problem model
+
+Tasks are vertices in a directed graph. A directed edge `a b` means task `a` must be completed before task `b`.
+
+### Input format
+
 ```
 n m
-task_id1 task_id2    # task_id1 must complete before task_id2
+pre1 post1
+pre2 post2
 ...
 ```
 
-### Example Usage
-```c
-/* Input: 6 tasks with dependencies */
-6 6
-0 1
-0 2
-1 3
-2 3
-3 4
-3 5
+### Required capabilities
 
-/* Expected output */
-No cycles detected - scheduling possible
+#### 1. Cycle detection (15 points)
 
-Execution order: 0 2 1 3 5 4
-(or any valid topological order)
+You must detect circular dependencies using the three-colour DFS algorithm.
 
-Critical path length: 4
-Critical tasks: 0 -> 1 -> 3 -> 4
-               or 0 -> 2 -> 3 -> 4
+- If a cycle exists, output the tasks involved.
+- Your output must be deterministic. If multiple cycles exist, report the first one encountered under your vertex iteration order.
+
+Pseudocode
+
+```text
+HAS-CYCLE(G):
+  colour[v] <- WHITE
+  parent[v] <- -1
+
+  for v in 0..n-1:
+    if colour[v] == WHITE:
+      if VISIT(v):
+        return true
+  return false
+
+VISIT(v):
+  colour[v] <- GREY
+  for u in Adj[v]:
+    if colour[u] == GREY:
+      extract cycle by walking parent from v back to u
+      return true
+    if colour[u] == WHITE:
+      parent[u] <- v
+      if VISIT(u): return true
+  colour[v] <- BLACK
+  return false
 ```
 
-### File: `homework2_scheduler.c`
+#### 2. Topological ordering (15 points)
 
----
+If the graph is acyclic, output a topological order.
 
-## 📊 Evaluation Criteria
+- DFS post-order reversal is acceptable.
+- Kahn's algorithm is also acceptable.
+
+Correctness requirement
+
+For every dependency edge `a -> b`, task `a` must appear before task `b`.
+
+#### 3. Critical path analysis with unit task durations (10 points)
+
+Assume each task takes exactly 1 time unit. Compute:
+
+- The minimum total completion time (critical path length)
+- At least one critical chain of tasks that achieves this length
+
+Suggested dynamic programming on a DAG
+
+Let `topo[0..n-1]` be a topological order. Define:
+
+- `dp[v]` = length of the longest path ending at v (in vertices or in edges, but be consistent)
+- `pred[v]` = predecessor that maximises dp
+
+Algorithm
+
+```text
+CRITICAL-PATH(G, topo):
+  dp[v] <- 1
+  pred[v] <- -1
+
+  for v in topo:
+    for each edge v -> u:
+      if dp[v] + 1 > dp[u]:
+        dp[u] <- dp[v] + 1
+        pred[u] <- v
+
+  T <- max_v dp[v]
+  end <- argmax_v dp[v]
+  reconstruct chain by walking pred[end]
+  return (T, chain)
+```
+
+### Marking breakdown
+
+- Input model and validation: 10 points
+- Cycle detection and reporting: 15 points
+- Topological ordering: 15 points
+- Critical path: 10 points
+
+## Evaluation criteria and penalties
 
 | Criterion | Points |
-|-----------|--------|
+|---|---:|
 | Functional correctness | 40 |
-| Proper use of graph algorithms (BFS/DFS) | 25 |
-| Edge case handling | 15 |
+| Correct use of graph algorithms | 25 |
+| Edge-case handling | 15 |
 | Code quality and documentation | 10 |
-| No compiler warnings | 10 |
+| No compiler warnings under the expected flags | 10 |
 
-### Penalties
-- -10p: Compiler warnings (any `-Wall -Wextra` warnings)
-- -20p: Memory leaks (detected by Valgrind)
-- -30p: Crashes on valid input
-- -50p: Plagiarism (automatic zero and disciplinary action)
+Penalties
 
-### Memory Management Requirements
-- All dynamically allocated memory must be freed
-- Run your code with `valgrind --leak-check=full` before submission
-- Zero memory leaks and zero errors expected
+- Compiler warnings: -10 points
+- Memory leaks (valgrind): -20 points
+- Crashes on valid input: -30 points
+- Plagiarism: automatic zero and disciplinary escalation
 
----
+## Testing guidance
 
-## 📤 Submission
+You are expected to construct both micro-tests and stress tests.
 
-1. Submit two C source files: `homework1_social.c` and `homework2_scheduler.c`
-2. Ensure files compile without warnings using: `gcc -Wall -Wextra -std=c11`
-3. Include your name and student ID in the file header comment
-4. Upload to the course portal before the deadline
+Micro-tests
 
----
+- Single vertex, no edges
+- Two vertices, one edge
+- Disconnected graph with several components
+- Graph with high-degree hub
 
-## 💡 Tips
+Stress tests
 
-1. **Start with the data structures**: Before writing algorithms, ensure your graph representation (adjacency list) is solid and well-tested.
+- Random sparse graphs with controlled degree distribution
+- Adversarial recommendation queries focused on high-degree vertices
 
-2. **Test incrementally**: Write and test each function separately before integrating. Use small graphs where you can verify results by hand.
-
-3. **Use helper functions**: Functions like `print_graph()`, `print_path()` help with debugging. You can remove or disable them before submission.
-
-4. **Handle edge cases first**: What happens with an empty graph? A single vertex? No edges? Disconnected components?
-
-5. **Memory management matters**: Every `malloc` needs a corresponding `free`. Draw memory diagrams if helpful.
-
-6. **Valgrind is your friend**: Run early and often with `valgrind --leak-check=full ./your_program`. Fix leaks immediately rather than at the end.
-
-7. **Read error messages carefully**: The compiler and Valgrind provide precise information about problems. Don't ignore warnings.
+A good submission contains test generators (not submitted) and evidence that your programme is stable under diverse inputs.
