@@ -1,13 +1,30 @@
 /**
  * =============================================================================
- * EXERCISE 2: Unified Graph Analyser - SOLUTION
+ * EXERCISE 2: Unified Graph Analyser
  * =============================================================================
  *
- * This file contains the complete solution for Exercise 2.
- * All TODOs have been implemented with detailed explanations.
+ * In week 14 the emphasis shifts from single-algorithm mastery to disciplined
+ * composition: parsing, representation, traversal, optimisation and reporting.
  *
- * COMPILATION: gcc -Wall -Wextra -std=c11 -o exercise2_sol exercise2_sol.c
- * USAGE: ./exercise2_sol [graph_file]
+ * The analyser loads an undirected weighted graph from an edge list file and
+ * computes a small portfolio of results:
+ *   - graph statistics (vertex count, edge count, density)
+ *   - connected components (via DFS)
+ *   - BFS and DFS traversal orders from a chosen source
+ *   - single-source shortest paths (Dijkstra, adjacency-matrix implementation)
+ *
+ * The programme also supports a quiet regression output profile which is used
+ * by the automated tests. When stdout is not a TTY it prints a strict, minimal
+ * transcript that is stable under diff.
+ *
+ * Compilation:
+ *   gcc -Wall -Wextra -std=c11 -g -o exercise2 src/exercise2.c -lm
+ *
+ * Regression usage:
+ *   ./exercise2 tests/test2_input.txt
+ *
+ * Interactive usage:
+ *   ./exercise2 data/graph_sample.txt
  *
  * =============================================================================
  */
@@ -17,6 +34,7 @@
 #include <string.h>
 #include <stdbool.h>
 #include <limits.h>
+#include <unistd.h>
 
 /* =============================================================================
  * CONFIGURATION
@@ -672,37 +690,86 @@ int export_analysis(Graph *g, const char *filename) {
  * =============================================================================
  */
 
-int main(int argc, char *argv[]) {
+static int run_quiet_profile(const char *input_file) {
+    Graph *g = graph_load(input_file);
+    if (!g) {
+        return 1;
+    }
+
+    printf("Graph: %d vertices, %d edges\n", g->vertices, g->edges);
+    printf("Density: %.3f\n", graph_density(g));
+    printf("Components: %d\n\n", count_components(g));
+
+    int order[MAX_VERTICES];
+    int count = 0;
+
+    graph_bfs(g, 0, order, &count);
+    printf("BFS from 0: ");
+    for (int i = 0; i < count; i++) {
+        if (i) putchar(' ');
+        printf("%d", order[i]);
+    }
+    putchar('\n');
+
+    graph_dfs(g, 0, order, &count);
+    printf("DFS from 0: ");
+    for (int i = 0; i < count; i++) {
+        if (i) putchar(' ');
+        printf("%d", order[i]);
+    }
+    putchar('\n');
+
+    printf("\nDijkstra from vertex 0:\n");
+
+    int *dist = (int *)malloc((size_t)g->vertices * sizeof(int));
+    int *parent = (int *)malloc((size_t)g->vertices * sizeof(int));
+    if (!dist || !parent) {
+        free(dist);
+        free(parent);
+        graph_free(g);
+        return 1;
+    }
+
+    dijkstra(g, 0, dist, parent);
+    for (int v = 0; v < g->vertices; v++) {
+        if (dist[v] == INF) {
+            printf("  To %d: unreachable\n", v);
+        } else {
+            printf("  To %d: %d\n", v, dist[v]);
+        }
+    }
+
+    free(dist);
+    free(parent);
+    graph_free(g);
+    return 0;
+}
+
+static int run_interactive_profile(const char *input_file) {
     printf("\n");
     printf("╔═══════════════════════════════════════════════════════════════╗\n");
     printf("║  Unified Graph Analyser                                       ║\n");
-    printf("║  Exercise 2 - Week 14 (SOLUTION)                              ║\n");
+    printf("║  Exercise 2 - Week 14                                         ║\n");
     printf("╚═══════════════════════════════════════════════════════════════╝\n\n");
-    
-    /* Determine input file */
-    const char *input_file = (argc > 1) ? argv[1] : "data/graph_sample.txt";
-    
+
     printf("Loading graph from: %s\n\n", input_file);
-    
-    /* Load graph from file */
+
     Graph *g = graph_load(input_file);
     if (!g) {
         fprintf(stderr, "Error: Could not load graph from %s\n", input_file);
         fprintf(stderr, "Make sure the file exists and has correct format.\n");
         return 1;
     }
-    
-    /* Display graph info */
+
     printf("Graph loaded successfully!\n");
     printf("  Vertices: %d\n", g->vertices);
     printf("  Edges:    %d\n", g->edges);
-    printf("  Density:  %.3f\n\n", graph_density(g));
-    
-    /* Arrays for traversal results */
+    printf("  Density:  %.3f\n", graph_density(g));
+    printf("  Components: %d\n\n", count_components(g));
+
     int order[MAX_VERTICES];
-    int count;
-    
-    /* BFS Traversal */
+    int count = 0;
+
     printf("BFS Traversal:\n");
     graph_bfs(g, 0, order, &count);
     printf("  From vertex 0: ");
@@ -710,8 +777,7 @@ int main(int argc, char *argv[]) {
         printf("%d ", order[i]);
     }
     printf("\n");
-    
-    /* DFS Traversal */
+
     printf("\nDFS Traversal:\n");
     graph_dfs(g, 0, order, &count);
     printf("  From vertex 0: ");
@@ -719,15 +785,12 @@ int main(int argc, char *argv[]) {
         printf("%d ", order[i]);
     }
     printf("\n");
-    
-    /* Dijkstra's algorithm */
+
     printf("\nShortest Paths (Dijkstra from vertex 0):\n");
-    int *dist = malloc(g->vertices * sizeof(int));
-    int *parent = malloc(g->vertices * sizeof(int));
-    
+    int *dist = (int *)malloc((size_t)g->vertices * sizeof(int));
+    int *parent = (int *)malloc((size_t)g->vertices * sizeof(int));
     if (dist && parent) {
         dijkstra(g, 0, dist, parent);
-        
         for (int v = 0; v < g->vertices; v++) {
             printf("  To %d: ", v);
             if (dist[v] == INF) {
@@ -736,30 +799,40 @@ int main(int argc, char *argv[]) {
                 printf("%d\n", dist[v]);
             }
         }
-        
+        free(dist);
+        free(parent);
+    } else {
         free(dist);
         free(parent);
     }
-    
-    /* Connected components */
-    printf("\nConnected Components: %d\n", count_components(g));
-    
-    /* Export analysis report */
+
     printf("\nExporting analysis report...\n");
     if (export_analysis(g, OUTPUT_FILE) == 0) {
         printf("Report saved to: %s\n", OUTPUT_FILE);
+    } else {
+        printf("Report export failed\n");
     }
-    
-    /* Cleanup */
+
     graph_free(g);
-    
+
     printf("\n");
     printf("╔═══════════════════════════════════════════════════════════════╗\n");
     printf("║  Analysis complete                                            ║\n");
     printf("╚═══════════════════════════════════════════════════════════════╝\n\n");
-    
+
     return 0;
 }
+
+int main(int argc, char *argv[]) {
+    const char *input_file = (argc > 1) ? argv[1] : "data/graph_sample.txt";
+
+    if (!isatty(STDOUT_FILENO)) {
+        return run_quiet_profile(input_file);
+    }
+
+    return run_interactive_profile(input_file);
+}
+
 
 /* =============================================================================
  * COMPLEXITY SUMMARY

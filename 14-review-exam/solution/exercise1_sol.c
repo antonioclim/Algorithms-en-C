@@ -1,12 +1,28 @@
 /**
  * =============================================================================
- * EXERCISE 1: Algorithm Benchmarking Suite - SOLUTION
+ * EXERCISE 1: Algorithm Benchmarking Suite
  * =============================================================================
  *
- * This file contains the complete solution for Exercise 1.
- * All TODOs have been implemented with detailed explanations.
+ * This exercise integrates two complementary concerns:
  *
- * COMPILATION: gcc -Wall -Wextra -std=c11 -o exercise1_sol exercise1_sol.c
+ * 1) Correctness under a strict, transcript-based regression harness
+ *    - When stdin is not a TTY the programme reads: n followed by n integers
+ *    - It sorts the same input with selection sort, quick sort and merge sort
+ *    - It prints the sorted sequence once then prints PASS/FAIL per algorithm
+ *
+ * 2) Empirical benchmarking and reproducible performance observation
+ *    - When stdin is a TTY the programme generates random inputs for a series
+ *      of sizes and measures mean execution time over multiple runs
+ *    - Results are exported in CSV form for external plotting
+ *
+ * Compilation:
+ *   gcc -Wall -Wextra -std=c11 -g -o exercise1 src/exercise1.c
+ *
+ * Regression usage:
+ *   ./exercise1 < tests/test1_input.txt
+ *
+ * Benchmark usage:
+ *   ./exercise1 --benchmark
  *
  * =============================================================================
  */
@@ -16,6 +32,7 @@
 #include <string.h>
 #include <time.h>
 #include <stdbool.h>
+#include <unistd.h>
 
 /* =============================================================================
  * CONFIGURATION
@@ -426,41 +443,105 @@ int export_results_csv(const BenchmarkResult *results, int count,
  * =============================================================================
  */
 
-int main(void) {
+
+static void print_int_list(const int *arr, int n) {
+    for (int i = 0; i < n; i++) {
+        if (i) putchar(' ');
+        printf("%d", arr[i]);
+    }
+    putchar('\n');
+}
+
+static int run_regression_mode(void) {
+    int n = 0;
+    if (scanf("%d", &n) != 1 || n < 0 || n > MAX_ARRAY_SIZE) {
+        return 1;
+    }
+
+    int *input = NULL;
+    if (n > 0) {
+        input = (int *)malloc((size_t)n * sizeof(int));
+        if (!input) {
+            return 1;
+        }
+        for (int i = 0; i < n; i++) {
+            if (scanf("%d", &input[i]) != 1) {
+                free(input);
+                return 1;
+            }
+        }
+    }
+
+    SortFunction algorithms[NUM_ALGORITHMS] = { selection_sort, quick_sort, merge_sort };
+    const char *algo_labels[NUM_ALGORITHMS] = { "SelectionSort", "QuickSort", "MergeSort" };
+
+    int *work = (n > 0) ? (int *)malloc((size_t)n * sizeof(int)) : NULL;
+    int *reference = (n > 0) ? (int *)malloc((size_t)n * sizeof(int)) : NULL;
+    if (n > 0 && (!work || !reference)) {
+        free(input);
+        free(work);
+        free(reference);
+        return 1;
+    }
+
+    bool passed[NUM_ALGORITHMS] = { true, true, true };
+
+    for (int a = 0; a < NUM_ALGORITHMS; a++) {
+        if (n > 0) {
+            copy_array(input, work, n);
+            algorithms[a](work, n);
+        }
+
+        if (!is_sorted(work, n)) {
+            passed[a] = false;
+        }
+
+        if (a == 0) {
+            if (n > 0) {
+                copy_array(work, reference, n);
+            }
+        } else {
+            if (n > 0 && memcmp(reference, work, (size_t)n * sizeof(int)) != 0) {
+                passed[a] = false;
+            }
+        }
+    }
+
+    if (n > 0) {
+        print_int_list(reference, n);
+    } else {
+        putchar('\n');
+    }
+
+    for (int a = 0; a < NUM_ALGORITHMS; a++) {
+        printf("%s: %s\n", algo_labels[a], passed[a] ? "PASSED" : "FAILED");
+    }
+
+    free(input);
+    free(work);
+    free(reference);
+    return 0;
+}
+
+static int run_benchmark_mode(void) {
     printf("\n");
     printf("╔═══════════════════════════════════════════════════════════════╗\n");
     printf("║  Algorithm Benchmarking Suite                                 ║\n");
-    printf("║  Exercise 1 - Week 14 (SOLUTION)                              ║\n");
+    printf("║  Exercise 1 - Week 14                                         ║\n");
     printf("╚═══════════════════════════════════════════════════════════════╝\n\n");
-    
-    /* Seed random number generator for reproducibility */
-    srand(42);  /* Fixed seed for consistent results */
-    
-    /**
-     * SOLUTION TODO 10: Create array of function pointers
-     *
-     * Array of function pointers allows us to iterate through
-     * algorithms in a loop rather than calling each one separately.
-     */
-    SortFunction algorithms[NUM_ALGORITHMS] = {
-        selection_sort,
-        quick_sort,
-        merge_sort
-    };
-    
-    /* Algorithm names for display */
-    const char *algo_names[NUM_ALGORITHMS] = {
-        "SelectSort", "QuickSort", "MergeSort"
-    };
-    
-    /* Storage for benchmark results */
+
+    /* Fixed seed ensures reproducible benchmark tables across runs. */
+    srand(42);
+
+    SortFunction algorithms[NUM_ALGORITHMS] = { selection_sort, quick_sort, merge_sort };
+    const char *algo_names[NUM_ALGORITHMS] = { "SelectSort", "QuickSort", "MergeSort" };
+
     BenchmarkResult results[NUM_ALGORITHMS];
     for (int i = 0; i < NUM_ALGORITHMS; i++) {
         strncpy(results[i].name, algo_names[i], 31);
         results[i].name[31] = '\0';
     }
-    
-    /* Print header */
+
     printf("Running benchmarks with %d runs per test...\n\n", BENCHMARK_RUNS);
     printf("%-6s", "Size");
     for (int a = 0; a < NUM_ALGORITHMS; a++) {
@@ -472,91 +553,103 @@ int main(void) {
         printf("-+-%12s", "------------");
     }
     printf("\n");
-    
-    /**
-     * SOLUTION TODO 11: Run benchmarks for each test size
-     *
-     * For each test size:
-     * 1. Generate random test data
-     * 2. Benchmark each algorithm
-     * 3. Store and display results
-     */
+
     for (int s = 0; s < NUM_TEST_SIZES; s++) {
         int size = TEST_SIZES[s];
-        
-        /* Generate random array for this test size */
         int *test_array = generate_random_array(size, 10000);
-        if (test_array == NULL) {
+        if (!test_array) {
             fprintf(stderr, "Failed to generate test array\n");
             return 1;
         }
-        
-        /* Print size column */
+
         printf("%5d ", size);
-        
-        /* Benchmark each algorithm */
         for (int a = 0; a < NUM_ALGORITHMS; a++) {
             double time_ms = measure_sort_time(algorithms[a], test_array, size);
             results[a].times[s] = time_ms;
             printf(" | %9.3f ms", time_ms);
         }
         printf("\n");
-        
-        /* Free test array */
+
         free(test_array);
     }
-    
+
     printf("\n");
-    
-    /**
-     * SOLUTION TODO 12: Export results and verify sorting correctness
-     */
-    
-    /* Export results to CSV */
-    export_results_csv(results, NUM_ALGORITHMS, OUTPUT_FILENAME);
-    
-    /* Verification section */
+
+    if (export_results_csv(results, NUM_ALGORITHMS, OUTPUT_FILENAME) == 0) {
+        printf("Results exported to %s\n", OUTPUT_FILENAME);
+    } else {
+        printf("Failed to export results to %s\n", OUTPUT_FILENAME);
+    }
+
     printf("\n");
     printf("╔═══════════════════════════════════════════════════════════════╗\n");
     printf("║  Verification                                                 ║\n");
     printf("╚═══════════════════════════════════════════════════════════════╝\n\n");
-    
-    /* Generate small test array for verification */
+
     int verify_size = 20;
     int *verify_array = generate_random_array(verify_size, 100);
-    int *test_copy = malloc(verify_size * sizeof(int));
-    
+    int *test_copy = (int *)malloc((size_t)verify_size * sizeof(int));
+
     if (verify_array && test_copy) {
         printf("Original array: ");
         print_array(verify_array, verify_size);
         printf("\n");
-        
-        /* Test each algorithm */
+
         for (int a = 0; a < NUM_ALGORITHMS; a++) {
             copy_array(verify_array, test_copy, verify_size);
             algorithms[a](test_copy, verify_size);
-            
+
             bool sorted = is_sorted(test_copy, verify_size);
             printf("%-12s: ", algo_names[a]);
-            if (sorted) {
-                printf("✓ PASSED ");
-                print_array(test_copy, verify_size);
-            } else {
-                printf("✗ FAILED - array not sorted\n");
-            }
+            printf("%s\n", sorted ? "PASSED" : "FAILED");
         }
-        
+
+        free(verify_array);
+        free(test_copy);
+    } else {
         free(verify_array);
         free(test_copy);
     }
-    
+
     printf("\n");
     printf("╔═══════════════════════════════════════════════════════════════╗\n");
     printf("║  Benchmarking complete                                        ║\n");
     printf("╚═══════════════════════════════════════════════════════════════╝\n\n");
-    
+
     return 0;
 }
+
+int main(int argc, char **argv) {
+    bool benchmark = false;
+    bool force_stdin = false;
+
+    for (int i = 1; i < argc; i++) {
+        if (strcmp(argv[i], "--benchmark") == 0 || strcmp(argv[i], "-b") == 0) {
+            benchmark = true;
+        } else if (strcmp(argv[i], "--stdin") == 0 || strcmp(argv[i], "-s") == 0) {
+            force_stdin = true;
+        } else if (strcmp(argv[i], "--help") == 0 || strcmp(argv[i], "-h") == 0) {
+            fprintf(stderr,
+                    "Usage: %s [--benchmark|-b] [--stdin|-s]\n\n"
+                    "Default behaviour:\n"
+                    "  - If stdin is not a TTY then run regression mode (read array from stdin)\n"
+                    "  - Otherwise run benchmarking mode\n",
+                    argv[0]);
+            return 0;
+        }
+    }
+
+    if (benchmark) {
+        return run_benchmark_mode();
+    }
+
+    if (force_stdin || !isatty(STDIN_FILENO)) {
+        return run_regression_mode();
+    }
+
+    return run_benchmark_mode();
+}
+
 
 /* =============================================================================
  * COMPLEXITY ANALYSIS

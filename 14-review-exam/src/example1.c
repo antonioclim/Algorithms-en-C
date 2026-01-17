@@ -880,6 +880,7 @@ static void demo_part3_dynamic_programming(void) {
                 
                 DPFunction func = (DPFunction)algo->function;
                 result = func(n);
+                (void)result;
                 
                 clock_t end = clock();
                 double time_ms = ((double)(end - start) * 1000.0) / CLOCKS_PER_SEC;

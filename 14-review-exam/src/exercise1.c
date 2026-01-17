@@ -3,38 +3,26 @@
  * EXERCISE 1: Algorithm Benchmarking Suite
  * =============================================================================
  *
- * OBJECTIVE:
- *   Build a comprehensive benchmarking framework that compares different
- *   implementations of common algorithms, measuring execution time and
- *   analysing complexity through empirical observation.
+ * This exercise integrates two complementary concerns:
  *
- * REQUIREMENTS:
- *   1. Implement three sorting algorithm variants
- *   2. Create a timing function using clock()
- *   3. Generate test data of varying sizes
- *   4. Compare theoretical vs empirical complexity
- *   5. Export results to a CSV file
+ * 1) Correctness under a strict, transcript-based regression harness
+ *    - When stdin is not a TTY the programme reads: n followed by n integers
+ *    - It sorts the same input with selection sort, quick sort and merge sort
+ *    - It prints the sorted sequence once then prints PASS/FAIL per algorithm
  *
- * EXAMPLE INPUT:
- *   (No direct input - generates test data internally)
+ * 2) Empirical benchmarking and reproducible performance observation
+ *    - When stdin is a TTY the programme generates random inputs for a series
+ *      of sizes and measures mean execution time over multiple runs
+ *    - Results are exported in CSV form for external plotting
  *
- * EXPECTED OUTPUT:
- *   Benchmarking Algorithm Suite
- *   ============================
- *   
- *   Running benchmarks for n = 100, 500, 1000, 2000, 5000
- *   
- *   Results:
- *   Size  | SelectSort |  QuickSort |  MergeSort
- *   ------|------------|------------|------------
- *    100  |    0.05 ms |    0.01 ms |    0.02 ms
- *    500  |    1.20 ms |    0.08 ms |    0.12 ms
- *   1000  |    4.80 ms |    0.18 ms |    0.26 ms
- *   ...
- *   
- *   Results exported to benchmark_output.csv
+ * Compilation:
+ *   gcc -Wall -Wextra -std=c11 -g -o exercise1 src/exercise1.c
  *
- * COMPILATION: gcc -Wall -Wextra -std=c11 -o exercise1 exercise1.c
+ * Regression usage:
+ *   ./exercise1 < tests/test1_input.txt
+ *
+ * Benchmark usage:
+ *   ./exercise1 --benchmark
  *
  * =============================================================================
  */
@@ -44,6 +32,7 @@
 #include <string.h>
 #include <time.h>
 #include <stdbool.h>
+#include <unistd.h>
 
 /* =============================================================================
  * CONFIGURATION
@@ -65,26 +54,20 @@ static const int TEST_SIZES[NUM_TEST_SIZES] = {100, 500, 1000, 2000, 5000};
  */
 
 /**
- * TODO 1: Define a function pointer type for sorting algorithms
+ * SOLUTION TODO 1: Function pointer type for sorting algorithms
  *
- * All sorting functions should take:
- *   - int *arr: pointer to array to sort
- *   - int n: number of elements
- * 
- * They should return void (sort in-place).
- *
- * Hint: typedef void (*TypeName)(int *, int);
+ * A function pointer type that can reference any sorting function
+ * with signature: void function_name(int *array, int size)
  */
-
-/* YOUR CODE HERE */
+typedef void (*SortFunction)(int *, int);
 
 
 /**
  * Structure to hold benchmark results for one algorithm.
  */
 typedef struct {
-    char name[32];              /* Algorithm name */
-    double times[NUM_TEST_SIZES]; /* Execution times in ms */
+    char name[32];                  /* Algorithm name */
+    double times[NUM_TEST_SIZES];   /* Execution times in ms */
 } BenchmarkResult;
 
 /* =============================================================================
@@ -129,87 +112,93 @@ static void print_array(const int *arr, int n) {
  */
 
 /**
- * TODO 2: Implement Selection Sort
- *
- * Selection Sort algorithm:
- *   1. Find the minimum element in unsorted portion
- *   2. Swap it with the first unsorted element
- *   3. Move boundary one element right
- *   4. Repeat until sorted
+ * SOLUTION TODO 2: Selection Sort
  *
  * Time Complexity: O(n²) for all cases
- * Space Complexity: O(1)
+ * Space Complexity: O(1) - in-place
  *
- * @param arr Array to sort
- * @param n   Number of elements
+ * Selection sort works by repeatedly finding the minimum element from the
+ * unsorted portion and placing it at the beginning of the unsorted portion.
  */
 void selection_sort(int *arr, int n) {
-    /* YOUR CODE HERE */
-    
-    /* Hint: Use nested loops
-     *   - Outer loop: i from 0 to n-1
-     *   - Find minimum index from i to n-1
-     *   - Swap arr[i] with arr[min_idx]
-     */
+    for (int i = 0; i < n - 1; i++) {
+        /* Find index of minimum element in unsorted portion [i, n-1] */
+        int min_idx = i;
+        for (int j = i + 1; j < n; j++) {
+            if (arr[j] < arr[min_idx]) {
+                min_idx = j;
+            }
+        }
+        
+        /* Swap minimum element with first unsorted element */
+        if (min_idx != i) {
+            int temp = arr[i];
+            arr[i] = arr[min_idx];
+            arr[min_idx] = temp;
+        }
+    }
 }
 
 /**
- * TODO 3: Implement Quick Sort partition function
+ * SOLUTION TODO 3: Quick Sort partition function (Lomuto scheme)
  *
- * Lomuto partition scheme:
- *   - Choose last element as pivot
- *   - Partition array so elements < pivot are left, >= pivot are right
- *   - Return final pivot position
+ * Partitions the array around the pivot (last element).
+ * After partitioning:
+ *   - All elements < pivot are to the left of pivot's final position
+ *   - All elements >= pivot are to the right
  *
- * @param arr  Array to partition
- * @param low  Starting index
- * @param high Ending index (pivot location)
- * @return     Final position of pivot
+ * @return Final position of the pivot element
  */
 static int partition(int *arr, int low, int high) {
-    /* YOUR CODE HERE */
+    /* Choose last element as pivot */
+    int pivot = arr[high];
     
-    /* Hint:
-     *   int pivot = arr[high];
-     *   int i = low - 1;
-     *   for j from low to high-1:
-     *       if arr[j] <= pivot:
-     *           i++
-     *           swap arr[i] and arr[j]
-     *   swap arr[i+1] and arr[high]
-     *   return i + 1
-     */
+    /* Index of smaller element - tracks boundary of left partition */
+    int i = low - 1;
     
-    return low;  /* Replace this */
+    /* Scan through array, moving elements smaller than pivot to left */
+    for (int j = low; j < high; j++) {
+        if (arr[j] <= pivot) {
+            i++;
+            /* Swap arr[i] and arr[j] */
+            int temp = arr[i];
+            arr[i] = arr[j];
+            arr[j] = temp;
+        }
+    }
+    
+    /* Place pivot in its correct position */
+    int temp = arr[i + 1];
+    arr[i + 1] = arr[high];
+    arr[high] = temp;
+    
+    return i + 1;  /* Return pivot's final position */
 }
 
 /**
- * TODO 4: Implement Quick Sort recursive function
+ * SOLUTION TODO 4: Quick Sort recursive implementation
  *
- * Quick Sort algorithm:
- *   1. If low < high:
- *   2. Partition the array
- *   3. Recursively sort left partition
- *   4. Recursively sort right partition
+ * Time Complexity: O(n log n) average, O(n²) worst case
+ * Space Complexity: O(log n) average (call stack)
  *
- * @param arr  Array to sort
- * @param low  Starting index
- * @param high Ending index
+ * Quick sort is a divide-and-conquer algorithm that:
+ * 1. Selects a 'pivot' element
+ * 2. Partitions array around pivot
+ * 3. Recursively sorts sub-arrays
  */
 static void quicksort_recursive(int *arr, int low, int high) {
-    /* YOUR CODE HERE */
-    
-    /* Hint:
-     *   if (low < high) {
-     *       int pi = partition(arr, low, high);
-     *       quicksort_recursive(arr, low, pi - 1);
-     *       quicksort_recursive(arr, pi + 1, high);
-     *   }
-     */
+    if (low < high) {
+        /* Partition array and get pivot position */
+        int pi = partition(arr, low, high);
+        
+        /* Recursively sort elements before and after partition */
+        quicksort_recursive(arr, low, pi - 1);   /* Left of pivot */
+        quicksort_recursive(arr, pi + 1, high);  /* Right of pivot */
+    }
 }
 
 /**
- * Quick Sort wrapper function (PROVIDED).
+ * Quick Sort wrapper function.
  */
 void quick_sort(int *arr, int n) {
     if (n > 1) {
@@ -218,60 +207,103 @@ void quick_sort(int *arr, int n) {
 }
 
 /**
- * TODO 5: Implement Merge function for Merge Sort
+ * SOLUTION TODO 5: Merge function for Merge Sort
  *
- * Merge two sorted subarrays:
- *   - arr[left..mid] and arr[mid+1..right]
- *   - Use temporary arrays for merging
- *   - Free temporary memory after use
+ * Merges two sorted sub-arrays into one sorted array.
+ * Uses temporary arrays to hold the two halves during merging.
  *
- * @param arr   Array containing both subarrays
- * @param left  Start of first subarray
- * @param mid   End of first subarray
- * @param right End of second subarray
+ * @param arr   The array containing both sub-arrays
+ * @param left  Starting index of first sub-array
+ * @param mid   Ending index of first sub-array
+ * @param right Ending index of second sub-array
  */
 static void merge(int *arr, int left, int mid, int right) {
-    /* YOUR CODE HERE */
+    /* Calculate sizes of two sub-arrays */
+    int n1 = mid - left + 1;    /* Size of left sub-array */
+    int n2 = right - mid;       /* Size of right sub-array */
     
-    /* Hint:
-     *   1. Calculate sizes: n1 = mid - left + 1, n2 = right - mid
-     *   2. Allocate temp arrays L and R
-     *   3. Copy data to temp arrays
-     *   4. Merge back: compare L[i] and R[j], copy smaller
-     *   5. Copy remaining elements
-     *   6. Free temp arrays
-     */
+    /* Allocate temporary arrays */
+    int *L = malloc(n1 * sizeof(int));
+    int *R = malloc(n2 * sizeof(int));
+    
+    if (L == NULL || R == NULL) {
+        fprintf(stderr, "Memory allocation failed in merge()\n");
+        free(L);
+        free(R);
+        return;
+    }
+    
+    /* Copy data to temporary arrays */
+    for (int i = 0; i < n1; i++) {
+        L[i] = arr[left + i];
+    }
+    for (int j = 0; j < n2; j++) {
+        R[j] = arr[mid + 1 + j];
+    }
+    
+    /* Merge temporary arrays back into arr[left..right] */
+    int i = 0;      /* Index for left sub-array */
+    int j = 0;      /* Index for right sub-array */
+    int k = left;   /* Index for merged array */
+    
+    while (i < n1 && j < n2) {
+        if (L[i] <= R[j]) {
+            arr[k] = L[i];
+            i++;
+        } else {
+            arr[k] = R[j];
+            j++;
+        }
+        k++;
+    }
+    
+    /* Copy remaining elements of L[], if any */
+    while (i < n1) {
+        arr[k] = L[i];
+        i++;
+        k++;
+    }
+    
+    /* Copy remaining elements of R[], if any */
+    while (j < n2) {
+        arr[k] = R[j];
+        j++;
+        k++;
+    }
+    
+    /* Free temporary arrays */
+    free(L);
+    free(R);
 }
 
 /**
- * TODO 6: Implement Merge Sort recursive function
+ * SOLUTION TODO 6: Merge Sort recursive implementation
  *
- * Merge Sort algorithm (divide and conquer):
- *   1. If left < right:
- *   2. Find middle point
- *   3. Recursively sort first half
- *   4. Recursively sort second half
- *   5. Merge the sorted halves
+ * Time Complexity: O(n log n) for all cases
+ * Space Complexity: O(n) for temporary arrays
  *
- * @param arr   Array to sort
- * @param left  Starting index
- * @param right Ending index
+ * Merge sort is a stable, divide-and-conquer algorithm that:
+ * 1. Divides array into two halves
+ * 2. Recursively sorts each half
+ * 3. Merges the sorted halves
  */
 static void mergesort_recursive(int *arr, int left, int right) {
-    /* YOUR CODE HERE */
-    
-    /* Hint:
-     *   if (left < right) {
-     *       int mid = left + (right - left) / 2;
-     *       mergesort_recursive(arr, left, mid);
-     *       mergesort_recursive(arr, mid + 1, right);
-     *       merge(arr, left, mid, right);
-     *   }
-     */
+    if (left < right) {
+        /* Find middle point to divide array */
+        /* Use left + (right - left) / 2 to avoid overflow */
+        int mid = left + (right - left) / 2;
+        
+        /* Recursively sort first and second halves */
+        mergesort_recursive(arr, left, mid);
+        mergesort_recursive(arr, mid + 1, right);
+        
+        /* Merge the sorted halves */
+        merge(arr, left, mid, right);
+    }
 }
 
 /**
- * Merge Sort wrapper function (PROVIDED).
+ * Merge Sort wrapper function.
  */
 void merge_sort(int *arr, int n) {
     if (n > 1) {
@@ -285,55 +317,77 @@ void merge_sort(int *arr, int n) {
  */
 
 /**
- * TODO 7: Implement array generator with random values
+ * SOLUTION TODO 7: Generate array with random values
  *
- * Generate an array of n random integers in range [0, max_val).
+ * Allocates and fills an array with random integers.
  *
- * @param n       Number of elements
+ * @param n       Number of elements to generate
  * @param max_val Maximum value (exclusive)
  * @return        Pointer to allocated array, or NULL on failure
- *
- * Steps:
- *   1. Allocate memory for n integers
- *   2. Check for allocation failure
- *   3. Fill with random values using rand() % max_val
- *   4. Return pointer
  */
 int *generate_random_array(int n, int max_val) {
-    /* YOUR CODE HERE */
+    /* Allocate memory for n integers */
+    int *arr = malloc(n * sizeof(int));
     
-    return NULL;  /* Replace this */
+    /* Check for allocation failure */
+    if (arr == NULL) {
+        fprintf(stderr, "Memory allocation failed for array of size %d\n", n);
+        return NULL;
+    }
+    
+    /* Fill with random values in range [0, max_val) */
+    for (int i = 0; i < n; i++) {
+        arr[i] = rand() % max_val;
+    }
+    
+    return arr;
 }
 
 /**
- * TODO 8: Implement the timing function
+ * SOLUTION TODO 8: Measure execution time of sorting algorithm
  *
- * Measure execution time of a sorting algorithm.
- * Run the algorithm BENCHMARK_RUNS times and return average time.
+ * Runs the algorithm multiple times and returns average execution time.
+ * Uses a fresh copy of the original array for each run.
  *
  * @param sort_func Function pointer to sorting algorithm
- * @param original  Original array (will be copied for each run)
+ * @param original  Original array (copied for each run)
  * @param n         Array size
  * @return          Average execution time in milliseconds
- *
- * Steps:
- *   1. Allocate a copy array
- *   2. For each run:
- *      a. Copy original to copy array
- *      b. Record start time with clock()
- *      c. Call sort_func(copy, n)
- *      d. Record end time
- *      e. Add elapsed time to total
- *   3. Free copy array
- *   4. Return average time in milliseconds
- *
- * Hint: time_ms = ((double)(end - start) * 1000.0) / CLOCKS_PER_SEC
  */
-double measure_sort_time(void (*sort_func)(int *, int), 
-                         const int *original, int n) {
-    /* YOUR CODE HERE */
+double measure_sort_time(SortFunction sort_func, const int *original, int n) {
+    /* Allocate copy array for testing */
+    int *copy = malloc(n * sizeof(int));
+    if (copy == NULL) {
+        fprintf(stderr, "Memory allocation failed in measure_sort_time()\n");
+        return -1.0;
+    }
     
-    return 0.0;  /* Replace this */
+    double total_time = 0.0;
+    
+    /* Run algorithm BENCHMARK_RUNS times */
+    for (int run = 0; run < BENCHMARK_RUNS; run++) {
+        /* Copy original array to preserve it */
+        copy_array(original, copy, n);
+        
+        /* Record start time */
+        clock_t start = clock();
+        
+        /* Execute sorting algorithm */
+        sort_func(copy, n);
+        
+        /* Record end time */
+        clock_t end = clock();
+        
+        /* Calculate elapsed time in milliseconds */
+        double elapsed = ((double)(end - start) * 1000.0) / CLOCKS_PER_SEC;
+        total_time += elapsed;
+    }
+    
+    /* Free copy array */
+    free(copy);
+    
+    /* Return average time */
+    return total_time / BENCHMARK_RUNS;
 }
 
 /* =============================================================================
@@ -342,32 +396,46 @@ double measure_sort_time(void (*sort_func)(int *, int),
  */
 
 /**
- * TODO 9: Export benchmark results to CSV file
+ * SOLUTION TODO 9: Export benchmark results to CSV file
  *
- * Create a CSV file with format:
- *   Size,SelectionSort,QuickSort,MergeSort
- *   100,0.05,0.01,0.02
- *   500,1.20,0.08,0.12
- *   ...
+ * Creates a CSV file suitable for importing into spreadsheet software
+ * or plotting with tools like gnuplot, matplotlib, etc.
  *
- * @param results Array of BenchmarkResult structures
- * @param count   Number of results
+ * @param results  Array of BenchmarkResult structures
+ * @param count    Number of algorithms
  * @param filename Output filename
- * @return        0 on success, -1 on failure
- *
- * Steps:
- *   1. Open file for writing
- *   2. Write header row
- *   3. For each test size:
- *      a. Write size
- *      b. Write time for each algorithm (comma-separated)
- *   4. Close file
+ * @return         0 on success, -1 on failure
  */
 int export_results_csv(const BenchmarkResult *results, int count, 
                        const char *filename) {
-    /* YOUR CODE HERE */
+    /* Open file for writing */
+    FILE *fp = fopen(filename, "w");
+    if (fp == NULL) {
+        fprintf(stderr, "Failed to open file '%s' for writing\n", filename);
+        return -1;
+    }
     
-    return -1;  /* Replace with 0 on success */
+    /* Write header row */
+    fprintf(fp, "Size");
+    for (int a = 0; a < count; a++) {
+        fprintf(fp, ",%s", results[a].name);
+    }
+    fprintf(fp, "\n");
+    
+    /* Write data rows */
+    for (int s = 0; s < NUM_TEST_SIZES; s++) {
+        fprintf(fp, "%d", TEST_SIZES[s]);
+        for (int a = 0; a < count; a++) {
+            fprintf(fp, ",%.4f", results[a].times[s]);
+        }
+        fprintf(fp, "\n");
+    }
+    
+    /* Close file */
+    fclose(fp);
+    
+    printf("Results exported to '%s'\n", filename);
+    return 0;
 }
 
 /* =============================================================================
@@ -375,42 +443,105 @@ int export_results_csv(const BenchmarkResult *results, int count,
  * =============================================================================
  */
 
-int main(void) {
+
+static void print_int_list(const int *arr, int n) {
+    for (int i = 0; i < n; i++) {
+        if (i) putchar(' ');
+        printf("%d", arr[i]);
+    }
+    putchar('\n');
+}
+
+static int run_regression_mode(void) {
+    int n = 0;
+    if (scanf("%d", &n) != 1 || n < 0 || n > MAX_ARRAY_SIZE) {
+        return 1;
+    }
+
+    int *input = NULL;
+    if (n > 0) {
+        input = (int *)malloc((size_t)n * sizeof(int));
+        if (!input) {
+            return 1;
+        }
+        for (int i = 0; i < n; i++) {
+            if (scanf("%d", &input[i]) != 1) {
+                free(input);
+                return 1;
+            }
+        }
+    }
+
+    SortFunction algorithms[NUM_ALGORITHMS] = { selection_sort, quick_sort, merge_sort };
+    const char *algo_labels[NUM_ALGORITHMS] = { "SelectionSort", "QuickSort", "MergeSort" };
+
+    int *work = (n > 0) ? (int *)malloc((size_t)n * sizeof(int)) : NULL;
+    int *reference = (n > 0) ? (int *)malloc((size_t)n * sizeof(int)) : NULL;
+    if (n > 0 && (!work || !reference)) {
+        free(input);
+        free(work);
+        free(reference);
+        return 1;
+    }
+
+    bool passed[NUM_ALGORITHMS] = { true, true, true };
+
+    for (int a = 0; a < NUM_ALGORITHMS; a++) {
+        if (n > 0) {
+            copy_array(input, work, n);
+            algorithms[a](work, n);
+        }
+
+        if (!is_sorted(work, n)) {
+            passed[a] = false;
+        }
+
+        if (a == 0) {
+            if (n > 0) {
+                copy_array(work, reference, n);
+            }
+        } else {
+            if (n > 0 && memcmp(reference, work, (size_t)n * sizeof(int)) != 0) {
+                passed[a] = false;
+            }
+        }
+    }
+
+    if (n > 0) {
+        print_int_list(reference, n);
+    } else {
+        putchar('\n');
+    }
+
+    for (int a = 0; a < NUM_ALGORITHMS; a++) {
+        printf("%s: %s\n", algo_labels[a], passed[a] ? "PASSED" : "FAILED");
+    }
+
+    free(input);
+    free(work);
+    free(reference);
+    return 0;
+}
+
+static int run_benchmark_mode(void) {
     printf("\n");
     printf("╔═══════════════════════════════════════════════════════════════╗\n");
     printf("║  Algorithm Benchmarking Suite                                 ║\n");
     printf("║  Exercise 1 - Week 14                                         ║\n");
     printf("╚═══════════════════════════════════════════════════════════════╝\n\n");
-    
-    /* Seed random number generator */
-    srand((unsigned int)time(NULL));
-    
-    /* TODO 10: Create array of function pointers to sorting algorithms
-     *
-     * Create an array that holds pointers to:
-     *   - selection_sort
-     *   - quick_sort
-     *   - merge_sort
-     *
-     * Hint: SortFunction algorithms[] = {selection_sort, quick_sort, merge_sort};
-     * (Requires TODO 1 to be completed first)
-     */
-    
-    /* YOUR CODE HERE */
-    
-    /* Algorithm names for display */
-    const char *algo_names[NUM_ALGORITHMS] = {
-        "SelectSort", "QuickSort", "MergeSort"
-    };
-    
-    /* Storage for benchmark results */
+
+    /* Fixed seed ensures reproducible benchmark tables across runs. */
+    srand(42);
+
+    SortFunction algorithms[NUM_ALGORITHMS] = { selection_sort, quick_sort, merge_sort };
+    const char *algo_names[NUM_ALGORITHMS] = { "SelectSort", "QuickSort", "MergeSort" };
+
     BenchmarkResult results[NUM_ALGORITHMS];
     for (int i = 0; i < NUM_ALGORITHMS; i++) {
         strncpy(results[i].name, algo_names[i], 31);
         results[i].name[31] = '\0';
     }
-    
-    /* Print header */
+
     printf("Running benchmarks with %d runs per test...\n\n", BENCHMARK_RUNS);
     printf("%-6s", "Size");
     for (int a = 0; a < NUM_ALGORITHMS; a++) {
@@ -422,56 +553,118 @@ int main(void) {
         printf("-+-%12s", "------------");
     }
     printf("\n");
-    
-    /* TODO 11: Run benchmarks for each test size
-     *
-     * For each size in TEST_SIZES:
-     *   1. Generate random array using generate_random_array()
-     *   2. For each algorithm:
-     *      a. Measure time using measure_sort_time()
-     *      b. Store result in results[algo].times[size_idx]
-     *      c. Print formatted time
-     *   3. Free the random array
-     *
-     * Expected output format per row:
-     *   printf("%5d ", size);
-     *   printf(" | %9.3f ms", time);
-     */
-    
-    /* YOUR CODE HERE */
-    
-    /* Placeholder output (remove when implementing) */
-    printf("(Benchmark implementation pending - complete TODOs 1-10)\n");
-    
-    /* TODO 12: Export results and verify sorting correctness
-     *
-     * Steps:
-     *   1. Call export_results_csv() to save results
-     *   2. Generate a small test array
-     *   3. Sort with each algorithm
-     *   4. Verify using is_sorted()
-     *   5. Print verification results
-     */
-    
-    /* YOUR CODE HERE */
-    
+
+    for (int s = 0; s < NUM_TEST_SIZES; s++) {
+        int size = TEST_SIZES[s];
+        int *test_array = generate_random_array(size, 10000);
+        if (!test_array) {
+            fprintf(stderr, "Failed to generate test array\n");
+            return 1;
+        }
+
+        printf("%5d ", size);
+        for (int a = 0; a < NUM_ALGORITHMS; a++) {
+            double time_ms = measure_sort_time(algorithms[a], test_array, size);
+            results[a].times[s] = time_ms;
+            printf(" | %9.3f ms", time_ms);
+        }
+        printf("\n");
+
+        free(test_array);
+    }
+
+    printf("\n");
+
+    if (export_results_csv(results, NUM_ALGORITHMS, OUTPUT_FILENAME) == 0) {
+        printf("Results exported to %s\n", OUTPUT_FILENAME);
+    } else {
+        printf("Failed to export results to %s\n", OUTPUT_FILENAME);
+    }
+
+    printf("\n");
+    printf("╔═══════════════════════════════════════════════════════════════╗\n");
+    printf("║  Verification                                                 ║\n");
+    printf("╚═══════════════════════════════════════════════════════════════╝\n\n");
+
+    int verify_size = 20;
+    int *verify_array = generate_random_array(verify_size, 100);
+    int *test_copy = (int *)malloc((size_t)verify_size * sizeof(int));
+
+    if (verify_array && test_copy) {
+        printf("Original array: ");
+        print_array(verify_array, verify_size);
+        printf("\n");
+
+        for (int a = 0; a < NUM_ALGORITHMS; a++) {
+            copy_array(verify_array, test_copy, verify_size);
+            algorithms[a](test_copy, verify_size);
+
+            bool sorted = is_sorted(test_copy, verify_size);
+            printf("%-12s: ", algo_names[a]);
+            printf("%s\n", sorted ? "PASSED" : "FAILED");
+        }
+
+        free(verify_array);
+        free(test_copy);
+    } else {
+        free(verify_array);
+        free(test_copy);
+    }
+
     printf("\n");
     printf("╔═══════════════════════════════════════════════════════════════╗\n");
     printf("║  Benchmarking complete                                        ║\n");
     printf("╚═══════════════════════════════════════════════════════════════╝\n\n");
-    
+
     return 0;
 }
 
+int main(int argc, char **argv) {
+    bool benchmark = false;
+    bool force_stdin = false;
+
+    for (int i = 1; i < argc; i++) {
+        if (strcmp(argv[i], "--benchmark") == 0 || strcmp(argv[i], "-b") == 0) {
+            benchmark = true;
+        } else if (strcmp(argv[i], "--stdin") == 0 || strcmp(argv[i], "-s") == 0) {
+            force_stdin = true;
+        } else if (strcmp(argv[i], "--help") == 0 || strcmp(argv[i], "-h") == 0) {
+            fprintf(stderr,
+                    "Usage: %s [--benchmark|-b] [--stdin|-s]\n\n"
+                    "Default behaviour:\n"
+                    "  - If stdin is not a TTY then run regression mode (read array from stdin)\n"
+                    "  - Otherwise run benchmarking mode\n",
+                    argv[0]);
+            return 0;
+        }
+    }
+
+    if (benchmark) {
+        return run_benchmark_mode();
+    }
+
+    if (force_stdin || !isatty(STDIN_FILENO)) {
+        return run_regression_mode();
+    }
+
+    return run_benchmark_mode();
+}
+
+
 /* =============================================================================
- * BONUS CHALLENGES (Optional)
+ * COMPLEXITY ANALYSIS
  * =============================================================================
  *
- * 1. Add Heap Sort to the benchmark suite
- * 2. Implement worst-case input generation (sorted, reverse-sorted)
- * 3. Add memory usage tracking using mallinfo() on Linux
- * 4. Create a bar chart visualisation using ASCII art
- * 5. Implement adaptive sorting that chooses algorithm based on input size
+ * Algorithm       | Best       | Average    | Worst      | Space
+ * ----------------|------------|------------|------------|--------
+ * Selection Sort  | O(n²)      | O(n²)      | O(n²)      | O(1)
+ * Quick Sort      | O(n log n) | O(n log n) | O(n²)      | O(log n)
+ * Merge Sort      | O(n log n) | O(n log n) | O(n log n) | O(n)
+ *
+ * Expected benchmark ratios when doubling n:
+ * - Selection Sort: ~4× (quadratic)
+ * - Quick Sort: ~2× (linearithmic)
+ * - Merge Sort: ~2× (linearithmic)
  *
  * =============================================================================
  */

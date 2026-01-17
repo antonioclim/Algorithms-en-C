@@ -3,49 +3,28 @@
  * EXERCISE 2: Unified Graph Analyser
  * =============================================================================
  *
- * OBJECTIVE:
- *   Build a comprehensive graph analysis tool that can load graphs from files,
- *   perform various traversals and algorithms, and export analysis reports.
- *   This exercise synthesises graph theory, file I/O and data structures.
+ * In week 14 the emphasis shifts from single-algorithm mastery to disciplined
+ * composition: parsing, representation, traversal, optimisation and reporting.
  *
- * REQUIREMENTS:
- *   1. Load graph from adjacency list file format
- *   2. Implement BFS and DFS traversals
- *   3. Compute shortest paths using Dijkstra's algorithm
- *   4. Detect connected components
- *   5. Export analysis report to file
+ * The analyser loads an undirected weighted graph from an edge list file and
+ * computes a small portfolio of results:
+ *   - graph statistics (vertex count, edge count, density)
+ *   - connected components (via DFS)
+ *   - BFS and DFS traversal orders from a chosen source
+ *   - single-source shortest paths (Dijkstra, adjacency-matrix implementation)
  *
- * INPUT FILE FORMAT (graph_sample.txt):
- *   6 8
- *   0 1 7
- *   0 3 10
- *   0 4 2
- *   1 2 9
- *   1 4 14
- *   2 5 15
- *   3 4 6
- *   4 5 11
+ * The programme also supports a quiet regression output profile which is used
+ * by the automated tests. When stdout is not a TTY it prints a strict, minimal
+ * transcript that is stable under diff.
  *
- *   First line: V E (vertices and edges)
- *   Following lines: src dest weight
+ * Compilation:
+ *   gcc -Wall -Wextra -std=c11 -g -o exercise2 src/exercise2.c -lm
  *
- * EXPECTED OUTPUT:
- *   Graph Analyser
- *   ==============
- *   Loaded graph: 6 vertices, 8 edges
- *   
- *   BFS from vertex 0: 0 1 3 4 2 5
- *   DFS from vertex 0: 0 1 2 5 4 3
- *   
- *   Dijkstra from vertex 0:
- *     To 0: 0
- *     To 1: 7
- *     To 2: 16
- *     ...
- *   
- *   Analysis exported to graph_analysis.txt
+ * Regression usage:
+ *   ./exercise2 tests/test2_input.txt
  *
- * COMPILATION: gcc -Wall -Wextra -std=c11 -o exercise2 exercise2.c
+ * Interactive usage:
+ *   ./exercise2 data/graph_sample.txt
  *
  * =============================================================================
  */
@@ -55,6 +34,7 @@
 #include <string.h>
 #include <stdbool.h>
 #include <limits.h>
+#include <unistd.h>
 
 /* =============================================================================
  * CONFIGURATION
@@ -72,19 +52,16 @@
  */
 
 /**
- * TODO 1: Define the Graph structure
+ * SOLUTION TODO 1: Graph structure definition
  *
- * The structure should contain:
- *   - int vertices:     Number of vertices
- *   - int edges:        Number of edges
- *   - int **adj_matrix: 2D adjacency matrix (weights)
- *   - bool *visited:    Visited flags for traversals
- *
- * Hint: Use pointers for dynamic allocation
+ * Stores graph as an adjacency matrix with metadata.
+ * Weight of 0 indicates no edge between vertices.
  */
 typedef struct {
-    /* YOUR CODE HERE */
-    int placeholder;  /* Remove this when implementing */
+    int vertices;       /* Number of vertices in graph */
+    int edges;          /* Number of edges */
+    int **adj_matrix;   /* V x V adjacency matrix (weights) */
+    bool *visited;      /* Visited flags for traversals */
 } Graph;
 
 /**
@@ -160,68 +137,118 @@ static void queue_free(Queue *q) {
  */
 
 /**
- * TODO 2: Implement graph creation
+ * SOLUTION TODO 2: Graph creation
  *
- * Allocate and initialise a graph with V vertices.
+ * Allocates all necessary memory for a graph with V vertices.
+ * Initialises adjacency matrix to all zeros (no edges).
  *
- * @param vertices Number of vertices
- * @return         Pointer to new graph, or NULL on failure
- *
- * Steps:
- *   1. Allocate Graph structure
- *   2. Set vertices count, edges = 0
- *   3. Allocate adjacency matrix (V x V)
- *   4. Initialise all weights to 0
- *   5. Allocate visited array
- *   6. Return pointer
- *
- * Memory allocation pattern:
- *   g->adj_matrix = malloc(V * sizeof(int *));
- *   for each row: g->adj_matrix[i] = calloc(V, sizeof(int));
+ * Time Complexity: O(V²) for matrix initialisation
+ * Space Complexity: O(V²) for adjacency matrix
  */
 Graph *graph_create(int vertices) {
-    /* YOUR CODE HERE */
+    /* Validate input */
+    if (vertices <= 0 || vertices > MAX_VERTICES) {
+        fprintf(stderr, "Invalid vertex count: %d\n", vertices);
+        return NULL;
+    }
     
-    return NULL;  /* Replace this */
+    /* Allocate Graph structure */
+    Graph *g = malloc(sizeof(Graph));
+    if (!g) {
+        fprintf(stderr, "Failed to allocate Graph structure\n");
+        return NULL;
+    }
+    
+    /* Initialise basic fields */
+    g->vertices = vertices;
+    g->edges = 0;
+    
+    /* Allocate adjacency matrix (array of row pointers) */
+    g->adj_matrix = malloc(vertices * sizeof(int *));
+    if (!g->adj_matrix) {
+        fprintf(stderr, "Failed to allocate adjacency matrix\n");
+        free(g);
+        return NULL;
+    }
+    
+    /* Allocate each row and initialise to zero */
+    for (int i = 0; i < vertices; i++) {
+        g->adj_matrix[i] = calloc(vertices, sizeof(int));
+        if (!g->adj_matrix[i]) {
+            fprintf(stderr, "Failed to allocate row %d\n", i);
+            /* Free already allocated rows */
+            for (int j = 0; j < i; j++) {
+                free(g->adj_matrix[j]);
+            }
+            free(g->adj_matrix);
+            free(g);
+            return NULL;
+        }
+    }
+    
+    /* Allocate visited array */
+    g->visited = calloc(vertices, sizeof(bool));
+    if (!g->visited) {
+        fprintf(stderr, "Failed to allocate visited array\n");
+        for (int i = 0; i < vertices; i++) {
+            free(g->adj_matrix[i]);
+        }
+        free(g->adj_matrix);
+        free(g);
+        return NULL;
+    }
+    
+    return g;
 }
 
 /**
- * TODO 3: Implement graph destruction
+ * SOLUTION TODO 3: Graph destruction
  *
- * Free all memory associated with the graph.
- *
- * @param g Graph to free
- *
- * Steps:
- *   1. Check if g is NULL
- *   2. Free each row of adjacency matrix
- *   3. Free adjacency matrix pointer
- *   4. Free visited array
- *   5. Free graph structure
+ * Properly frees all allocated memory in reverse order of allocation.
+ * Safe to call with NULL pointer.
  */
 void graph_free(Graph *g) {
-    /* YOUR CODE HERE */
+    if (!g) return;
+    
+    /* Free each row of adjacency matrix */
+    if (g->adj_matrix) {
+        for (int i = 0; i < g->vertices; i++) {
+            free(g->adj_matrix[i]);
+        }
+        free(g->adj_matrix);
+    }
+    
+    /* Free visited array */
+    free(g->visited);
+    
+    /* Free graph structure */
+    free(g);
 }
 
 /**
- * TODO 4: Add weighted edge to graph
+ * SOLUTION TODO 4: Add weighted edge
  *
- * For undirected graph, add edge in both directions.
- *
- * @param g      Graph structure
- * @param src    Source vertex
- * @param dest   Destination vertex
- * @param weight Edge weight
- *
- * Validation:
- *   - Check g is not NULL
- *   - Check src and dest are valid (0 to vertices-1)
- *   - Add edge: g->adj_matrix[src][dest] = weight
- *   - For undirected: g->adj_matrix[dest][src] = weight
- *   - Increment edge count (only once for undirected)
+ * Adds an undirected edge between src and dest with given weight.
+ * For undirected graphs, adds edge in both directions.
  */
 void graph_add_edge(Graph *g, int src, int dest, int weight) {
-    /* YOUR CODE HERE */
+    /* Validate parameters */
+    if (!g) return;
+    if (src < 0 || src >= g->vertices) {
+        fprintf(stderr, "Invalid source vertex: %d\n", src);
+        return;
+    }
+    if (dest < 0 || dest >= g->vertices) {
+        fprintf(stderr, "Invalid destination vertex: %d\n", dest);
+        return;
+    }
+    
+    /* Add edge (undirected - add both directions) */
+    g->adj_matrix[src][dest] = weight;
+    g->adj_matrix[dest][src] = weight;
+    
+    /* Increment edge count (once for undirected edge) */
+    g->edges++;
 }
 
 /* =============================================================================
@@ -230,34 +257,56 @@ void graph_add_edge(Graph *g, int src, int dest, int weight) {
  */
 
 /**
- * TODO 5: Load graph from file
+ * SOLUTION TODO 5: Load graph from file
  *
- * Read graph from file in format:
- *   Line 1: V E (vertices, edges)
- *   Lines 2-E+1: src dest weight
- *
- * @param filename Path to input file
- * @return         Loaded graph, or NULL on error
- *
- * Steps:
- *   1. Open file for reading
- *   2. Read V and E from first line
- *   3. Create graph with V vertices
- *   4. For each of E lines:
- *      a. Read src, dest, weight
- *      b. Add edge to graph
- *   5. Close file
- *   6. Return graph
- *
- * Error handling:
- *   - Check file opens successfully
- *   - Validate V and E are positive
- *   - Handle fscanf failures
+ * Reads graph from standard format:
+ *   Line 1: V E
+ *   Lines 2+: src dest weight
  */
 Graph *graph_load(const char *filename) {
-    /* YOUR CODE HERE */
+    /* Open file */
+    FILE *fp = fopen(filename, "r");
+    if (!fp) {
+        fprintf(stderr, "Cannot open file: %s\n", filename);
+        return NULL;
+    }
     
-    return NULL;  /* Replace this */
+    /* Read header: V and E */
+    int V, E;
+    if (fscanf(fp, "%d %d", &V, &E) != 2) {
+        fprintf(stderr, "Invalid file format: expected V E on first line\n");
+        fclose(fp);
+        return NULL;
+    }
+    
+    /* Validate V and E */
+    if (V <= 0 || E < 0) {
+        fprintf(stderr, "Invalid V=%d or E=%d\n", V, E);
+        fclose(fp);
+        return NULL;
+    }
+    
+    /* Create graph */
+    Graph *g = graph_create(V);
+    if (!g) {
+        fclose(fp);
+        return NULL;
+    }
+    
+    /* Read edges */
+    for (int i = 0; i < E; i++) {
+        int src, dest, weight;
+        if (fscanf(fp, "%d %d %d", &src, &dest, &weight) != 3) {
+            fprintf(stderr, "Error reading edge %d\n", i + 1);
+            graph_free(g);
+            fclose(fp);
+            return NULL;
+        }
+        graph_add_edge(g, src, dest, weight);
+    }
+    
+    fclose(fp);
+    return g;
 }
 
 /* =============================================================================
@@ -266,78 +315,97 @@ Graph *graph_load(const char *filename) {
  */
 
 /**
- * TODO 6: Reset visited flags
- *
- * Set all visited flags to false before traversal.
- *
- * @param g Graph structure
+ * SOLUTION TODO 6: Reset visited flags
  */
 void graph_reset_visited(Graph *g) {
-    /* YOUR CODE HERE */
+    if (!g || !g->visited) return;
+    
+    for (int i = 0; i < g->vertices; i++) {
+        g->visited[i] = false;
+    }
 }
 
 /**
- * TODO 7: Implement Breadth-First Search
+ * SOLUTION TODO 7: Breadth-First Search
  *
- * Perform BFS from starting vertex, storing traversal order.
+ * BFS explores all vertices at distance k before visiting vertices at k+1.
+ * Uses a queue to maintain the frontier of exploration.
  *
- * @param g      Graph structure
- * @param start  Starting vertex
- * @param order  Array to store traversal order
- * @param count  Pointer to store number of visited vertices
- *
- * Algorithm:
- *   1. Reset visited flags
- *   2. Create queue and enqueue start
- *   3. Mark start as visited
- *   4. While queue not empty:
- *      a. Dequeue vertex v
- *      b. Add v to order array
- *      c. For each unvisited neighbour:
- *         - Mark as visited
- *         - Enqueue neighbour
- *   5. Free queue
+ * Time Complexity: O(V + E)
+ * Space Complexity: O(V) for queue and visited array
  */
 void graph_bfs(Graph *g, int start, int *order, int *count) {
-    /* YOUR CODE HERE */
+    *count = 0;
     
-    *count = 0;  /* Replace with actual implementation */
+    if (!g || start < 0 || start >= g->vertices) return;
+    
+    /* Reset all visited flags */
+    graph_reset_visited(g);
+    
+    /* Create queue for BFS */
+    Queue *q = queue_create();
+    if (!q) return;
+    
+    /* Start BFS from starting vertex */
+    queue_enqueue(q, start);
+    g->visited[start] = true;
+    
+    while (!queue_is_empty(q)) {
+        /* Dequeue front vertex */
+        int v = queue_dequeue(q);
+        
+        /* Add to traversal order */
+        order[(*count)++] = v;
+        
+        /* Visit all unvisited neighbours */
+        for (int i = 0; i < g->vertices; i++) {
+            /* Check if edge exists and neighbour not visited */
+            if (g->adj_matrix[v][i] != 0 && !g->visited[i]) {
+                g->visited[i] = true;
+                queue_enqueue(q, i);
+            }
+        }
+    }
+    
+    queue_free(q);
 }
 
 /**
- * TODO 8: Implement DFS helper (recursive)
+ * SOLUTION TODO 8: DFS recursive helper
  *
- * Recursive DFS from vertex v.
- *
- * @param g     Graph structure
- * @param v     Current vertex
- * @param order Array to store traversal order
- * @param idx   Pointer to current index in order array
+ * Recursively explores as deep as possible before backtracking.
  */
 static void dfs_visit(Graph *g, int v, int *order, int *idx) {
-    /* YOUR CODE HERE */
+    /* Mark current vertex as visited */
+    g->visited[v] = true;
     
-    /* Hint:
-     *   1. Mark v as visited
-     *   2. Add v to order[(*idx)++]
-     *   3. For each neighbour i:
-     *      if edge exists and not visited:
-     *          dfs_visit(g, i, order, idx)
-     */
+    /* Add to traversal order */
+    order[(*idx)++] = v;
+    
+    /* Recursively visit all unvisited neighbours */
+    for (int i = 0; i < g->vertices; i++) {
+        if (g->adj_matrix[v][i] != 0 && !g->visited[i]) {
+            dfs_visit(g, i, order, idx);
+        }
+    }
 }
 
 /**
- * TODO 9: Implement Depth-First Search wrapper
+ * SOLUTION TODO 9: Depth-First Search wrapper
  *
- * @param g      Graph structure
- * @param start  Starting vertex
- * @param order  Array to store traversal order
- * @param count  Pointer to store number of visited vertices
+ * Time Complexity: O(V + E)
+ * Space Complexity: O(V) for recursion stack and visited array
  */
 void graph_dfs(Graph *g, int start, int *order, int *count) {
-    /* YOUR CODE HERE */
+    *count = 0;
     
-    *count = 0;  /* Replace with actual implementation */
+    if (!g || start < 0 || start >= g->vertices) return;
+    
+    /* Reset visited flags */
+    graph_reset_visited(g);
+    
+    /* Start DFS from starting vertex */
+    dfs_visit(g, start, order, count);
 }
 
 /* =============================================================================
@@ -346,67 +414,121 @@ void graph_dfs(Graph *g, int start, int *order, int *count) {
  */
 
 /**
- * TODO 10: Find vertex with minimum distance (helper for Dijkstra)
+ * SOLUTION TODO 10: Find minimum distance vertex
  *
- * @param dist      Array of distances
- * @param processed Array of processed flags
- * @param V         Number of vertices
- * @return          Index of minimum distance vertex, or -1 if all processed
+ * Helper function for Dijkstra's algorithm.
+ * Finds the unprocessed vertex with smallest distance.
  */
 static int find_min_distance(const int *dist, const bool *processed, int V) {
-    /* YOUR CODE HERE */
+    int min_dist = INF;
+    int min_idx = -1;
     
-    return -1;  /* Replace this */
+    for (int v = 0; v < V; v++) {
+        if (!processed[v] && dist[v] < min_dist) {
+            min_dist = dist[v];
+            min_idx = v;
+        }
+    }
+    
+    return min_idx;
 }
 
 /**
- * TODO 11: Implement Dijkstra's algorithm
+ * SOLUTION TODO 11: Dijkstra's algorithm
  *
- * Find shortest paths from source to all vertices.
+ * Finds shortest paths from source to all other vertices.
+ * Uses greedy approach: always process vertex with minimum distance.
  *
- * @param g      Graph structure
- * @param src    Source vertex
- * @param dist   Array to store distances (caller allocates)
- * @param parent Array to store parent pointers (caller allocates, can be NULL)
+ * Time Complexity: O(V²) with adjacency matrix
+ * Space Complexity: O(V) for distance and processed arrays
  *
- * Algorithm:
- *   1. Initialise all distances to INF, source to 0
- *   2. Create processed array (all false)
- *   3. For V-1 iterations:
- *      a. Find unprocessed vertex u with min distance
- *      b. Mark u as processed
- *      c. For each neighbour v of u:
- *         if not processed and dist[u] + weight < dist[v]:
- *            dist[v] = dist[u] + weight
- *            parent[v] = u (if parent not NULL)
- *   4. Free processed array
+ * Note: This implementation uses simple array-based min finding.
+ * For better performance, use a priority queue (O(E log V)).
  */
 void dijkstra(Graph *g, int src, int *dist, int *parent) {
-    /* YOUR CODE HERE */
+    if (!g || src < 0 || src >= g->vertices || !dist) return;
+    
+    int V = g->vertices;
+    
+    /* Allocate processed array */
+    bool *processed = calloc(V, sizeof(bool));
+    if (!processed) {
+        fprintf(stderr, "Memory allocation failed in dijkstra()\n");
+        return;
+    }
+    
+    /* Initialise distances to infinity, source to 0 */
+    for (int i = 0; i < V; i++) {
+        dist[i] = INF;
+        if (parent) parent[i] = -1;
+    }
+    dist[src] = 0;
+    
+    /* Process V-1 vertices (source already processed conceptually) */
+    for (int count = 0; count < V - 1; count++) {
+        /* Find unprocessed vertex with minimum distance */
+        int u = find_min_distance(dist, processed, V);
+        
+        /* If no reachable unprocessed vertex, stop */
+        if (u == -1 || dist[u] == INF) break;
+        
+        /* Mark as processed */
+        processed[u] = true;
+        
+        /* Update distances to all neighbours */
+        for (int v = 0; v < V; v++) {
+            /* Check if:
+             * 1. Edge exists (weight != 0)
+             * 2. Vertex not processed
+             * 3. Distance through u is shorter
+             */
+            int weight = g->adj_matrix[u][v];
+            if (weight != 0 && 
+                !processed[v] && 
+                dist[u] != INF &&
+                dist[u] + weight < dist[v]) {
+                
+                dist[v] = dist[u] + weight;
+                if (parent) parent[v] = u;
+            }
+        }
+    }
+    
+    free(processed);
 }
 
 /**
- * TODO 12: Reconstruct shortest path
+ * SOLUTION TODO 12: Reconstruct shortest path
  *
- * Build path from source to destination using parent array.
- *
- * @param parent Array of parent pointers
- * @param src    Source vertex
- * @param dest   Destination vertex
- * @param path   Array to store path (caller allocates)
- * @param length Pointer to store path length
+ * Traces back from destination to source using parent pointers.
+ * Reverses the path to get correct order (source to destination).
  */
 void reconstruct_path(const int *parent, int src, int dest, 
                       int *path, int *length) {
-    /* YOUR CODE HERE */
+    *length = 0;
     
-    /* Hint:
-     *   1. Start at dest, follow parent pointers to src
-     *   2. Store vertices in reverse order
-     *   3. Reverse the path array
-     */
+    if (!parent || !path) return;
+    if (parent[dest] == -1 && dest != src) {
+        /* No path exists */
+        return;
+    }
     
-    *length = 0;  /* Replace this */
+    /* Trace path backwards from dest to src */
+    int temp_path[MAX_VERTICES];
+    int temp_len = 0;
+    int current = dest;
+    
+    while (current != -1) {
+        temp_path[temp_len++] = current;
+        if (current == src) break;
+        current = parent[current];
+    }
+    
+    /* Reverse to get path from src to dest */
+    for (int i = 0; i < temp_len; i++) {
+        path[i] = temp_path[temp_len - 1 - i];
+    }
+    *length = temp_len;
 }
 
 /* =============================================================================
@@ -415,40 +537,49 @@ void reconstruct_path(const int *parent, int src, int dest,
  */
 
 /**
- * TODO 13: Count connected components
+ * SOLUTION TODO 13: Count connected components
  *
- * Use DFS to count number of connected components.
- *
- * @param g Graph structure
- * @return  Number of connected components
- *
- * Algorithm:
- *   1. Reset visited flags
- *   2. count = 0
- *   3. For each vertex v:
- *      if not visited:
- *          DFS from v (marks all reachable as visited)
- *          count++
- *   4. Return count
+ * Uses DFS to identify all connected components in the graph.
+ * Each DFS from an unvisited vertex explores one complete component.
  */
 int count_components(Graph *g) {
-    /* YOUR CODE HERE */
+    if (!g) return 0;
     
-    return 0;  /* Replace this */
+    /* Reset visited flags */
+    graph_reset_visited(g);
+    
+    int count = 0;
+    int order[MAX_VERTICES];  /* Dummy array for DFS */
+    
+    /* Try starting DFS from each vertex */
+    for (int v = 0; v < g->vertices; v++) {
+        if (!g->visited[v]) {
+            /* Found new component - explore it with DFS */
+            int dummy;
+            dfs_visit(g, v, order, &dummy);
+            count++;
+        }
+    }
+    
+    return count;
 }
 
 /**
- * TODO 14: Calculate graph density
+ * SOLUTION TODO 14: Calculate graph density
  *
- * Density = 2E / (V * (V-1)) for undirected graph
- *
- * @param g Graph structure
- * @return  Graph density (0.0 to 1.0)
+ * For undirected graph: density = 2E / (V × (V-1))
+ * Density ranges from 0 (no edges) to 1 (complete graph)
  */
 double graph_density(Graph *g) {
-    /* YOUR CODE HERE */
+    if (!g || g->vertices < 2) return 0.0;
     
-    return 0.0;  /* Replace this */
+    int V = g->vertices;
+    int E = g->edges;
+    
+    /* Maximum possible edges in undirected graph: V(V-1)/2 */
+    double max_edges = (double)V * (V - 1) / 2.0;
+    
+    return (double)E / max_edges;
 }
 
 /* =============================================================================
@@ -457,42 +588,101 @@ double graph_density(Graph *g) {
  */
 
 /**
- * TODO 15: Export analysis report to file
+ * SOLUTION TODO 15: Export analysis report
  *
- * Generate comprehensive analysis report including:
- *   - Graph statistics (vertices, edges, density)
- *   - BFS and DFS traversals from vertex 0
- *   - Shortest paths from vertex 0
- *   - Connected component count
- *
- * @param g        Graph structure
- * @param filename Output filename
- * @return         0 on success, -1 on failure
+ * Generates a comprehensive text report with all graph analysis results.
  */
 int export_analysis(Graph *g, const char *filename) {
-    /* YOUR CODE HERE */
+    if (!g || !filename) return -1;
     
-    /* File content structure:
-     *
-     *   Graph Analysis Report
-     *   =====================
-     *   
-     *   Statistics:
-     *     Vertices: 6
-     *     Edges: 8
-     *     Density: 0.533
-     *     Components: 1
-     *   
-     *   BFS Traversal (from 0): 0 1 3 4 2 5
-     *   DFS Traversal (from 0): 0 1 2 5 4 3
-     *   
-     *   Shortest Paths from vertex 0:
-     *     To 0: 0
-     *     To 1: 7
-     *     ...
-     */
+    FILE *fp = fopen(filename, "w");
+    if (!fp) {
+        fprintf(stderr, "Cannot create file: %s\n", filename);
+        return -1;
+    }
     
-    return -1;  /* Replace with 0 on success */
+    /* Header */
+    fprintf(fp, "╔═══════════════════════════════════════════════════════════════╗\n");
+    fprintf(fp, "║              Graph Analysis Report                            ║\n");
+    fprintf(fp, "╚═══════════════════════════════════════════════════════════════╝\n\n");
+    
+    /* Statistics */
+    fprintf(fp, "Statistics\n");
+    fprintf(fp, "══════════\n");
+    fprintf(fp, "  Vertices:   %d\n", g->vertices);
+    fprintf(fp, "  Edges:      %d\n", g->edges);
+    fprintf(fp, "  Density:    %.3f\n", graph_density(g));
+    fprintf(fp, "  Components: %d\n\n", count_components(g));
+    
+    /* BFS Traversal */
+    int order[MAX_VERTICES];
+    int count;
+    
+    graph_bfs(g, 0, order, &count);
+    fprintf(fp, "BFS Traversal (from vertex 0)\n");
+    fprintf(fp, "═════════════════════════════\n");
+    fprintf(fp, "  ");
+    for (int i = 0; i < count; i++) {
+        fprintf(fp, "%d", order[i]);
+        if (i < count - 1) fprintf(fp, " → ");
+    }
+    fprintf(fp, "\n\n");
+    
+    /* DFS Traversal */
+    graph_dfs(g, 0, order, &count);
+    fprintf(fp, "DFS Traversal (from vertex 0)\n");
+    fprintf(fp, "═════════════════════════════\n");
+    fprintf(fp, "  ");
+    for (int i = 0; i < count; i++) {
+        fprintf(fp, "%d", order[i]);
+        if (i < count - 1) fprintf(fp, " → ");
+    }
+    fprintf(fp, "\n\n");
+    
+    /* Dijkstra's shortest paths */
+    int *dist = malloc(g->vertices * sizeof(int));
+    int *parent = malloc(g->vertices * sizeof(int));
+    
+    if (dist && parent) {
+        dijkstra(g, 0, dist, parent);
+        
+        fprintf(fp, "Shortest Paths from vertex 0 (Dijkstra)\n");
+        fprintf(fp, "═══════════════════════════════════════\n");
+        
+        for (int v = 0; v < g->vertices; v++) {
+            fprintf(fp, "  To %d: ", v);
+            if (dist[v] == INF) {
+                fprintf(fp, "unreachable\n");
+            } else {
+                fprintf(fp, "%d", dist[v]);
+                
+                /* Show path */
+                int path[MAX_VERTICES];
+                int path_len;
+                reconstruct_path(parent, 0, v, path, &path_len);
+                
+                if (path_len > 1) {
+                    fprintf(fp, " (path: ");
+                    for (int i = 0; i < path_len; i++) {
+                        fprintf(fp, "%d", path[i]);
+                        if (i < path_len - 1) fprintf(fp, "→");
+                    }
+                    fprintf(fp, ")");
+                }
+                fprintf(fp, "\n");
+            }
+        }
+        
+        free(dist);
+        free(parent);
+    }
+    
+    /* Footer */
+    fprintf(fp, "\n═══════════════════════════════════════════════════════════════\n");
+    fprintf(fp, "Report generated successfully.\n");
+    
+    fclose(fp);
+    return 0;
 }
 
 /* =============================================================================
@@ -500,114 +690,166 @@ int export_analysis(Graph *g, const char *filename) {
  * =============================================================================
  */
 
-int main(int argc, char *argv[]) {
+static int run_quiet_profile(const char *input_file) {
+    Graph *g = graph_load(input_file);
+    if (!g) {
+        return 1;
+    }
+
+    printf("Graph: %d vertices, %d edges\n", g->vertices, g->edges);
+    printf("Density: %.3f\n", graph_density(g));
+    printf("Components: %d\n\n", count_components(g));
+
+    int order[MAX_VERTICES];
+    int count = 0;
+
+    graph_bfs(g, 0, order, &count);
+    printf("BFS from 0: ");
+    for (int i = 0; i < count; i++) {
+        if (i) putchar(' ');
+        printf("%d", order[i]);
+    }
+    putchar('\n');
+
+    graph_dfs(g, 0, order, &count);
+    printf("DFS from 0: ");
+    for (int i = 0; i < count; i++) {
+        if (i) putchar(' ');
+        printf("%d", order[i]);
+    }
+    putchar('\n');
+
+    printf("\nDijkstra from vertex 0:\n");
+
+    int *dist = (int *)malloc((size_t)g->vertices * sizeof(int));
+    int *parent = (int *)malloc((size_t)g->vertices * sizeof(int));
+    if (!dist || !parent) {
+        free(dist);
+        free(parent);
+        graph_free(g);
+        return 1;
+    }
+
+    dijkstra(g, 0, dist, parent);
+    for (int v = 0; v < g->vertices; v++) {
+        if (dist[v] == INF) {
+            printf("  To %d: unreachable\n", v);
+        } else {
+            printf("  To %d: %d\n", v, dist[v]);
+        }
+    }
+
+    free(dist);
+    free(parent);
+    graph_free(g);
+    return 0;
+}
+
+static int run_interactive_profile(const char *input_file) {
     printf("\n");
     printf("╔═══════════════════════════════════════════════════════════════╗\n");
     printf("║  Unified Graph Analyser                                       ║\n");
     printf("║  Exercise 2 - Week 14                                         ║\n");
     printf("╚═══════════════════════════════════════════════════════════════╝\n\n");
-    
-    /* Determine input file */
-    const char *input_file = (argc > 1) ? argv[1] : "data/graph_sample.txt";
-    
+
     printf("Loading graph from: %s\n\n", input_file);
-    
-    /* Load graph from file */
+
     Graph *g = graph_load(input_file);
     if (!g) {
         fprintf(stderr, "Error: Could not load graph from %s\n", input_file);
         fprintf(stderr, "Make sure the file exists and has correct format.\n");
         return 1;
     }
-    
-    /* Display graph info (requires TODO 1-5 implementation) */
-    /* printf("Loaded: %d vertices, %d edges\n", g->vertices, g->edges); */
-    printf("(Graph loading implementation pending - complete TODOs 1-5)\n\n");
-    
-    /* Arrays for traversal results */
+
+    printf("Graph loaded successfully!\n");
+    printf("  Vertices: %d\n", g->vertices);
+    printf("  Edges:    %d\n", g->edges);
+    printf("  Density:  %.3f\n", graph_density(g));
+    printf("  Components: %d\n\n", count_components(g));
+
     int order[MAX_VERTICES];
-    int count;
-    
-    /* BFS Traversal */
+    int count = 0;
+
     printf("BFS Traversal:\n");
     graph_bfs(g, 0, order, &count);
-    if (count > 0) {
-        printf("  From vertex 0: ");
-        for (int i = 0; i < count; i++) {
-            printf("%d ", order[i]);
-        }
-        printf("\n");
-    } else {
-        printf("  (Implementation pending - complete TODO 7)\n");
+    printf("  From vertex 0: ");
+    for (int i = 0; i < count; i++) {
+        printf("%d ", order[i]);
     }
-    
-    /* DFS Traversal */
+    printf("\n");
+
     printf("\nDFS Traversal:\n");
     graph_dfs(g, 0, order, &count);
-    if (count > 0) {
-        printf("  From vertex 0: ");
-        for (int i = 0; i < count; i++) {
-            printf("%d ", order[i]);
-        }
-        printf("\n");
-    } else {
-        printf("  (Implementation pending - complete TODOs 8-9)\n");
+    printf("  From vertex 0: ");
+    for (int i = 0; i < count; i++) {
+        printf("%d ", order[i]);
     }
-    
-    /* Dijkstra's Algorithm */
+    printf("\n");
+
     printf("\nShortest Paths (Dijkstra from vertex 0):\n");
-    /* TODO: Uncomment when graph structure is implemented
-    int *dist = malloc(g->vertices * sizeof(int));
-    int *parent = malloc(g->vertices * sizeof(int));
+    int *dist = (int *)malloc((size_t)g->vertices * sizeof(int));
+    int *parent = (int *)malloc((size_t)g->vertices * sizeof(int));
     if (dist && parent) {
         dijkstra(g, 0, dist, parent);
-        for (int i = 0; i < g->vertices; i++) {
-            if (dist[i] == INF) {
-                printf("  To %d: unreachable\n", i);
+        for (int v = 0; v < g->vertices; v++) {
+            printf("  To %d: ", v);
+            if (dist[v] == INF) {
+                printf("unreachable\n");
             } else {
-                printf("  To %d: %d\n", i, dist[i]);
+                printf("%d\n", dist[v]);
             }
         }
         free(dist);
         free(parent);
+    } else {
+        free(dist);
+        free(parent);
     }
-    */
-    printf("  (Implementation pending - complete TODOs 10-12)\n");
-    
-    /* Graph Analysis */
-    printf("\nGraph Analysis:\n");
-    printf("  Components: %d\n", count_components(g));
-    printf("  Density: %.3f\n", graph_density(g));
-    
-    /* Export Report */
+
     printf("\nExporting analysis report...\n");
     if (export_analysis(g, OUTPUT_FILE) == 0) {
-        printf("  Report saved to %s\n", OUTPUT_FILE);
+        printf("Report saved to: %s\n", OUTPUT_FILE);
     } else {
-        printf("  (Export pending - complete TODO 15)\n");
+        printf("Report export failed\n");
     }
-    
-    /* Cleanup */
+
     graph_free(g);
-    
+
     printf("\n");
     printf("╔═══════════════════════════════════════════════════════════════╗\n");
     printf("║  Analysis complete                                            ║\n");
     printf("╚═══════════════════════════════════════════════════════════════╝\n\n");
-    
+
     return 0;
 }
 
+int main(int argc, char *argv[]) {
+    const char *input_file = (argc > 1) ? argv[1] : "data/graph_sample.txt";
+
+    if (!isatty(STDOUT_FILENO)) {
+        return run_quiet_profile(input_file);
+    }
+
+    return run_interactive_profile(input_file);
+}
+
+
 /* =============================================================================
- * BONUS CHALLENGES (Optional)
+ * COMPLEXITY SUMMARY
  * =============================================================================
  *
- * 1. Add Bellman-Ford algorithm for graphs with negative weights
- * 2. Implement Floyd-Warshall for all-pairs shortest paths
- * 3. Detect cycles using DFS (back edges)
- * 4. Implement topological sort for DAGs
- * 5. Add support for directed graphs (separate adjacency matrix values)
- * 6. Implement minimum spanning tree (Prim's or Kruskal's)
+ * Operation           | Time        | Space
+ * --------------------|-------------|--------
+ * graph_create        | O(V²)       | O(V²)
+ * graph_add_edge      | O(1)        | O(1)
+ * graph_load          | O(V² + E)   | O(V²)
+ * graph_bfs           | O(V²)       | O(V)
+ * graph_dfs           | O(V²)       | O(V)
+ * dijkstra            | O(V²)       | O(V)
+ * count_components    | O(V²)       | O(V)
+ *
+ * Note: With adjacency list, BFS/DFS would be O(V + E)
+ *       With priority queue, Dijkstra would be O((V + E) log V)
  *
  * =============================================================================
  */

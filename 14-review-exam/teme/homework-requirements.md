@@ -1,49 +1,88 @@
 # Week 14 Homework: Advanced Topics and Comprehensive Review
 
-## 📋 General Information
+## Purpose and expected learning outcomes
 
-- **Deadline:** End of examination period
-- **Total Points:** 100 (contributes 10% towards final grade)
-- **Language:** C (C11 standard)
-- **Compiler:** GCC with `-Wall -Wextra -std=c11`
-- **Submission:** Single `.c` file per homework via university portal
+This homework is designed as a capstone exercise. It assumes that students can implement basic algorithms and data structures and instead evaluates whether those components can be integrated into a coherent command-line tool with explicit interfaces, deterministic behaviour and empirically defensible measurements.
+
+By completing the assignment a student should be able to:
+
+1. Design a small but principled library interface in C11.
+2. Implement a collection of algorithms behind that interface using function pointers.
+3. Justify complexity claims both theoretically and empirically.
+4. Produce reproducible outputs suitable for automated assessment.
+5. Demonstrate memory safety by construction rather than by luck.
 
 ---
 
-## 📝 Homework 1: Algorithm Toolkit Library (50 points)
+## General information
 
-### Description
+- **Deadline:** end of the examination period
+- **Total points:** 100 (contributes 10% towards the final grade)
+- **Language:** C (C11)
+- **Compiler model:** GCC with `-Wall -Wextra -std=c11`
+- **Submission:** one `.c` file per homework via the university portal
 
-Design and implement a **comprehensive algorithm toolkit** that demonstrates mastery of the entire semester's content. Your library must provide a unified interface for sorting, searching, graph algorithms and dynamic programming—all accessible through function pointers and a command-driven interface.
+### Assessment principles
 
-### Functional Requirements
+The rubric rewards correctness, clarity and robustness. A solution that is correct for one input but fragile under small perturbations should not be considered complete.
 
-| Requirement | Points |
-|-------------|--------|
-| **Core Data Structures** | 15 |
-| Implement a generic array container with metadata | 5 |
-| Implement an adjacency list graph representation | 5 |
-| Implement a hash table with chaining (minimum 97 buckets) | 5 |
-| **Algorithm Suite** | 20 |
-| At least 3 sorting algorithms selectable via function pointer | 6 |
-| Binary search with iterative and recursive variants | 4 |
-| Dijkstra's shortest path algorithm | 5 |
-| One dynamic programming solution (LCS, knapsack or edit distance) | 5 |
-| **Interface Design** | 15 |
-| Command-line argument parsing for operation selection | 5 |
-| File I/O for loading and saving data | 5 |
-| Formatted output with timing information | 5 |
+When in doubt prefer:
 
-### Required Function Signatures
+- explicit precondition checks
+- deterministic iteration order
+- bounded resource usage
+- descriptive error messages written to stderr
+
+---
+
+## Homework 1: Algorithm toolkit library (50 points)
+
+### High-level brief
+
+Design and implement a unified algorithm toolkit that exposes sorting, searching, graph algorithms and at least one dynamic programming algorithm through a command-driven interface. The programme should be usable both as a tool (processing files) and as a self-demonstration (generating its own data).
+
+### Functional requirements and marking rubric
+
+| Requirement family | Points | Assessment focus |
+|---|---:|---|
+| Core data structures | 15 | representation, invariants, memory ownership |
+| Algorithm suite | 20 | correctness, asymptotic behaviour, edge cases |
+| Interface and I/O | 15 | deterministic output, usable CLI, error handling |
+
+#### Core data structures (15)
+
+1. Generic dynamic array container with metadata (5)
+   - amortised growth strategy, typically doubling
+   - explicit element size and capacity
+
+2. Adjacency list graph representation (5)
+   - directed and undirected variants
+   - clear ownership of adjacency nodes
+
+3. Hash table with chaining, minimum 97 buckets (5)
+   - stable hash function
+   - collision resolution via linked lists
+
+#### Algorithm suite (20)
+
+- at least three sorting algorithms selected by name via a function pointer table (6)
+- binary search implemented iteratively and recursively (4)
+- Dijkstra shortest paths (5)
+- one dynamic programming solution (5) such as LCS, knapsack or edit distance
+
+#### Interface and I/O (15)
+
+- command-line parsing for operation selection (5)
+- file I/O for loading and saving data (5)
+- formatted output including timing information (5)
+
+### Required signatures
 
 ```c
-/* Generic comparator type for sorting and searching */
 typedef int (*Comparator)(const void*, const void*);
 
-/* Algorithm selector type */
 typedef void (*SortFunction)(void* arr, size_t n, size_t size, Comparator cmp);
 
-/* Core structure definitions */
 typedef struct {
     void*  data;
     size_t count;
@@ -59,7 +98,6 @@ typedef struct {
     int     directed;
 } Graph;
 
-/* Required functions */
 DynamicArray* array_create(size_t elem_size, size_t initial_cap);
 void          array_destroy(DynamicArray* arr);
 int           array_append(DynamicArray* arr, const void* elem);
@@ -73,22 +111,67 @@ void toolkit_sort(DynamicArray* arr, const char* algorithm, Comparator cmp);
 int  toolkit_search(const DynamicArray* arr, const void* key, Comparator cmp);
 ```
 
-### Example Usage
+### Required behaviours
 
-```bash
-# Sort integers from file using quicksort
-./homework1 --sort quicksort --input numbers.txt --output sorted.txt
+1. The programme must fail gracefully on malformed input files.
+2. Sorting and searching must use the provided comparator consistently.
+3. Dijkstra must reject negative edges explicitly.
+4. Output must be deterministic for a fixed seed and fixed input.
 
-# Find shortest paths in a graph
-./homework1 --graph roads.txt --dijkstra 0
+### Recommended architecture
 
-# Run full demonstration
-./homework1 --demo
+A robust structure for a single-file submission is:
+
+- type definitions and private helpers
+- data structure implementations
+- algorithm implementations
+- CLI parser and dispatch
+- main
+
+Avoid interleaving unrelated concerns. In C a single file can still be structured.
+
+### Pseudocode exemplars
+
+#### Dynamic array append
+
+```
+ARRAY_APPEND(arr, elem):
+    if arr.count = arr.capacity:
+        new_capacity ← max(1, 2*arr.capacity)
+        new_data ← realloc(arr.data, new_capacity * arr.elem_size)
+        if new_data = NULL: return error
+        arr.data ← new_data
+        arr.capacity ← new_capacity
+    memcpy(arr.data + arr.count*arr.elem_size, elem, arr.elem_size)
+    arr.count ← arr.count + 1
+    return success
 ```
 
-### Input/Output Formats
+#### Comparator-aware quicksort skeleton
 
-**Number file format (one integer per line):**
+```
+QS(A, low, high, cmp):
+    if low < high:
+        p ← PARTITION(A, low, high, cmp)
+        QS(A, low, p-1, cmp)
+        QS(A, p+1, high, cmp)
+```
+
+The key in generic sorting is not the recursion. It is the pointer arithmetic and the disciplined use of `cmp`.
+
+### Example usage
+
+```bash
+./homework1 --sort quicksort --input numbers.txt --output sorted.txt
+./homework1 --search 42 --input sorted.txt
+./homework1 --graph roads.txt --dijkstra 0
+./homework1 --demo --seed 42
+```
+
+### Input formats
+
+Number file format (one integer per line):
+
 ```
 42
 17
@@ -97,7 +180,8 @@ int  toolkit_search(const DynamicArray* arr, const void* key, Comparator cmp);
 99
 ```
 
-**Graph file format (first line: V E, then E edges):**
+Graph file format (first line: V E, then E edges):
+
 ```
 5 7
 0 1 10
@@ -109,263 +193,192 @@ int  toolkit_search(const DynamicArray* arr, const void* key, Comparator cmp);
 3 2 9
 ```
 
-**Expected output for `--demo`:**
-```
-╔═══════════════════════════════════════════════════════════════╗
-║         ALGORITHM TOOLKIT - DEMONSTRATION                      ║
-╚═══════════════════════════════════════════════════════════════╝
+### Output contract suggestions
 
-[SORTING] Testing with 1000 random integers
-  QuickSort:     0.342 ms (O(n log n) average)
-  MergeSort:     0.456 ms (O(n log n) guaranteed)
-  HeapSort:      0.523 ms (O(n log n) in-place)
+For automated assessment produce output that is stable for fixed inputs:
 
-[SEARCHING] Binary search for value 42
-  Found at index: 127
-  Comparisons: 10
-
-[GRAPH] Dijkstra from vertex 0 (5 vertices, 7 edges)
-  To 0: 0
-  To 1: 8
-  To 2: 9
-  To 3: 5
-  To 4: 13
-
-[DYNAMIC PROGRAMMING] Longest Common Subsequence
-  String A: "ALGORITHM"
-  String B: "LOGARITHM"
-  LCS length: 7 ("LGRITHM")
-
-All tests completed successfully.
-```
-
-### File: `homework1_toolkit.c`
+- avoid printing memory addresses
+- avoid timing outputs in mandatory transcripts unless explicitly requested
+- sort vertex and edge listings deterministically
 
 ---
 
-## 📝 Homework 2: Performance Analysis Framework (50 points)
+## Homework 2: Performance analysis framework (50 points)
 
-### Description
+### High-level brief
 
-Create a **rigorous benchmarking framework** that empirically analyses algorithm complexity. Your framework must generate test data, measure execution time with statistical validity, produce complexity estimates and export results for visualisation.
+Implement a benchmarking framework that empirically analyses algorithm complexity. The goal is methodological literacy. A benchmark is only as credible as its experimental design.
 
-### Functional Requirements
+### Functional requirements and rubric
 
-| Requirement | Points |
-|-------------|--------|
-| **Data Generation** | 12 |
-| Random array generator with configurable seed | 3 |
-| Sorted, reverse-sorted and partially sorted generators | 3 |
-| Graph generator (random, dense, sparse, tree) | 3 |
-| Reproducibility through seed control | 3 |
-| **Timing Infrastructure** | 13 |
-| High-resolution timing using `clock_gettime()` | 4 |
-| Multiple runs per test with outlier elimination | 4 |
-| Statistical measures: mean, median, std deviation | 5 |
-| **Complexity Estimation** | 15 |
-| Ratio test for empirical complexity classification | 5 |
-| Curve fitting for O(n), O(n log n), O(n²), O(2^n) | 5 |
-| Comparison with theoretical expectations | 5 |
-| **Output and Visualisation** | 10 |
-| CSV export for external plotting | 3 |
-| ASCII chart generation for terminal display | 4 |
-| Summary report with pass/fail status | 3 |
+| Requirement family | Points | Assessment focus |
+|---|---:|---|
+| Data generation | 12 | distributional control, reproducibility |
+| Timing infrastructure | 13 | correct clocks, statistics |
+| Complexity estimation | 15 | inference discipline, model fit |
+| Output and visualisation | 10 | usable exports, clear summaries |
 
-### Required Function Signatures
+### Data generation (12)
 
-```c
-/* Timing result structure */
-typedef struct {
-    double   mean_ns;
-    double   median_ns;
-    double   std_dev;
-    double   min_ns;
-    double   max_ns;
-    int      runs;
-    int      outliers_removed;
-} TimingResult;
+- random array generator with configurable seed (3)
+- sorted, reverse-sorted and partially sorted generators (3)
+- graph generator with multiple regimes (3)
+- explicit reproducibility (3)
 
-/* Complexity estimation */
-typedef enum {
-    COMPLEXITY_CONSTANT,    /* O(1)        */
-    COMPLEXITY_LOGARITHMIC, /* O(log n)    */
-    COMPLEXITY_LINEAR,      /* O(n)        */
-    COMPLEXITY_LINEARITHMIC,/* O(n log n)  */
-    COMPLEXITY_QUADRATIC,   /* O(n²)       */
-    COMPLEXITY_CUBIC,       /* O(n³)       */
-    COMPLEXITY_EXPONENTIAL, /* O(2^n)      */
-    COMPLEXITY_UNKNOWN
-} ComplexityClass;
+### Timing infrastructure (13)
 
-/* Benchmark configuration */
-typedef struct {
-    const char* name;
-    void      (*function)(void* data, size_t n);
-    size_t*     test_sizes;
-    int         num_sizes;
-    int         runs_per_size;
-    ComplexityClass expected;
-} BenchmarkConfig;
+- use `clock_gettime()` with `CLOCK_MONOTONIC` where available (4)
+- multiple runs with outlier elimination (4)
+- compute mean, median and standard deviation (5)
 
-/* Required functions */
-int*         generate_random(size_t n, unsigned int seed);
-int*         generate_sorted(size_t n, int ascending);
-int*         generate_partial(size_t n, int sorted_percent, unsigned int seed);
+### Complexity estimation (15)
 
-TimingResult benchmark_function(void (*fn)(void*, size_t), 
-                                void* data, size_t n, int runs);
+A plausible minimal approach is:
 
-ComplexityClass estimate_complexity(const TimingResult* results, 
-                                    const size_t* sizes, int count);
+1. Choose a set of candidate classes: `O(1)`, `O(log n)`, `O(n)`, `O(n log n)`, `O(n²)`.
+2. For each candidate compute a normalised error against observed timings.
+3. Choose the candidate with the lowest error subject to stability under resampling.
 
-void         export_csv(const char* filename, const BenchmarkConfig* cfg,
-                        const TimingResult* results);
+The assignment encourages ratio tests because they are easy to explain.
 
-void         print_ascii_chart(const TimingResult* results, 
-                               const size_t* sizes, int count);
+### Output and visualisation (10)
+
+- CSV export suitable for plotting in R, Python or Excel (3)
+- ASCII charts for terminal inspection (4)
+- summary report with pass/fail criteria (3)
+
+### Practical guidance
+
+- Warm up caches by running at least one untimed trial.
+- Pin the seed and document it.
+- Avoid I/O in timed regions.
+- Report the clock used and its resolution.
+
+---
+
+## Submission checklist
+
+1. The programme compiles with `-Wall -Wextra -std=c11` and no warnings.
+2. All allocated memory is freed on all code paths.
+3. The tool prints a `--help` message that describes arguments.
+4. Deterministic behaviour: fixed seed implies fixed outputs.
+5. The report explains methodology, not only results.
+
+---
+
+## Suggested reading (optional)
+
+The following are established references that discuss algorithms and performance reasoning. They are not required but they provide authoritative context.
+
+- Cormen, T. H., Leiserson, C. E., Rivest, R. L., & Stein, C. (2009). *Introduction to algorithms* (3rd ed). MIT Press. https://doi.org/10.7551/mitpress/9780262033848.001.0001
+- Knuth, D. E. (1998). *The art of computer programming, volume 3: Sorting and searching* (2nd ed). Addison-Wesley. https://doi.org/10.1002/9781118032703
+
+
+## Implementation and assessment guidance
+
+This section is not an additional set of requirements. It is a clarification of what will be examined in practice when a submission is assessed.
+
+### Architectural expectations
+
+A strong submission will exhibit an explicit separation between:
+
+- *representation*: how data are stored (dynamic arrays, adjacency lists, hash tables)
+- *interfaces*: stable function signatures and clear contracts
+- *algorithms*: implementations that assume the interface contract and state invariants
+- *I/O and reporting*: file parsing, formatting and error handling
+
+The mark scheme rewards this separation because it supports systematic debugging and it reduces the probability of hidden aliasing and memory ownership errors.
+
+### Robustness requirements
+
+Even when inputs are well formed, robustness should be engineered rather than assumed.
+
+- Validate sizes before allocation and check every allocation result.
+- Ensure that all ownership transfers are explicit. If a function returns a pointer that must be freed, document it.
+- Treat integer overflow as a correctness bug. When computing `dist[u] + w` for Dijkstra, guard against overflow.
+- Prefer deterministic traversal order in all graph algorithms. When multiple neighbours are available, iterate in ascending vertex order.
+
+### Required algorithms: canonical pseudocode
+
+The following pseudocode captures the minimum expected logical structure. You may implement variants, but your report must state which variant you selected and why.
+
+#### Binary search (iterative)
+
+```
+BINARY_SEARCH(A[0..n-1], key):
+    lo := 0
+    hi := n-1
+    while lo <= hi:
+        mid := lo + (hi-lo)//2
+        if A[mid] == key: return mid
+        if A[mid] < key: lo := mid+1
+        else: hi := mid-1
+    return NOT_FOUND
 ```
 
-### Example Usage
-
-```bash
-# Benchmark all sorting algorithms
-./homework2 --benchmark sorting --sizes 100,500,1000,5000 --runs 5
-
-# Analyse single algorithm with detailed statistics
-./homework2 --analyse quicksort --csv results.csv
-
-# Full analysis with complexity estimation
-./homework2 --full-analysis --output report.txt
-```
-
-### Expected Output for `--full-analysis`
+#### Dijkstra (priority queue variant)
 
 ```
-╔═══════════════════════════════════════════════════════════════╗
-║         ALGORITHM COMPLEXITY ANALYSIS REPORT                   ║
-╚═══════════════════════════════════════════════════════════════╝
-
-Generated: 2026-01-15 14:30:00
-Test Parameters: sizes=[100,500,1000,5000,10000], runs=5
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-SORTING ALGORITHMS
-──────────────────────────────────────────────────────────────────
-Algorithm        Expected     Measured     Status    Ratio (n→2n)
-──────────────────────────────────────────────────────────────────
-SelectionSort    O(n²)        O(n²)        ✓ PASS    3.98 ≈ 4
-QuickSort        O(n log n)   O(n log n)   ✓ PASS    2.12 ≈ 2
-MergeSort        O(n log n)   O(n log n)   ✓ PASS    2.08 ≈ 2
-HeapSort         O(n log n)   O(n log n)   ✓ PASS    2.15 ≈ 2
-
-ASCII Performance Chart (log scale):
-n=100   |████                              |   0.05 ms
-n=500   |████████████                      |   0.28 ms
-n=1000  |████████████████████              |   0.64 ms
-n=5000  |████████████████████████████████  |   3.89 ms
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-SEARCH ALGORITHMS
-──────────────────────────────────────────────────────────────────
-Algorithm        Expected     Measured     Status    Ratio (n→2n)
-──────────────────────────────────────────────────────────────────
-LinearSearch     O(n)         O(n)         ✓ PASS    2.01 ≈ 2
-BinarySearch     O(log n)     O(log n)     ✓ PASS    1.03 ≈ 1
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-SUMMARY
-──────────────────────────────────────────────────────────────────
-Total algorithms tested: 6
-Passed: 6
-Failed: 0
-Coverage: 100%
-
-Results exported to: benchmark_results.csv
+DIJKSTRA(G, s):
+    for each v in V:
+        dist[v] := ∞
+        parent[v] := NIL
+    dist[s] := 0
+    PQ := min-priority-queue keyed by dist
+    PQ.push(s)
+    while PQ not empty:
+        u := PQ.pop_min()
+        for each edge (u, v, w) outgoing:
+            if dist[u] + w < dist[v]:
+                dist[v] := dist[u] + w
+                parent[v] := u
+                PQ.decrease_key(v, dist[v]) or PQ.push(v)
+    return dist, parent
 ```
 
-### File: `homework2_benchmark.c`
+#### Longest common subsequence (dynamic programming)
 
----
+```
+LCS_LENGTH(X[1..m], Y[1..n]):
+    create table L[0..m][0..n]
+    for i := 0..m: L[i][0] := 0
+    for j := 0..n: L[0][j] := 0
+    for i := 1..m:
+        for j := 1..n:
+            if X[i] == Y[j]:
+                L[i][j] := L[i-1][j-1] + 1
+            else:
+                L[i][j] := max(L[i-1][j], L[i][j-1])
+    return L[m][n]
+```
 
-## 📊 Evaluation Criteria
+### Marking rubric clarifications
 
-| Criterion | Homework 1 | Homework 2 |
-|-----------|------------|------------|
-| Functional correctness | 20 | 20 |
-| Algorithm implementation quality | 12 | 10 |
-| Interface design and usability | 8 | 10 |
-| Code organisation and modularity | 5 | 5 |
-| Edge case and error handling | 5 | 5 |
-| **Total** | **50** | **50** |
+- Correctness is necessary but not sufficient for high marks. An implementation that passes a narrow set of tests but lacks clear contracts and memory safety will be penalised.
+- Complexity claims must be justified. If you state that an operation is `Θ(n log n)` then you must describe the dominant step and the cost of that step.
+- Benchmark results must be reproducible. If your programme prints timings but uses a changing seed without reporting it, results are not scientifically interpretable.
 
-### Quality Standards
+### Academic integrity note
 
-All code must:
-- Compile without warnings using `gcc -Wall -Wextra -std=c11`
-- Pass Valgrind memory check with zero leaks
-- Handle invalid input gracefully (return error codes, not crash)
-- Include comprehensive comments explaining algorithms
-- Use consistent naming conventions (snake_case for functions)
+You may consult external references to learn, but the submitted code must be authored by you and must be attributable. When you adapt an idea, credit the source in a comment. This is treated as good scholarly practice rather than as a liability.
 
-### Penalties
+## References
 
-| Violation | Penalty |
-|-----------|---------|
-| Compiler warnings | -10 points |
-| Memory leaks (Valgrind errors) | -20 points |
-| Crashes on valid input | -30 points |
-| Missing required functions | -5 per function |
-| Poor code formatting | -5 points |
-| Plagiarism | -100% + disciplinary action |
+| Topic | Reference |
+|---|---|
+| Quicksort original paper | Hoare, C. A. R. (1962). Quicksort. *The Computer Journal, 5*(1), 10–15. https://doi.org/10.1093/comjnl/5.1.10 |
+| Single-source shortest paths | Dijkstra, E. W. (1959). A note on two problems in connexion with graphs. *Numerische Mathematik, 1*, 269–271. https://doi.org/10.1007/BF01386390 |
+| Dynamic programming foundations | Bellman, R. (1957). *Dynamic Programming*. Princeton University Press. (Monograph, no DOI) |
 
----
 
-## 📤 Submission Instructions
+## Submission hygiene and reproducibility checklist
 
-1. **File naming:** `homework1_[surname].c` and `homework2_[surname].c`
-2. **Header comment:** Include your name, student ID and date
-3. **Single file:** All code in one `.c` file (no separate headers)
-4. **Test before submission:**
-   ```bash
-   gcc -Wall -Wextra -std=c11 -o homework1 homework1_name.c -lm
-   valgrind --leak-check=full ./homework1 --demo
-   ```
-5. **Upload:** University e-learning portal before deadline
+Before submission you should treat your programme as an artefact that will be built and executed on an environment that you do not control.
 
----
+1. **Build determinism:** ensure that `gcc -Wall -Wextra -std=c11` produces no warnings. Warnings will be treated as defects because they are frequently symptoms of undefined behaviour.
+2. **Input defensiveness:** validate headers, bounds and file operations. Reject malformed inputs early with clear diagnostics.
+3. **Ownership clarity:** each allocation must have exactly one responsible owner. Pair every `malloc` or `calloc` with a unique and reachable `free`.
+4. **Transcript stability:** ensure that results are deterministic for a fixed seed and that output formatting is invariant across runs.
+5. **Complexity narrative:** for each algorithm, state the representation assumptions that justify your complexity claim.
 
-## 💡 Implementation Tips
-
-1. **Start with data structures:** Build `DynamicArray` and `Graph` first—everything else depends on them
-
-2. **Use function pointers wisely:** Store algorithm implementations in dispatch tables for clean switching
-
-3. **Test incrementally:** Verify each algorithm works before moving to the next
-
-4. **Mind the clock:** Use `CLOCK_MONOTONIC` for timing, not `CLOCK_REALTIME`
-
-5. **Handle edge cases:** Empty arrays, single-element arrays, disconnected graphs
-
-6. **Document complexity:** Comment each function with its time and space complexity
-
-7. **Statistical validity:** Remove outliers using IQR method (values outside Q1-1.5×IQR to Q3+1.5×IQR)
-
----
-
-## 📚 Reference Materials
-
-- **Cormen et al.** *Introduction to Algorithms* - Chapter 2 (Analysis), Chapter 22-26 (Graphs)
-- **Sedgewick & Wayne** *Algorithms* - Performance analysis methodology
-- GNU C Library documentation for `clock_gettime()`
-- Course slides: Weeks 1-13 for algorithm implementations
-
----
-
-## ❓ Questions?
-
-Contact the teaching assistant during laboratory hours or via the course forum.
-
-*Good luck with your final assignments!*
+If you follow this checklist, most high-impact marking deductions can be avoided.

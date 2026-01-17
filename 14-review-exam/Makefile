@@ -149,41 +149,34 @@ test: exercise1 exercise2
 	@echo ""
 	@echo "$(YELLOW)$(BOLD)Running automated tests...$(NC)"
 	@echo ""
+	@rm -f /tmp/week14_test*_out.txt /tmp/week14_test*_diff.txt
 	@echo "$(CYAN)Test 1: Sorting Algorithms$(NC)"
 	@echo "  Input: $(TEST_DIR)/test1_input.txt"
 	@echo "  Expected: $(TEST_DIR)/test1_expected.txt"
-	@if ./exercise1 < $(TEST_DIR)/test1_input.txt 2>/dev/null | diff -q - $(TEST_DIR)/test1_expected.txt > /dev/null 2>&1; then \
-		echo "  $(GREEN)✓ Test 1 PASSED$(NC)"; \
-	else \
-		echo "  $(YELLOW)⚠ Test 1: Output differs (exercise may not be complete)$(NC)"; \
-	fi
+	@./exercise1 < $(TEST_DIR)/test1_input.txt > /tmp/week14_test1_out.txt
+	@if diff -u $(TEST_DIR)/test1_expected.txt /tmp/week14_test1_out.txt > /tmp/week14_test1_diff.txt; then 		echo "  $(GREEN)✓ Test 1 PASSED$(NC)"; 	else 		echo "  $(RED)✗ Test 1 FAILED$(NC)"; 		echo "  $(RED)Diff (expected vs actual):$(NC)"; 		cat /tmp/week14_test1_diff.txt; 		exit 1; 	fi
 	@echo ""
 	@echo "$(CYAN)Test 2: Graph Analysis$(NC)"
 	@echo "  Input: $(TEST_DIR)/test2_input.txt"
 	@echo "  Expected: $(TEST_DIR)/test2_expected.txt"
-	@if ./exercise2 $(TEST_DIR)/test2_input.txt 2>/dev/null | diff -q - $(TEST_DIR)/test2_expected.txt > /dev/null 2>&1; then \
-		echo "  $(GREEN)✓ Test 2 PASSED$(NC)"; \
-	else \
-		echo "  $(YELLOW)⚠ Test 2: Output differs (exercise may not be complete)$(NC)"; \
-	fi
+	@./exercise2 $(TEST_DIR)/test2_input.txt > /tmp/week14_test2_out.txt
+	@if diff -u $(TEST_DIR)/test2_expected.txt /tmp/week14_test2_out.txt > /tmp/week14_test2_diff.txt; then 		echo "  $(GREEN)✓ Test 2 PASSED$(NC)"; 	else 		echo "  $(RED)✗ Test 2 FAILED$(NC)"; 		echo "  $(RED)Diff (expected vs actual):$(NC)"; 		cat /tmp/week14_test2_diff.txt; 		exit 1; 	fi
 	@echo ""
-	@echo "$(CYAN)$(BOLD)Testing complete$(NC)"
+	@echo "$(GREEN)$(BOLD)✓ All tests passed$(NC)"
+	@rm -f /tmp/week14_test*_out.txt /tmp/week14_test*_diff.txt
+
 
 test-solutions: solutions
 	@echo ""
-	@echo "$(MAGENTA)$(BOLD)Testing solution files...$(NC)"
-	@./exercise1_sol < $(TEST_DIR)/test1_input.txt > /tmp/sol1_out.txt 2>&1
-	@if diff -q /tmp/sol1_out.txt $(TEST_DIR)/test1_expected.txt > /dev/null 2>&1; then \
-		echo "$(GREEN)✓ Exercise 1 Solution: PASSED$(NC)"; \
-	else \
-		echo "$(RED)✗ Exercise 1 Solution: FAILED$(NC)"; \
-	fi
-	@./exercise2_sol $(TEST_DIR)/test2_input.txt > /tmp/sol2_out.txt 2>&1
-	@if diff -q /tmp/sol2_out.txt $(TEST_DIR)/test2_expected.txt > /dev/null 2>&1; then \
-		echo "$(GREEN)✓ Exercise 2 Solution: PASSED$(NC)"; \
-	else \
-		echo "$(RED)✗ Exercise 2 Solution: FAILED$(NC)"; \
-	fi
+	@echo "$(MAGENTA)$(BOLD)Running regression tests for solution binaries...$(NC)"
+	@rm -f /tmp/week14_sol*_out.txt /tmp/week14_sol*_diff.txt
+	@./exercise1_sol < $(TEST_DIR)/test1_input.txt > /tmp/week14_sol1_out.txt
+	@if diff -u $(TEST_DIR)/test1_expected.txt /tmp/week14_sol1_out.txt > /tmp/week14_sol1_diff.txt; then 		echo "$(GREEN)✓ Exercise 1 Solution: PASSED$(NC)"; 	else 		echo "$(RED)✗ Exercise 1 Solution: FAILED$(NC)"; 		cat /tmp/week14_sol1_diff.txt; 		exit 1; 	fi
+	@./exercise2_sol $(TEST_DIR)/test2_input.txt > /tmp/week14_sol2_out.txt
+	@if diff -u $(TEST_DIR)/test2_expected.txt /tmp/week14_sol2_out.txt > /tmp/week14_sol2_diff.txt; then 		echo "$(GREEN)✓ Exercise 2 Solution: PASSED$(NC)"; 	else 		echo "$(RED)✗ Exercise 2 Solution: FAILED$(NC)"; 		cat /tmp/week14_sol2_diff.txt; 		exit 1; 	fi
+	@echo ""
+	@echo "$(GREEN)$(BOLD)✓ Solution regression tests passed$(NC)"
+	@rm -f /tmp/week14_sol*_out.txt /tmp/week14_sol*_diff.txt
 
 # =============================================================================
 # Memory Check Targets

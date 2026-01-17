@@ -1,562 +1,736 @@
 # Week 14: Advanced Topics and Comprehensive Review
 
-## 🎯 Learning Objectives
+## Abstract
 
-Upon successful completion of this week's laboratory, students will be able to:
+Week 14 is framed as a consolidation week and as an examination-calibrated rehearsal. The emphasis is not merely on implementing canonical algorithms but on demonstrating that they can be composed, tested and reasoned about under constraints that mirror real assessment conditions: deterministic I/O transcripts, explicit invariants, principled memory ownership and carefully delimited side effects.
 
-1. **Remember** — Recall the fundamental characteristics, time complexities and space requirements of all major data structures and algorithms covered throughout the semester, including dynamic programming paradigms, graph traversal strategies and tree-based operations.
+The repository therefore provides three artefacts that together function as a miniature portfolio:
 
-2. **Understand** — Explain the theoretical underpinnings of algorithm design techniques such as divide-and-conquer, greedy methods, dynamic programming and backtracking, articulating when each paradigm offers optimal solutions.
+- `src/example1.c` is an integrated demonstration programme (“Algorithm Portfolio Manager”) that illustrates how a heterogeneous algorithm set can be registered, selected and benchmarked using function pointers and lightweight data structures.
+- `src/exercise1.c` implements a small sorting portfolio with two operational profiles: a strict regression profile driven by stdin and a benchmarking profile driven by generated data.
+- `src/exercise2.c` implements a graph analyser with a regression profile that emits a stable transcript and an interactive profile that produces a richer report, including file export.
 
-3. **Apply** — Implement hybrid solutions that combine multiple algorithmic techniques, integrating data structures such as hash tables with graph algorithms or priority queues with dynamic programming.
+Both exercises are engineered to be testable via `diff`. This is not cosmetic. A programme that is correct but not deterministic is frequently unmarkable in practice and often fails continuous integration pipelines.
 
-4. **Analyse** — Evaluate competing algorithmic approaches for complex problems, performing rigorous asymptotic analysis and identifying bottlenecks through profiling and benchmarking.
+## Table of contents
 
-5. **Evaluate** — Critically assess trade-offs between time complexity, space complexity, code maintainability and implementation effort when selecting algorithms for real-world applications.
-
-6. **Create** — Design and implement original solutions to novel problems by synthesising knowledge from the entire course, producing optimised, well-documented and thoroughly-tested C programs.
-
----
-
-## 📜 Historical Context
-
-The systematic study of algorithms as a formal discipline emerged from the pioneering work of mathematicians and computer scientists throughout the twentieth century. The very word "algorithm" derives from the name of the ninth-century Persian mathematician Muḥammad ibn Mūsā al-Khwārizmī, whose treatise on Hindu-Arabic numerals introduced systematic computational procedures to the Islamic world and, subsequently, to medieval Europe.
-
-The modern era of algorithm analysis began in earnest with the work of Donald Knuth, whose monumental multi-volume opus "The Art of Computer Programming" (commencing 1968) established rigorous mathematical foundations for analysing computational procedures. Knuth introduced the now-ubiquitous O-notation to computer science, formalising asymptotic analysis and enabling precise comparisons between competing approaches.
-
-Dynamic programming, one of the most powerful algorithmic paradigms, was developed by Richard Bellman in the 1950s whilst working at the RAND Corporation. Bellman chose the term "dynamic programming" partly for its impressive-sounding nature and partly to obscure the mathematical research from sceptical government officials. His work revolutionised optimisation problems across operations research, economics and computer science.
-
-### Key Figure: Donald Ervin Knuth (1938–present)
-
-Donald Knuth stands as one of the most influential computer scientists in history. Born in Milwaukee, Wisconsin, Knuth demonstrated exceptional mathematical aptitude from youth, famously finding all errors in the textbook his teachers used. He earned his Ph.D. from the California Institute of Technology in 1963 and joined Stanford University's faculty, where he remains Professor Emeritus.
-
-Knuth's contributions extend far beyond algorithm analysis. He created the TeX typesetting system (still widely used in academic publishing), developed the METAFONT system for digital typography and introduced literate programming as a methodology for writing clear, maintainable code. His advocacy for structured programming and mathematical rigour shaped generations of computer scientists.
-
-> *"Premature optimisation is the root of all evil."*
-> — Donald E. Knuth, "Computer Programming as an Art" (1974)
+1. Repository structure
+2. Build, run and test workflows
+3. Exercise 1: sorting portfolio
+4. Exercise 2: graph analyser
+5. Example 1: architecture notes
+6. Algorithmic dossiers and pseudocode
+7. Cross-language correspondences
+8. Testing methodology and failure modes
+9. Appendices
 
 ---
 
-## 📚 Theoretical Foundations
-
-### 1. Algorithm Design Paradigms
-
-The semester has explored four fundamental paradigms for algorithm design, each suited to different problem characteristics:
+## Repository structure
 
 ```
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                     ALGORITHM DESIGN PARADIGMS                              │
-├─────────────────────────────────────────────────────────────────────────────┤
-│                                                                             │
-│   ┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐        │
-│   │  DIVIDE AND     │    │    DYNAMIC      │    │     GREEDY      │        │
-│   │    CONQUER      │    │  PROGRAMMING    │    │    STRATEGY     │        │
-│   ├─────────────────┤    ├─────────────────┤    ├─────────────────┤        │
-│   │ Break into      │    │ Overlapping     │    │ Locally optimal │        │
-│   │ independent     │    │ subproblems     │    │ choices lead to │        │
-│   │ subproblems     │    │ with optimal    │    │ global optimum  │        │
-│   │                 │    │ substructure    │    │                 │        │
-│   │ Examples:       │    │                 │    │ Examples:       │        │
-│   │ - Merge sort    │    │ Examples:       │    │ - Dijkstra      │        │
-│   │ - Quick sort    │    │ - Fibonacci     │    │ - Prim/Kruskal  │        │
-│   │ - Binary search │    │ - Knapsack      │    │ - Huffman       │        │
-│   │                 │    │ - LCS           │    │                 │        │
-│   └─────────────────┘    └─────────────────┘    └─────────────────┘        │
-│                                                                             │
-│   ┌─────────────────┐    ┌─────────────────┐                               │
-│   │  BACKTRACKING   │    │   BRANCH AND    │                               │
-│   │                 │    │     BOUND       │                               │
-│   ├─────────────────┤    ├─────────────────┤                               │
-│   │ Systematic      │    │ Backtracking    │                               │
-│   │ search with     │    │ with bounds     │                               │
-│   │ pruning         │    │ pruning         │                               │
-│   │                 │    │                 │                               │
-│   │ Examples:       │    │ Examples:       │                               │
-│   │ - N-Queens      │    │ - TSP           │                               │
-│   │ - Sudoku        │    │ - Integer LP    │                               │
-│   │ - Graph colour  │    │ - Knapsack      │                               │
-│   └─────────────────┘    └─────────────────┘                               │
-│                                                                             │
-└─────────────────────────────────────────────────────────────────────────────┘
+14-review-exam/
+├─ Makefile
+├─ README.md
+├─ src/
+│  ├─ example1.c
+│  ├─ exercise1.c
+│  └─ exercise2.c
+├─ data/
+│  └─ graph_sample.txt
+├─ tests/
+│  ├─ test1_input.txt
+│  ├─ test1_expected.txt
+│  ├─ test2_input.txt
+│  └─ test2_expected.txt
+└─ teme/
+   ├─ homework-requirements.md
+   └─ homework-extended.md
 ```
 
-### 2. Complexity Analysis Summary
-
-Understanding time and space complexity remains essential for algorithm selection. The following table summarises the major algorithms covered:
-
-| Category | Algorithm | Time (Average) | Time (Worst) | Space | Stable |
-|----------|-----------|----------------|--------------|-------|--------|
-| **Sorting** | Quick Sort | O(n log n) | O(n²) | O(log n) | No |
-| | Merge Sort | O(n log n) | O(n log n) | O(n) | Yes |
-| | Heap Sort | O(n log n) | O(n log n) | O(1) | No |
-| **Searching** | Binary Search | O(log n) | O(log n) | O(1) | — |
-| | Hash Table | O(1) | O(n) | O(n) | — |
-| | BST Search | O(log n) | O(n) | O(1) | — |
-| | AVL Search | O(log n) | O(log n) | O(1) | — |
-| **Graph** | BFS/DFS | O(V + E) | O(V + E) | O(V) | — |
-| | Dijkstra (heap) | O((V+E) log V) | O((V+E) log V) | O(V) | — |
-| | Bellman-Ford | O(VE) | O(VE) | O(V) | — |
-| | Prim (heap) | O((V+E) log V) | O((V+E) log V) | O(V) | — |
-| | Kruskal | O(E log E) | O(E log E) | O(V) | — |
-| **Dynamic Prog.** | Fibonacci (memo) | O(n) | O(n) | O(n) | — |
-| | 0/1 Knapsack | O(nW) | O(nW) | O(nW) | — |
-| | LCS | O(mn) | O(mn) | O(mn) | — |
-| | Edit Distance | O(mn) | O(mn) | O(mn) | — |
-
-### 3. Memory Optimisation Techniques
-
-Dynamic programming algorithms often consume substantial memory. Several techniques reduce space requirements:
-
-```c
-/* Space-optimised LCS: O(min(m,n)) instead of O(mn) */
-int lcs_optimised(const char *X, const char *Y, int m, int n) {
-    /* Ensure X is the shorter string for minimal memory */
-    if (m > n) {
-        const char *temp = X; X = Y; Y = temp;
-        int t = m; m = n; n = t;
-    }
-    
-    int *prev = calloc(m + 1, sizeof(int));
-    int *curr = calloc(m + 1, sizeof(int));
-    
-    for (int j = 1; j <= n; j++) {
-        for (int i = 1; i <= m; i++) {
-            if (X[i-1] == Y[j-1])
-                curr[i] = prev[i-1] + 1;
-            else
-                curr[i] = (prev[i] > curr[i-1]) ? prev[i] : curr[i-1];
-        }
-        int *temp = prev; prev = curr; curr = temp;
-    }
-    
-    int result = prev[m];
-    free(prev); free(curr);
-    return result;
-}
-```
-
-**Key Optimisation Strategies:**
-
-- **Rolling arrays** — Maintain only necessary rows/columns of DP tables
-- **Bit manipulation** — Pack boolean states into integers for subset problems
-- **Sparse representations** — Use adjacency lists over matrices for sparse graphs
-- **In-place algorithms** — Modify input rather than allocating new structures
-- **Cache-aware design** — Organise data access patterns for CPU cache efficiency
+The directory `solution/` is included as an instructor reference. For this week it also provides regression-compatible binaries so that `make test-solutions` can serve as a calibration tool.
 
 ---
 
-## 🏭 Industrial Applications
+## Build, run and test workflows
 
-### 1. Network Routing (Dijkstra's Algorithm)
+### Compilation model
 
-Modern internet routing protocols such as OSPF (Open Shortest Path First) employ variants of Dijkstra's algorithm:
+All C code targets the C11 standard and is compiled with warnings enabled. The Makefile uses a single compilation unit per programme for pedagogical clarity. In larger systems one would normally split code into translation units and introduce headers with explicit interfaces.
 
-```c
-/* Simplified OSPF cost calculation */
-typedef struct {
-    int destination;
-    int cost;
-    int next_hop;
-} RoutingEntry;
+### Canonical commands
 
-void ospf_calculate_routes(Graph *topology, int router_id, 
-                           RoutingEntry *table, int *table_size) {
-    int *dist = malloc(topology->V * sizeof(int));
-    int *prev = malloc(topology->V * sizeof(int));
-    
-    dijkstra(topology, router_id, dist, prev);
-    
-    *table_size = 0;
-    for (int v = 0; v < topology->V; v++) {
-        if (v != router_id && dist[v] != INT_MAX) {
-            table[*table_size].destination = v;
-            table[*table_size].cost = dist[v];
-            table[*table_size].next_hop = trace_next_hop(prev, router_id, v);
-            (*table_size)++;
-        }
-    }
-    
-    free(dist); free(prev);
-}
-```
-
-### 2. Database Query Optimisation
-
-Relational databases use dynamic programming for join ordering in query execution:
-
-```c
-/* Conceptual DP for optimal join order (System R algorithm) */
-typedef struct {
-    unsigned long long relation_set;  /* Bitmask of included relations */
-    double cost;
-    struct JoinPlan *plan;
-} DPEntry;
-
-DPEntry dp_find_optimal_join(Relation *relations, int n, 
-                              Statistics *stats) {
-    int total_sets = 1 << n;
-    DPEntry *dp = calloc(total_sets, sizeof(DPEntry));
-    
-    /* Base cases: single relations */
-    for (int i = 0; i < n; i++) {
-        dp[1 << i].relation_set = 1 << i;
-        dp[1 << i].cost = estimate_scan_cost(relations[i], stats);
-    }
-    
-    /* DP: build larger sets from smaller subsets */
-    for (int size = 2; size <= n; size++) {
-        for (unsigned long long S = 0; S < total_sets; S++) {
-            if (__builtin_popcountll(S) != size) continue;
-            
-            /* Try all partitions of S into two non-empty subsets */
-            for (unsigned long long S1 = (S - 1) & S; S1 > 0; S1 = (S1 - 1) & S) {
-                unsigned long long S2 = S ^ S1;
-                double join_cost = dp[S1].cost + dp[S2].cost + 
-                                   estimate_join_cost(S1, S2, stats);
-                if (join_cost < dp[S].cost || dp[S].cost == 0) {
-                    dp[S].cost = join_cost;
-                    /* Store plan details... */
-                }
-            }
-        }
-    }
-    
-    DPEntry result = dp[total_sets - 1];
-    free(dp);
-    return result;
-}
-```
-
-### 3. Compiler Register Allocation
-
-Graph colouring algorithms underpin register allocation in optimising compilers:
-
-```c
-/* Register allocation via graph colouring (simplified) */
-typedef struct {
-    int *neighbours;
-    int degree;
-    int colour;  /* -1 = uncoloured, 0..K-1 = register */
-    bool spilled;
-} InterferenceNode;
-
-void allocate_registers(InterferenceNode *graph, int n_vars, int K) {
-    /* Build simplify worklist (degree < K) */
-    int *stack = malloc(n_vars * sizeof(int));
-    int sp = 0;
-    
-    bool *removed = calloc(n_vars, sizeof(bool));
-    
-    /* Iteratively simplify */
-    bool progress = true;
-    while (progress) {
-        progress = false;
-        for (int i = 0; i < n_vars; i++) {
-            if (!removed[i] && effective_degree(graph, i, removed) < K) {
-                stack[sp++] = i;
-                removed[i] = true;
-                progress = true;
-            }
-        }
-    }
-    
-    /* Check for potential spills */
-    for (int i = 0; i < n_vars; i++) {
-        if (!removed[i]) {
-            /* Must spill: choose based on heuristics */
-            int victim = select_spill_candidate(graph, n_vars, removed);
-            stack[sp++] = victim;
-            removed[victim] = true;
-            graph[victim].spilled = true;
-        }
-    }
-    
-    /* Pop and colour */
-    while (sp > 0) {
-        int v = stack[--sp];
-        removed[v] = false;
-        graph[v].colour = find_available_colour(graph, v, K);
-    }
-    
-    free(stack); free(removed);
-}
-```
-
-### 4. Version Control Systems (LCS for Diff)
-
-Git and other version control systems use LCS variants for computing file differences:
-
-```c
-/* Generate unified diff using LCS */
-typedef enum { KEEP, INSERT, DELETE } DiffOp;
-
-typedef struct {
-    DiffOp op;
-    int line_num;
-    char *content;
-} DiffHunk;
-
-DiffHunk *generate_diff(char **old_lines, int old_count,
-                        char **new_lines, int new_count,
-                        int *hunk_count) {
-    /* Compute LCS with backtracking */
-    int **dp = allocate_2d(old_count + 1, new_count + 1);
-    
-    for (int i = 1; i <= old_count; i++) {
-        for (int j = 1; j <= new_count; j++) {
-            if (strcmp(old_lines[i-1], new_lines[j-1]) == 0)
-                dp[i][j] = dp[i-1][j-1] + 1;
-            else
-                dp[i][j] = MAX(dp[i-1][j], dp[i][j-1]);
-        }
-    }
-    
-    /* Backtrack to generate diff */
-    DiffHunk *hunks = malloc((old_count + new_count) * sizeof(DiffHunk));
-    *hunk_count = 0;
-    
-    backtrack_diff(dp, old_lines, new_lines, old_count, new_count,
-                   hunks, hunk_count);
-    
-    free_2d(dp, old_count + 1);
-    return hunks;
-}
-```
-
-### 5. Bioinformatics Sequence Alignment
-
-Edit distance algorithms form the basis for DNA and protein sequence alignment:
-
-```c
-/* Smith-Waterman local alignment (simplified) */
-typedef struct {
-    int score;
-    int start_i, start_j;
-    int end_i, end_j;
-    char *aligned_seq1;
-    char *aligned_seq2;
-} Alignment;
-
-Alignment smith_waterman(const char *seq1, const char *seq2,
-                         int match, int mismatch, int gap) {
-    int m = strlen(seq1), n = strlen(seq2);
-    int **H = allocate_2d(m + 1, n + 1);
-    
-    Alignment best = {0};
-    
-    for (int i = 1; i <= m; i++) {
-        for (int j = 1; j <= n; j++) {
-            int diag = H[i-1][j-1] + (seq1[i-1] == seq2[j-1] ? match : mismatch);
-            int up = H[i-1][j] + gap;
-            int left = H[i][j-1] + gap;
-            
-            H[i][j] = MAX(0, MAX(diag, MAX(up, left)));
-            
-            if (H[i][j] > best.score) {
-                best.score = H[i][j];
-                best.end_i = i;
-                best.end_j = j;
-            }
-        }
-    }
-    
-    /* Backtrack from best.end to find alignment */
-    traceback_local(H, seq1, seq2, &best);
-    
-    free_2d(H, m + 1);
-    return best;
-}
-```
-
----
-
-## 💻 Laboratory Exercises
-
-### Exercise 1: Algorithm Portfolio Manager
-
-Design and implement a comprehensive algorithm benchmarking system that allows comparison of multiple algorithmic solutions for the same problem class.
-
-**Requirements:**
-
-1. Implement at least three sorting algorithms (Quick Sort, Merge Sort, Heap Sort)
-2. Implement function pointer-based algorithm selection
-3. Measure and report execution time for each algorithm
-4. Generate comparative performance reports
-5. Handle various input distributions (sorted, reverse sorted, random, nearly sorted)
-6. Implement memory usage tracking
-7. Support different data types through generic programming
-8. Generate visualisation data in CSV format
-
-### Exercise 2: Unified Graph Analyser
-
-Build a graph analysis toolkit that integrates multiple graph algorithms into a cohesive framework.
-
-**Requirements:**
-
-1. Support both adjacency matrix and adjacency list representations
-2. Implement BFS, DFS, Dijkstra and Bellman-Ford algorithms
-3. Detect graph properties (connected, cyclic, bipartite)
-4. Find shortest paths between all vertex pairs (Floyd-Warshall)
-5. Compute minimum spanning trees (Prim and Kruskal)
-6. Identify strongly connected components (Kosaraju's algorithm)
-7. Export graph structure to DOT format for Graphviz visualisation
-8. Read graphs from multiple file formats (edge list, adjacency matrix)
-
----
-
-## 🔧 Compilation and Execution
+- Build student exercises
 
 ```bash
-# Build all targets
-make all
+make
+```
 
-# Run complete example demonstration
+- Run the integrated demonstration programme
+
+```bash
 make run
+```
 
-# Execute automated test suite
+- Run regression tests (strict, failing on mismatch)
+
+```bash
 make test
-
-# Check for memory leaks with Valgrind
-make valgrind
-
-# Generate performance benchmarks
-make benchmark
-
-# Clean build artefacts
-make clean
-
-# Display available targets
-make help
 ```
 
----
+- Run regression tests for solution binaries
 
-## 📁 Directory Structure
-
-```
-week-14-advanced-review/
-├── README.md                           # This documentation
-├── Makefile                            # Build automation
-│
-├── slides/
-│   ├── presentation-week14.html        # Main lecture slides
-│   └── presentation-comparativ.html    # Language comparison slides
-│
-├── src/
-│   ├── example1.c                      # Algorithm portfolio demonstration
-│   ├── exercise1.c                     # Benchmarking exercise
-│   └── exercise2.c                     # Graph analyser exercise
-│
-├── data/
-│   ├── graph_sample.txt                # Sample graph for testing
-│   └── benchmark_data.txt              # Performance test data
-│
-├── tests/
-│   ├── test1_input.txt                 # Test input for exercise 1
-│   ├── test1_expected.txt              # Expected output for exercise 1
-│   ├── test2_input.txt                 # Test input for exercise 2
-│   └── test2_expected.txt              # Expected output for exercise 2
-│
-├── teme/
-│   ├── homework-requirements.md        # Homework specifications
-│   └── homework-extended.md            # Bonus challenges
-│
-└── solution/
-    ├── exercise1_sol.c                 # Exercise 1 solution
-    ├── exercise2_sol.c                 # Exercise 2 solution
-    ├── homework1_sol.c                 # Homework 1 solution
-    └── homework2_sol.c                 # Homework 2 solution
+```bash
+make test-solutions
 ```
 
----
+### Deterministic regression transcripts
 
-## 📖 Recommended Reading
+Both `exercise1` and `exercise2` implement a quiet profile that is triggered when output is not a terminal.
 
-### Essential References
+- In `exercise1` regression mode is selected when stdin is not a terminal, which is the standard situation when a test harness redirects stdin from a file.
+- In `exercise2` regression mode is selected when stdout is not a terminal, which is the standard situation when a harness captures programme output.
 
-1. **Cormen, T.H., Leiserson, C.E., Rivest, R.L. & Stein, C.** (2022). *Introduction to Algorithms* (4th ed.). MIT Press. — The definitive algorithms textbook, comprehensive coverage of all topics.
-
-2. **Sedgewick, R. & Wayne, K.** (2011). *Algorithms* (4th ed.). Addison-Wesley. — Excellent practical approach with Java implementations easily adaptable to C.
-
-3. **Skiena, S.S.** (2020). *The Algorithm Design Manual* (3rd ed.). Springer. — Outstanding "war stories" connecting theory to practice.
-
-### Advanced Topics
-
-4. **Kleinberg, J. & Tardos, É.** (2006). *Algorithm Design*. Pearson. — Superb treatment of algorithm design techniques with formal proofs.
-
-5. **Knuth, D.E.** (1997–2011). *The Art of Computer Programming*, Vols. 1–4A. Addison-Wesley. — The definitive reference for serious algorithm study.
-
-6. **Dasgupta, S., Papadimitriou, C.H. & Vazirani, U.V.** (2006). *Algorithms*. McGraw-Hill. — Concise yet rigorous treatment with excellent complexity analysis.
-
-### Online Resources
-
-7. **MIT OpenCourseWare 6.006** — Introduction to Algorithms (video lectures)
-   https://ocw.mit.edu/courses/6-006-introduction-to-algorithms-spring-2020/
-
-8. **Visualgo** — Algorithm Visualisations
-   https://visualgo.net/
-
-9. **Big-O Cheat Sheet** — Complexity reference
-   https://www.bigocheatsheet.com/
+The intent is to separate human-facing narration from machine-facing transcripts. Both have value but they should not be conflated.
 
 ---
 
-## ✅ Self-Assessment Checklist
+## Exercise 1: sorting portfolio
 
-Before completing this week, verify your understanding:
+### Behavioural specification
 
-- [ ] I can identify the appropriate algorithm design paradigm for a given problem
-- [ ] I can perform asymptotic analysis and express complexity using O, Θ and Ω notation
-- [ ] I can implement and compare multiple sorting algorithms
-- [ ] I can implement dynamic programming solutions with space optimisation
-- [ ] I can implement graph algorithms using both adjacency matrix and list representations
-- [ ] I can analyse algorithm performance using profiling tools
-- [ ] I can detect and fix memory leaks using Valgrind
-- [ ] I can design test cases that exercise edge cases and boundary conditions
-- [ ] I can explain the trade-offs between different algorithmic approaches
-- [ ] I can write clean, well-documented C code following best practices
+#### Regression profile
 
----
+Input format:
 
-## 💼 Interview Preparation
+- First token: integer `n` (number of elements)
+- Next `n` tokens: integers
 
-Common technical interview questions on algorithms and data structures:
+Output format:
 
-1. **"Describe the differences between BFS and DFS. When would you use each?"**
-   — Focus on space complexity (BFS: O(branching factor^depth) vs DFS: O(depth)), applications (BFS for shortest path in unweighted graphs, DFS for topological sort).
+1. A single line containing the sorted sequence in non-decreasing order
+2. Three lines, one per algorithm, each in the form `AlgorithmName: PASSED` or `AlgorithmName: FAILED`
 
-2. **"How would you detect a cycle in a linked list? What is the time and space complexity?"**
-   — Floyd's tortoise and hare algorithm, O(n) time, O(1) space.
+This profile is designed to be stable under `diff` and to support automated marking.
 
-3. **"Explain dynamic programming. How does it differ from simple recursion?"**
-   — Memoisation/tabulation of overlapping subproblems, optimal substructure property. Reduces exponential to polynomial complexity.
+#### Benchmark profile
 
-4. **"Given a graph, how would you find the shortest path between two nodes?"**
-   — Discuss BFS (unweighted), Dijkstra (non-negative weights), Bellman-Ford (handles negative weights), Floyd-Warshall (all pairs).
+When run interactively the programme benchmarks three algorithms across a fixed set of sizes and writes a CSV file (`benchmark_output.csv`). The benchmark is deliberately modest because the intent is to practise methodology rather than to produce publishable microbenchmark results.
 
-5. **"What data structure would you use to implement a priority queue? Why?"**
-   — Binary heap: O(log n) insert/extract-min, O(1) find-min. Discuss heap sort, Dijkstra's algorithm applications.
+### Algorithmic inventory
 
----
+1. **Selection sort**: a quadratic baseline with constant auxiliary space.
+2. **Quicksort (Lomuto partition)**: average-case `Θ(n log n)` with recursion depth dependent on pivot quality.
+3. **Merge sort**: guaranteed `Θ(n log n)` time with `Θ(n)` auxiliary storage.
 
-## 🔗 Course Conclusion
+### Data structure and control architecture
 
-This concludes the Algorithms and Programming Techniques course. Throughout fourteen weeks, we have progressed from foundational concepts in function pointers and file handling through sophisticated data structures (linked lists, trees, heaps, hash tables and graphs) to advanced algorithmic techniques (dynamic programming, graph algorithms and optimisation methods).
+The programme uses a function pointer array to store and iterate over algorithm implementations. This achieves two outcomes.
 
-The skills acquired form the essential toolkit for software engineering:
+- It eliminates repetitive code and encourages an interface-first style.
+- It makes it straightforward to introduce an additional algorithm (heap sort is the obvious extension) without rewriting the control flow.
 
-- **Analytical thinking** — Breaking complex problems into manageable subproblems
-- **Algorithmic literacy** — Recognising common patterns and selecting appropriate solutions
-- **Implementation discipline** — Writing correct, efficient and maintainable code
-- **Testing rigour** — Verifying correctness through systematic testing
-
-Continue practising by solving problems on platforms such as LeetCode, HackerRank and Codeforces. The algorithmic foundations established here will serve throughout your computing careers.
-
-*"Computer science is no more about computers than astronomy is about telescopes."*
-— Edsger W. Dijkstra
+In C this is a standard technique for implementing strategy selection, callbacks and dispatch tables.
 
 ---
 
-**Prepared for:** ASE-CSIE Algorithms and Programming Techniques  
-**Week:** 14 of 14  
-**Last Updated:** January 2026
+## Exercise 2: graph analyser
+
+### Graph model
+
+The analyser loads a weighted undirected graph from a file containing an edge list. Internally it stores the graph in an adjacency matrix `W` where `W[u][v] = 0` denotes absence of an edge and `W[u][v] > 0` denotes the weight.
+
+This representation is intentionally simple.
+
+- It provides deterministic neighbour iteration by scanning `v = 0..V-1`.
+- It supports constant-time edge lookup.
+- It has `Θ(V²)` memory which is suboptimal for sparse graphs but pedagogically convenient.
+
+### Output obligations
+
+#### Regression transcript
+
+The transcript printed in quiet mode is:
+
+1. A three-line header with vertex count, edge count, density and component count
+2. BFS order from source 0
+3. DFS order from source 0
+4. Dijkstra single-source distances from source 0
+
+The formatting is fixed to match the test files.
+
+#### Interactive report
+
+The interactive profile prints a richer narrative and writes a report (`graph_analysis.txt`) to disk.
+
+---
+
+## Example 1: architecture notes
+
+`src/example1.c` is not a marking target. It is a reference implementation intended to show how semester topics can be combined into a coherent programme structure.
+
+### Core patterns demonstrated
+
+- **Function pointer registries**: algorithms are registered with metadata and stored in an array. Lookup is accelerated by a hash table.
+- **Chaining hash table**: collisions are resolved via linked lists. This illustrates the difference between average-case and worst-case lookup.
+- **Benchmark logging**: results are appended to a linked list which is then used to produce a report.
+- **Graph algorithms**: traversal and shortest path computations are incorporated into the same portfolio.
+- **Dynamic programming**: multiple Fibonacci implementations are included to demonstrate memoisation, tabulation and space optimisation.
+
+### Why a registry matters
+
+In an examination context students often implement algorithms as isolated functions. A registry forces an additional layer of discipline.
+
+- Each algorithm must conform to a signature.
+- Each algorithm must be callable through an indirection boundary.
+- Each algorithm must be testable with shared tooling.
+
+This is a small analogue of how real libraries are designed.
+
+---
+
+## Algorithmic dossiers and pseudocode
+
+The following dossiers summarise the algorithms used in this week. Each dossier includes pseudocode, invariants and complexity claims.
+
+### Selection sort
+
+#### Pseudocode
+
+```
+SELECTION_SORT(A[0..n-1]):
+    for i ← 0 to n-2:
+        m ← i
+        for j ← i+1 to n-1:
+            if A[j] < A[m]:
+                m ← j
+        swap A[i], A[m]
+```
+
+#### Loop invariants
+
+Let `i` be the outer-loop index.
+
+- Invariant I1: After iteration `i-1` the prefix `A[0..i-1]` is sorted.
+- Invariant I2: After iteration `i-1` the prefix contains the `i` smallest elements of the original array.
+
+These invariants are sufficient for a standard induction proof of correctness.
+
+#### Complexity
+
+- Comparisons: `(n-1) + (n-2) + ... + 1 = n(n-1)/2 = Θ(n²)`
+- Swaps: at most `n-1`
+- Auxiliary space: `Θ(1)`
+
+Selection sort is not stable unless the swap is replaced by a stable insertion step.
+
+#### Worked micro-trace
+
+For `A = [64, 25, 12, 22, 11]`:
+
+- `i=0`: minimum in `[64, 25, 12, 22, 11]` is 11, swap with 64
+- `i=1`: minimum in `[25, 12, 22, 64]` is 12, swap with 25
+- `i=2`: minimum in `[25, 22, 64]` is 22, swap with 25
+- `i=3`: minimum in `[25, 64]` is 25, swap no-op
+
+Result: `[11, 12, 22, 25, 64]`
+
+### Quicksort with Lomuto partition
+
+#### Partition specification
+
+Given indices `low` and `high`, partition chooses `A[high]` as pivot and rearranges the subarray `A[low..high]` so that:
+
+- for all `k ∈ [low, p-1]`, `A[k] ≤ pivot`
+- `A[p] = pivot`
+- for all `k ∈ [p+1, high]`, `A[k] > pivot`
+
+#### Pseudocode
+
+```
+PARTITION_LOMUTO(A, low, high):
+    pivot ← A[high]
+    i ← low - 1
+    for j ← low to high-1:
+        if A[j] ≤ pivot:
+            i ← i + 1
+            swap A[i], A[j]
+    swap A[i+1], A[high]
+    return i + 1
+
+QUICKSORT(A, low, high):
+    if low < high:
+        p ← PARTITION_LOMUTO(A, low, high)
+        QUICKSORT(A, low, p-1)
+        QUICKSORT(A, p+1, high)
+```
+
+#### Correctness sketch
+
+The key invariant in partition is:
+
+- After processing `j`, the subarray `A[low..i]` contains elements `≤ pivot` and `A[i+1..j]` contains elements `> pivot`.
+
+At termination, swapping the pivot into `i+1` yields the partition property and recursion preserves correctness.
+
+#### Complexity
+
+- Average time: `Θ(n log n)` under mild distributional assumptions
+- Worst-case time: `Θ(n²)` for adversarial inputs (already sorted input with pivot as last element is the classic example)
+- Auxiliary space: `Θ(log n)` expected call stack depth and `Θ(n)` worst case depth
+
+The programme uses Lomuto because it is compact and easy to reason about. Hoare partition is often faster but is also easier to implement incorrectly.
+
+#### Engineering note
+
+In examination code bases it is sensible to include a guard against stack depth by either randomising pivots or converting the larger recursive branch into a loop. That optimisation is not required here but it is discussed in the homework.
+
+### Merge sort
+
+#### Pseudocode
+
+```
+MERGE_SORT(A, left, right):
+    if left < right:
+        mid ← left + (right-left)/2
+        MERGE_SORT(A, left, mid)
+        MERGE_SORT(A, mid+1, right)
+        MERGE(A, left, mid, right)
+
+MERGE(A, left, mid, right):
+    L ← copy of A[left..mid]
+    R ← copy of A[mid+1..right]
+    i ← 0, j ← 0, k ← left
+    while i < |L| and j < |R|:
+        if L[i] ≤ R[j]:
+            A[k] ← L[i]; i ← i + 1
+        else:
+            A[k] ← R[j]; j ← j + 1
+        k ← k + 1
+    copy remaining items of L then remaining items of R into A
+```
+
+#### Recurrence and solution
+
+Let `T(n)` be the worst-case running time. Merge sort satisfies:
+
+- `T(n) = 2T(n/2) + Θ(n)`
+
+By the Master theorem (case 2), `T(n) = Θ(n log n)`.
+
+#### Stability
+
+Merge sort is stable if the merge procedure uses `≤` when selecting from the left run. This is explicitly implemented in the code.
+
+---
+
+## Graph algorithms and metrics
+
+### Graph density
+
+For an undirected simple graph with `V` vertices and `E` edges, density is:
+
+`density = 2E / (V(V-1))`
+
+The implementation returns `0.0` for `V < 2`.
+
+### BFS
+
+#### Pseudocode
+
+```
+BFS(G, s):
+    for each vertex v:
+        visited[v] ← false
+    Q ← empty queue
+    visited[s] ← true
+    enqueue(Q, s)
+    order ← empty list
+
+    while Q not empty:
+        u ← dequeue(Q)
+        append(order, u)
+        for v ← 0 to V-1:
+            if W[u][v] > 0 and visited[v] = false:
+                visited[v] ← true
+                enqueue(Q, v)
+    return order
+```
+
+BFS is used both as a traversal method and as a conceptual foundation for unweighted shortest paths. It is important to stress that the weight field is ignored by BFS.
+
+### DFS
+
+#### Pseudocode
+
+```
+DFS(G, s):
+    for each vertex v:
+        visited[v] ← false
+    order ← empty list
+    VISIT(s)
+    return order
+
+VISIT(u):
+    visited[u] ← true
+    append(order, u)
+    for v ← 0 to V-1:
+        if W[u][v] > 0 and visited[v] = false:
+            VISIT(v)
+```
+
+DFS is used for traversal and as the workhorse in connected component counting.
+
+### Connected components
+
+A component counter is a direct application of DFS.
+
+```
+COMPONENTS(G):
+    visited[v] ← false for all v
+    c ← 0
+    for v ← 0 to V-1:
+        if visited[v] = false:
+            VISIT(v)
+            c ← c + 1
+    return c
+```
+
+### Dijkstra
+
+The implementation uses the adjacency matrix variant which has `Θ(V²)` time complexity.
+
+```
+DIJKSTRA(G, s):
+    dist[v] ← INF for all v
+    parent[v] ← -1 for all v
+    processed[v] ← false for all v
+    dist[s] ← 0
+
+    repeat V times:
+        u ← argmin dist[u] where processed[u] = false
+        if u = -1: break
+        processed[u] ← true
+
+        for v ← 0 to V-1:
+            w ← W[u][v]
+            if w > 0 and processed[v] = false and dist[u] + w < dist[v]:
+                dist[v] ← dist[u] + w
+                parent[v] ← u
+
+    return dist, parent
+```
+
+Dijkstra requires non-negative edge weights. If negative edges are present Bellman–Ford is the standard alternative.
+
+---
+
+## Cross-language correspondences
+
+The purpose of cross-language correspondence is not to encourage language switching during assessment. It is to make clear which conceptual moves are language independent and which are C specific.
+
+### Sorting
+
+**Python**
+
+```python
+xs = [64, 25, 12, 22, 11]
+xs_sorted = sorted(xs)
+```
+
+In Python `sorted` implements Timsort which is stable and exploits existing runs. It is therefore not comparable as a pure algorithmic baseline.
+
+**C++**
+
+```cpp
+std::vector<int> xs{64, 25, 12, 22, 11};
+std::sort(xs.begin(), xs.end());
+```
+
+`std::sort` is typically introsort (quicksort with heap sort fallback). It has `O(n log n)` worst-case time.
+
+**Java**
+
+```java
+int[] xs = {64, 25, 12, 22, 11};
+java.util.Arrays.sort(xs);
+```
+
+For primitive arrays Java uses a dual-pivot quicksort. For object arrays it uses a stable TimSort variant.
+
+### BFS
+
+**Python**
+
+```python
+from collections import deque
+
+def bfs(W, s):
+    V = len(W)
+    seen = [False]*V
+    q = deque([s])
+    seen[s] = True
+    order = []
+    while q:
+        u = q.popleft()
+        order.append(u)
+        for v in range(V):
+            if W[u][v] > 0 and not seen[v]:
+                seen[v] = True
+                q.append(v)
+    return order
+```
+
+**Java**
+
+```java
+Queue<Integer> q = new ArrayDeque<>();
+boolean[] seen = new boolean[V];
+q.add(s);
+seen[s] = true;
+while (!q.isEmpty()) {
+    int u = q.remove();
+    // process u
+    for (int v = 0; v < V; v++) {
+        if (W[u][v] > 0 && !seen[v]) {
+            seen[v] = true;
+            q.add(v);
+        }
+    }
+}
+```
+
+The conceptual mapping to the C implementation is direct: the queue carries the frontier, `seen` corresponds to `visited` and the adjacency representation determines the neighbour iteration cost.
+
+---
+
+## Testing methodology and failure modes
+
+### What the tests actually guarantee
+
+The provided tests are intentionally narrow. They guarantee:
+
+- The sorting algorithms produce a correct non-decreasing order for a specific input and that all three agree on the output.
+- The graph analyser correctly parses the input file, computes density and component count and prints BFS, DFS and Dijkstra outputs with deterministic formatting.
+
+They do not guarantee:
+
+- Performance properties.
+- Robustness under malformed input.
+- Absence of memory leaks for all code paths.
+
+The intent is to provide a baseline regression harness and to encourage students to extend it.
+
+### Common failure modes
+
+1. **Non-deterministic printing**: extra spaces, trailing spaces or additional banners in regression mode.
+2. **Incorrect pivot handling**: off-by-one errors in Lomuto partition leading to out-of-bounds swaps.
+3. **Merge buffer mistakes**: allocating incorrect sizes or failing to free temporary arrays.
+4. **Graph initialisation errors**: failing to zero the adjacency matrix or leaving `visited` uninitialised.
+5. **Overflow in Dijkstra**: adding weights to `INT_MAX` without checking.
+
+### Recommended local extensions
+
+- Add tests with repeated values to confirm stability claims.
+- Add a disconnected graph input to check component counting.
+- Add an unreachable vertex case to check the `unreachable` output path.
+
+---
+
+## Appendices
+
+### Appendix A: Minimal I/O transcripts
+
+Exercise 1 regression transcript:
+
+```
+11 12 22 25 33 45 56 64 78 90
+SelectionSort: PASSED
+QuickSort: PASSED
+MergeSort: PASSED
+```
+
+Exercise 2 regression transcript skeleton:
+
+```
+Graph: V vertices, E edges
+Density: d.ddd
+Components: c
+
+BFS from 0: ...
+DFS from 0: ...
+
+Dijkstra from vertex 0:
+  To 0: 0
+  To 1: ...
+```
+
+### Appendix B: Complexity cheat sheet
+
+- `Θ(n²)` algorithms become infeasible rapidly. Doubling `n` multiplies time by roughly four.
+- `Θ(n log n)` algorithms scale substantially better. Doubling `n` multiplies time by slightly more than two.
+- `Θ(2^n)` algorithms are only appropriate for small `n` or when combined with pruning and memoisation.
+
+### Appendix C: When to choose a representation
+
+- Adjacency matrix: good for dense graphs, constant-time edge lookup, deterministic scans, poor for very sparse graphs.
+- Adjacency list: good for sparse graphs, `Θ(V+E)` traversals, more complex to implement correctly in C.
+
+These representation choices are not decorative. They are algorithmic decisions that dominate asymptotic costs and real performance.
+
+
+### Appendix D: Worked trace for Dijkstra on the sample graph
+
+To connect the abstract invariant of Dijkstra’s method with an auditable trace, consider the graph used in `tests/test2_input.txt`:
+
+```
+V=5, E=6
+0—1 (4)
+0—2 (1)
+1—2 (2)
+1—3 (5)
+2—3 (8)
+3—4 (3)
+```
+
+The algorithm maintains two arrays:
+
+- `dist[v]`: current best known distance from source `s=0` to `v`
+- `processed[v]`: whether `v` has been permanently settled
+
+Initialisation:
+
+- `dist[0]=0`
+- `dist[v]=∞` for `v≠0`
+- all `processed[v]=false`
+
+Iteration 1 (select min unprocessed):
+
+- choose `u=0` since `dist[0]=0` is minimal
+- set `processed[0]=true`
+- relax neighbours:
+  - `dist[1] = min(∞, dist[0]+w(0,1)=0+4)=4`
+  - `dist[2] = min(∞, dist[0]+w(0,2)=0+1)=1`
+
+Iteration 2:
+
+- choose `u=2` since `dist[2]=1` is minimal among unprocessed vertices
+- set `processed[2]=true`
+- relax neighbours:
+  - `dist[1] = min(4, dist[2]+w(2,1)=1+2)=3`  (strict improvement)
+  - `dist[3] = min(∞, dist[2]+w(2,3)=1+8)=9`
+
+Iteration 3:
+
+- choose `u=1` since `dist[1]=3` is minimal
+- set `processed[1]=true`
+- relax neighbours:
+  - `dist[3] = min(9, dist[1]+w(1,3)=3+5)=8`  (strict improvement)
+
+Iteration 4:
+
+- choose `u=3` since `dist[3]=8` is minimal
+- set `processed[3]=true`
+- relax neighbours:
+  - `dist[4] = min(∞, dist[3]+w(3,4)=8+3)=11`
+
+Iteration 5:
+
+- choose `u=4` and terminate (all vertices processed)
+
+Final distances match the expected transcript:
+
+- `dist = [0, 3, 1, 8, 11]`
+
+The critical invariant is that once a vertex is selected as minimal among unprocessed vertices it cannot later be improved, which relies on non-negative edge weights.
+
+### Appendix E: Pivot selection strategies and their consequences
+
+The implementation uses the Lomuto partition scheme with the last element as pivot. This choice is intentionally transparent: it is easy to prove correct and easy to translate into pseudocode. The trade-off is that adversarial inputs may trigger the quadratic case.
+
+A non-exhaustive pivot taxonomy:
+
+- **Last element pivot (used here)**: simplest, susceptible to sorted or reverse-sorted inputs.
+- **First element pivot**: symmetric vulnerability.
+- **Middle element pivot**: mild improvement, still predictable.
+- **Random pivot**: expected `Θ(n log n)` under broad assumptions, requires a trustworthy RNG and a reproducibility plan.
+- **Median-of-three**: pragmatic compromise, reduces the probability of pathological partitions.
+
+If you change the pivot strategy you must preserve the partition invariant. In particular the boundary index must continue to represent “the last index of the ≤ pivot region” while scanning.
+
+### Appendix F: Benchmark methodology as an empirical argument
+
+A benchmark table is not an experiment unless its assumptions are made explicit. For this repository the benchmark mode is intended as a didactic probe rather than a publication-grade evaluation.
+
+Recommended methodological practices:
+
+1. Fix the random seed for reproducibility and record it in the output.
+2. Run multiple repetitions and report at least mean and median.
+3. Avoid printing during timed sections because I/O dominates algorithmic costs for small `n`.
+4. Warm up caches where relevant or discard the first run.
+5. Report the machine context (CPU model, compiler version, optimisation flags) when results are compared across machines.
+
+The code measures CPU time via `clock()` because it is standard C. For higher resolution and better isolation from scheduling noise, use `clock_gettime(CLOCK_MONOTONIC, ...)`.
+
+### Further reading
+
+The following sources are well suited to a week 14 revision phase because they explicitly separate algorithmic invariants from implementation detail.
+
+- Cormen, T. H., Leiserson, C. E., Rivest, R. L. and Stein, C. (2022). *Introduction to Algorithms* (4th ed). MIT Press. (Reference text, no DOI)
+- Dijkstra, E. W. (1959). A note on two problems in connexion with graphs. *Numerische Mathematik, 1*, 269–271. https://doi.org/10.1007/BF01386390
+- Floyd, R. W. (1962). Algorithm 97: Shortest path. *Communications of the ACM, 5*(6), 345. https://doi.org/10.1145/367766.368168
+- Hoare, C. A. R. (1962). Quicksort. *The Computer Journal, 5*(1), 10–15. https://doi.org/10.1093/comjnl/5.1.10
+- Knuth, D. E. (1998). *The Art of Computer Programming, Volume 3: Sorting and Searching* (2nd ed). Addison-Wesley. (Reference text, no DOI)
+
+
+### Appendix G: Loop invariants and proof templates
+
+The examination setting rewards the ability to state invariants crisply, because invariants allow you to justify correctness without narrating every instruction. Below are compact templates that correspond to the implementations in this repository.
+
+#### Selection sort invariant
+
+Let `i` be the index of the current outer loop iteration.
+
+**Invariant:** before the `i`-th iteration begins, the prefix `A[0..i-1]` consists of the `i` smallest elements of the original array and it is sorted in nondecreasing order. The suffix `A[i..n-1]` is a permutation of the remaining elements.
+
+**Initialisation:** for `i = 0` the prefix is empty, so the claim holds vacuously.
+
+**Maintenance:** the inner loop selects `m = argmin_{j in [i,n-1]} A[j]` then swaps `A[i]` and `A[m]`. After the swap, `A[i]` is the smallest element of the previous suffix, so the new prefix `A[0..i]` contains the `i+1` smallest elements and remains sorted because all earlier elements are smaller than or equal to `A[i]`.
+
+**Termination:** when `i = n-1` the prefix has length `n-1` and the remaining suffix has length one, hence the whole array is sorted.
+
+#### Lomuto partition invariant
+
+During partition, maintain two indices `i` and `j` where `j` scans the array and `i` denotes the boundary between elements `<= pivot` and elements `> pivot`.
+
+**Invariant:** at the start of each iteration of the `j` loop, the subarray `A[low..i]` contains elements `<= pivot`, the subarray `A[i+1..j-1]` contains elements `> pivot` and `A[j..high-1]` is unclassified.
+
+At termination, swapping `A[i+1]` with `A[high]` places the pivot between the two regions.
+
+#### Merge invariant
+
+During merge, indices `p` and `q` point into the left and right temporary arrays.
+
+**Invariant:** after `k` assignments into the output region `A[left..right]`, the prefix `A[left..left+k-1]` contains the `k` smallest elements of the multiset `L ∪ R` and it is sorted.
+
+The invariant is maintained because each step selects the smaller head element of the two sorted lists.
+
+#### BFS layer property
+
+If BFS is executed on an unweighted graph with a queue that enqueues newly discovered vertices, then vertices are dequeued in nondecreasing order of their distance from the start vertex. This property follows because all neighbours of a vertex at distance `d` are enqueued after the vertex is dequeued and they are assigned distance `d+1`. No vertex at distance `d+1` can be dequeued before all vertices at distance `d` have been dequeued.
+
+#### Dijkstra invariant
+
+Let `S` be the set of processed vertices.
+
+**Invariant:** for every vertex `u` in `S`, `dist[u]` equals the length of the shortest path from the source to `u`. For every vertex `v` not in `S`, `dist[v]` is the length of the shortest known path whose internal vertices are all in `S`.
+
+The invariant relies on nonnegative weights: when the algorithm selects the unprocessed vertex with minimal tentative distance, no alternative path through unprocessed vertices can decrease it.
+
+### Appendix H: Further reading
+
+The following sources offer rigorous treatments of the algorithms used in this week and are suitable for revision. They are not required for building the code but they support proof writing and complexity analysis.
+
+- Cormen, T. H., Leiserson, C. E., Rivest, R. L., & Stein, C. (2009). *Introduction to algorithms* (3rd ed). MIT Press.
+- Knuth, D. E. (1998). *The art of computer programming, Volume 3: Sorting and searching* (2nd ed). Addison-Wesley.
+- Dijkstra, E. W. (1959). A note on two problems in connexion with graphs. *Numerische Mathematik, 1*, 269–271.
