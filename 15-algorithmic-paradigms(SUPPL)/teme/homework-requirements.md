@@ -1,260 +1,246 @@
 # Week 15 Homework: Algorithmic Paradigms
 
-## 📋 General Information
+## Administrative information
 
-- **Deadline:** End of Week 16
-- **Points:** 100 (10% of final grade)
-- **Language:** C (C11 standard)
-- **Compiler:** GCC with `-Wall -Wextra -std=c11`
-- **Submission:** Upload source files to the course portal
+- **Deadline:** end of Week 16
+- **Weight:** 100 points (10% of the final grade)
+- **Implementation language:** ISO C11
+- **Expected toolchain:** GCC or Clang with warning flags enabled
+- **Submission bundle:** a single archive containing source code, build scripts and a short technical report
 
----
+You are expected to submit work that is *reproducible*. A submission is reproducible when a third party can compile and run it on a clean machine using only the instructions you provide and when the programme produces the same functional results for the same inputs.
 
-## 📝 Homework 1: Comprehensive Sorting Library (50 points)
+## General constraints
 
-### Description
+1. Your code must compile without warnings under `-Wall -Wextra -std=c11`.
+2. Your programme(s) must fail safely on invalid inputs (negative sizes, truncated files, non-integer tokens and overflow-prone values) by returning a non-zero exit status and printing a clear diagnostic to standard error.
+3. Dynamic memory must be released. Memory leaks that appear under Valgrind are penalised.
+4. Any randomised behaviour must be documented. If you benchmark randomised algorithms, you must state the seed policy and the number of trials.
+5. Your report must be written in British English and must explain the algorithmic choices at the level of invariants and asymptotic reasoning.
 
-Create a sorting library that implements all major sorting algorithms covered in the ATP syllabus with performance benchmarking capabilities.
+## Deliverable A: Comprehensive sorting library (50 points)
 
-### Requirements
+### A.1 Objective
 
-1. **QuickSort with Multiple Pivot Strategies** (10 points)
-   - First element pivot
-   - Median-of-three pivot
-   - Random pivot
-   - Allow runtime selection of strategy via function parameter
+Design and implement a compact sorting library that supports multiple comparison-based algorithms and exposes a uniform interface. The intent is to make the *paradigm* explicit: the same interface should permit you to swap between divide and conquer methods and incremental refinement methods without rewriting your benchmarking harness.
 
-2. **Shell Sort with Multiple Gap Sequences** (10 points)
-   - Shell's original sequence (N/2, N/4, ..., 1)
-   - Hibbard sequence (2^k - 1)
-   - Knuth sequence ((3^k - 1) / 2)
-   - Compare performance across sequences
+### A.2 Required algorithms
 
-3. **Counting Sort** (8 points)
-   - Handle arrays with elements in range [0, k]
-   - Implement stable version
-   - Return sorted array without modifying input
+You must implement the following algorithms for arrays of integers. Extensions to generic types are encouraged but not required.
 
-4. **Radix Sort** (12 points)
-   - LSD (Least Significant Digit) variant for integers
-   - MSD (Most Significant Digit) variant for strings
-   - Support both decimal and arbitrary base
+1. **MergeSort** (divide and conquer)
+   - Implement a top-down MergeSort with an auxiliary buffer.
+   - State and respect the merge invariant: at each merge step, two adjacent sorted subarrays are combined into a single sorted subarray.
 
-5. **Bucket Sort** (10 points)
-   - For uniformly distributed floating-point numbers in [0, 1)
-   - Configurable number of buckets
-   - Use insertion sort within buckets
+2. **QuickSort with multiple pivot strategies** (divide and conquer)
+   - Strategy 1: last-element pivot (baseline)
+   - Strategy 2: median-of-three pivot (first, middle and last)
+   - Strategy 3: random pivot
+   - The pivot strategy must be selectable at runtime through a function parameter.
 
-### Benchmarking Requirements
+3. **Shell sort with multiple gap sequences** (incremental refinement)
+   - Shell’s original sequence: `n/2, n/4, …, 1`
+   - Hibbard sequence: `2^k − 1`
+   - Knuth sequence: `(3^k − 1)/2`
+   - Provide a clean mechanism for selecting the gap sequence at runtime.
 
-Create a benchmarking framework that:
-- Generates test arrays: random, sorted, reverse-sorted, nearly-sorted
-- Measures comparisons, swaps, and execution time
-- Outputs formatted comparison table
+### A.3 Instrumentation requirements
 
-### Example Usage
+You must report at least two cost metrics for each algorithm.
 
-```bash
-./homework1 benchmark 10000
+- **Key comparisons:** the number of pairwise key comparisons performed
+- **Data movement metric:** either swaps (exchanges of two array elements) or moves (assignments) but you must define the metric precisely and use it consistently
+
+Your report must include a short paragraph explaining how the chosen metric relates to the actual cost on modern hardware. For example, swaps are often a proxy for cache line traffic and branch misprediction is often a proxy for irregular control flow.
+
+### A.4 Functional requirements
+
+- Provide a command-line interface that supports:
+  - reading an array from standard input
+  - generating arrays of specified sizes and distributions
+  - selecting an algorithm and a pivot or gap strategy
+  - printing the sorted output for correctness runs
+  - printing a compact summary for benchmarking runs
+
+- Provide at least four input distributions:
+  - uniform random
+  - already sorted
+  - reverse sorted
+  - nearly sorted (a small fraction of elements perturbed)
+
+### A.5 Minimum report content
+
+Your report must contain the following sections.
+
+1. **Algorithmic dossier** for each algorithm, including:
+   - pseudocode
+   - invariants
+   - asymptotic time and space complexity
+2. **Benchmark methodology**
+   - machine description (CPU model, memory)
+   - compiler and flags
+   - number of trials and aggregation method (mean, median and dispersion)
+3. **Results**
+   - tables and at least one plot
+   - a short interpretation grounded in the cost model
+4. **Threats to validity**
+   - a discussion of measurement noise, cache effects and the limits of small sample sizes
+
+### A.6 Marking rubric for Deliverable A
+
+- Correctness and edge-case handling: 20 points
+- Interface design and clarity: 10 points
+- Instrumentation validity: 10 points
+- Benchmark methodology and interpretation: 10 points
+
+## Deliverable B: Greedy algorithms versus dynamic programming (50 points)
+
+### B.1 Objective
+
+Implement paired greedy and dynamic programming solutions for selected problems and identify the boundary conditions under which greedy reasoning is valid.
+
+### B.2 Required problems
+
+1. **Coin change**
+   - Implement a greedy algorithm that always takes the largest possible denomination.
+   - Implement an unbounded dynamic programming algorithm that computes the minimum number of coins.
+   - Provide at least one non-canonical coin system for which greedy is suboptimal.
+   - Explain the failure as a violation of the greedy-choice property.
+
+2. **Job sequencing with deadlines**
+   - Implement the greedy scheduling algorithm that sorts jobs by profit and schedules each job at the latest available slot before its deadline.
+   - Provide an argument for why this greedy strategy is optimal under the model assumptions.
+
+3. **Longest increasing subsequence**
+   - Implement the `O(n^2)` dynamic programming algorithm and reconstruct one optimal subsequence.
+   - In the report, briefly mention the existence of the `O(n log n)` variant and explain why it is not a greedy algorithm in the usual sense.
+
+### B.3 Minimum report content
+
+Your report for Deliverable B must include:
+
+- a clear statement of the greedy-choice property and optimal substructure
+- a counterexample for greedy coin change with a worked trace
+- dynamic programming recurrences for coin change and LIS
+- complexity analysis (time and space)
+- a short reflection on when a greedy approach is appropriate and when it is misleading
+
+### B.4 Marking rubric for Deliverable B
+
+- Correctness and reconstruction: 20 points
+- Quality of counterexample and explanation: 10 points
+- Dynamic programming formulation and reasoning: 10 points
+- Writing quality and structure: 10 points
+
+## Academic integrity
+
+You may consult external references for theory but you must write your code and report yourself. If you reuse code fragments, you must cite the source and you must be able to explain the fragment line by line.
+
+3. **ShellSort with multiple gap sequences** (incremental refinement)
+   - Shell's original sequence: ⌊n/2⌋, ⌊n/4⌋, …, 1
+   - Hibbard sequence: 2^k − 1
+   - Knuth sequence: (3^k − 1) / 2
+   - The gap sequence must be selectable at runtime.
+
+### A.3 Required API
+
+Provide a small header file (for example `sortlib.h`) and an implementation file (for example `sortlib.c`). The API must be usable from an external benchmarking programme without editing library internals. The minimum required interface is shown below. You may extend it, but you should not weaken it.
+
+```c
+typedef enum {
+    PIVOT_LAST = 0,
+    PIVOT_MEDIAN3 = 1,
+    PIVOT_RANDOM = 2
+} pivot_strategy_t;
+
+typedef enum {
+    GAP_SHELL = 0,
+    GAP_HIBBARD = 1,
+    GAP_KNUTH = 2
+} gap_sequence_t;
+
+typedef struct {
+    long comparisons;
+    long swaps;
+    double milliseconds;
+} sort_stats_t;
+
+void mergesort_int(int *a, int n, sort_stats_t *s);
+void quicksort_int(int *a, int n, pivot_strategy_t p, sort_stats_t *s);
+void shellsort_int(int *a, int n, gap_sequence_t g, sort_stats_t *s);
 ```
 
-### Output Format
+Your library must define precisely what is counted as a comparison and what is counted as a swap or movement. If you count assignments rather than swaps you must rename the metric accordingly.
 
-```
-═══════════════════════════════════════════════════════════════
-                    SORTING ALGORITHM BENCHMARK
-                         n = 10,000 elements
-═══════════════════════════════════════════════════════════════
+### A.4 Benchmarking protocol
 
-Random Array:
-┌──────────────────────┬────────────────┬──────────┬──────────┐
-│ Algorithm            │ Comparisons    │ Swaps    │ Time(ms) │
-├──────────────────────┼────────────────┼──────────┼──────────┤
-│ QuickSort (first)    │ 148,234        │ 54,321   │ 2.45     │
-│ QuickSort (median3)  │ 142,567        │ 51,234   │ 2.31     │
-│ QuickSort (random)   │ 145,890        │ 52,789   │ 2.38     │
-│ ShellSort (Shell)    │ 234,567        │ 89,012   │ 3.67     │
-│ ShellSort (Hibbard)  │ 198,234        │ 76,543   │ 3.12     │
-│ ShellSort (Knuth)    │ 187,654        │ 71,234   │ 2.98     │
-│ Counting Sort        │ N/A            │ N/A      │ 0.45     │
-│ Radix Sort (LSD)     │ N/A            │ N/A      │ 0.78     │
-│ Bucket Sort          │ 12,345         │ 5,678    │ 1.23     │
-└──────────────────────┴────────────────┴──────────┴──────────┘
+Your benchmarking harness must report at least the following.
 
-[Similar tables for Sorted, Reverse-Sorted, Nearly-Sorted arrays]
+- problem size `n`
+- input distribution (random, sorted, reverse-sorted, nearly sorted and all-equal)
+- comparisons and swaps (or comparisons and moves)
+- elapsed time measured consistently
 
-═══════════════════════════════════════════════════════════════
-```
+You must report results from multiple trials when randomness is involved. You must state how you chose the seed and whether you fixed it for reproducibility.
 
-### File: `homework1_sorting_library.c`
+### A.5 Correctness requirements
 
----
+- The output array must be sorted in non-decreasing order.
+- All algorithms must preserve the multiset of input values.
+- MergeSort must be stable. QuickSort and ShellSort need not be stable, but if you claim stability you must justify it.
 
-## 📝 Homework 2: Algorithm Design Problems (50 points)
+## Deliverable B: Greedy methods and dynamic programming (50 points)
 
-### Description
+### B.1 Objective
 
-Solve four classic algorithmic problems that demonstrate the application of greedy and dynamic programming paradigms.
+Implement and analyse two classes of problems that expose the conceptual boundary between greedy choice and global optimisation.
 
-### Problem 1: Weighted Activity Selection (15 points)
+### B.2 Required components
 
-Unlike the unweighted version where greedy works, weighted activities require DP.
+1. **Coin change**
+   - Implement a greedy algorithm that repeatedly chooses the largest denomination not exceeding the remaining amount.
+   - Implement a dynamic programming algorithm that computes an optimal solution for arbitrary denominations.
+   - Provide at least one non-canonical denomination system for which greedy is suboptimal and explain why.
 
-**Input:**
-- n activities with start time, finish time, and weight (profit)
-- Activities cannot overlap
-- Maximise total weight
+2. **Job sequencing with deadlines**
+   - Implement the greedy profit-first scheduler that assigns each job to the latest available time slot before its deadline.
+   - Explain the scheduling invariant and the reason the profit-first heuristic is optimal under the stated constraints.
 
-**Requirements:**
-- Sort activities by finish time
-- Define dp[i] = max weight using activities 1..i
-- Use binary search to find compatible activities
-- Reconstruct the optimal selection
+3. **Longest increasing subsequence**
+   - Implement the O(n^2) dynamic programming algorithm with reconstruction of the subsequence.
+   - State the recurrence and justify the reconstruction procedure.
 
-**Example:**
-```
-Activities: (1,4,5), (3,5,1), (0,6,8), (4,7,4), (3,8,6), (5,9,3), (6,10,2), (8,11,4)
-Output: Maximum weight = 17, Selected: [(0,6,8), (6,10,2), ...]
-```
+### B.3 Report requirements
 
-### Problem 2: Huffman Encoding/Decoding (15 points)
+The report is assessed as a technical document rather than as prose. It must contain:
 
-Implement complete Huffman compression and decompression.
+- problem statements and assumptions
+- algorithm descriptions using pseudocode
+- invariants or proof sketches for correctness
+- asymptotic analysis in time and space
+- at least one empirical experiment for each deliverable with interpretation
 
-**Requirements:**
-- Read input text and calculate character frequencies
-- Build Huffman tree using priority queue (min-heap)
-- Generate prefix codes for each character
-- Encode text to binary representation
-- Decode binary back to original text
-- Calculate compression ratio
+A typical report is 4–8 pages when typeset with sensible spacing. Excessive length without additional substance is not rewarded.
 
-**Example:**
-```
-Input: "abracadabra"
-Frequencies: a:5, b:2, r:2, c:1, d:1
-Codes: a=0, b=10, r=110, c=1110, d=1111
-Encoded: 0101100011100111001100 (22 bits vs 88 bits original)
-Compression ratio: 75%
-```
+## Marking rubric and penalties
 
-### Problem 3: 0/1 Knapsack with Item Reconstruction (10 points)
+- **Correctness (50%)**: functional correctness on hidden tests, robust handling of edge cases and adherence to interface requirements.
+- **Algorithmic fidelity (25%)**: correct implementation of the specified algorithms and appropriate complexity.
+- **Engineering quality (15%)**: readability, modularity, meaningful error handling and absence of resource leaks.
+- **Report quality (10%)**: clarity of explanation, correctness of asymptotic reasoning and alignment between claims and evidence.
 
-**Requirements:**
-- Implement DP solution for 0/1 knapsack
-- Return not just maximum value but the actual items selected
-- Handle edge cases: empty knapsack, single item, exact capacity
+Common penalties include:
 
-**Input:**
-```
-n = 4, capacity = 7
-Items: [(weight=1, value=1), (weight=3, value=4), (weight=4, value=5), (weight=5, value=7)]
-```
+- undefined behaviour (for example out-of-bounds access)
+- memory leaks
+- non-deterministic outputs in test mode without justification
+- missing documentation for assumptions or measurement methodology
 
-**Output:**
-```
-Maximum value: 9
-Selected items: [1, 2] (indices 1-based)
-Total weight: 4 (using weight 3 + 1)
-```
+## Submission checklist
 
-### Problem 4: Edit Distance with Alignment (10 points)
+Before submission, ensure that:
 
-Compute the minimum number of operations (insert, delete, replace) to transform one string into another.
-
-**Requirements:**
-- Standard DP solution with O(mn) time and space
-- Space-optimised version using O(min(m,n)) space
-- Output the actual alignment showing operations
-
-**Example:**
-```
-String 1: "kitten"
-String 2: "sitting"
-Edit distance: 3
-
-Alignment:
-k i t t e n -
-| | | | | | |
-s i t t i n g
-R = = = R = I
-
-Operations: Replace k→s, Replace e→i, Insert g
-```
-
-### File: `homework2_algorithm_design.c`
-
----
-
-## 📊 Evaluation Criteria
-
-| Criterion | Homework 1 | Homework 2 |
-|-----------|------------|------------|
-| Functional correctness | 25 | 25 |
-| Algorithm efficiency | 10 | 10 |
-| Code structure and readability | 10 | 10 |
-| Memory management | 5 | 5 |
-| **Total** | **50** | **50** |
-
-### Penalties
-
-| Issue | Penalty |
-|-------|---------|
-| Compiler warnings | -5 points per warning (max -10) |
-| Memory leaks (Valgrind) | -10 points |
-| Crashes on valid input | -15 points |
-| Does not compile | -25 points |
-| Incorrect complexity | -5 points per algorithm |
-| Late submission (per day) | -10 points (max -30) |
-| Plagiarism | -50 points + disciplinary action |
-
----
-
-## 📤 Submission Guidelines
-
-1. **Files to submit:**
-   - `homework1_sorting_library.c`
-   - `homework2_algorithm_design.c`
-   - Any additional header files (if used)
-   - Sample input/output demonstrating correctness
-
-2. **Naming convention:**
-   - Use exactly the filenames specified
-   - Include your student ID in a comment at the top of each file
-
-3. **Testing before submission:**
-   ```bash
-   # Compile with strict flags
-   gcc -Wall -Wextra -std=c11 -o homework1 homework1_sorting_library.c -lm
-   gcc -Wall -Wextra -std=c11 -o homework2 homework2_algorithm_design.c -lm
-   
-   # Check for memory leaks
-   valgrind --leak-check=full ./homework1 benchmark 1000
-   valgrind --leak-check=full ./homework2 < sample_input.txt
-   ```
-
----
-
-## 💡 Tips for Success
-
-1. **Start with simpler algorithms** — Get Counting Sort and basic QuickSort working before tackling Radix Sort MSD or weighted activity selection.
-
-2. **Test incrementally** — Create small test cases where you can verify the answer by hand.
-
-3. **Handle edge cases** — Empty arrays, single elements, all equal elements, maximum values.
-
-4. **Analyse complexity** — Make sure your implementations achieve the expected time complexity.
-
-5. **Document your code** — Explain the recurrence relation for DP problems and the greedy choice for greedy problems.
-
-6. **Use assertions** — Add `assert()` statements to catch bugs early.
-
----
-
-## 🆘 Getting Help
-
-- **Office hours:** Wednesday 14:00-16:00
-- **Course forum:** Post questions (without sharing solution code)
-- **Lab sessions:** Ask teaching assistants during Thursday lab
-
-Good luck! 🍀
+1. `make` builds all artefacts on a clean clone.
+2. `make test` passes on your machine.
+3. Valgrind reports no leaks and no invalid memory accesses.
+4. The report contains all required sections and is written in British English.

@@ -1,667 +1,669 @@
-# Week 15: Algorithmic Paradigms
+# Week 15: Algorithmic Paradigms (Supplement)
 
-## 🎯 Learning Objectives
+## Scope and pedagogical intent
 
-By the end of this laboratory session, students will be able to:
+This laboratory week consolidates the course material by treating algorithm design as a discipline of *paradigms* rather than a catalogue of isolated techniques. The repository is organised around two complementary aims.
 
-1. **Remember** the Master Theorem formula and its three cases for solving recurrence relations
-2. **Understand** the fundamental differences between divide-and-conquer, greedy, and dynamic programming paradigms
-3. **Apply** MergeSort and QuickSort algorithms to sort arrays of arbitrary data types
-4. **Analyse** recurrence relations to determine time complexity of recursive algorithms
-5. **Evaluate** when greedy algorithms yield optimal solutions versus when dynamic programming is required
-6. **Create** efficient solutions by selecting the appropriate algorithmic paradigm for specific problem characteristics
+1. To make the paradigms operational through concrete implementations in ISO C11.
+2. To make the paradigms analysable through explicit instrumentation, deterministic regression tests and an explicit mapping between mathematical recurrences and observable program behaviour.
 
----
+The delivered code therefore emphasises three properties that are routinely neglected in introductory material but become decisive in professional and research settings.
 
-## 📜 Historical Context
+- **Invariants that can be stated and checked.** Each algorithm is accompanied by a small set of invariants that explain *why* it works and that can be traced at runtime.
+- **Cost models that are explicit.** Comparisons and swaps are counted in a defined manner and the implications of that definition are stated.
+- **Reproducibility.** Randomised behaviour is made deterministic under non-interactive execution so that regression tests remain stable across runs.
 
-### The Genesis of Algorithmic Thinking (1940s-1960s)
+## Repository structure
 
-The mid-twentieth century witnessed a profound transformation in computational science as pioneers established the theoretical foundations upon which modern algorithm design rests. This period marked the transition from ad-hoc problem solving to systematic methodological frameworks.
+The repository follows a compact and conventional layout.
 
-### Key Figure: John von Neumann (1903-1957)
+- `src/`
+  - `example1.c` – complete worked exemplar spanning divide and conquer, greedy methods and dynamic programming
+  - `exercise1.c` – instrumented sorting comparison suite
+  - `exercise2.c` – boundary exploration between greedy algorithms and dynamic programming
+- `tests/` – canonical inputs and expected transcripts used by `make test`
+- `data/` – additional inputs for exploratory runs
+- `solution/` – reference implementations and extended homework solutions
+- `slides/` – teaching slides for the week
+- `teme/` – homework specifications
 
-The Hungarian-American polymath John von Neumann invented MergeSort in 1945 whilst working on the EDVAC computer project. His insight was revolutionary: rather than sorting an array directly, one could recursively divide it into halves, sort each half, and merge the results. This "divide and conquer" approach demonstrated that complex problems could be solved by decomposing them into simpler subproblems.
+## Building and testing
 
-Von Neumann's contributions extended far beyond sorting. He formalised the stored-program concept, developed game theory, and established the mathematical foundations of quantum mechanics. His merge sort algorithm remains optimal for comparison-based sorting, achieving O(n log n) time complexity with guaranteed performance regardless of input distribution.
+### Compilation
 
-### Key Figure: C.A.R. Hoare (1934-present)
+The project uses a single Makefile with three primary executables:
 
-Sir Charles Antony Richard Hoare developed QuickSort in 1959 whilst working as a visiting student at Moscow State University. The algorithm arose from a practical need: Hoare was developing a machine translation system and needed to sort words efficiently. His partition-based approach achieved average-case O(n log n) performance with remarkable practical speed due to excellent cache locality.
+- `example1`
+- `exercise1`
+- `exercise2`
 
-Hoare later made fundamental contributions to programming language theory, including the development of Communicating Sequential Processes (CSP) and the axiomatic basis for computer programming (Hoare Logic). He received the Turing Award in 1980.
-
-> *"There are two ways of constructing a software design: One way is to make it so simple that there are obviously no deficiencies, and the other way is to make it so complicated that there are no obvious deficiencies."*
-> — C.A.R. Hoare, 1980 Turing Award Lecture
-
-### Key Figure: Richard Bellman (1920-1984)
-
-Richard Ernest Bellman coined the term "dynamic programming" in the 1950s whilst working at the RAND Corporation. The name was deliberately chosen to be impressive yet vague—Bellman needed to obscure the mathematical nature of his work from his superiors who were hostile to mathematical research.
-
-Bellman's principle of optimality states that an optimal policy has the property that whatever the initial state and initial decision are, the remaining decisions must constitute an optimal policy with regard to the state resulting from the first decision. This principle underpins countless algorithms in operations research, control theory, bioinformatics, and computer science.
-
----
-
-## 📚 Theoretical Foundations
-
-### Part A: Divide and Conquer
-
-#### 1. Paradigm Definition
-
-The divide-and-conquer strategy solves problems through three distinct phases:
-
-```
-┌─────────────────────────────────────────────────────────────┐
-│                    DIVIDE AND CONQUER                       │
-├─────────────────────────────────────────────────────────────┤
-│                                                             │
-│    ┌──────────┐    ┌──────────┐    ┌──────────┐            │
-│    │  DIVIDE  │ → │ CONQUER  │ → │  COMBINE  │            │
-│    └──────────┘    └──────────┘    └──────────┘            │
-│         │               │               │                   │
-│         ▼               ▼               ▼                   │
-│    Break problem   Solve smaller   Merge partial           │
-│    into smaller    subproblems     solutions into          │
-│    subproblems     recursively     final answer            │
-│                                                             │
-└─────────────────────────────────────────────────────────────┘
-```
-
-**When to use Divide and Conquer:**
-- Problem can be broken into independent subproblems
-- Subproblems are smaller instances of the original
-- Solutions to subproblems can be combined efficiently
-
-#### 2. Recurrence Relations
-
-Divide-and-conquer algorithms naturally give rise to recurrence relations of the form:
-
-```
-T(n) = aT(n/b) + f(n)
-```
-
-Where:
-- `a` = number of subproblems generated
-- `n/b` = size of each subproblem
-- `f(n)` = cost of dividing and combining
-
-**Common Examples:**
-
-| Algorithm | Recurrence | Solution |
-|-----------|------------|----------|
-| Binary Search | T(n) = T(n/2) + O(1) | O(log n) |
-| MergeSort | T(n) = 2T(n/2) + O(n) | O(n log n) |
-| Karatsuba Multiplication | T(n) = 3T(n/2) + O(n) | O(n^1.585) |
-| Strassen's Matrix Multiplication | T(n) = 7T(n/2) + O(n²) | O(n^2.807) |
-
-#### 3. The Master Theorem
-
-The Master Theorem provides a direct solution for recurrences of the form T(n) = aT(n/b) + f(n):
-
-```
-Let c_crit = log_b(a)
-
-Case 1: If f(n) = O(n^(c_crit - ε)) for some ε > 0
-        Then T(n) = Θ(n^c_crit)
-        
-Case 2: If f(n) = Θ(n^c_crit · log^k(n)) for some k ≥ 0
-        Then T(n) = Θ(n^c_crit · log^(k+1)(n))
-        
-Case 3: If f(n) = Ω(n^(c_crit + ε)) for some ε > 0
-        AND a·f(n/b) ≤ c·f(n) for some c < 1 (regularity)
-        Then T(n) = Θ(f(n))
-```
-
-**Intuition:**
-- Case 1: Leaf-heavy — work at leaves dominates
-- Case 2: Balanced — work spread evenly across all levels
-- Case 3: Root-heavy — work at root dominates
-
-#### 4. MergeSort Implementation
-
-MergeSort exemplifies divide-and-conquer with elegant simplicity:
-
-```c
-void merge_sort(int arr[], int left, int right) {
-    if (left < right) {
-        int mid = left + (right - left) / 2;  // Avoid overflow
-        
-        merge_sort(arr, left, mid);      // Sort left half
-        merge_sort(arr, mid + 1, right); // Sort right half
-        merge(arr, left, mid, right);    // Combine
-    }
-}
-```
-
-**Merge Operation Visualisation:**
-
-```
-     Left Array          Right Array
-    ┌───┬───┬───┐      ┌───┬───┬───┐
-    │ 2 │ 5 │ 8 │      │ 1 │ 4 │ 9 │
-    └───┴───┴───┘      └───┴───┴───┘
-         i                  j
-                    ↓
-         ┌───┬───┬───┬───┬───┬───┐
-         │ 1 │ 2 │ 4 │ 5 │ 8 │ 9 │  Merged
-         └───┴───┴───┴───┴───┴───┘
-```
-
-**Properties:**
-| Property | Value |
-|----------|-------|
-| Time (all cases) | O(n log n) |
-| Space | O(n) auxiliary |
-| Stable | Yes |
-| In-place | No |
-| Cache-friendly | Moderately |
-
-#### 5. QuickSort Implementation
-
-QuickSort achieves practical superiority through in-place partitioning:
-
-```c
-void quick_sort(int arr[], int low, int high) {
-    if (low < high) {
-        int pivot_idx = partition(arr, low, high);
-        
-        quick_sort(arr, low, pivot_idx - 1);
-        quick_sort(arr, pivot_idx + 1, high);
-    }
-}
-```
-
-**Pivot Selection Strategies:**
-
-| Strategy | Description | Worst Case |
-|----------|-------------|------------|
-| First/Last element | Simple but vulnerable | Sorted input |
-| Median-of-three | Choose median of first, middle, last | Crafted input |
-| Random pivot | Randomised selection | Probabilistically rare |
-
-**Partitioning Schemes:**
-
-*Lomuto Partitioning* (simpler, more swaps):
-```
-Choose rightmost as pivot
-Maintain invariant: arr[low..i] ≤ pivot < arr[i+1..j-1]
-```
-
-*Hoare Partitioning* (fewer swaps, bidirectional):
-```
-Choose first as pivot
-Two pointers move towards centre, swap on violation
-```
-
-**Properties:**
-| Property | Average | Worst |
-|----------|---------|-------|
-| Time | O(n log n) | O(n²) |
-| Space | O(log n) | O(n) |
-| Stable | No | No |
-| In-place | Yes | Yes |
-| Cache-friendly | Excellent | Excellent |
-
----
-
-### Part B: Greedy Algorithms
-
-#### 1. Greedy Choice Property
-
-A greedy algorithm builds a solution incrementally, always making the locally optimal choice at each step. This approach succeeds when:
-
-```
-Local Optimum → Global Optimum (under specific conditions)
-```
-
-**The Greedy Choice Property** states that a globally optimal solution can be arrived at by making locally optimal choices. Not all problems exhibit this property!
-
-#### 2. Optimal Substructure
-
-A problem exhibits **optimal substructure** if an optimal solution to the problem contains optimal solutions to its subproblems. This property is necessary (but not sufficient) for greedy algorithms.
-
-#### 3. Activity Selection Problem
-
-**Problem:** Given n activities with start times s_i and finish times f_i, select the maximum number of non-overlapping activities.
-
-```
-Activities (sorted by finish time):
-┌─────────────────────────────────────────────┐
-│ A1: ████                                    │  [1, 4)
-│ A2:    ████                                 │  [3, 5)
-│ A3:         █████                           │  [5, 7)
-│ A4:             █████                       │  [6, 8)
-│ A5:                   ██████                │  [8, 11)
-│ A6:                       ████████          │  [8, 12)
-│ A7:                              ████       │  [12, 14)
-└─────────────────────────────────────────────┘
-          Time →
-
-Greedy solution: A1, A3, A5, A7 (4 activities)
-```
-
-**Greedy Strategy:** Always select the activity with the earliest finish time that does not conflict with already selected activities.
-
-**Correctness Sketch:** If there exists an optimal solution not containing the earliest-finishing activity, we can exchange the first activity in that solution with the earliest-finishing one without reducing the count.
-
-#### 4. Huffman Coding
-
-**Problem:** Given character frequencies, construct a prefix-free binary code minimising the expected code length.
-
-**Prefix Code Property:** No codeword is a prefix of another. This ensures unambiguous decoding.
-
-**Algorithm:**
-1. Create leaf nodes for each character with frequency as priority
-2. While more than one node remains:
-   - Extract two nodes with minimum frequency
-   - Create parent with combined frequency
-   - Make extracted nodes children
-
-**Example:**
-
-```
-Characters: A(45) B(13) C(12) D(16) E(9) F(5)
-
-                    ┌─────────┐
-                    │   100   │
-                    └────┬────┘
-                   0/    \1
-              ┌────┴─┐  ┌─┴────┐
-              │  A   │  │  55  │
-              │  45  │  └──┬───┘
-              └──────┘   0/ \1
-                    ┌────┴─┐ ┌─┴────┐
-                    │  25  │ │  30  │
-                    └──┬───┘ └──┬───┘
-                     0/ \1    0/ \1
-                    C  D     B  ┌─┴─┐
-                   12  16   13 │14 │
-                               └─┬─┘
-                               0/ \1
-                               E   F
-                               9   5
-
-Codes: A=0, C=100, D=101, B=110, E=1110, F=1111
-```
-
-#### 5. Fractional Knapsack
-
-**Problem:** Given items with weights w_i and values v_i, and capacity W, maximise total value that fits in the knapsack. Items may be taken fractionally.
-
-**Greedy Strategy:** Sort items by value-to-weight ratio (v_i/w_i) in decreasing order. Take items greedily until capacity is exhausted.
-
-```c
-// Sort by v[i]/w[i] descending, then:
-double total_value = 0.0;
-for (int i = 0; i < n && capacity > 0; i++) {
-    double take = (w[i] <= capacity) ? w[i] : capacity;
-    total_value += take * (v[i] / w[i]);
-    capacity -= take;
-}
-```
-
-**Note:** This greedy approach does NOT work for 0/1 Knapsack where items must be taken entirely or not at all.
-
----
-
-### Part C: Dynamic Programming Introduction
-
-#### 1. Key Properties
-
-Dynamic Programming (DP) is applicable when a problem exhibits:
-
-1. **Overlapping Subproblems:** The same subproblems are solved multiple times
-2. **Optimal Substructure:** An optimal solution contains optimal solutions to subproblems
-
-```
-┌──────────────────────────────────────────────────────┐
-│           DYNAMIC PROGRAMMING INDICATORS             │
-├──────────────────────────────────────────────────────┤
-│  ✓ Can the problem be broken into subproblems?       │
-│  ✓ Are subproblems reused across different paths?    │
-│  ✓ Does optimal solution depend on optimal subs?     │
-│  ✓ Is there a clear recurrence relation?             │
-└──────────────────────────────────────────────────────┘
-```
-
-#### 2. Implementation Approaches
-
-**Top-Down (Memoisation):**
-- Natural recursive formulation
-- Store computed results in lookup table
-- Compute only needed subproblems
-- Easier to implement from recurrence
-
-**Bottom-Up (Tabulation):**
-- Iterative computation
-- Fill table in topological order
-- Compute all subproblems
-- Often more space-efficient
-
-#### 3. Fibonacci: Three Implementations
-
-```
-Fibonacci Sequence: 0, 1, 1, 2, 3, 5, 8, 13, 21, ...
-Recurrence: F(n) = F(n-1) + F(n-2), F(0)=0, F(1)=1
-```
-
-**Naive Recursive: O(2^n) time**
-
-```c
-int fib_naive(int n) {
-    if (n <= 1) return n;
-    return fib_naive(n - 1) + fib_naive(n - 2);
-}
-```
-
-Recursion tree shows exponential redundancy:
-```
-                    fib(5)
-                   /      \
-              fib(4)      fib(3)
-             /    \       /    \
-         fib(3)  fib(2) fib(2) fib(1)
-         /  \    /  \   /  \
-      fib(2) fib(1)... ... ...
-```
-
-**Memoised: O(n) time, O(n) space**
-
-```c
-int fib_memo(int n, int *cache) {
-    if (n <= 1) return n;
-    if (cache[n] != -1) return cache[n];
-    cache[n] = fib_memo(n - 1, cache) + fib_memo(n - 2, cache);
-    return cache[n];
-}
-```
-
-**Tabulated: O(n) time, O(1) space**
-
-```c
-int fib_tab(int n) {
-    if (n <= 1) return n;
-    int prev2 = 0, prev1 = 1;
-    for (int i = 2; i <= n; i++) {
-        int curr = prev1 + prev2;
-        prev2 = prev1;
-        prev1 = curr;
-    }
-    return prev1;
-}
-```
-
-#### 4. 0/1 Knapsack Problem
-
-**Problem:** Given n items with weights w_i and values v_i, and capacity W, select items (entirely or not at all) to maximise value without exceeding capacity.
-
-**State Definition:** dp[i][w] = maximum value achievable using items 1..i with capacity w
-
-**Recurrence:**
-```
-dp[i][w] = max(dp[i-1][w],                    // Don't take item i
-               dp[i-1][w - w_i] + v_i)        // Take item i (if w_i ≤ w)
-```
-
-**Table Construction:**
-
-```
-Items: {w=2,v=3}, {w=3,v=4}, {w=4,v=5}, {w=5,v=6}
-Capacity W = 5
-
-    w→  0   1   2   3   4   5
-i↓  ┌───┬───┬───┬───┬───┬───┐
-0   │ 0 │ 0 │ 0 │ 0 │ 0 │ 0 │
-    ├───┼───┼───┼───┼───┼───┤
-1   │ 0 │ 0 │ 3 │ 3 │ 3 │ 3 │  item 1: w=2, v=3
-    ├───┼───┼───┼───┼───┼───┤
-2   │ 0 │ 0 │ 3 │ 4 │ 4 │ 7 │  item 2: w=3, v=4
-    ├───┼───┼───┼───┼───┼───┤
-3   │ 0 │ 0 │ 3 │ 4 │ 5 │ 7 │  item 3: w=4, v=5
-    ├───┼───┼───┼───┼───┼───┤
-4   │ 0 │ 0 │ 3 │ 4 │ 5 │ 7 │  item 4: w=5, v=6
-    └───┴───┴───┴───┴───┴───┘
-    
-Answer: dp[4][5] = 7 (items 1 and 2)
-```
-
-#### 5. Longest Common Subsequence (LCS)
-
-**Problem:** Given two sequences X and Y, find the longest subsequence common to both.
-
-**Note:** A subsequence maintains relative order but need not be contiguous.
-
-**State Definition:** dp[i][j] = length of LCS of X[1..i] and Y[1..j]
-
-**Recurrence:**
-```
-dp[i][j] = dp[i-1][j-1] + 1           if X[i] == Y[j]
-         = max(dp[i-1][j], dp[i][j-1]) otherwise
-```
-
-**Example:**
-```
-X = "ABCBDAB"
-Y = "BDCABA"
-
-LCS = "BCBA" (length 4)
-```
-
----
-
-## 🏭 Industrial Applications
-
-### Database Query Optimisation (Divide and Conquer)
-
-Modern database systems use divide-and-conquer for merge joins:
-
-```c
-// External merge sort for large datasets
-void external_merge_sort(FILE *input, FILE *output, size_t memory_limit) {
-    // Phase 1: Create sorted runs that fit in memory
-    // Phase 2: Merge runs using k-way merge
-}
-```
-
-### File Compression (Huffman Coding)
-
-Huffman coding forms the basis of widely-used compression formats:
-
-```c
-// Used in: ZIP, gzip, PNG, JPEG, MP3
-HuffmanTree *build_compression_tree(const char *data, size_t length) {
-    int freq[256] = {0};
-    for (size_t i = 0; i < length; i++)
-        freq[(unsigned char)data[i]]++;
-    return huffman_build(freq);
-}
-```
-
-### Network Routing (Greedy Algorithms)
-
-Shortest path algorithms in network routing:
-
-```c
-// Dijkstra's algorithm (greedy) for routing tables
-void compute_routing_table(Graph *network, int source) {
-    // Greedy selection of minimum-distance vertex
-    // Update distances to neighbours
-}
-```
-
-### Bioinformatics (Dynamic Programming)
-
-DNA sequence alignment using LCS-based algorithms:
-
-```c
-// Smith-Waterman for local sequence alignment
-int smith_waterman(const char *seq1, const char *seq2) {
-    // DP table with gap penalties
-    // Find local optimal alignment
-}
-```
-
----
-
-## 💻 Laboratory Exercises
-
-### Exercise 1: Sorting Algorithm Implementation and Analysis
-
-Implement and compare multiple sorting algorithms with performance instrumentation.
-
-**Requirements:**
-- Implement MergeSort with auxiliary array
-- Implement QuickSort with three pivot selection strategies (first, median-of-three, random)
-- Implement ShellSort with Hibbard gaps (2^k - 1)
-- Add comparison and swap counters to each algorithm
-- Generate performance statistics for various input distributions
-
-**File:** `src/exercise1.c`
-
-### Exercise 2: Greedy vs Dynamic Programming
-
-Explore the boundary between greedy and dynamic programming approaches.
-
-**Requirements:**
-- Implement greedy coin change algorithm
-- Implement DP coin change algorithm
-- Find and demonstrate cases where greedy fails
-- Implement activity selection with weighted activities
-- Implement longest increasing subsequence using DP
-
-**File:** `src/exercise2.c`
-
----
-
-## 🔧 Build & Run
+To compile everything:
 
 ```bash
-# Compile all sources
 make
+```
 
-# Run all executables
-make run
+### Regression testing
 
-# Run specific demo
-make run-example
+The repository includes deterministic, transcript-based regression tests.
 
-# Run automated tests
+```bash
 make test
+```
 
-# Check for memory leaks
+The test harness runs `exercise1` and `exercise2` against fixed inputs and compares stdout against the corresponding files in `tests/` using `diff`. A failure therefore indicates an externally observable behavioural mismatch rather than a stylistic difference.
+
+### Memory safety checks
+
+If Valgrind is installed, the Makefile provides a memory analysis target:
+
+```bash
 make valgrind
-
-# Clean build artifacts
-make clean
-
-# Show help
-make help
 ```
 
----
+This is particularly relevant for week 15 because both exercises allocate temporary buffers whose lifetimes must be precisely controlled.
 
-## 📁 Directory Structure
+## Determinism and the role of randomness
 
+`exercise1.c` includes a randomised pivot strategy for QuickSort. Randomisation is algorithmically meaningful because it suppresses adversarial inputs that force worst-case recursion depth. Randomisation is also a practical hazard for automated assessment because it can destabilise outputs.
+
+To resolve this tension the programme uses a dual seeding policy.
+
+- When standard input is a terminal (interactive use) the PRNG is seeded from the wall clock.
+- When standard input is not a terminal (regression execution) the PRNG is seeded with a fixed constant.
+
+This policy is deliberately conservative. It preserves a faithful classroom demonstration of randomised pivot selection while ensuring that `make test` is stable.
+
+## Instrumentation model: comparisons and swaps
+
+### Comparison counter
+
+A **comparison** is counted whenever the programme performs a key comparison that decides ordering. In code this is represented by calls to `compare_counted(a, b)`.
+
+- The counter measures *algorithmic decision cost*.
+- It does not count loop-bound checks or integer arithmetic.
+
+### Swap counter
+
+A **swap** is counted when the programme exchanges the values stored in *two distinct memory locations* using `swap_counted(&x, &y)`.
+
+- Swapping an element with itself is treated as a semantic no-op and is therefore not counted.
+- This definition is chosen because it correlates with actual data movement and because it eliminates a common instrumentation artefact of Lomuto partitioning where self-swaps dominate the count.
+
+This definition implies that algorithms written as shift-based insertion procedures should not interpret the swap counter as a proxy for assignments. If assignments are to be measured, a separate move counter should be introduced.
+
+## Exercise 1: Sorting algorithm implementation and analysis
+
+`src/exercise1.c` implements three families of sorting strategies and exposes their empirical behaviour through instrumentation.
+
+- **MergeSort**: divide and conquer with stable merging
+- **QuickSort**: divide and conquer with pivot-driven partitioning
+- **ShellSort**: incremental refinement through gapped insertion
+
+The programme reads an input array, prints it and then runs each algorithm on an independent copy.
+
+### MergeSort
+
+#### Algorithmic paradigm
+
+MergeSort is the canonical example of divide and conquer.
+
+- **Divide**: split the array into two halves.
+- **Conquer**: recursively sort each half.
+- **Combine**: merge two sorted halves in linear time.
+
+#### Correctness invariants
+
+1. After recursively sorting, the subarrays `A[left..mid]` and `A[mid+1..right]` are each sorted in non-decreasing order.
+2. The merge procedure maintains the invariant that `A[left..k-1]` is the sorted merge of the consumed prefixes of the two subarrays.
+
+#### Pseudocode
+
+```text
+MERGE_SORT(A, left, right):
+    if left >= right:
+        return
+    mid <- left + floor((right - left) / 2)
+    MERGE_SORT(A, left, mid)
+    MERGE_SORT(A, mid + 1, right)
+    MERGE(A, left, mid, right)
+
+MERGE(A, left, mid, right):
+    L <- copy of A[left..mid]
+    R <- copy of A[mid+1..right]
+    i <- 0, j <- 0
+    for k from left to right:
+        if j == |R| or (i < |L| and L[i] <= R[j]):
+            A[k] <- L[i]; i <- i + 1
+        else:
+            A[k] <- R[j]; j <- j + 1
 ```
-15-algorithmic-paradigms/
-├── README.md                 # This file
-├── Makefile                  # Build automation
-├── slides/
-│   ├── presentation-week15.html      # Main lecture slides (~40 slides)
-│   └── presentation-comparativ.html  # C vs Python comparison
-├── src/
-│   ├── example1.c            # Complete working demonstrations
-│   ├── exercise1.c           # Sorting algorithms exercise (TODO)
-│   └── exercise2.c           # Greedy vs DP exercise (TODO)
-├── data/
-│   ├── sorting_data.txt      # Sample data for sorting
-│   ├── knapsack_items.txt    # Knapsack problem instances
-│   └── huffman_text.txt      # Text for Huffman encoding
-├── tests/
-│   ├── test1_input.txt       # Test input for exercise 1
-│   ├── test1_expected.txt    # Expected output for exercise 1
-│   ├── test2_input.txt       # Test input for exercise 2
-│   └── test2_expected.txt    # Expected output for exercise 2
-├── teme/
-│   ├── homework-requirements.md  # Two homework assignments
-│   └── homework-extended.md      # Five bonus challenges
-└── solution/
-    ├── exercise1_sol.c       # Solution for exercise 1
-    ├── exercise2_sol.c       # Solution for exercise 2
-    ├── homework1_sol.c       # Homework 1 solution
-    └── homework2_sol.c       # Homework 2 solution
+
+#### Complexity
+
+Let `T(n) = 2T(n/2) + Θ(n)`. By the Master theorem this solves to `T(n) = Θ(n log n)`.
+
+- Time: `Θ(n log n)` in best, average and worst cases
+- Space: `Θ(n)` auxiliary due to the merge buffers
+- Stability: yes
+- In-place: no
+
+### QuickSort
+
+#### Algorithmic paradigm
+
+QuickSort is also divide and conquer but the structure is defined by a *partition* step rather than a merge step.
+
+- **Divide**: partition the array around a pivot so that elements less than or equal to the pivot are placed on its left and the rest on its right.
+- **Conquer**: recursively sort the two partitions.
+- **Combine**: trivial, because partitions are already in their final relative position.
+
+#### Partition scheme used
+
+The implementation uses the Lomuto partition scheme with three pivot strategies.
+
+- Strategy 0: last element pivot
+- Strategy 1: median-of-three pivot
+- Strategy 2: random pivot
+
+#### Partition invariant (Lomuto)
+
+For a subarray `A[low..high]` with pivot `p = A[high]` the partition loop maintains:
+
+- `A[low..i] <= p`
+- `A[i+1..j-1] > p`
+- `A[j..high-1]` are unclassified
+
+At termination the final swap places the pivot at index `i+1` which is its final sorted position.
+
+#### Pseudocode
+
+```text
+PARTITION_LAST(A, low, high):
+    pivot <- A[high]
+    i <- low - 1
+    for j from low to high - 1:
+        if A[j] <= pivot:
+            i <- i + 1
+            swap(A[i], A[j])
+    swap(A[i+1], A[high])
+    return i + 1
+
+QUICKSORT(A, low, high, strategy):
+    if low < high:
+        p <- PARTITION(A, low, high, strategy)
+        QUICKSORT(A, low, p - 1, strategy)
+        QUICKSORT(A, p + 1, high, strategy)
 ```
 
----
+#### Complexity and probabilistic guarantee
 
-## 📖 Recommended Reading
+- Worst case: `Θ(n^2)` comparisons and `Θ(n)` recursion depth
+- Average case (under randomised pivot selection): `Θ(n log n)` comparisons and `Θ(log n)` recursion depth in expectation
 
-### Essential
+The randomised pivot strategy is a *distributional defence* against crafted inputs rather than a claim that the algorithm becomes worst-case optimal.
 
-- **CLRS** (Cormen, Leiserson, Rivest, Stein) — *Introduction to Algorithms*, 4th Edition
-  - Chapter 4: Divide-and-Conquer
-  - Chapter 15: Dynamic Programming
-  - Chapter 16: Greedy Algorithms
+### ShellSort with Hibbard gaps
 
-- **Sedgewick & Wayne** — *Algorithms*, 4th Edition
-  - Chapter 2: Sorting
-  - Section 4.4: Shortest Paths
+#### Algorithmic paradigm
 
-### Advanced
+ShellSort can be understood as a staged relaxation of the inversion structure of the array.
 
-- **Knuth** — *The Art of Computer Programming*, Volume 3: Sorting and Searching
-- **Bellman** — *Dynamic Programming* (1957, the original treatise)
-- **Hoare** — *Quicksort* (Computer Journal, 1962)
+- Large gaps reduce long-range inversions cheaply.
+- Smaller gaps progressively refine local order.
+- The final gap 1 reduces to insertion sort but on an array that is typically close to sorted.
 
-### Online Resources
+#### Hibbard gap sequence
 
-- [VisuAlgo](https://visualgo.net/en/sorting) — Sorting algorithm visualisations
-- [MIT OpenCourseWare 6.006](https://ocw.mit.edu/courses/6-006-introduction-to-algorithms-fall-2011/) — Introduction to Algorithms
-- [Brilliant.org](https://brilliant.org/wiki/master-theorem/) — Master Theorem explanation
+The Hibbard sequence is defined as:
 
----
+`g_k = 2^k - 1` for `k >= 1`.
 
-## ✅ Self-Assessment Checklist
+For `n = 100` the sequence used is `63, 31, 15, 7, 3, 1`.
 
-After completing this lab, verify you can:
+#### Pseudocode
 
-- [ ] Identify which algorithmic paradigm suits a given problem
-- [ ] Write the Master Theorem and apply it to recurrences
-- [ ] Implement MergeSort with O(n) auxiliary space
-- [ ] Implement QuickSort with randomised pivot selection
-- [ ] Prove correctness of the activity selection greedy approach
-- [ ] Construct a Huffman tree from character frequencies
-- [ ] Convert a naive recursive solution to memoised form
-- [ ] Fill a 0/1 Knapsack DP table and reconstruct the solution
-- [ ] Implement LCS and recover the actual subsequence
-- [ ] Analyse time and space complexity of all covered algorithms
+```text
+HIBBARD_GAPS(n):
+    gaps <- []
+    g <- 1
+    while g < n:
+        append(gaps, g)
+        g <- 2*g + 1
+    return reverse(gaps)
 
----
+SHELLSORT_HIBBARD(A, n):
+    for each gap in HIBBARD_GAPS(n):
+        for i from gap to n - 1:
+            j <- i
+            while j >= gap and A[j-gap] > A[j]:
+                swap(A[j], A[j-gap])
+                j <- j - gap
+```
 
-## 💼 Interview Preparation
+#### Complexity
 
-Common questions about algorithmic paradigms:
+ShellSort does not admit a single closed-form complexity bound that is both tight and simple for all gap sequences. For Hibbard gaps the worst-case time is commonly stated as `O(n^{3/2})` while practical behaviour is often closer to `O(n^{4/3})` on random inputs.
 
-1. **Explain** the difference between MergeSort and QuickSort. When would you prefer one over the other?
+For assessment purposes the key point is conceptual rather than asymptotic: the gap sequence is the design lever that mediates the trade-off between number of passes and local work per pass.
 
-2. **Implement** a function to find the k-th smallest element in an unsorted array in expected O(n) time.
+## Exercise 2: Greedy algorithms and dynamic programming
 
-3. **Prove** that the greedy activity selection algorithm yields an optimal solution.
+`src/exercise2.c` provides a structured comparison between greedy choice and dynamic programming.
 
-4. **Design** a DP solution for the coin change problem. What is the time and space complexity?
+- Coin change: greedy vs DP
+- Job sequencing with deadlines: greedy
+- Longest increasing subsequence: DP
 
-5. **Compare** top-down (memoisation) vs bottom-up (tabulation) dynamic programming. What are the trade-offs?
+The programme is menu-driven so that each part can be exercised independently.
 
----
+### Coin change
 
-## 🔗 Next Week Preview
+#### Greedy algorithm
 
-**Week 16: Advanced Graph Algorithms & Backtracking**
-- Minimum Spanning Trees (Kruskal and Prim)
-- Topological Sort and Strongly Connected Components
-- Backtracking paradigm and state-space exploration
-- Classic problems: N-Queens, Sudoku, Graph Colouring
+The greedy strategy selects the largest coin denomination that does not exceed the remaining amount.
 
----
+Greedy is optimal for canonical coin systems such as `{1, 5, 10, 25}` but it is not universally optimal.
 
-*Laboratory materials prepared for ATP Course, Academy of Economic Studies - CSIE Bucharest*
+#### Dynamic programming algorithm
+
+The DP algorithm solves the unbounded coin change problem by computing the minimum number of coins required to form every intermediate amount up to the target.
+
+- State: `dp[x] =` minimum coins needed to form amount `x`
+- Base: `dp[0] = 0`
+- Recurrence:
+
+`dp[x] = min_j (dp[x - coin[j]] + 1)` for all `coin[j] <= x`
+
+Backtracking uses a `pick[]` array that records the last coin used in an optimal solution.
+
+#### Demonstrating greedy failure
+
+The repository includes a canonical counterexample.
+
+- Coins: `{1, 3, 4}`
+- Amount: `6`
+
+Greedy produces `4 + 1 + 1` (3 coins) while DP produces `3 + 3` (2 coins).
+
+This example is structurally important because it shows that the failure is not an implementation artefact but a property of the choice rule.
+
+### Job sequencing with deadlines
+
+#### Problem statement
+
+Each job has an identifier, a deadline and a profit. Each job takes one unit of time and at most one job can be executed in a time slot. The objective is to maximise total profit.
+
+#### Greedy strategy
+
+1. Sort jobs in descending order of profit.
+2. Consider jobs in that order and schedule each job in the latest available slot at or before its deadline.
+
+This strategy is optimal for the unit-time version of the problem.
+
+#### Pseudocode
+
+```text
+JOB_SEQUENCING(jobs):
+    sort jobs by profit descending
+    maxD <- maximum deadline
+    schedule[0..maxD-1] <- empty
+    profit <- 0
+    for job in jobs:
+        for slot from min(job.deadline, maxD) - 1 down to 0:
+            if schedule[slot] empty:
+                schedule[slot] <- job
+                profit <- profit + job.profit
+                break
+    return schedule, profit
+```
+
+### Longest increasing subsequence
+
+#### Dynamic programming formulation
+
+The implementation uses the classical `O(n^2)` DP formulation because it is structurally transparent and because it supports direct reconstruction via predecessor pointers.
+
+- State: `dp[i] =` length of the longest increasing subsequence ending at `i`
+- Base: `dp[i] = 1`
+- Recurrence:
+
+`dp[i] = max(dp[j] + 1)` over all `j < i` such that `A[j] < A[i]`
+
+A `parent[]` array records the predecessor index for reconstruction.
+
+#### Pseudocode
+
+```text
+LIS(A):
+    for i in 0..n-1:
+        dp[i] <- 1
+        parent[i] <- -1
+    for i in 1..n-1:
+        for j in 0..i-1:
+            if A[j] < A[i] and dp[j] + 1 > dp[i]:
+                dp[i] <- dp[j] + 1
+                parent[i] <- j
+    end <- argmax_i dp[i]
+    reconstruct by following parent from end
+```
+
+## Worked exemplar: `src/example1.c`
+
+`example1.c` is a complete, runnable narrative that interleaves code, output and analysis. It contains:
+
+- Divide and conquer: MergeSort and QuickSort
+- Recurrence reasoning and Master theorem commentary
+- Greedy algorithms: activity selection, Huffman coding and fractional knapsack
+- Dynamic programming: multiple Fibonacci variants, 0/1 knapsack and LCS
+
+It is intended as a reference point for style and for the expected density of argument in written reports.
+
+## Notes on the reference solutions
+
+The `solution/` directory contains instructor-oriented implementations. In several places the reference code uses a different instrumentation convention to simplify explanation. The student exercises in `src/` are the normative artefacts for assessment and for regression tests.
+
+## References
+
+The following sources are suitable as primary citations for the algorithms and paradigms used in this repository.
+
+| Topic | APA 7th reference | DOI |
+|---|---|---|
+| QuickSort | Hoare, C. A. R. (1961). Algorithm 64: Quicksort. *Communications of the ACM, 4*(7), 321. | https://doi.org/10.1145/366622.366644 |
+| ShellSort | Shell, D. L. (1959). A high-speed sorting procedure. *Communications of the ACM, 2*(7), 30–32. | https://doi.org/10.1145/368370.368387 |
+| Dynamic programming principle | Bellman, R. (1958). On a routing problem. *Quarterly of Applied Mathematics, 16*(1), 87–90. | https://doi.org/10.1090/qam/102435 |
+| Longest common subsequence foundations | Hirschberg, D. S. (1975). A linear space algorithm for computing maximal common subsequences. *Communications of the ACM, 18*(6), 341–343. | https://doi.org/10.1145/360825.360861 |
+
+
+## Instrumentation semantics and methodological cautions
+
+### What is counted as a comparison
+
+A *comparison* is counted when two keys are compared for ordering. In this repository this is implemented by the helper `compare_counted(a, b)` which returns a signed difference and increments a global counter. The counter is therefore a proxy for the number of key comparisons, not for the number of loop guard evaluations nor for the number of arithmetic operations.
+
+Two consequences follow.
+
+1. A loop whose termination depends on an index is not counted as a comparison because it does not compare keys.
+2. A comparison that is short-circuited by a guard is also not counted because `compare_counted` is not invoked.
+
+This convention aligns with the standard comparison model used in the analysis of comparison-based sorting.
+
+### What is counted as a swap
+
+A *swap* is counted when two *distinct* array locations exchange values. The helper `swap_counted(&x, &y)` therefore increments the swap counter only when the pointers refer to different addresses.
+
+This is a deliberate choice. Many textbook implementations of Lomuto partitioning call `swap` even when the two indices coincide. Counting such self-swaps would inflate the swap total while reporting no movement of data between distinct locations. Under the present convention the swap counter more closely measures the disruptive component of the algorithm’s behaviour and is therefore more interpretable when relating statistics to cache behaviour and memory traffic.
+
+When you report swap counts in coursework you should state the convention explicitly because different conventions can differ by large constant factors.
+
+### Deterministic execution under test
+
+`exercise1.c` includes a random-pivot QuickSort variant. Randomisation is conceptually valuable but it complicates regression testing because the pivot sequence depends on the pseudo-random generator state. To preserve both properties the programme uses the following policy.
+
+- During interactive execution the generator is seeded from the wall clock.
+- During non-interactive execution the generator is seeded with a fixed constant.
+
+The non-interactive case is recognised by `isatty(STDIN_FILENO)`. Under `make test` standard input is redirected from a file and is therefore not a terminal. The fixed seed ensures that the expected transcript is stable and that a failing test is informative rather than stochastic.
+
+A methodological corollary is that timing measurements printed in regression transcripts should not be interpreted as performance evidence. Meaningful benchmarking requires repeated trials, controlled CPU frequency scaling and careful treatment of measurement overhead.
+
+## Exercise 1 dossier: `src/exercise1.c`
+
+### Functional overview
+
+`exercise1.c` reads an integer sequence, prints it and runs five instrumented sorting pipelines.
+
+- MergeSort (divide and conquer)
+- QuickSort with last-element pivot (divide and conquer)
+- QuickSort with median-of-three pivot (divide and conquer)
+- QuickSort with random pivot (randomised divide and conquer)
+- ShellSort with Hibbard gaps (incremental improvement through diminishing increments)
+
+Each pipeline is executed on a fresh copy of the original array. After sorting the programme verifies the monotonicity post-condition `arr[i-1] <= arr[i]` for all indices. If the check fails a warning is printed. The transcript is deterministic under non-interactive execution.
+
+### MergeSort
+
+#### Correctness argument as invariants
+
+MergeSort rests on two invariants.
+
+1. *Recursive correctness.* If the recursive calls correctly sort the left and right halves then the merge procedure receives two sorted arrays.
+2. *Merge invariant.* At any step of the merge loop the output prefix `arr[left..k-1]` contains exactly the smallest `(k-left)` elements of the multiset union of the two inputs and that prefix is sorted.
+
+The merge invariant is established at `k = left` trivially and maintained because the next element appended is the minimum of the two current heads. Termination yields a sorted output because once one side is exhausted the remainder of the other side is already sorted.
+
+#### Pseudocode with explicit cost hooks
+
+```text
+MERGE_SORT(A, left, right):
+    if left >= right:
+        return
+    mid <- left + floor((right-left)/2)
+    MERGE_SORT(A, left, mid)
+    MERGE_SORT(A, mid+1, right)
+    MERGE(A, left, mid, right)
+
+MERGE(A, left, mid, right):
+    L <- copy A[left..mid]
+    R <- copy A[mid+1..right]
+    i <- 0, j <- 0, k <- left
+    while i < |L| and j < |R|:
+        if COMPARE(L[i], R[j]) <= 0:
+            A[k] <- L[i]; i <- i + 1
+        else:
+            A[k] <- R[j]; j <- j + 1
+        k <- k + 1
+    append remaining elements of L or R
+```
+
+Here `COMPARE` corresponds to `compare_counted` and no swaps are performed.
+
+#### Complexity
+
+Let `T(n)` denote the running time on an array of length `n`.
+
+- Divide: two subproblems of size `n/2`
+- Combine: one linear merge pass
+
+Hence `T(n) = 2T(n/2) + Θ(n)` and by the Master theorem `T(n) = Θ(n log n)`. The auxiliary space is `Θ(n)` due to the temporary buffers created in the merge.
+
+### QuickSort
+
+#### Partition invariant (Lomuto)
+
+Let `pivot = A[high]`. During partitioning we maintain that:
+
+- all elements in `A[low..i]` are `<= pivot`
+- all elements in `A[i+1..j-1]` are `> pivot`
+
+The invariant is maintained by advancing `j` and swapping the next element into the left region when it satisfies the `<=` predicate. At termination, swapping `A[i+1]` with the pivot places the pivot in its final position.
+
+#### Pivot strategies
+
+- *Last-element pivot:* simplest, analytically convenient but vulnerable to adversarial arrangements.
+- *Median-of-three pivot:* reduces the probability of extreme imbalance on partially ordered data by sampling a constant number of candidates.
+- *Random pivot:* uses randomisation to eliminate structured worst-case inputs in expectation.
+
+The median-of-three strategy in this repository orders the triple `(low, mid, high)` using three comparisons and up to three swaps then moves the median to position `high` and calls the same Lomuto partition routine.
+
+#### Complexity
+
+QuickSort’s expected cost is `Θ(n log n)` but the worst-case remains `Θ(n^2)` when partitions become maximally unbalanced. The recursion depth is `Θ(log n)` in expectation and `Θ(n)` in the worst case. In practice the pivot strategy heavily influences constants.
+
+### ShellSort with Hibbard gaps
+
+ShellSort generalises insertion sort by allowing exchanges between positions separated by a *gap* `g`. For each gap the array is transformed into `g` interleaved subsequences and each is insertion-sorted.
+
+The Hibbard sequence `g_k = 2^k - 1` has a provable upper bound of `O(n^{3/2})` comparisons for this variant which is asymptotically better than quadratic insertion sort while remaining simple to implement.
+
+The implementation here uses gap-spaced swaps rather than element shifting so that the swap count retains its semantic meaning. This choice tends to increase constant factors compared with shift-based insertion but makes the instrumentation more interpretable.
+
+### Worked trace for the canonical test vector
+
+The regression test uses the input `64 34 25 12 22 11 90`. The following observations are useful when auditing your own instrumentation.
+
+- MergeSort performs 13 key comparisons because each merge step compares heads until one side is exhausted and the recursion tree for `n=7` has merges of sizes `1+1`, `2+2` and `3+4`.
+- Lomuto QuickSort performs 19 key comparisons because each partition compares every element except the pivot to the pivot and the recursion partitions the array into sizes `(6,0)`, `(0,5)`, `(3,1)` and `(1,0)`.
+- The swap total differs dramatically depending on whether self-swaps are counted. This repository does not count them.
+
+These counts are not universal constants. They are the consequences of a specific input, a specific partition scheme and a stated instrumentation convention.
+
+## Exercise 2 dossier: `src/exercise2.c`
+
+`exercise2.c` is designed to make the greedy-versus-dynamic-programming boundary concrete. The programme is menu-driven, yet every option is implemented as a pure function over arrays so that the logic is testable without interactive state.
+
+### Coin change
+
+#### Greedy algorithm
+
+The greedy algorithm repeatedly takes the largest denomination that does not exceed the remaining amount.
+
+```text
+COIN_CHANGE_GREEDY(coins[0..n-1], amount):
+    remaining <- amount
+    for i from n-1 down to 0:
+        take <- floor(remaining / coins[i])
+        use[i] <- take
+        remaining <- remaining mod coins[i]
+    if remaining != 0:
+        return IMPOSSIBLE
+    return sum_i use[i]
+```
+
+The algorithm is correct on *canonical* coin systems but fails on many non-canonical ones. The programme includes a canonical counterexample `coins = {1, 3, 4}, amount = 6`.
+
+#### Dynamic programming algorithm
+
+The dynamic programming algorithm solves the unbounded variant by computing `dp[x] = min_j dp[x - coins[j]] + 1`.
+
+```text
+COIN_CHANGE_DP(coins[0..n-1], amount):
+    dp[0] <- 0
+    for x from 1 to amount:
+        dp[x] <- +infty
+        pick[x] <- -1
+        for j from 0 to n-1:
+            if coins[j] <= x and dp[x - coins[j]] != +infty:
+                if dp[x - coins[j]] + 1 < dp[x]:
+                    dp[x] <- dp[x - coins[j]] + 1
+                    pick[x] <- j
+    if dp[amount] == +infty:
+        return IMPOSSIBLE
+    backtrack using pick to reconstruct multiset
+    return dp[amount]
+```
+
+Time complexity is `Θ(n·amount)` and space complexity is `Θ(amount)`. The reconstruction step is linear in the number of coins used.
+
+### Job sequencing with deadlines
+
+The job sequencing problem is a canonical greedy success story. Sorting by profit and scheduling each job as late as possible yields an optimal solution for the unweighted single-machine variant.
+
+```text
+JOB_SEQUENCING(jobs[1..m]):
+    sort jobs by profit descending
+    maxD <- max deadline
+    schedule[0..maxD-1] <- EMPTY
+    profit <- 0
+    for each job in sorted order:
+        for slot from min(job.deadline, maxD)-1 down to 0:
+            if schedule[slot] is EMPTY:
+                schedule[slot] <- job
+                profit <- profit + job.profit
+                break
+    return profit, schedule
+```
+
+The time complexity is `O(m log m + m·maxD)`. For large `maxD` it is common to optimise the inner loop using a disjoint set union structure but the present implementation prioritises clarity.
+
+### Longest increasing subsequence
+
+The longest increasing subsequence is presented as a dynamic programming archetype. The implementation uses the classical quadratic recurrence.
+
+```text
+LIS_LENGTH_AND_WITNESS(A[0..n-1]):
+    for i in 0..n-1:
+        dp[i] <- 1
+        parent[i] <- -1
+    for i in 1..n-1:
+        for j in 0..i-1:
+            if A[j] < A[i] and dp[j] + 1 > dp[i]:
+                dp[i] <- dp[j] + 1
+                parent[i] <- j
+    end <- argmax_i dp[i]
+    reconstruct by following parent from end
+```
+
+The reconstruction is performed in reverse then written into the output array in forward order.
+
+## Cross-language reference fragments
+
+The assessed implementations are in C. The following fragments are intentionally short and are provided only to help students who think bilingually across ecosystems.
+
+### MergeSort in Python (reference only)
+
+```python
+def mergesort(a):
+    if len(a) <= 1:
+        return a
+    m = len(a) // 2
+    left = mergesort(a[:m])
+    right = mergesort(a[m:])
+    out = []
+    i = j = 0
+    while i < len(left) and j < len(right):
+        if left[i] <= right[j]:
+            out.append(left[i]); i += 1
+        else:
+            out.append(right[j]); j += 1
+    out.extend(left[i:])
+    out.extend(right[j:])
+    return out
+```
+
+### Coin change DP in C++ (reference only)
+
+```cpp
+std::vector<int> dp(amount + 1, INF);
+std::vector<int> pick(amount + 1, -1);
+dp[0] = 0;
+for (int x = 1; x <= amount; ++x) {
+    for (int j = 0; j < n; ++j) {
+        int c = coins[j];
+        if (c <= x && dp[x - c] != INF && dp[x - c] + 1 < dp[x]) {
+            dp[x] = dp[x - c] + 1;
+            pick[x] = j;
+        }
+    }
+}
+```
+
+### LIS recurrence in Java (reference only)
+
+```java
+for (int i = 0; i < n; ++i) {
+    dp[i] = 1;
+    parent[i] = -1;
+}
+for (int i = 1; i < n; ++i) {
+    for (int j = 0; j < i; ++j) {
+        if (a[j] < a[i] && dp[j] + 1 > dp[i]) {
+            dp[i] = dp[j] + 1;
+            parent[i] = j;
+        }
+    }
+}
+```
+
+These fragments are not optimised and should not be copied verbatim into assessed work without careful adaptation.
+
+## Quality assurance checklist
+
+When reviewing your own solutions, treat the following as a minimum standard.
+
+1. Compile with warnings enabled and resolve all warnings.
+2. Run `make test` and ensure the transcripts match exactly.
+3. Run `make valgrind` to confirm that no heap memory is leaked.
+4. Inspect failure modes by deliberately corrupting inputs (negative sizes, missing data and out-of-range values) and confirm that the programme fails safely.
+5. For randomised algorithms, ensure that any report of performance is based on multiple trials and that the seed strategy is documented.
+

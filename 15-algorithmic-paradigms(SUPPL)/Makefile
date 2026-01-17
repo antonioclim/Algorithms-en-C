@@ -140,19 +140,23 @@ valgrind: all
 	@echo "$(CYAN)═══════════════════════════════════════════════════════════$(NC)"
 	@echo "$(CYAN)              CHECKING MEMORY LEAKS                         $(NC)"
 	@echo "$(CYAN)═══════════════════════════════════════════════════════════$(NC)"
-	@for exe in $(EXECUTABLES); do \
-		if [ -x "./$$exe" ]; then \
-			echo ""; \
-			echo "$(YELLOW)▶ Valgrind $$exe...$(NC)"; \
-			if [ "$$exe" = "exercise1" ] && [ -f "$(TEST_DIR)/test1_input.txt" ]; then \
-				valgrind --leak-check=full --show-leak-kinds=all --error-exitcode=1 ./$$exe < $(TEST_DIR)/test1_input.txt 2>&1 | grep -E "(ERROR SUMMARY|definitely lost|indirectly lost|possibly lost)"; \
-			elif [ "$$exe" = "exercise2" ] && [ -f "$(TEST_DIR)/test2_input.txt" ]; then \
-				valgrind --leak-check=full --show-leak-kinds=all --error-exitcode=1 ./$$exe < $(TEST_DIR)/test2_input.txt 2>&1 | grep -E "(ERROR SUMMARY|definitely lost|indirectly lost|possibly lost)"; \
-			else \
-				valgrind --leak-check=full --show-leak-kinds=all --error-exitcode=1 ./$$exe 2>&1 | grep -E "(ERROR SUMMARY|definitely lost|indirectly lost|possibly lost)"; \
+	@if ! command -v valgrind >/dev/null 2>&1; then \
+		echo "$(YELLOW)  ⚠ Valgrind is not installed on this system so the memory check is skipped.$(NC)"; \
+	else \
+		for exe in $(EXECUTABLES); do \
+			if [ -x "./$$exe" ]; then \
+				echo ""; \
+				echo "$(YELLOW)▶ Valgrind $$exe...$(NC)"; \
+				if [ "$$exe" = "exercise1" ] && [ -f "$(TEST_DIR)/test1_input.txt" ]; then \
+					valgrind --leak-check=full --show-leak-kinds=all --error-exitcode=1 ./$$exe < $(TEST_DIR)/test1_input.txt 2>&1 | grep -E "(ERROR SUMMARY|definitely lost|indirectly lost|possibly lost)"; \
+				elif [ "$$exe" = "exercise2" ] && [ -f "$(TEST_DIR)/test2_input.txt" ]; then \
+					valgrind --leak-check=full --show-leak-kinds=all --error-exitcode=1 ./$$exe < $(TEST_DIR)/test2_input.txt 2>&1 | grep -E "(ERROR SUMMARY|definitely lost|indirectly lost|possibly lost)"; \
+				else \
+					valgrind --leak-check=full --show-leak-kinds=all --error-exitcode=1 ./$$exe 2>&1 | grep -E "(ERROR SUMMARY|definitely lost|indirectly lost|possibly lost)"; \
+				fi; \
 			fi; \
-		fi; \
-	done
+		done; \
+	fi
 
 # ==============================================================================
 # SOLUTIONS (Instructor only)

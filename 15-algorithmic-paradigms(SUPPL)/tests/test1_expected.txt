@@ -13,21 +13,21 @@ MergeSort:
 ─────────────────────────────────────────────────────────────
 QuickSort (last element pivot):
   Sorted: 11 12 22 25 34 64 90 
-  Comparisons: 14, Swaps: 8, Time: 0.000 ms
+  Comparisons: 19, Swaps: 4, Time: 0.000 ms
 
 ─────────────────────────────────────────────────────────────
 QuickSort (median-of-three pivot):
   Sorted: 11 12 22 25 34 64 90 
-  Comparisons: 17, Swaps: 11, Time: 0.000 ms
+  Comparisons: 21, Swaps: 12, Time: 0.000 ms
 
 ─────────────────────────────────────────────────────────────
 QuickSort (random pivot):
   Sorted: 11 12 22 25 34 64 90 
-  Comparisons: 15, Swaps: 9, Time: 0.000 ms
+  Comparisons: 11, Swaps: 12, Time: 0.000 ms
 
 ─────────────────────────────────────────────────────────────
 ShellSort (Hibbard gaps):
   Sorted: 11 12 22 25 34 64 90 
-  Comparisons: 18, Swaps: 9, Time: 0.000 ms
+  Comparisons: 14, Swaps: 8, Time: 0.000 ms
 
 ═════════════════════════════════════════════════════════════

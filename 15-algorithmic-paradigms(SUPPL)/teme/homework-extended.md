@@ -1,218 +1,165 @@
 # Week 15 Extended Challenges: Algorithmic Paradigms
 
-## 🏆 Bonus Challenges
+## Purpose and assessment model
 
-These optional challenges are for students seeking deeper understanding. Each challenge is worth bonus points that can offset penalties or improve your grade.
+The tasks in this document are optional and are intended for students who wish to explore the paradigms beyond the minimum assessed material. Each challenge yields bonus points that may compensate for penalties elsewhere, subject to the course rules. Bonus points are awarded only when the work demonstrates technical depth, methodological care and clear exposition.
 
----
+Unless stated otherwise, all implementations should be written in ISO C11 and should compile without warnings under `-Wall -Wextra -std=c11`. Reports must be written in British English.
 
-## Challenge 1: Randomised QuickSort Analysis (15 bonus points)
+## General methodological requirements
+
+For each challenge you attempt, provide:
+
+- a clear problem statement and assumptions
+- an algorithmic description using pseudocode
+- a complexity discussion in time and space
+- an empirical section that states the experimental design (input generation, number of trials, seed policy and statistical summaries)
+- a short reflective section explaining what the experiment teaches about the underlying paradigm
+
+## Challenge 1: Randomised QuickSort as a probabilistic algorithm (15 bonus points)
 
 ### Objective
 
-Implement randomised QuickSort and empirically verify its probabilistic guarantees.
+Implement randomised QuickSort and empirically validate a probabilistic claim about its cost. The purpose is not merely to obtain small average runtimes, but to demonstrate that a randomised pivot policy turns adversarial input orders into a low-probability event.
 
-### Requirements
+### Deliverables
 
 1. **Implementation**
-   - Random pivot selection using high-quality PRNG
-   - Track recursion depth for each run
-   - Count comparisons precisely
+   - A QuickSort implementation with random pivot selection.
+   - Instrumentation that records comparisons, swaps and recursion depth.
+   - A mode that runs repeated trials on fresh random permutations without printing per-trial transcripts.
+
+2. **Empirical analysis**
+   - Perform at least 10,000 trials for array sizes `n ∈ {10^3, 10^4}`.
+   - Report the mean, standard deviation and a 95% confidence interval for the comparison count.
+   - Plot a histogram of comparison counts and comment on tail behaviour.
+
+3. **Interpretation**
+   - Explain why randomisation prevents an adversary from reliably triggering the quadratic case.
+   - Discuss how the seed policy affects reproducibility and how you ensured determinism when required.
+
+### Notes
+
+If you cite the well-known approximation that the expected number of comparisons is about `1.386 n log2 n` then you must justify the base of the logarithm and state whether the constant is empirical or derived.
+
+## Challenge 2: Strassen’s matrix multiplication as a divide and conquer optimisation (20 bonus points)
+
+### Objective
+
+Implement Strassen’s algorithm for square matrices and compare it with the classical `O(n^3)` algorithm for moderate sizes. The primary learning outcome is to understand why asymptotic improvements may not dominate for realistic input sizes, particularly when constant factors and memory traffic are considered.
+
+### Deliverables
+
+- A classical multiplication baseline.
+- A Strassen implementation with a tunable cutoff `n0` below which the baseline is used.
+- A report that discusses both asymptotic complexity and observed performance.
+
+### Experimental design guidance
+
+Use sizes that cover both regimes, for example `n ∈ {64, 128, 256, 512}`. Report results for several cutoff choices and explain the trade-off.
+
+## Challenge 3: Canonical coin systems and the boundary of greedy optimality (15 bonus points)
+
+### Objective
+
+Investigate when greedy coin change is optimal. Your task is to move from isolated counterexamples to a principled characterisation.
+
+### Deliverables
+
+- A programme that searches for amounts up to a bound `B` and detects greedy failures for a fixed coin system.
+- At least two non-canonical coin systems where greedy fails and at least one canonical system where it does not fail for the tested range.
+- A discussion of why a finite search does not constitute a proof and what additional arguments would be required.
+
+## Challenge 4: Weighted interval scheduling as a greedy failure case (20 bonus points)
+
+### Objective
+
+Implement the weighted interval scheduling problem and show that the unweighted greedy strategy fails. Then implement the dynamic programming solution.
+
+### Deliverables
+
+- Input format and parser for intervals `(start, end, weight)`.
+- A greedy baseline (for example earliest finish time) and at least one counterexample.
+- A dynamic programming solution with reconstruction of the chosen set of intervals.
+
+## Challenge 5: Edit distance as a dynamic programming archetype (15 bonus points)
+
+### Objective
+
+Implement Levenshtein edit distance and discuss how the DP table encodes optimal substructure.
+
+### Deliverables
+
+- A DP implementation that reports both distance and an alignment trace.
+- A space-optimised variant that reduces memory from `O(mn)` to `O(min(m, n))`.
+- A short discussion of when the space optimisation is valid and what information it discards.
+
+## Submission guidance
+
+Submit each challenge in a separate directory or with a clear naming convention. Provide a `README` for each challenge describing build steps and usage. If you include plots, embed them in the report or provide scripts that regenerate them.
 
 2. **Analysis**
-   - Run 10,000 trials on arrays of size n = 1000
-   - Plot histogram of comparison counts
-   - Calculate mean, variance, and 95% confidence interval
-   - Compare with theoretical expectation: 1.39 n log n
+   - Run at least 10,000 trials for n = 1,000 and n = 10,000.
+   - Plot the empirical distribution of comparison counts.
+   - Report mean, standard deviation and an empirical 95% confidence interval.
+   - Compare the observed mean with the asymptotic expectation E[C_n] ≈ 2n ln n.
 
 3. **Report**
-   - Explain why randomisation eliminates worst-case inputs
-   - Discuss the birthday paradox in pivot collision analysis
-   - Compare with deterministic median-of-three
+   - Explain why randomisation removes deterministic worst-case inputs.
+   - Discuss how the recursion depth behaves under random pivots.
+   - State clearly whether your empirical findings are consistent with theory and where discrepancies may originate (measurement overhead, finite-size effects and implementation details).
 
-### Expected Outcome
+### Marking guidance
 
-Demonstrate that randomised QuickSort achieves O(n log n) with high probability, and identify conditions (if any) that cause deviation.
+Full credit requires both correct implementation and a statistically literate experimental design. Purely descriptive plots without interpretation will not receive full credit.
 
----
-
-## Challenge 2: Strassen's Matrix Multiplication (20 bonus points)
+## Challenge 2: Strassen matrix multiplication and thresholding (20 bonus points)
 
 ### Objective
 
-Implement Strassen's algorithm for matrix multiplication and analyse when it outperforms the naive algorithm.
-
-### Background
-
-Standard matrix multiplication: O(n³)
-Strassen's algorithm: O(n^2.807) using divide-and-conquer with only 7 recursive calls instead of 8.
+Implement Strassen's algorithm for square matrices and study the practical cross-over point at which it becomes faster than the naive O(n^3) algorithm for your toolchain and machine.
 
 ### Requirements
 
-1. **Implementation**
-   - Naive O(n³) multiplication for baseline
-   - Strassen's recursive algorithm
-   - Hybrid approach: switch to naive below threshold
+- Implement both the naive algorithm and Strassen's algorithm.
+- Use padding to handle matrix sizes that are not powers of two.
+- Implement a threshold parameter t such that for subproblems of size n ≤ t the implementation falls back to the naive algorithm.
 
-2. **Find crossover point**
-   - Experimentally determine matrix size where Strassen beats naive
-   - Typical crossover: 32 ≤ n ≤ 128
+### Evaluation
 
-3. **Numerical stability**
-   - Analyse floating-point error accumulation
-   - Compare precision of both algorithms
+- Provide a plot of runtime against n for several threshold values.
+- Identify a sensible threshold regime and justify it.
+- Discuss memory use, cache effects and constant factors.
 
-### The Seven Products
-
-```
-P1 = A11 × (B12 - B22)
-P2 = (A11 + A12) × B22
-P3 = (A21 + A22) × B11
-P4 = A22 × (B21 - B11)
-P5 = (A11 + A22) × (B11 + B22)
-P6 = (A12 - A22) × (B21 + B22)
-P7 = (A11 - A21) × (B11 + B12)
-
-C11 = P5 + P4 - P2 + P6
-C12 = P1 + P2
-C21 = P3 + P4
-C22 = P1 + P5 - P3 - P7
-```
-
----
-
-## Challenge 3: Optimal Binary Search Tree (15 bonus points)
+## Challenge 3: Canonical coin systems and greedy optimality (15 bonus points)
 
 ### Objective
 
-Construct a binary search tree that minimises expected search cost given key access probabilities.
-
-### Problem Definition
-
-Given n keys k₁ < k₂ < ... < kₙ with access probabilities p₁, p₂, ..., pₙ, and gaps (unsuccessful searches) with probabilities q₀, q₁, ..., qₙ, construct BST minimising:
-
-```
-E[cost] = Σᵢ (depth(kᵢ) + 1) × pᵢ + Σⱼ (depth(gapⱼ) + 1) × qⱼ
-```
+Investigate when the greedy coin change algorithm is guaranteed to be optimal. Your task is to treat the exercise as an empirical and theoretical investigation rather than as a single counterexample.
 
 ### Requirements
 
-1. **DP Solution**
-   - State: dp[i][j] = minimum cost for keys i..j
-   - Root choice: root[i][j] = optimal root for subtree
-   - Complexity: O(n³) time, O(n²) space
+- Implement a generator of small coin systems (for example with maximum denomination ≤ 50 and at most 6 denominations).
+- For each system, test greedy optimality for all target amounts up to a bound B (for example B = 200) by comparing greedy with dynamic programming.
+- Classify the systems into canonical and non-canonical classes under your chosen bound.
 
-2. **Tree Construction**
-   - Backtrack using root[i][j] table
-   - Build actual BST structure
+### Discussion points
 
-3. **Visualisation**
-   - ASCII tree output
-   - Show expected search cost
+- Explain why testing up to a finite bound is evidence rather than proof.
+- Relate your findings to known sufficient conditions (for example certain structured systems) and explain limitations.
 
-### Example
-
-```
-Keys:   k1=10  k2=20  k3=30
-Probs:  p1=0.3 p2=0.1 p3=0.2
-Gaps:   q0=0.1 q1=0.1 q2=0.1 q3=0.1
-
-Optimal tree:
-      20
-     /  \
-   10    30
-
-Expected cost: 1.7
-```
-
----
-
-## Challenge 4: Maximum Subarray (Kadane's Algorithm) (10 bonus points)
+## Challenge 4: From O(n^2) to O(n log n) for LIS (15 bonus points)
 
 ### Objective
 
-Implement three solutions for finding the maximum sum contiguous subarray.
+Implement the patience sorting based O(n log n) algorithm for the longest increasing subsequence and compare it empirically with the O(n^2) dynamic programming algorithm.
 
 ### Requirements
 
-1. **Brute Force** - O(n³)
-   - Check all possible subarrays
+- Implement both algorithms and ensure that both reconstruct an actual subsequence.
+- Provide an experiment that varies n over at least three orders of magnitude.
+- Discuss asymptotics and constant factors.
 
-2. **Divide and Conquer** - O(n log n)
-   - Maximum subarray is either:
-     - Entirely in left half
-     - Entirely in right half
-     - Crosses the midpoint
+## Submission notes
 
-3. **Kadane's Algorithm** - O(n)
-   - Dynamic programming with optimal substructure
-   - Track current sum and maximum seen
-
-### Extensions
-
-- Handle all-negative arrays
-- Return subarray indices, not just sum
-- 2D version: maximum sum rectangle in matrix (O(n³) algorithm)
-
-### Example
-
-```
-Array: [-2, 1, -3, 4, -1, 2, 1, -5, 4]
-Maximum subarray: [4, -1, 2, 1] with sum 6
-```
-
----
-
-## Challenge 5: Matrix Chain Multiplication (15 bonus points)
-
-### Objective
-
-Find the optimal parenthesisation for matrix chain multiplication to minimise scalar multiplications.
-
-### Problem
-
-Given matrices A₁ (p₀ × p₁), A₂ (p₁ × p₂), ..., Aₙ (pₙ₋₁ × pₙ), find parenthesisation that minimises total operations.
-
-Example: A₁(10×30) × A₂(30×5) × A₃(5×60)
-
-```
-(A₁ × A₂) × A₃ = 10×30×5 + 10×5×60 = 1500 + 3000 = 4500
-A₁ × (A₂ × A₃) = 30×5×60 + 10×30×60 = 9000 + 18000 = 27000
-```
-
-Optimal: 4500 operations with ((A₁ × A₂) × A₃)
-
-### Requirements
-
-1. **DP Solution**
-   - State: dp[i][j] = minimum cost to multiply Aᵢ..Aⱼ
-   - Recurrence: dp[i][j] = min over k of {dp[i][k] + dp[k+1][j] + pᵢ₋₁×pₖ×pⱼ}
-   - Complexity: O(n³) time, O(n²) space
-
-2. **Parenthesisation Recovery**
-   - Track optimal split point s[i][j]
-   - Recursively construct parenthesised expression
-
-3. **Print optimal order**
-   - Output like: ((A₁ × A₂) × (A₃ × A₄))
-
----
-
-## 📤 Submission
-
-Submit bonus challenges separately with filename `bonus_challenge_N.c` where N is the challenge number.
-
-**Grading:** Bonus points are added to your homework score (max 100 + 75 = 175, but capped at 100 for grade calculation, excess serves as buffer against penalties).
-
----
-
-## 📚 References
-
-1. **CLRS** Chapter 4.2 (Strassen), 15.2 (Matrix Chain), 15.5 (Optimal BST)
-2. **Knuth** Volume 3: Searching and Sorting
-3. **Bentley** *Programming Pearls*, Column 7 (Maximum Subarray)
-4. **Motwani & Raghavan** *Randomised Algorithms* (Quicksort analysis)
-
----
-
-*Challenge yourself! The best way to learn algorithms is to implement them.*
+Extended challenges must be submitted as an addendum to the main homework archive. Clearly separate files for each challenge and ensure that the report indicates which challenges are attempted.
