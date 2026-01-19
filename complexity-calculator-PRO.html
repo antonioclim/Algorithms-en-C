@@ -1,0 +1,4121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UNIT01 - Complexity Calculator (Multi-Language)</title>
+    <style>
+        :root {
+            --bg-dark: #0f172a;
+            --bg-card: #1e293b;
+            --bg-input: #334155;
+            --text-primary: #f8fafc;
+            --text-secondary: #94a3b8;
+            --text-muted: #64748b;
+            --accent-cyan: #22d3ee;
+            --accent-purple: #a78bfa;
+            --accent-green: #10b981;
+            --accent-amber: #f59e0b;
+            --accent-red: #ef4444;
+            --accent-blue: #3b82f6;
+            --border: #475569;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg-dark);
+            color: var(--text-primary);
+            min-height: 100vh;
+            padding: 24px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 32px;
+        }
+
+        header h1 {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        header p {
+            color: var(--text-secondary);
+            font-size: 1rem;
+        }
+
+        .lang-count {
+            display: inline-block;
+            background: var(--accent-cyan);
+            color: var(--bg-dark);
+            padding: 2px 10px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            margin-left: 8px;
+        }
+
+        .main-grid {
+            display: grid;
+            grid-template-columns: 1fr 420px;
+            gap: 24px;
+        }
+
+        @media (max-width: 1000px) {
+            .main-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .card {
+            background: var(--bg-card);
+            border-radius: 12px;
+            padding: 20px;
+            border: 1px solid var(--border);
+        }
+
+        .card-title {
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 16px;
+        }
+
+        /* Language Selector */
+        .language-select {
+            margin-bottom: 12px;
+        }
+
+        .language-select select {
+            background: var(--bg-input);
+            border: 1px solid var(--border);
+            color: var(--text-primary);
+            padding: 10px 14px;
+            border-radius: 6px;
+            font-size: 14px;
+            width: 100%;
+            cursor: pointer;
+        }
+
+        .language-select select:focus {
+            outline: none;
+            border-color: var(--accent-cyan);
+        }
+
+        .language-select optgroup {
+            background: var(--bg-card);
+            color: var(--text-secondary);
+            font-weight: 600;
+        }
+
+        .language-select option {
+            background: var(--bg-input);
+            color: var(--text-primary);
+            padding: 8px;
+        }
+
+        /* Code Editor */
+        .code-editor {
+            position: relative;
+        }
+
+        #code-input {
+            width: 100%;
+            min-height: 420px;
+            background: var(--bg-input);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 16px;
+            font-family: 'Fira Code', 'Consolas', 'Monaco', monospace;
+            font-size: 13px;
+            color: var(--text-primary);
+            line-height: 1.6;
+            resize: vertical;
+            tab-size: 4;
+        }
+
+        #code-input:focus {
+            outline: none;
+            border-color: var(--accent-cyan);
+        }
+
+        /* Results Panel */
+        .results-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .metric-card {
+            background: var(--bg-input);
+            border-radius: 8px;
+            padding: 16px;
+        }
+
+        .metric-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .metric-name {
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: var(--text-secondary);
+        }
+
+        .metric-value {
+            font-size: 2rem;
+            font-weight: 700;
+            font-family: 'Fira Code', monospace;
+        }
+
+        .metric-cc .metric-value { color: var(--accent-cyan); }
+        .metric-cogc .metric-value { color: var(--accent-purple); }
+
+        .metric-bar {
+            height: 8px;
+            background: var(--bg-dark);
+            border-radius: 4px;
+            overflow: hidden;
+            margin-bottom: 8px;
+        }
+
+        .metric-bar-fill {
+            height: 100%;
+            border-radius: 4px;
+            transition: width 0.3s ease, background 0.3s ease;
+        }
+
+        .severity-low { background: var(--accent-green); }
+        .severity-moderate { background: var(--accent-amber); }
+        .severity-high { background: var(--accent-red); }
+
+        .metric-interpretation {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+
+        /* Language Info Badge */
+        .lang-info {
+            background: var(--bg-dark);
+            padding: 10px 14px;
+            border-radius: 6px;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .lang-icon {
+            font-size: 1.25rem;
+        }
+
+        .lang-details {
+            flex: 1;
+        }
+
+        .lang-name {
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        .lang-paradigm {
+            font-size: 0.7rem;
+            color: var(--text-muted);
+        }
+
+        .lang-snippet {
+            font-size: 0.7rem;
+            color: var(--accent-cyan);
+            margin-top: 4px;
+            font-style: italic;
+        }
+
+        /* Decision Points List */
+        .decisions-list {
+            max-height: 180px;
+            overflow-y: auto;
+        }
+
+        .decision-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 6px 0;
+            border-bottom: 1px solid var(--bg-dark);
+            font-size: 0.8rem;
+        }
+
+        .decision-item:last-child {
+            border-bottom: none;
+        }
+
+        .decision-type {
+            color: var(--accent-cyan);
+            font-family: monospace;
+        }
+
+        .decision-count {
+            color: var(--text-secondary);
+        }
+
+        /* Formula Display */
+        .formula-display {
+            background: var(--bg-dark);
+            padding: 10px;
+            border-radius: 6px;
+            font-family: monospace;
+            font-size: 0.8rem;
+            text-align: center;
+            margin-top: 10px;
+        }
+
+        .formula-highlight {
+            color: var(--accent-cyan);
+            font-weight: 600;
+        }
+
+        /* Buttons */
+        .btn {
+            background: var(--accent-cyan);
+            color: var(--bg-dark);
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: opacity 0.2s, transform 0.1s;
+            width: 100%;
+            margin-top: 12px;
+        }
+
+        .btn:hover {
+            opacity: 0.9;
+        }
+
+        .btn:active {
+            transform: scale(0.98);
+        }
+
+        /* Examples */
+        .examples {
+            margin-top: 16px;
+        }
+
+        .example-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .example-btn {
+            background: var(--bg-input);
+            border: 1px solid var(--border);
+            color: var(--text-primary);
+            padding: 6px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.8rem;
+            transition: border-color 0.2s;
+        }
+
+        .example-btn:hover {
+            border-color: var(--accent-cyan);
+        }
+
+        /* Stats Summary */
+        .stats-summary {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+            margin-top: 12px;
+        }
+
+        .stat-item {
+            background: var(--bg-dark);
+            padding: 8px;
+            border-radius: 6px;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 1.1rem;
+            font-weight: 700;
+            font-family: monospace;
+            color: var(--accent-blue);
+        }
+
+        .stat-label {
+            font-size: 0.65rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--bg-dark);
+            border-radius: 3px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--border);
+            border-radius: 3px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--text-muted);
+        }
+
+        /* Clickable Elements */
+        .clickable {
+            cursor: pointer;
+            transition: color 0.2s, text-decoration 0.2s;
+            text-decoration: underline;
+            text-decoration-style: dotted;
+            text-underline-offset: 3px;
+        }
+
+        .clickable:hover {
+            color: var(--accent-cyan);
+        }
+
+        .metric-name.clickable {
+            text-decoration: underline;
+            text-decoration-style: dotted;
+        }
+
+        header h1.clickable {
+            text-decoration: none;
+        }
+
+        header h1.clickable:hover {
+            text-shadow: 0 0 20px rgba(34, 211, 238, 0.5);
+        }
+
+        .info-icon {
+            font-size: 0.7em;
+            vertical-align: super;
+            opacity: 0.6;
+            margin-left: 4px;
+        }
+
+        /* Modal Overlay */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(4px);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        /* Modal Content */
+        .modal {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            max-width: 800px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+            position: relative;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+        }
+
+        .modal-header {
+            padding: 20px 24px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            background: var(--bg-card);
+            z-index: 10;
+        }
+
+        .modal-title {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--accent-cyan);
+        }
+
+        .modal-close {
+            background: var(--bg-input);
+            border: 1px solid var(--border);
+            color: var(--text-primary);
+            width: 36px;
+            height: 36px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1.25rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.2s, border-color 0.2s;
+        }
+
+        .modal-close:hover {
+            background: var(--bg-dark);
+            border-color: var(--accent-red);
+            color: var(--accent-red);
+        }
+
+        .modal-body {
+            padding: 24px;
+            line-height: 1.7;
+            color: var(--text-secondary);
+        }
+
+        .modal-body h3 {
+            color: var(--text-primary);
+            font-size: 1rem;
+            font-weight: 600;
+            margin: 24px 0 12px 0;
+            padding-bottom: 8px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .modal-body h3:first-child {
+            margin-top: 0;
+        }
+
+        .modal-body p {
+            margin-bottom: 12px;
+        }
+
+        .modal-body ul, .modal-body ol {
+            margin: 12px 0;
+            padding-left: 24px;
+        }
+
+        .modal-body li {
+            margin-bottom: 8px;
+        }
+
+        .modal-body code {
+            background: var(--bg-dark);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: 'Fira Code', monospace;
+            font-size: 0.9em;
+            color: var(--accent-cyan);
+        }
+
+        .modal-body .formula-box {
+            background: var(--bg-dark);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 16px;
+            margin: 16px 0;
+            text-align: center;
+            font-family: 'Fira Code', monospace;
+            font-size: 1.1rem;
+        }
+
+        .modal-body .formula-box .highlight {
+            color: var(--accent-cyan);
+            font-weight: 600;
+        }
+
+        .modal-body .reference {
+            background: var(--bg-input);
+            border-left: 3px solid var(--accent-purple);
+            padding: 12px 16px;
+            margin: 12px 0;
+            border-radius: 0 8px 8px 0;
+            font-size: 0.85rem;
+        }
+
+        .modal-body .reference-title {
+            color: var(--text-primary);
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .modal-body .reference-details {
+            color: var(--text-muted);
+            font-style: italic;
+        }
+
+        .modal-body .reference a {
+            color: var(--accent-cyan);
+            text-decoration: none;
+        }
+
+        .modal-body .reference a:hover {
+            text-decoration: underline;
+        }
+
+        .modal-body table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 16px 0;
+            font-size: 0.875rem;
+        }
+
+        .modal-body th {
+            background: var(--bg-dark);
+            color: var(--text-primary);
+            padding: 10px 12px;
+            text-align: left;
+            font-weight: 600;
+            border: 1px solid var(--border);
+        }
+
+        .modal-body td {
+            padding: 10px 12px;
+            border: 1px solid var(--border);
+        }
+
+        .modal-body .severity-badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .modal-body .severity-low { background: var(--accent-green); color: #000; }
+        .modal-body .severity-moderate { background: var(--accent-amber); color: #000; }
+        .modal-body .severity-high { background: var(--accent-red); color: #fff; }
+
+        .modal-body .note-box {
+            background: rgba(34, 211, 238, 0.1);
+            border: 1px solid var(--accent-cyan);
+            border-radius: 8px;
+            padding: 12px 16px;
+            margin: 16px 0;
+        }
+
+        .modal-body .note-box.warning {
+            background: rgba(245, 158, 11, 0.1);
+            border-color: var(--accent-amber);
+        }
+
+        .modal-body .comparison-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            margin: 16px 0;
+        }
+
+        .modal-body .comparison-item {
+            background: var(--bg-input);
+            border-radius: 8px;
+            padding: 12px;
+        }
+
+        .modal-body .comparison-item h4 {
+            color: var(--accent-cyan);
+            font-size: 0.875rem;
+            margin-bottom: 8px;
+        }
+
+        @media (max-width: 600px) {
+            .modal-body .comparison-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* ═══════════════════════════════════════════════════════════════════════════
+           ENHANCED FEATURES - Toast, Progress, Suggestions, Export
+           ═══════════════════════════════════════════════════════════════════════════ */
+
+        /* Progress Bars for Metrics */
+        .metric-progress {
+            margin-top: 12px;
+        }
+
+        .progress-bar {
+            height: 6px;
+            background: var(--bg-dark);
+            border-radius: 3px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            border-radius: 3px;
+            transition: width 0.4s ease;
+        }
+
+        .progress-fill.cc {
+            background: linear-gradient(90deg, var(--accent-green), var(--accent-amber), var(--accent-red));
+        }
+
+        .progress-fill.cogc {
+            background: linear-gradient(90deg, var(--accent-green), var(--accent-purple), var(--accent-red));
+        }
+
+        .progress-markers {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 4px;
+            font-size: 0.65rem;
+            color: var(--text-muted);
+        }
+
+        /* Suggestions Panel */
+        .suggestions-panel {
+            margin-top: 16px;
+            display: none;
+        }
+
+        .suggestions-panel.visible {
+            display: block;
+        }
+
+        .suggestion-item {
+            background: var(--bg-input);
+            border-left: 3px solid var(--accent-amber);
+            padding: 12px 16px;
+            margin-bottom: 10px;
+            border-radius: 0 8px 8px 0;
+        }
+
+        .suggestion-item.good {
+            border-left-color: var(--accent-green);
+        }
+
+        .suggestion-item.warning {
+            border-left-color: var(--accent-amber);
+        }
+
+        .suggestion-item.critical {
+            border-left-color: var(--accent-red);
+        }
+
+        .suggestion-title {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 4px;
+        }
+
+        .suggestion-text {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            line-height: 1.5;
+        }
+
+        /* Export Actions */
+        .export-actions {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-top: 12px;
+            padding-top: 12px;
+            border-top: 1px solid var(--border);
+        }
+
+        .btn-export {
+            background: var(--bg-input);
+            border: 1px solid var(--border);
+            color: var(--text-secondary);
+            padding: 8px 14px;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .btn-export:hover {
+            border-color: var(--accent-cyan);
+            color: var(--accent-cyan);
+            background: rgba(34, 211, 238, 0.05);
+        }
+
+        /* Toast Notifications */
+        .toast-container {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            z-index: 2000;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .toast {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 14px 20px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+            animation: toastIn 0.3s ease;
+            min-width: 250px;
+        }
+
+        .toast.success { border-left: 4px solid var(--accent-green); }
+        .toast.error { border-left: 4px solid var(--accent-red); }
+        .toast.info { border-left: 4px solid var(--accent-cyan); }
+
+        @keyframes toastIn {
+            from { opacity: 0; transform: translateX(100px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        .toast-icon { font-size: 1.2rem; }
+        .toast-message { font-size: 0.85rem; color: var(--text-primary); }
+
+        /* Auto-Analyze Toggle */
+        .analyze-controls {
+            display: flex;
+            gap: 16px;
+            align-items: center;
+            margin-top: 12px;
+            flex-wrap: wrap;
+        }
+
+        .toggle-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+
+        .toggle-switch {
+            position: relative;
+            width: 40px;
+            height: 22px;
+            background: var(--bg-input);
+            border: 1px solid var(--border);
+            border-radius: 11px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .toggle-switch.active {
+            background: var(--accent-cyan);
+            border-color: var(--accent-cyan);
+        }
+
+        .toggle-switch::after {
+            content: '';
+            position: absolute;
+            width: 16px;
+            height: 16px;
+            background: var(--text-primary);
+            border-radius: 50%;
+            top: 2px;
+            left: 2px;
+            transition: all 0.2s;
+        }
+
+        .toggle-switch.active::after {
+            left: 20px;
+            background: #000;
+        }
+
+        /* Keyboard Shortcuts */
+        .shortcuts-hint {
+            position: fixed;
+            bottom: 24px;
+            left: 24px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 10px 16px;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            z-index: 50;
+        }
+
+        .kbd {
+            background: var(--bg-input);
+            border: 1px solid var(--border);
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 0.7rem;
+        }
+
+        @media (max-width: 768px) {
+            .shortcuts-hint { display: none; }
+        }
+
+        /* Code Stats Enhanced */
+        .code-stats {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+            margin-top: 12px;
+        }
+
+        .stat-box {
+            background: var(--bg-input);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 12px;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-family: 'Fira Code', monospace;
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .stat-label {
+            font-size: 0.65rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            margin-top: 4px;
+        }
+
+        @media (max-width: 500px) {
+            .code-stats { grid-template-columns: repeat(2, 1fr); }
+        }
+
+        /* Print Styles */
+        @media print {
+            body { background: #fff; color: #000; padding: 12px; }
+            .card { border: 1px solid #ccc; break-inside: avoid; }
+            .shortcuts-hint, .toast-container, .btn-export, .example-btn, .modal-overlay { display: none !important; }
+            .metric-value { color: #000 !important; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1 class="clickable" onclick="openModal('about')">🧮 Complexity Calculator <span class="info-icon">ⓘ</span><span class="lang-count">20 Languages</span></h1>
+            <p>UNIT01: Code Quality Fundamentals — Cyclomatic & Cognitive Complexity Analysis</p>
+        </header>
+
+        <div class="main-grid">
+            <!-- Code Editor -->
+            <div class="card code-editor">
+                <div class="card-title">Code Input</div>
+                <div class="language-select">
+                    <select id="language-select" onchange="onLanguageChange()">
+                        <optgroup label="━━ Systems Programming ━━">
+                            <option value="c">C</option>
+                            <option value="cpp">C++</option>
+                            <option value="rust">Rust</option>
+                            <option value="go">Go</option>
+                        </optgroup>
+                        <optgroup label="━━ Object-Oriented / JVM ━━">
+                            <option value="java">Java</option>
+                            <option value="kotlin">Kotlin</option>
+                            <option value="scala">Scala</option>
+                            <option value="csharp">C#</option>
+                        </optgroup>
+                        <optgroup label="━━ Web / Scripting ━━">
+                            <option value="javascript" selected>JavaScript</option>
+                            <option value="typescript">TypeScript</option>
+                            <option value="python">Python</option>
+                            <option value="ruby">Ruby</option>
+                            <option value="php">PHP</option>
+                            <option value="perl">Perl</option>
+                        </optgroup>
+                        <optgroup label="━━ Mobile ━━">
+                            <option value="swift">Swift</option>
+                            <option value="objectivec">Objective-C</option>
+                        </optgroup>
+                        <optgroup label="━━ Scientific / Data ━━">
+                            <option value="r">R</option>
+                            <option value="matlab">MATLAB</option>
+                        </optgroup>
+                        <optgroup label="━━ Shell Scripting ━━">
+                            <option value="bash">Bash / Shell</option>
+                            <option value="powershell">PowerShell</option>
+                        </optgroup>
+                    </select>
+                </div>
+                
+                <div class="lang-info" id="lang-info">
+                    <span class="lang-icon">📜</span>
+                    <div class="lang-details">
+                        <div class="lang-name" id="lang-name">JavaScript</div>
+                        <div class="lang-paradigm" id="lang-paradigm">Multi-paradigm: Event-driven, Functional, Prototype-based OOP</div>
+                        <div class="lang-snippet" id="lang-snippet">📝 Example: Order processing with discounts and member levels</div>
+                    </div>
+                </div>
+
+                <textarea id="code-input" placeholder="Paste or type your code here...">function processOrder(order) {
+    if (!order || !order.items) {
+        return { success: false, error: 'Invalid order' };
+    }
+    
+    let total = 0;
+    let hasDiscount = false;
+    
+    for (const item of order.items) {
+        if (item.quantity > 0 && item.price > 0) {
+            total += item.quantity * item.price;
+            
+            if (item.quantity >= 10 || item.isPromo) {
+                hasDiscount = true;
+            }
+        }
+    }
+    
+    if (hasDiscount && total > 100) {
+        total *= 0.9;
+    } else if (order.memberLevel === 'gold') {
+        total *= 0.85;
+    } else if (order.memberLevel === 'silver') {
+        total *= 0.95;
+    }
+    
+    return { success: true, total };
+}</textarea>
+                <div class="analyze-controls">
+                    <button class="btn" onclick="analyzeCode()">⚡ Analyze Complexity</button>
+                    <div class="toggle-wrapper">
+                        <div class="toggle-switch active" id="auto-analyze-toggle" onclick="toggleAutoAnalyze()"></div>
+                        <span>Auto-analyze</span>
+                    </div>
+                </div>
+                
+                <div class="examples">
+                    <div class="card-title">Load Example</div>
+                    <div class="example-buttons">
+                        <button class="example-btn" onclick="loadExample('simple')">Simple (CC≈3)</button>
+                        <button class="example-btn" onclick="loadExample('moderate')">Moderate (CC≈9)</button>
+                        <button class="example-btn" onclick="loadExample('complex')">Complex (CC≈12)</button>
+                        <button class="example-btn" onclick="loadExample('lang')">Language-Specific</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Results Panel -->
+            <div class="results-panel">
+                <!-- Cyclomatic Complexity -->
+                <div class="card metric-card metric-cc">
+                    <div class="metric-header">
+                        <span class="metric-name clickable" onclick="openModal('cc')">Cyclomatic Complexity (CC) <span class="info-icon">ⓘ</span></span>
+                        <span class="metric-value" id="cc-value">--</span>
+                    </div>
+                    <div class="metric-bar">
+                        <div class="metric-bar-fill" id="cc-bar" style="width: 0%"></div>
+                    </div>
+                    <div class="metric-interpretation" id="cc-interpretation">
+                        Enter code to calculate
+                    </div>
+                    <div class="formula-display" id="cc-formula">
+                        CC = D + 1 = <span class="formula-highlight">?</span>
+                    </div>
+                </div>
+
+                <!-- Cognitive Complexity -->
+                <div class="card metric-card metric-cogc">
+                    <div class="metric-header">
+                        <span class="metric-name clickable" onclick="openModal('cogc')">Cognitive Complexity (CogC) <span class="info-icon">ⓘ</span></span>
+                        <span class="metric-value" id="cogc-value">--</span>
+                    </div>
+                    <div class="metric-bar">
+                        <div class="metric-bar-fill" id="cogc-bar" style="width: 0%"></div>
+                    </div>
+                    <div class="metric-interpretation" id="cogc-interpretation">
+                        Enter code to calculate
+                    </div>
+                </div>
+
+                <!-- Code Stats -->
+                <div class="card">
+                    <div class="card-title">Code Statistics</div>
+                    <div class="stats-summary">
+                        <div class="stat-item">
+                            <div class="stat-value" id="stat-loc">--</div>
+                            <div class="stat-label">Lines</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value" id="stat-sloc">--</div>
+                            <div class="stat-label">SLOC</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value" id="stat-depth">--</div>
+                            <div class="stat-label">Max Depth</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Decision Points -->
+                <div class="card">
+                    <div class="card-title">Decision Points Detected</div>
+                    <div class="decisions-list" id="decisions-list">
+                        <p style="color: var(--text-muted); font-size: 0.8rem;">
+                            Analyze code to see decision points
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Suggestions Panel (shown dynamically) -->
+                <div class="card suggestions-panel" id="suggestions-panel">
+                    <div class="card-title">💡 Refactoring Suggestions</div>
+                    <div id="suggestions-list"></div>
+                </div>
+
+                <!-- Export Actions -->
+                <div class="card">
+                    <div class="card-title">📤 Export & Actions</div>
+                    <div class="export-actions">
+                        <button class="btn-export" onclick="copyResultsSummary()">
+                            <span>📋</span> Copy Summary
+                        </button>
+                        <button class="btn-export" onclick="exportJSON()">
+                            <span>📄</span> Export JSON
+                        </button>
+                        <button class="btn-export" onclick="copyCode()">
+                            <span>💾</span> Copy Code
+                        </button>
+                        <button class="btn-export" onclick="window.print()">
+                            <span>🖨️</span> Print
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════════════════════════ -->
+    <!-- MODAL: About Complexity Calculator                                          -->
+    <!-- ═══════════════════════════════════════════════════════════════════════════ -->
+    <div class="modal-overlay" id="modal-about" onclick="closeModalOnOverlay(event)">
+        <div class="modal">
+            <div class="modal-header">
+                <span class="modal-title">📚 About This Complexity Calculator</span>
+                <button class="modal-close" onclick="closeModal('about')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <h3>Theoretical Foundations</h3>
+                <p>This calculator implements two complementary software complexity metrics, each grounded in distinct theoretical frameworks:</p>
+                
+                <div class="comparison-grid">
+                    <div class="comparison-item">
+                        <h4>Cyclomatic Complexity (1976)</h4>
+                        <p>Graph-theoretic measure based on control flow analysis. Measures <strong>testability</strong>—the minimum number of test paths needed for complete branch coverage.</p>
+                    </div>
+                    <div class="comparison-item">
+                        <h4>Cognitive Complexity (2016)</h4>
+                        <p>Human-centric measure based on cognitive psychology principles. Measures <strong>understandability</strong>—the mental effort required to comprehend code.</p>
+                    </div>
+                </div>
+
+                <h3>Academic Sources & Standards</h3>
+                
+                <div class="reference">
+                    <div class="reference-title">Primary Source — Cyclomatic Complexity</div>
+                    <div class="reference-details">
+                        McCabe, T. J. (1976). "A Complexity Measure." <em>IEEE Transactions on Software Engineering</em>, SE-2(4), 308-320.<br>
+                        <a href="https://doi.org/10.1109/TSE.1976.233837" target="_blank">DOI: 10.1109/TSE.1976.233837</a>
+                    </div>
+                </div>
+
+                <div class="reference">
+                    <div class="reference-title">Primary Source — Cognitive Complexity</div>
+                    <div class="reference-details">
+                        Campbell, G. A. (2016). <em>Cognitive Complexity: A New Way of Measuring Understandability</em>. SonarSource SA.<br>
+                        <a href="https://www.sonarsource.com/docs/CognitiveComplexity.pdf" target="_blank">White Paper (PDF)</a>
+                    </div>
+                </div>
+
+                <div class="reference">
+                    <div class="reference-title">NIST Standards Reference</div>
+                    <div class="reference-details">
+                        Watson, A. H., & McCabe, T. J. (1996). <em>Structured Testing: A Testing Methodology Using the Cyclomatic Complexity Metric</em>. NIST Special Publication 500-235.<br>
+                        <a href="https://doi.org/10.6028/NIST.SP.500-235" target="_blank">DOI: 10.6028/NIST.SP.500-235</a>
+                    </div>
+                </div>
+
+                <h3>International Standards Adoption</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Standard</th>
+                            <th>Domain</th>
+                            <th>Application</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>IEEE 1061-1998</td>
+                            <td>Software Quality</td>
+                            <td>Defect prediction metric</td>
+                        </tr>
+                        <tr>
+                            <td>ISO/IEC 25010</td>
+                            <td>Quality Models</td>
+                            <td>Maintainability sub-characteristic</td>
+                        </tr>
+                        <tr>
+                            <td>ISO 26262-3</td>
+                            <td>Automotive Safety</td>
+                            <td>Mandatory complexity monitoring</td>
+                        </tr>
+                        <tr>
+                            <td>IEC 62304</td>
+                            <td>Medical Devices</td>
+                            <td>Unit acceptance criteria</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h3>Objectivity vs. Subjectivity</h3>
+                
+                <div class="note-box">
+                    <strong>⚖️ Important Epistemological Note</strong><br>
+                    These metrics are <em>objective in calculation</em> but <em>subjective in interpretation</em>. The formulas produce deterministic results, but threshold values (e.g., "CC ≤ 10 is acceptable") represent heuristic guidelines derived from empirical observation rather than mathematical proof.
+                </div>
+
+                <p><strong>What is objective:</strong></p>
+                <ul>
+                    <li>The counting rules for decision points</li>
+                    <li>The mathematical formulas (CC = E − N + 2P, or simplified CC = D + 1)</li>
+                    <li>Nesting depth calculations for cognitive complexity</li>
+                </ul>
+
+                <p><strong>What is subjective:</strong></p>
+                <ul>
+                    <li>Threshold values (10, 15, 20) — these are consensus-based guidelines</li>
+                    <li>Risk categorisation ("simple," "moderate," "high")</li>
+                    <li>Whether a particular complexity level is "acceptable" for a given context</li>
+                </ul>
+
+                <h3>Known Limitations</h3>
+                
+                <div class="note-box warning">
+                    <strong>⚠️ Academic Critique</strong><br>
+                    Shepperd (1988) demonstrated that cyclomatic complexity is often "no more than a proxy for, and in many cases is outperformed by, lines of code." Jay et al. (2009), analysing over 1.2 million source files, found that LOC alone predicts ~90% of CC's variance.
+                </div>
+
+                <p>Neither metric captures:</p>
+                <ul>
+                    <li>Data complexity (complex data structures, state management)</li>
+                    <li>Algorithmic complexity (time/space efficiency)</li>
+                    <li>Domain complexity (business logic intricacy)</li>
+                    <li>Coupling and cohesion between modules</li>
+                    <li>Code readability factors (naming, comments, formatting)</li>
+                </ul>
+
+                <h3>Textbook References</h3>
+                <div class="reference">
+                    <div class="reference-title">Software Engineering Textbooks</div>
+                    <div class="reference-details">
+                        Pressman, R. S. <em>Software Engineering: A Practitioner's Approach</em>. McGraw-Hill (9th ed., 2019).<br>
+                        Sommerville, I. <em>Software Engineering</em>. Pearson (10th ed., 2016).<br>
+                        McConnell, S. <em>Code Complete</em>. Microsoft Press (2nd ed., 2004).
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════════════════════════ -->
+    <!-- MODAL: Cyclomatic Complexity (CC)                                           -->
+    <!-- ═══════════════════════════════════════════════════════════════════════════ -->
+    <div class="modal-overlay" id="modal-cc" onclick="closeModalOnOverlay(event)">
+        <div class="modal">
+            <div class="modal-header">
+                <span class="modal-title">🔄 Cyclomatic Complexity (CC)</span>
+                <button class="modal-close" onclick="closeModal('cc')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <h3>Definition</h3>
+                <p><strong>Cyclomatic Complexity</strong> is a quantitative measure of the number of linearly independent paths through a program's source code. It was introduced by Thomas J. McCabe, Sr. in 1976 while working at the National Security Agency.</p>
+                
+                <div class="note-box">
+                    <strong>In Plain English:</strong> CC counts how many different "routes" exist through your code. Every <code>if</code>, <code>for</code>, <code>while</code>, or <code>case</code> creates a fork in the road, increasing the number of possible paths a program can take.
+                </div>
+
+                <h3>Mathematical Foundation</h3>
+                <p>The metric is derived from graph theory, specifically the cyclomatic number of a directed graph representing the program's control flow.</p>
+                
+                <div class="formula-box">
+                    <span class="highlight">V(G) = E − N + 2P</span>
+                </div>
+                
+                <p>Where:</p>
+                <ul>
+                    <li><strong>E</strong> = Number of edges (transfers of control)</li>
+                    <li><strong>N</strong> = Number of nodes (sequential code blocks)</li>
+                    <li><strong>P</strong> = Number of connected components (usually 1)</li>
+                </ul>
+
+                <p>For structured programming, McCabe proved an elegant simplification:</p>
+                
+                <div class="formula-box">
+                    <span class="highlight">CC = D + 1</span>
+                </div>
+                
+                <p>Where <strong>D</strong> is the number of decision points (predicates) in the code.</p>
+
+                <h3>What Counts as a Decision Point?</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Construct</th>
+                            <th>Count</th>
+                            <th>Example</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><code>if</code></td>
+                            <td>+1</td>
+                            <td><code>if (x > 0)</code></td>
+                        </tr>
+                        <tr>
+                            <td><code>else if</code> / <code>elif</code></td>
+                            <td>+1</td>
+                            <td><code>else if (x < 0)</code></td>
+                        </tr>
+                        <tr>
+                            <td><code>for</code> / <code>foreach</code></td>
+                            <td>+1</td>
+                            <td><code>for (i = 0; i < n; i++)</code></td>
+                        </tr>
+                        <tr>
+                            <td><code>while</code></td>
+                            <td>+1</td>
+                            <td><code>while (running)</code></td>
+                        </tr>
+                        <tr>
+                            <td><code>case</code> (each)</td>
+                            <td>+1</td>
+                            <td><code>case 1: case 2:</code> = +2</td>
+                        </tr>
+                        <tr>
+                            <td><code>catch</code></td>
+                            <td>+1</td>
+                            <td><code>catch (Exception e)</code></td>
+                        </tr>
+                        <tr>
+                            <td><code>&&</code> / <code>||</code></td>
+                            <td>+1 each</td>
+                            <td><code>if (a && b)</code> = +2</td>
+                        </tr>
+                        <tr>
+                            <td>Ternary <code>?:</code></td>
+                            <td>+1</td>
+                            <td><code>x > 0 ? "pos" : "neg"</code></td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h3>Threshold Guidelines</h3>
+                <p>The following thresholds originate from McCabe's original paper and were elaborated in NIST SP 500-235:</p>
+                
+                <table>
+                    <thead>
+                        <tr>
+                            <th>CC Value</th>
+                            <th>Risk Level</th>
+                            <th>Interpretation</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>1–10</td>
+                            <td><span class="severity-badge severity-low">LOW</span></td>
+                            <td>Simple, low risk, easy to test</td>
+                        </tr>
+                        <tr>
+                            <td>11–20</td>
+                            <td><span class="severity-badge severity-moderate">MODERATE</span></td>
+                            <td>More complex, moderate risk</td>
+                        </tr>
+                        <tr>
+                            <td>21–50</td>
+                            <td><span class="severity-badge severity-high">HIGH</span></td>
+                            <td>Complex, high risk, consider refactoring</td>
+                        </tr>
+                        <tr>
+                            <td>&gt;50</td>
+                            <td><span class="severity-badge severity-high">VERY HIGH</span></td>
+                            <td>Untestable, extremely high risk</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <div class="note-box">
+                    <strong>💡 McCabe's Original Recommendation:</strong><br>
+                    "The particular upper bound that has been used for cyclomatic complexity is <strong>10</strong> which seems like a reasonable, but not magical, upper limit."
+                </div>
+
+                <h3>Practical Significance</h3>
+                <p><strong>Testing Implication:</strong> CC defines the minimum number of test cases required for complete branch coverage. A function with CC = 5 needs at least 5 test cases to exercise all independent paths.</p>
+                
+                <p><strong>Maintainability Implication:</strong> Higher CC correlates with increased difficulty in understanding, modifying, and debugging code.</p>
+
+                <h3>Primary References</h3>
+                <div class="reference">
+                    <div class="reference-title">Original Paper</div>
+                    <div class="reference-details">
+                        McCabe, T. J. (1976). "A Complexity Measure." <em>IEEE Transactions on Software Engineering</em>, SE-2(4), 308-320.<br>
+                        <a href="https://doi.org/10.1109/TSE.1976.233837" target="_blank">DOI: 10.1109/TSE.1976.233837</a>
+                    </div>
+                </div>
+
+                <div class="reference">
+                    <div class="reference-title">NIST Methodology Guide</div>
+                    <div class="reference-details">
+                        Watson, A. H., & McCabe, T. J. (1996). <em>Structured Testing: A Testing Methodology Using the Cyclomatic Complexity Metric</em>. NIST SP 500-235.<br>
+                        <a href="https://www.nist.gov/publications/structured-testing-testing-methodology-using-cyclomatic-complexity-metric" target="_blank">NIST Publication Page</a>
+                    </div>
+                </div>
+
+                <div class="reference">
+                    <div class="reference-title">Critical Analysis</div>
+                    <div class="reference-details">
+                        Shepperd, M. (1988). "A Critique of Cyclomatic Complexity as a Software Metric." <em>Software Engineering Journal</em>, 3(2), 30-36.<br>
+                        <a href="https://doi.org/10.1049/sej.1988.0003" target="_blank">DOI: 10.1049/sej.1988.0003</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════════════════════════ -->
+    <!-- MODAL: Cognitive Complexity (CogC)                                          -->
+    <!-- ═══════════════════════════════════════════════════════════════════════════ -->
+    <div class="modal-overlay" id="modal-cogc" onclick="closeModalOnOverlay(event)">
+        <div class="modal">
+            <div class="modal-header">
+                <span class="modal-title">🧠 Cognitive Complexity (CogC)</span>
+                <button class="modal-close" onclick="closeModal('cogc')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <h3>Definition</h3>
+                <p><strong>Cognitive Complexity</strong> is a measure of how difficult code is to <em>understand</em>, as opposed to how difficult it is to <em>test</em>. It was developed by G. Ann Campbell at SonarSource in 2016 specifically to address the limitations of Cyclomatic Complexity.</p>
+                
+                <div class="note-box">
+                    <strong>In Plain English:</strong> CogC measures the mental effort required to read and understand code. It penalises deeply nested structures more heavily because our brains must maintain more "context" to follow the logic.
+                </div>
+
+                <h3>The Core Insight</h3>
+                <p>Cyclomatic Complexity answers: <em>"How many test cases do I need?"</em></p>
+                <p>Cognitive Complexity answers: <em>"How hard is this code to understand?"</em></p>
+
+                <div class="comparison-grid">
+                    <div class="comparison-item">
+                        <h4>Same CC, Different CogC</h4>
+                        <p>A 10-case <code>switch</code> statement has CC = 11, but is cognitively simple—you just scan for the matching case.</p>
+                    </div>
+                    <div class="comparison-item">
+                        <h4>Same CC, Higher CogC</h4>
+                        <p>Four nested <code>if</code> statements also have CC = 5, but require tracking multiple conditions simultaneously.</p>
+                    </div>
+                </div>
+
+                <h3>Three Fundamental Rules</h3>
+                
+                <p><strong>Rule 1: Ignore Shorthand</strong></p>
+                <p>Structures that make code more readable by condensing multiple operations don't add complexity:</p>
+                <ul>
+                    <li>Null-coalescing: <code>x ?? defaultValue</code> → +0</li>
+                    <li>Null-safe navigation: <code>obj?.property</code> → +0</li>
+                    <li>Method chaining (when readable)</li>
+                </ul>
+
+                <p><strong>Rule 2: Increment for Breaks in Linear Flow</strong></p>
+                <p>Each construct that breaks the top-to-bottom reading flow adds a base increment:</p>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Construct</th>
+                            <th>Increment</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr><td><code>if</code>, <code>else if</code>, <code>else</code></td><td>+1</td></tr>
+                        <tr><td><code>switch</code> (entire statement)</td><td>+1</td></tr>
+                        <tr><td><code>for</code>, <code>while</code>, <code>do-while</code></td><td>+1</td></tr>
+                        <tr><td><code>catch</code></td><td>+1</td></tr>
+                        <tr><td><code>goto</code>, labeled <code>break</code>/<code>continue</code></td><td>+1</td></tr>
+                        <tr><td>Sequence of <code>&&</code> / <code>||</code> operators</td><td>+1 per sequence</td></tr>
+                    </tbody>
+                </table>
+
+                <p><strong>Rule 3: Nesting Penalty</strong></p>
+                <p>Nested structures require the reader to maintain more mental context. Each level of nesting adds an additional increment:</p>
+                
+                <div class="formula-box">
+                    <span class="highlight">Increment = Base(1) + NestingLevel</span>
+                </div>
+
+                <p>Example:</p>
+                <ul>
+                    <li><code>if</code> at depth 0 → +1</li>
+                    <li><code>if</code> inside another <code>if</code> (depth 1) → +2</li>
+                    <li><code>if</code> at depth 2 → +3</li>
+                </ul>
+
+                <h3>Worked Example</h3>
+                <pre style="background: var(--bg-dark); padding: 12px; border-radius: 8px; font-size: 0.85rem; overflow-x: auto;">
+function example(a, b, c) {        // CogC = 0
+    if (a) {                       // +1 (depth 0)
+        for (let i of items) {     // +2 (depth 1: base + nesting)
+            if (b && c) {          // +3 (depth 2) +1 (logical seq)
+                doSomething();
+            }
+        }
+    }
+}                                  // Total CogC = 7</pre>
+
+                <h3>Threshold Guidelines</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>CogC Value</th>
+                            <th>Risk Level</th>
+                            <th>Interpretation</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>0–10</td>
+                            <td><span class="severity-badge severity-low">LOW</span></td>
+                            <td>Easy to understand, maintainable</td>
+                        </tr>
+                        <tr>
+                            <td>11–20</td>
+                            <td><span class="severity-badge severity-moderate">MODERATE</span></td>
+                            <td>Some mental effort required</td>
+                        </tr>
+                        <tr>
+                            <td>&gt;20</td>
+                            <td><span class="severity-badge severity-high">HIGH</span></td>
+                            <td>Difficult to comprehend, refactor</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <div class="note-box">
+                    <strong>💡 SonarSource Default:</strong> A threshold of <strong>15</strong> is recommended as the default maximum for methods/functions.
+                </div>
+
+                <h3>What CogC Intentionally Ignores</h3>
+                <ul>
+                    <li><strong>Early returns</strong> — These actually <em>reduce</em> complexity by avoiding nesting</li>
+                    <li><strong>Switch cases</strong> — A 10-case switch adds only +1 (not +10 like CC)</li>
+                    <li><strong>Method declarations</strong> — Simply defining a method isn't complex</li>
+                    <li><strong>Recursion</strong> — Handled specially (increments but doesn't nest)</li>
+                </ul>
+
+                <h3>Empirical Validation</h3>
+                <div class="reference">
+                    <div class="reference-title">Academic Validation Study</div>
+                    <div class="reference-details">
+                        Muñoz Barón, M., Wyrich, M., & Wagner, S. (2020). "An Empirical Validation of Cognitive Complexity as a Measure of Source Code Understandability." <em>ESEM '20: ACM/IEEE International Symposium on Empirical Software Engineering and Measurement</em>.<br>
+                        <a href="https://doi.org/10.1145/3382494.3410636" target="_blank">DOI: 10.1145/3382494.3410636</a>
+                    </div>
+                </div>
+
+                <p>This study analysed ~24,000 understandability evaluations and found CogC correlated positively with comprehension time and subjective difficulty ratings, making it "the first validated and solely code-based metric which is able to reflect at least some aspects of code understandability."</p>
+
+                <h3>Primary References</h3>
+                <div class="reference">
+                    <div class="reference-title">Original White Paper</div>
+                    <div class="reference-details">
+                        Campbell, G. A. (2016). <em>Cognitive Complexity: A New Way of Measuring Understandability</em>. SonarSource SA.<br>
+                        <a href="https://www.sonarsource.com/docs/CognitiveComplexity.pdf" target="_blank">Download PDF</a>
+                    </div>
+                </div>
+
+                <div class="reference">
+                    <div class="reference-title">SonarSource Blog Announcement</div>
+                    <div class="reference-details">
+                        Campbell, G. A. (2016). "Cognitive Complexity, Because Testability != Understandability." SonarSource Blog.<br>
+                        <a href="https://www.sonarsource.com/blog/cognitive-complexity-because-testability-understandability/" target="_blank">Read Article</a>
+                    </div>
+                </div>
+
+                <div class="reference">
+                    <div class="reference-title">Follow-up Empirical Study</div>
+                    <div class="reference-details">
+                        Lavazza, L., & Morasca, S. (2023). "An Empirical Evaluation of the 'Cognitive Complexity' Measure as a Predictor of Code Understandability." <em>Journal of Systems and Software</em>, 195, 111561.<br>
+                        <a href="https://doi.org/10.1016/j.jss.2022.111561" target="_blank">DOI: 10.1016/j.jss.2022.111561</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notifications Container -->
+    <div class="toast-container" id="toast-container"></div>
+
+    <!-- Keyboard Shortcuts Hint -->
+    <div class="shortcuts-hint">
+        <span class="kbd">Ctrl</span>+<span class="kbd">Enter</span> Analyze
+        <span style="margin: 0 8px;">|</span>
+        <span class="kbd">Esc</span> Close modal
+    </div>
+
+    <script>
+        // ═══════════════════════════════════════════════════════════════════════════
+        // LANGUAGE METADATA
+        // ═══════════════════════════════════════════════════════════════════════════
+        const languageInfo = {
+            c: { name: 'C', icon: '⚙️', paradigm: 'Imperative, Procedural, Structured', snippet: 'Data aggregation with pointer validation and range capping' },
+            cpp: { name: 'C++', icon: '⚙️', paradigm: 'Multi-paradigm: OOP, Generic, Procedural', snippet: 'Template-based container processing with exception handling' },
+            rust: { name: 'Rust', icon: '🦀', paradigm: 'Multi-paradigm: Functional, Imperative, Structured', snippet: 'Result-based error handling with iterator chains and pattern matching' },
+            go: { name: 'Go', icon: '🐹', paradigm: 'Multi-paradigm: Concurrent, Imperative, OOP', snippet: 'Idiomatic error handling with range loops and switch expressions' },
+            java: { name: 'Java', icon: '☕', paradigm: 'Object-Oriented, Class-based, Concurrent', snippet: 'Collection processing with enhanced for-loop and validation' },
+            kotlin: { name: 'Kotlin', icon: '🎯', paradigm: 'Multi-paradigm: OOP, Functional, Coroutines', snippet: 'Null-safe processing with when expressions and scope functions' },
+            scala: { name: 'Scala', icon: '🔴', paradigm: 'Multi-paradigm: Functional, OOP, Concurrent', snippet: 'Functional Either monad with pattern matching and fold operations' },
+            csharp: { name: 'C#', icon: '🟣', paradigm: 'Multi-paradigm: OOP, Functional, Event-driven', snippet: 'LINQ aggregation with switch expressions and pattern matching' },
+            javascript: { name: 'JavaScript', icon: '📜', paradigm: 'Multi-paradigm: Event-driven, Functional, Prototype OOP', snippet: 'Array methods chaining with optional chaining and validation' },
+            typescript: { name: 'TypeScript', icon: '🔷', paradigm: 'Multi-paradigm: OOP, Functional, Static Typing', snippet: 'Type-safe array processing with type guards and nullish checks' },
+            python: { name: 'Python', icon: '🐍', paradigm: 'Multi-paradigm: OOP, Functional, Procedural', snippet: 'Generator expression with conditional comprehension and type hints' },
+            ruby: { name: 'Ruby', icon: '💎', paradigm: 'Multi-paradigm: OOP, Functional, Reflective', snippet: 'Method chaining with blocks, select/map, and ternary guards' },
+            php: { name: 'PHP', icon: '🐘', paradigm: 'Multi-paradigm: Imperative, OOP, Functional', snippet: 'Array functions with arrow functions and null coalescing' },
+            perl: { name: 'Perl', icon: '🐪', paradigm: 'Multi-paradigm: Procedural, OOP, Functional', snippet: 'List processing with array dereferencing and conditional logic' },
+            swift: { name: 'Swift', icon: '🐦', paradigm: 'Multi-paradigm: OOP, Functional, Protocol-oriented', snippet: 'Guard-let unwrapping with higher-order functions and throws' },
+            objectivec: { name: 'Objective-C', icon: '📱', paradigm: 'Object-Oriented, Reflective, Smalltalk-style', snippet: 'Fast enumeration with NSError handling and message passing' },
+            r: { name: 'R', icon: '📊', paradigm: 'Multi-paradigm: Functional, OOP, Array-oriented', snippet: 'Pipe operator chaining with vectorised operations and ifelse' },
+            matlab: { name: 'MATLAB', icon: '📐', paradigm: 'Multi-paradigm: Imperative, Procedural, Array-based', snippet: 'Index-based iteration with matrix-style conditionals' },
+            bash: { name: 'Bash / Shell', icon: '🖥️', paradigm: 'Scripting, Command-based, Pipeline-oriented', snippet: 'Positional parameters with arithmetic expansion and test brackets' },
+            powershell: { name: 'PowerShell', icon: '💠', paradigm: 'Multi-paradigm: Imperative, OOP, Pipeline-based', snippet: 'Pipeline processing with Where-Object and ForEach-Object cmdlets' }
+        };
+
+        // Track current example type for snippet display
+        let currentExampleType = 'default';
+
+        // ═══════════════════════════════════════════════════════════════════════════
+        // DECISION POINT PATTERNS (Language-Specific)
+        // ═══════════════════════════════════════════════════════════════════════════
+        const patterns = {
+            // ─────────────────────────────────────────────────────────────────────────
+            // C - Procedural, low-level
+            // ─────────────────────────────────────────────────────────────────────────
+            c: {
+                if: /\bif\s*\(/g,
+                elseif: /\belse\s+if\s*\(/g,
+                for: /\bfor\s*\(/g,
+                while: /\bwhile\s*\(/g,
+                dowhile: /\bdo\s*\{/g,
+                switch: /\bswitch\s*\(/g,
+                case: /\bcase\s+[^:]+:/g,
+                ternary: /\?[^?:]+:/g,
+                and: /&&/g,
+                or: /\|\|/g,
+                goto: /\bgoto\s+\w+/g
+            },
+
+            // ─────────────────────────────────────────────────────────────────────────
+            // C++ - Multi-paradigm with templates
+            // ─────────────────────────────────────────────────────────────────────────
+            cpp: {
+                if: /\bif\s*\(/g,
+                elseif: /\belse\s+if\s*\(/g,
+                for: /\bfor\s*\(/g,
+                rangefor: /\bfor\s*\([^;]+\s*:\s*/g,
+                while: /\bwhile\s*\(/g,
+                dowhile: /\bdo\s*\{/g,
+                switch: /\bswitch\s*\(/g,
+                case: /\bcase\s+[^:]+:/g,
+                catch: /\bcatch\s*\(/g,
+                ternary: /\?[^?:]+:/g,
+                and: /&&/g,
+                or: /\|\|/g,
+                throw: /\bthrow\b/g,
+                constexpr_if: /\bif\s+constexpr\s*\(/g
+            },
+
+            // ─────────────────────────────────────────────────────────────────────────
+            // Rust - Systems with pattern matching
+            // ─────────────────────────────────────────────────────────────────────────
+            rust: {
+                if: /\bif\s+/g,
+                elseif: /\belse\s+if\s+/g,
+                for: /\bfor\s+\w+\s+in\b/g,
+                while: /\bwhile\s+/g,
+                loop: /\bloop\s*\{/g,
+                match: /\bmatch\s+/g,
+                match_arm: /=>/g,
+                if_let: /\bif\s+let\s+/g,
+                while_let: /\bwhile\s+let\s+/g,
+                and: /&&/g,
+                or: /\|\|/g,
+                question_mark: /\?(?![^<]*>)/g,  // ? operator for Result/Option
+                ok_or: /\.ok_or|\.unwrap_or|\.unwrap_or_else/g
+            },
+
+            // ─────────────────────────────────────────────────────────────────────────
+            // Go - Simple, concurrent
+            // ─────────────────────────────────────────────────────────────────────────
+            go: {
+                if: /\bif\s+/g,
+                elseif: /\belse\s+if\s+/g,
+                for: /\bfor\s+/g,
+                switch: /\bswitch\s*/g,
+                case: /\bcase\s+[^:]+:/g,
+                select: /\bselect\s*\{/g,
+                select_case: /\bcase\s+<-/g,
+                defer: /\bdefer\s+/g,
+                go_routine: /\bgo\s+/g,
+                and: /&&/g,
+                or: /\|\|/g,
+                recover: /\brecover\s*\(\)/g
+            },
+
+            // ─────────────────────────────────────────────────────────────────────────
+            // Java - Object-oriented, class-based
+            // ─────────────────────────────────────────────────────────────────────────
+            java: {
+                if: /\bif\s*\(/g,
+                elseif: /\belse\s+if\s*\(/g,
+                for: /\bfor\s*\(/g,
+                foreach: /\bfor\s*\(\s*\w+\s+\w+\s*:\s*/g,
+                while: /\bwhile\s*\(/g,
+                dowhile: /\bdo\s*\{/g,
+                switch: /\bswitch\s*\(/g,
+                case: /\bcase\s+[^:]+:/g,
+                catch: /\bcatch\s*\(/g,
+                ternary: /\?[^?:]+:/g,
+                and: /&&/g,
+                or: /\|\|/g,
+                instanceof: /\binstanceof\b/g,
+                assert: /\bassert\b/g
+            },
+
+            // ─────────────────────────────────────────────────────────────────────────
+            // Kotlin - Modern JVM with null-safety
+            // ─────────────────────────────────────────────────────────────────────────
+            kotlin: {
+                if: /\bif\s*\(/g,
+                elseif: /\belse\s+if\s*\(/g,
+                for: /\bfor\s*\(/g,
+                while: /\bwhile\s*\(/g,
+                dowhile: /\bdo\s*\{/g,
+                when: /\bwhen\s*[\(\{]/g,
+                when_branch: /->/g,
+                catch: /\bcatch\s*\(/g,
+                elvis: /\?:/g,
+                safe_call: /\?\./g,
+                and: /&&/g,
+                or: /\|\|/g,
+                let: /\.let\s*\{/g,
+                takeIf: /\.takeIf\s*\{/g,
+                require: /\brequire\s*\(/g
+            },
+
+            // ─────────────────────────────────────────────────────────────────────────
+            // Scala - Functional + OOP on JVM
+            // ─────────────────────────────────────────────────────────────────────────
+            scala: {
+                if: /\bif\s*\(/g,
+                elseif: /\belse\s+if\s*\(/g,
+                for: /\bfor\s*[\(\{]/g,
+                for_yield: /\byield\b/g,
+                while: /\bwhile\s*\(/g,
+                match: /\bmatch\s*\{/g,
+                case: /\bcase\s+/g,
+                catch: /\bcatch\s*\{/g,
+                and: /&&/g,
+                or: /\|\|/g,
+                guard: /\bif\s+(?=.*=>)/g,
+                option_ops: /\.getOrElse|\.orElse|\.fold/g,
+                partial_func: /\bcase\s+.*=>/g
+            },
+
+            // ─────────────────────────────────────────────────────────────────────────
+            // C# - Modern .NET OOP
+            // ─────────────────────────────────────────────────────────────────────────
+            csharp: {
+                if: /\bif\s*\(/g,
+                elseif: /\belse\s+if\s*\(/g,
+                for: /\bfor\s*\(/g,
+                foreach: /\bforeach\s*\(/g,
+                while: /\bwhile\s*\(/g,
+                dowhile: /\bdo\s*\{/g,
+                switch: /\bswitch\s*\(/g,
+                case: /\bcase\s+[^:]+:/g,
+                switch_expr: /\bswitch\s*\{/g,
+                catch: /\bcatch\s*[\(\{]/g,
+                ternary: /\?[^?:]+:/g,
+                and: /&&/g,
+                or: /\|\|/g,
+                nullcoalesce: /\?\?/g,
+                nullconditional: /\?\./g,
+                is_pattern: /\bis\s+\w+/g,
+                when_clause: /\bwhen\s+/g
+            },
+
+            // ─────────────────────────────────────────────────────────────────────────
+            // JavaScript - Dynamic, event-driven
+            // ─────────────────────────────────────────────────────────────────────────
+            javascript: {
+                if: /\bif\s*\(/g,
+                elseif: /\belse\s+if\s*\(/g,
+                for: /\bfor\s*\(/g,
+                forin: /\bfor\s*\([^)]+\s+in\s+/g,
+                forof: /\bfor\s*\([^)]+\s+of\s+/g,
+                while: /\bwhile\s*\(/g,
+                dowhile: /\bdo\s*\{/g,
+                switch: /\bswitch\s*\(/g,
+                case: /\bcase\s+[^:]+:/g,
+                catch: /\bcatch\s*\(/g,
+                ternary: /\?[^?:.]+:/g,
+                and: /&&/g,
+                or: /\|\|/g,
+                nullish: /\?\?/g,
+                optional_chain: /\?\./g,
+                promise_catch: /\.catch\s*\(/g,
+                array_methods: /\.(filter|find|some|every|reduce)\s*\(/g
+            },
+
+            // ─────────────────────────────────────────────────────────────────────────
+            // TypeScript - Typed JavaScript
+            // ─────────────────────────────────────────────────────────────────────────
+            typescript: {
+                if: /\bif\s*\(/g,
+                elseif: /\belse\s+if\s*\(/g,
+                for: /\bfor\s*\(/g,
+                forin: /\bfor\s*\([^)]+\s+in\s+/g,
+                forof: /\bfor\s*\([^)]+\s+of\s+/g,
+                while: /\bwhile\s*\(/g,
+                dowhile: /\bdo\s*\{/g,
+                switch: /\bswitch\s*\(/g,
+                case: /\bcase\s+[^:]+:/g,
+                catch: /\bcatch\s*\(/g,
+                ternary: /\?[^?:.]+:/g,
+                and: /&&/g,
+                or: /\|\|/g,
+                nullish: /\?\?/g,
+                optional_chain: /\?\./g,
+                type_guard: /\bis\s+\w+/g,
+                as_assertion: /\bas\s+\w+/g,
+                conditional_type: /\bextends\s+.*\?/g
+            },
+
+            // ─────────────────────────────────────────────────────────────────────────
+            // Python - Readable, multi-paradigm
+            // ─────────────────────────────────────────────────────────────────────────
+            python: {
+                if: /\bif\s+/g,
+                elif: /\belif\s+/g,
+                for: /\bfor\s+\w+\s+in\b/g,
+                while: /\bwhile\s+/g,
+                except: /\bexcept[\s:]/g,
+                and: /\band\b/g,
+                or: /\bor\b/g,
+                ternary: /\bif\b.*\belse\b(?!:)/g,
+                comprehension_if: /\bfor\b.*\bif\b/g,
+                with: /\bwith\s+/g,
+                assert: /\bassert\b/g,
+                match: /\bmatch\s+/g,
+                case: /\bcase\s+/g,
+                walrus: /:=/g
+            },
+
+            // ─────────────────────────────────────────────────────────────────────────
+            // Ruby - Pure OOP, expressive
+            // ─────────────────────────────────────────────────────────────────────────
+            ruby: {
+                if: /\bif\b(?!\s*:)/g,
+                elsif: /\belsif\b/g,
+                unless: /\bunless\b/g,
+                for: /\bfor\s+\w+\s+in\b/g,
+                while: /\bwhile\b/g,
+                until: /\buntil\b/g,
+                case: /\bcase\b/g,
+                when: /\bwhen\b/g,
+                rescue: /\brescue\b/g,
+                each: /\.each\b/g,
+                map: /\.map\b/g,
+                select: /\.select\b/g,
+                and: /\band\b|&&/g,
+                or: /\bor\b|\|\|/g,
+                ternary: /\?[^?:]+:/g,
+                modifier_if: /\s+if\s+(?!.*then)/g,
+                modifier_unless: /\s+unless\s+/g
+            },
+
+            // ─────────────────────────────────────────────────────────────────────────
+            // PHP - Web scripting
+            // ─────────────────────────────────────────────────────────────────────────
+            php: {
+                if: /\bif\s*\(/g,
+                elseif: /\b(elseif|else\s+if)\s*\(/g,
+                for: /\bfor\s*\(/g,
+                foreach: /\bforeach\s*\(/g,
+                while: /\bwhile\s*\(/g,
+                dowhile: /\bdo\s*\{/g,
+                switch: /\bswitch\s*\(/g,
+                case: /\bcase\s+[^:]+:/g,
+                match: /\bmatch\s*\(/g,
+                catch: /\bcatch\s*\(/g,
+                ternary: /\?[^?:]+:/g,
+                and: /&&/g,
+                or: /\|\|/g,
+                nullcoalesce: /\?\?/g,
+                nullsafe: /\?->/g,
+                spaceship: /<=>/g
+            },
+
+            // ─────────────────────────────────────────────────────────────────────────
+            // Perl - Text processing, TMTOWTDI
+            // ─────────────────────────────────────────────────────────────────────────
+            perl: {
+                if: /\bif\s*\(/g,
+                elsif: /\belsif\s*\(/g,
+                unless: /\bunless\s*\(/g,
+                for: /\bfor\s*\(/g,
+                foreach: /\bforeach\s+/g,
+                while: /\bwhile\s*\(/g,
+                until: /\buntil\s*\(/g,
+                given: /\bgiven\s*\(/g,
+                when: /\bwhen\s*\(/g,
+                and: /\band\b|&&/g,
+                or: /\bor\b|\|\|/g,
+                ternary: /\?[^?:]+:/g,
+                modifier_if: /\s+if\s+/g,
+                modifier_unless: /\s+unless\s+/g,
+                grep: /\bgrep\s*\{/g,
+                map: /\bmap\s*\{/g
+            },
+
+            // ─────────────────────────────────────────────────────────────────────────
+            // Swift - Modern Apple ecosystem
+            // ─────────────────────────────────────────────────────────────────────────
+            swift: {
+                if: /\bif\s+/g,
+                elseif: /\belse\s+if\s+/g,
+                for: /\bfor\s+\w+\s+in\b/g,
+                while: /\bwhile\s+/g,
+                repeat: /\brepeat\s*\{/g,
+                switch: /\bswitch\s+/g,
+                case: /\bcase\s+/g,
+                guard: /\bguard\s+/g,
+                if_let: /\bif\s+let\s+/g,
+                guard_let: /\bguard\s+let\s+/g,
+                catch: /\bcatch\s*/g,
+                and: /&&/g,
+                or: /\|\|/g,
+                ternary: /\?[^?:]+:/g,
+                optional_chain: /\?\./g,
+                nil_coalesce: /\?\?/g,
+                where: /\bwhere\s+/g
+            },
+
+            // ─────────────────────────────────────────────────────────────────────────
+            // Objective-C - Apple legacy, message-passing
+            // ─────────────────────────────────────────────────────────────────────────
+            objectivec: {
+                if: /\bif\s*\(/g,
+                elseif: /\belse\s+if\s*\(/g,
+                for: /\bfor\s*\(/g,
+                forin: /\bfor\s*\([^)]+\s+in\s+/g,
+                while: /\bwhile\s*\(/g,
+                dowhile: /\bdo\s*\{/g,
+                switch: /\bswitch\s*\(/g,
+                case: /\bcase\s+[^:]+:/g,
+                catch: /\@catch\s*\(/g,
+                ternary: /\?[^?:]+:/g,
+                and: /&&/g,
+                or: /\|\|/g
+            },
+
+            // ─────────────────────────────────────────────────────────────────────────
+            // R - Statistical computing
+            // ─────────────────────────────────────────────────────────────────────────
+            r: {
+                if: /\bif\s*\(/g,
+                elseif: /\belse\s+if\s*\(/g,
+                for: /\bfor\s*\(/g,
+                while: /\bwhile\s*\(/g,
+                repeat: /\brepeat\s*\{/g,
+                switch: /\bswitch\s*\(/g,
+                tryCatch: /\btryCatch\s*\(/g,
+                and: /&&|&/g,
+                or: /\|\||\|/g,
+                ifelse: /\bifelse\s*\(/g,
+                sapply: /\bsapply\s*\(/g,
+                lapply: /\blapply\s*\(/g,
+                apply: /\bapply\s*\(/g,
+                filter: /\bfilter\s*\(/g,
+                case_when: /\bcase_when\s*\(/g
+            },
+
+            // ─────────────────────────────────────────────────────────────────────────
+            // MATLAB - Matrix-oriented numerical computing
+            // ─────────────────────────────────────────────────────────────────────────
+            matlab: {
+                if: /\bif\s+/g,
+                elseif: /\belseif\s+/g,
+                for: /\bfor\s+\w+\s*=/g,
+                while: /\bwhile\s+/g,
+                switch: /\bswitch\s+/g,
+                case: /\bcase\s+/g,
+                otherwise: /\botherwise\b/g,
+                try: /\btry\b/g,
+                catch: /\bcatch\b/g,
+                and: /&&|&/g,
+                or: /\|\||\|/g,
+                arrayfun: /\barrayfun\s*\(/g,
+                cellfun: /\bcellfun\s*\(/g
+            },
+
+            // ─────────────────────────────────────────────────────────────────────────
+            // Bash - Shell scripting
+            // ─────────────────────────────────────────────────────────────────────────
+            bash: {
+                if: /\bif\s+/g,
+                elif: /\belif\s+/g,
+                for: /\bfor\s+\w+\s+in\b/g,
+                while: /\bwhile\s+/g,
+                until: /\buntil\s+/g,
+                case: /\bcase\s+/g,
+                case_pattern: /\)[^;]*;;/g,
+                select: /\bselect\s+/g,
+                and: /&&/g,
+                or: /\|\|/g,
+                test: /\[\[|\[|\btest\b/g,
+                pipe: /\|(?!\|)/g
+            },
+
+            // ─────────────────────────────────────────────────────────────────────────
+            // PowerShell - Windows scripting, object pipeline
+            // ─────────────────────────────────────────────────────────────────────────
+            powershell: {
+                if: /\bif\s*\(/g,
+                elseif: /\belseif\s*\(/g,
+                for: /\bfor\s*\(/g,
+                foreach: /\bforeach\s*\(/g,
+                foreach_object: /\bForEach-Object\b/g,
+                while: /\bwhile\s*\(/g,
+                dowhile: /\bdo\s*\{/g,
+                dountil: /\bdo\s*\{.*\}\s*until/g,
+                switch: /\bswitch\s*[\(\{]/g,
+                catch: /\bcatch\s*[\{\[]/g,
+                trap: /\btrap\s*\{/g,
+                and: /-and\b/g,
+                or: /-or\b/g,
+                where: /\bWhere-Object\b|\bwhere\b|\?\s*\{/g,
+                ternary: /\?[^?:]+:/g
+            }
+        };
+
+        // ═══════════════════════════════════════════════════════════════════════════
+        // LANGUAGE-SPECIFIC CODE EXAMPLES
+        // ═══════════════════════════════════════════════════════════════════════════
+        const languageExamples = {
+            c: `int processData(int* data, int size) {
+    if (data == NULL || size <= 0) {
+        return -1;
+    }
+    
+    int sum = 0;
+    for (int i = 0; i < size; i++) {
+        if (data[i] > 0 && data[i] < 100) {
+            sum += data[i];
+        } else if (data[i] >= 100) {
+            sum += 100;
+        }
+    }
+    
+    return sum > 1000 ? 1000 : sum;
+}`,
+            cpp: `template<typename T>
+T processContainer(const std::vector<T>& items) {
+    if (items.empty()) {
+        throw std::invalid_argument("Empty container");
+    }
+    
+    T result{};
+    for (const auto& item : items) {
+        if (item > T{} && item < T{100}) {
+            result += item;
+        } else if (item >= T{100}) {
+            result += T{100};
+        }
+    }
+    
+    return result > T{1000} ? T{1000} : result;
+}`,
+            rust: `fn process_data(data: &[i32]) -> Result<i32, &'static str> {
+    if data.is_empty() {
+        return Err("Empty data");
+    }
+    
+    let sum: i32 = data.iter()
+        .filter(|&&x| x > 0)
+        .map(|&x| match x {
+            1..=99 => x,
+            _ => 100,
+        })
+        .sum();
+    
+    Ok(if sum > 1000 { 1000 } else { sum })
+}`,
+            go: `func processData(data []int) (int, error) {
+    if len(data) == 0 {
+        return 0, errors.New("empty data")
+    }
+    
+    sum := 0
+    for _, v := range data {
+        switch {
+        case v > 0 && v < 100:
+            sum += v
+        case v >= 100:
+            sum += 100
+        }
+    }
+    
+    if sum > 1000 {
+        return 1000, nil
+    }
+    return sum, nil
+}`,
+            java: `public int processData(List<Integer> data) {
+    if (data == null || data.isEmpty()) {
+        throw new IllegalArgumentException("Invalid data");
+    }
+    
+    int sum = 0;
+    for (Integer item : data) {
+        if (item > 0 && item < 100) {
+            sum += item;
+        } else if (item >= 100) {
+            sum += 100;
+        }
+    }
+    
+    return sum > 1000 ? 1000 : sum;
+}`,
+            kotlin: `fun processData(data: List<Int>?): Int {
+    val items = data?.takeIf { it.isNotEmpty() }
+        ?: throw IllegalArgumentException("Invalid data")
+    
+    val sum = items.sumOf { item ->
+        when {
+            item in 1..99 -> item
+            item >= 100 -> 100
+            else -> 0
+        }
+    }
+    
+    return if (sum > 1000) 1000 else sum
+}`,
+            scala: `def processData(data: List[Int]): Either[String, Int] = {
+  data match {
+    case Nil => Left("Empty data")
+    case items =>
+      val sum = items.foldLeft(0) { (acc, item) =>
+        item match {
+          case x if x > 0 && x < 100 => acc + x
+          case x if x >= 100 => acc + 100
+          case _ => acc
+        }
+      }
+      Right(if (sum > 1000) 1000 else sum)
+  }
+}`,
+            csharp: `public int ProcessData(List<int>? data)
+{
+    if (data is null or { Count: 0 })
+        throw new ArgumentException("Invalid data");
+    
+    var sum = data.Sum(item => item switch
+    {
+        > 0 and < 100 => item,
+        >= 100 => 100,
+        _ => 0
+    });
+    
+    return sum > 1000 ? 1000 : sum;
+}`,
+            javascript: `function processData(data) {
+    if (!data?.length) {
+        throw new Error('Invalid data');
+    }
+    
+    const sum = data
+        .filter(item => item > 0)
+        .reduce((acc, item) => {
+            if (item < 100) {
+                return acc + item;
+            } else {
+                return acc + 100;
+            }
+        }, 0);
+    
+    return sum > 1000 ? 1000 : sum;
+}`,
+            typescript: `function processData(data: number[] | null): number {
+    if (!data?.length) {
+        throw new Error('Invalid data');
+    }
+    
+    const sum = data
+        .filter((item): item is number => item > 0)
+        .reduce((acc, item) => {
+            if (item < 100) {
+                return acc + item;
+            } else {
+                return acc + 100;
+            }
+        }, 0);
+    
+    return sum > 1000 ? 1000 : sum;
+}`,
+            python: `def process_data(data: list[int] | None) -> int:
+    if not data:
+        raise ValueError("Invalid data")
+    
+    total = sum(
+        item if item < 100 else 100
+        for item in data
+        if item > 0
+    )
+    
+    return 1000 if total > 1000 else total`,
+            ruby: `def process_data(data)
+  raise ArgumentError, 'Invalid data' if data.nil? || data.empty?
+  
+  sum = data
+    .select { |item| item > 0 }
+    .map { |item| item < 100 ? item : 100 }
+    .sum
+  
+  sum > 1000 ? 1000 : sum
+end`,
+            php: `function processData(?array $data): int {
+    if (empty($data)) {
+        throw new InvalidArgumentException('Invalid data');
+    }
+    
+    $sum = array_reduce(
+        array_filter($data, fn($item) => $item > 0),
+        fn($acc, $item) => $acc + ($item < 100 ? $item : 100),
+        0
+    );
+    
+    return $sum > 1000 ? 1000 : $sum;
+}`,
+            perl: `sub process_data {
+    my ($data) = @_;
+    die "Invalid data" unless $data && @$data;
+    
+    my $sum = 0;
+    for my $item (@$data) {
+        if ($item > 0 && $item < 100) {
+            $sum += $item;
+        } elsif ($item >= 100) {
+            $sum += 100;
+        }
+    }
+    
+    return $sum > 1000 ? 1000 : $sum;
+}`,
+            swift: `func processData(_ data: [Int]?) throws -> Int {
+    guard let items = data, !items.isEmpty else {
+        throw DataError.invalidData
+    }
+    
+    let sum = items
+        .filter { $0 > 0 }
+        .reduce(0) { acc, item in
+            acc + (item < 100 ? item : 100)
+        }
+    
+    return min(sum, 1000)
+}`,
+            objectivec: `- (NSInteger)processData:(NSArray<NSNumber *> *)data error:(NSError **)error {
+    if (!data || data.count == 0) {
+        if (error) *error = [NSError errorWithDomain:@"DataError" code:1 userInfo:nil];
+        return -1;
+    }
+    
+    NSInteger sum = 0;
+    for (NSNumber *item in data) {
+        NSInteger value = item.integerValue;
+        if (value > 0 && value < 100) {
+            sum += value;
+        } else if (value >= 100) {
+            sum += 100;
+        }
+    }
+    
+    return sum > 1000 ? 1000 : sum;
+}`,
+            r: `process_data <- function(data) {
+  if (is.null(data) || length(data) == 0) {
+    stop("Invalid data")
+  }
+  
+  sum <- data %>%
+    Filter(function(x) x > 0, .) %>%
+    sapply(function(x) ifelse(x < 100, x, 100)) %>%
+    sum()
+  
+  ifelse(sum > 1000, 1000, sum)
+}`,
+            matlab: `function result = processData(data)
+    if isempty(data)
+        error('Invalid data');
+    end
+    
+    total = 0;
+    for i = 1:length(data)
+        if data(i) > 0 && data(i) < 100
+            total = total + data(i);
+        elseif data(i) >= 100
+            total = total + 100;
+        end
+    end
+    
+    if total > 1000
+        result = 1000;
+    else
+        result = total;
+    end
+end`,
+            bash: `#!/bin/bash
+process_data() {
+    if [ $# -eq 0 ]; then
+        echo "Error: Invalid data" >&2
+        return 1
+    fi
+    
+    local sum=0
+    for item in "$@"; do
+        if [[ $item -gt 0 && $item -lt 100 ]]; then
+            ((sum += item))
+        elif [[ $item -ge 100 ]]; then
+            ((sum += 100))
+        fi
+    done
+    
+    if [[ $sum -gt 1000 ]]; then
+        echo 1000
+    else
+        echo $sum
+    fi
+}`,
+            powershell: `function Process-Data {
+    param([int[]]$Data)
+    
+    if (-not $Data -or $Data.Count -eq 0) {
+        throw "Invalid data"
+    }
+    
+    $sum = $Data | Where-Object { $_ -gt 0 } | ForEach-Object {
+        if ($_ -lt 100) { $_ }
+        else { 100 }
+    } | Measure-Object -Sum | Select-Object -ExpandProperty Sum
+    
+    if ($sum -gt 1000) { 1000 }
+    else { $sum }
+}`
+        };
+
+        // ═══════════════════════════════════════════════════════════════════════════
+        // GENERIC EXAMPLES (for Simple/Moderate/Complex)
+        // ═══════════════════════════════════════════════════════════════════════════
+        // ═══════════════════════════════════════════════════════════════════════════
+        // COMPLEXITY-LEVEL EXAMPLES (Per Language)
+        // Simple (CC≈3), Moderate (CC≈9), Complex (CC≈12+)
+        // ═══════════════════════════════════════════════════════════════════════════
+        
+        const exampleSnippets = {
+            simple: 'Sign determination — simple branching with early returns',
+            moderate: 'Triangle classification — validation chains with logical operators',
+            complex: 'Order processing — nested loops with discount tiers and member levels'
+        };
+
+        const levelExamples = {
+            // ─────────────────────────────────────────────────────────────────────────
+            // C
+            // ─────────────────────────────────────────────────────────────────────────
+            c: {
+                simple: `int getSign(int number) {
+    if (number > 0) {
+        return 1;
+    }
+    if (number < 0) {
+        return -1;
+    }
+    return 0;
+}`,
+                moderate: `const char* classifyTriangle(int a, int b, int c) {
+    if (a <= 0 || b <= 0 || c <= 0) {
+        return "invalid";
+    }
+    if (a + b <= c || b + c <= a || a + c <= b) {
+        return "invalid";
+    }
+    if (a == b && b == c) {
+        return "equilateral";
+    }
+    if (a == b || b == c || a == c) {
+        return "isosceles";
+    }
+    return "scalene";
+}`,
+                complex: `int processOrder(Order* order) {
+    if (order == NULL || order->items == NULL) {
+        return -1;
+    }
+    
+    int total = 0;
+    int hasDiscount = 0;
+    
+    for (int i = 0; i < order->itemCount; i++) {
+        Item* item = &order->items[i];
+        if (item->quantity > 0 && item->price > 0) {
+            total += item->quantity * item->price;
+            
+            if (item->quantity >= 10 || item->isPromo) {
+                hasDiscount = 1;
+            }
+        }
+    }
+    
+    if (hasDiscount && total > 100) {
+        total = (int)(total * 0.9);
+    } else if (order->memberLevel == GOLD) {
+        total = (int)(total * 0.85);
+    } else if (order->memberLevel == SILVER) {
+        total = (int)(total * 0.95);
+    }
+    
+    return total;
+}`
+            },
+
+            // ─────────────────────────────────────────────────────────────────────────
+            // C++
+            // ─────────────────────────────────────────────────────────────────────────
+            cpp: {
+                simple: `int getSign(int number) {
+    if (number > 0) {
+        return 1;
+    }
+    if (number < 0) {
+        return -1;
+    }
+    return 0;
+}`,
+                moderate: `std::string classifyTriangle(int a, int b, int c) {
+    if (a <= 0 || b <= 0 || c <= 0) {
+        return "invalid";
+    }
+    if (a + b <= c || b + c <= a || a + c <= b) {
+        return "invalid";
+    }
+    if (a == b && b == c) {
+        return "equilateral";
+    }
+    if (a == b || b == c || a == c) {
+        return "isosceles";
+    }
+    return "scalene";
+}`,
+                complex: `double processOrder(const Order& order) {
+    if (order.items.empty()) {
+        throw std::invalid_argument("Invalid order");
+    }
+    
+    double total = 0;
+    bool hasDiscount = false;
+    
+    for (const auto& item : order.items) {
+        if (item.quantity > 0 && item.price > 0) {
+            total += item.quantity * item.price;
+            
+            if (item.quantity >= 10 || item.isPromo) {
+                hasDiscount = true;
+            }
+        }
+    }
+    
+    if (hasDiscount && total > 100) {
+        total *= 0.9;
+    } else if (order.memberLevel == "gold") {
+        total *= 0.85;
+    } else if (order.memberLevel == "silver") {
+        total *= 0.95;
+    }
+    
+    return total;
+}`
+            },
+
+            // ─────────────────────────────────────────────────────────────────────────
+            // Rust
+            // ─────────────────────────────────────────────────────────────────────────
+            rust: {
+                simple: `fn get_sign(number: i32) -> i32 {
+    if number > 0 {
+        return 1;
+    }
+    if number < 0 {
+        return -1;
+    }
+    0
+}`,
+                moderate: `fn classify_triangle(a: i32, b: i32, c: i32) -> &'static str {
+    if a <= 0 || b <= 0 || c <= 0 {
+        return "invalid";
+    }
+    if a + b <= c || b + c <= a || a + c <= b {
+        return "invalid";
+    }
+    if a == b && b == c {
+        return "equilateral";
+    }
+    if a == b || b == c || a == c {
+        return "isosceles";
+    }
+    "scalene"
+}`,
+                complex: `fn process_order(order: &Order) -> Result<f64, &'static str> {
+    if order.items.is_empty() {
+        return Err("Invalid order");
+    }
+    
+    let mut total = 0.0;
+    let mut has_discount = false;
+    
+    for item in &order.items {
+        if item.quantity > 0 && item.price > 0.0 {
+            total += item.quantity as f64 * item.price;
+            
+            if item.quantity >= 10 || item.is_promo {
+                has_discount = true;
+            }
+        }
+    }
+    
+    if has_discount && total > 100.0 {
+        total *= 0.9;
+    } else if order.member_level == "gold" {
+        total *= 0.85;
+    } else if order.member_level == "silver" {
+        total *= 0.95;
+    }
+    
+    Ok(total)
+}`
+            },
+
+            // ─────────────────────────────────────────────────────────────────────────
+            // Go
+            // ─────────────────────────────────────────────────────────────────────────
+            go: {
+                simple: `func getSign(number int) int {
+    if number > 0 {
+        return 1
+    }
+    if number < 0 {
+        return -1
+    }
+    return 0
+}`,
+                moderate: `func classifyTriangle(a, b, c int) string {
+    if a <= 0 || b <= 0 || c <= 0 {
+        return "invalid"
+    }
+    if a+b <= c || b+c <= a || a+c <= b {
+        return "invalid"
+    }
+    if a == b && b == c {
+        return "equilateral"
+    }
+    if a == b || b == c || a == c {
+        return "isosceles"
+    }
+    return "scalene"
+}`,
+                complex: `func processOrder(order *Order) (float64, error) {
+    if order == nil || len(order.Items) == 0 {
+        return 0, errors.New("invalid order")
+    }
+    
+    total := 0.0
+    hasDiscount := false
+    
+    for _, item := range order.Items {
+        if item.Quantity > 0 && item.Price > 0 {
+            total += float64(item.Quantity) * item.Price
+            
+            if item.Quantity >= 10 || item.IsPromo {
+                hasDiscount = true
+            }
+        }
+    }
+    
+    if hasDiscount && total > 100 {
+        total *= 0.9
+    } else if order.MemberLevel == "gold" {
+        total *= 0.85
+    } else if order.MemberLevel == "silver" {
+        total *= 0.95
+    }
+    
+    return total, nil
+}`
+            },
+
+            // ─────────────────────────────────────────────────────────────────────────
+            // Java
+            // ─────────────────────────────────────────────────────────────────────────
+            java: {
+                simple: `public int getSign(int number) {
+    if (number > 0) {
+        return 1;
+    }
+    if (number < 0) {
+        return -1;
+    }
+    return 0;
+}`,
+                moderate: `public String classifyTriangle(int a, int b, int c) {
+    if (a <= 0 || b <= 0 || c <= 0) {
+        return "invalid";
+    }
+    if (a + b <= c || b + c <= a || a + c <= b) {
+        return "invalid";
+    }
+    if (a == b && b == c) {
+        return "equilateral";
+    }
+    if (a == b || b == c || a == c) {
+        return "isosceles";
+    }
+    return "scalene";
+}`,
+                complex: `public double processOrder(Order order) {
+    if (order == null || order.getItems().isEmpty()) {
+        throw new IllegalArgumentException("Invalid order");
+    }
+    
+    double total = 0;
+    boolean hasDiscount = false;
+    
+    for (Item item : order.getItems()) {
+        if (item.getQuantity() > 0 && item.getPrice() > 0) {
+            total += item.getQuantity() * item.getPrice();
+            
+            if (item.getQuantity() >= 10 || item.isPromo()) {
+                hasDiscount = true;
+            }
+        }
+    }
+    
+    if (hasDiscount && total > 100) {
+        total *= 0.9;
+    } else if ("gold".equals(order.getMemberLevel())) {
+        total *= 0.85;
+    } else if ("silver".equals(order.getMemberLevel())) {
+        total *= 0.95;
+    }
+    
+    return total;
+}`
+            },
+
+            // ─────────────────────────────────────────────────────────────────────────
+            // Kotlin
+            // ─────────────────────────────────────────────────────────────────────────
+            kotlin: {
+                simple: `fun getSign(number: Int): Int {
+    if (number > 0) {
+        return 1
+    }
+    if (number < 0) {
+        return -1
+    }
+    return 0
+}`,
+                moderate: `fun classifyTriangle(a: Int, b: Int, c: Int): String {
+    if (a <= 0 || b <= 0 || c <= 0) {
+        return "invalid"
+    }
+    if (a + b <= c || b + c <= a || a + c <= b) {
+        return "invalid"
+    }
+    if (a == b && b == c) {
+        return "equilateral"
+    }
+    if (a == b || b == c || a == c) {
+        return "isosceles"
+    }
+    return "scalene"
+}`,
+                complex: `fun processOrder(order: Order?): Double {
+    if (order?.items.isNullOrEmpty()) {
+        throw IllegalArgumentException("Invalid order")
+    }
+    
+    var total = 0.0
+    var hasDiscount = false
+    
+    for (item in order!!.items) {
+        if (item.quantity > 0 && item.price > 0) {
+            total += item.quantity * item.price
+            
+            if (item.quantity >= 10 || item.isPromo) {
+                hasDiscount = true
+            }
+        }
+    }
+    
+    if (hasDiscount && total > 100) {
+        total *= 0.9
+    } else if (order.memberLevel == "gold") {
+        total *= 0.85
+    } else if (order.memberLevel == "silver") {
+        total *= 0.95
+    }
+    
+    return total
+}`
+            },
+
+            // ─────────────────────────────────────────────────────────────────────────
+            // Scala
+            // ─────────────────────────────────────────────────────────────────────────
+            scala: {
+                simple: `def getSign(number: Int): Int = {
+  if (number > 0) {
+    return 1
+  }
+  if (number < 0) {
+    return -1
+  }
+  0
+}`,
+                moderate: `def classifyTriangle(a: Int, b: Int, c: Int): String = {
+  if (a <= 0 || b <= 0 || c <= 0) {
+    return "invalid"
+  }
+  if (a + b <= c || b + c <= a || a + c <= b) {
+    return "invalid"
+  }
+  if (a == b && b == c) {
+    return "equilateral"
+  }
+  if (a == b || b == c || a == c) {
+    return "isosceles"
+  }
+  "scalene"
+}`,
+                complex: `def processOrder(order: Order): Either[String, Double] = {
+  if (order == null || order.items.isEmpty) {
+    return Left("Invalid order")
+  }
+  
+  var total = 0.0
+  var hasDiscount = false
+  
+  for (item <- order.items) {
+    if (item.quantity > 0 && item.price > 0) {
+      total += item.quantity * item.price
+      
+      if (item.quantity >= 10 || item.isPromo) {
+        hasDiscount = true
+      }
+    }
+  }
+  
+  if (hasDiscount && total > 100) {
+    total *= 0.9
+  } else if (order.memberLevel == "gold") {
+    total *= 0.85
+  } else if (order.memberLevel == "silver") {
+    total *= 0.95
+  }
+  
+  Right(total)
+}`
+            },
+
+            // ─────────────────────────────────────────────────────────────────────────
+            // C#
+            // ─────────────────────────────────────────────────────────────────────────
+            csharp: {
+                simple: `public int GetSign(int number)
+{
+    if (number > 0)
+    {
+        return 1;
+    }
+    if (number < 0)
+    {
+        return -1;
+    }
+    return 0;
+}`,
+                moderate: `public string ClassifyTriangle(int a, int b, int c)
+{
+    if (a <= 0 || b <= 0 || c <= 0)
+    {
+        return "invalid";
+    }
+    if (a + b <= c || b + c <= a || a + c <= b)
+    {
+        return "invalid";
+    }
+    if (a == b && b == c)
+    {
+        return "equilateral";
+    }
+    if (a == b || b == c || a == c)
+    {
+        return "isosceles";
+    }
+    return "scalene";
+}`,
+                complex: `public double ProcessOrder(Order order)
+{
+    if (order == null || order.Items.Count == 0)
+    {
+        throw new ArgumentException("Invalid order");
+    }
+    
+    double total = 0;
+    bool hasDiscount = false;
+    
+    foreach (var item in order.Items)
+    {
+        if (item.Quantity > 0 && item.Price > 0)
+        {
+            total += item.Quantity * item.Price;
+            
+            if (item.Quantity >= 10 || item.IsPromo)
+            {
+                hasDiscount = true;
+            }
+        }
+    }
+    
+    if (hasDiscount && total > 100)
+    {
+        total *= 0.9;
+    }
+    else if (order.MemberLevel == "gold")
+    {
+        total *= 0.85;
+    }
+    else if (order.MemberLevel == "silver")
+    {
+        total *= 0.95;
+    }
+    
+    return total;
+}`
+            },
+
+            // ─────────────────────────────────────────────────────────────────────────
+            // JavaScript
+            // ─────────────────────────────────────────────────────────────────────────
+            javascript: {
+                simple: `function getSign(number) {
+    if (number > 0) {
+        return 1;
+    }
+    if (number < 0) {
+        return -1;
+    }
+    return 0;
+}`,
+                moderate: `function classifyTriangle(a, b, c) {
+    if (a <= 0 || b <= 0 || c <= 0) {
+        return "invalid";
+    }
+    if (a + b <= c || b + c <= a || a + c <= b) {
+        return "invalid";
+    }
+    if (a === b && b === c) {
+        return "equilateral";
+    }
+    if (a === b || b === c || a === c) {
+        return "isosceles";
+    }
+    return "scalene";
+}`,
+                complex: `function processOrder(order) {
+    if (!order || !order.items || order.items.length === 0) {
+        throw new Error('Invalid order');
+    }
+    
+    let total = 0;
+    let hasDiscount = false;
+    
+    for (const item of order.items) {
+        if (item.quantity > 0 && item.price > 0) {
+            total += item.quantity * item.price;
+            
+            if (item.quantity >= 10 || item.isPromo) {
+                hasDiscount = true;
+            }
+        }
+    }
+    
+    if (hasDiscount && total > 100) {
+        total *= 0.9;
+    } else if (order.memberLevel === 'gold') {
+        total *= 0.85;
+    } else if (order.memberLevel === 'silver') {
+        total *= 0.95;
+    }
+    
+    return total;
+}`
+            },
+
+            // ─────────────────────────────────────────────────────────────────────────
+            // TypeScript
+            // ─────────────────────────────────────────────────────────────────────────
+            typescript: {
+                simple: `function getSign(number: number): number {
+    if (number > 0) {
+        return 1;
+    }
+    if (number < 0) {
+        return -1;
+    }
+    return 0;
+}`,
+                moderate: `function classifyTriangle(a: number, b: number, c: number): string {
+    if (a <= 0 || b <= 0 || c <= 0) {
+        return "invalid";
+    }
+    if (a + b <= c || b + c <= a || a + c <= b) {
+        return "invalid";
+    }
+    if (a === b && b === c) {
+        return "equilateral";
+    }
+    if (a === b || b === c || a === c) {
+        return "isosceles";
+    }
+    return "scalene";
+}`,
+                complex: `function processOrder(order: Order | null): number {
+    if (!order || !order.items || order.items.length === 0) {
+        throw new Error('Invalid order');
+    }
+    
+    let total = 0;
+    let hasDiscount = false;
+    
+    for (const item of order.items) {
+        if (item.quantity > 0 && item.price > 0) {
+            total += item.quantity * item.price;
+            
+            if (item.quantity >= 10 || item.isPromo) {
+                hasDiscount = true;
+            }
+        }
+    }
+    
+    if (hasDiscount && total > 100) {
+        total *= 0.9;
+    } else if (order.memberLevel === 'gold') {
+        total *= 0.85;
+    } else if (order.memberLevel === 'silver') {
+        total *= 0.95;
+    }
+    
+    return total;
+}`
+            },
+
+            // ─────────────────────────────────────────────────────────────────────────
+            // Python
+            // ─────────────────────────────────────────────────────────────────────────
+            python: {
+                simple: `def get_sign(number):
+    if number > 0:
+        return 1
+    if number < 0:
+        return -1
+    return 0`,
+                moderate: `def classify_triangle(a, b, c):
+    if a <= 0 or b <= 0 or c <= 0:
+        return "invalid"
+    if a + b <= c or b + c <= a or a + c <= b:
+        return "invalid"
+    if a == b and b == c:
+        return "equilateral"
+    if a == b or b == c or a == c:
+        return "isosceles"
+    return "scalene"`,
+                complex: `def process_order(order):
+    if not order or not order.get('items'):
+        raise ValueError("Invalid order")
+    
+    total = 0
+    has_discount = False
+    
+    for item in order['items']:
+        if item['quantity'] > 0 and item['price'] > 0:
+            total += item['quantity'] * item['price']
+            
+            if item['quantity'] >= 10 or item.get('is_promo'):
+                has_discount = True
+    
+    if has_discount and total > 100:
+        total *= 0.9
+    elif order.get('member_level') == 'gold':
+        total *= 0.85
+    elif order.get('member_level') == 'silver':
+        total *= 0.95
+    
+    return total`
+            },
+
+            // ─────────────────────────────────────────────────────────────────────────
+            // Ruby
+            // ─────────────────────────────────────────────────────────────────────────
+            ruby: {
+                simple: `def get_sign(number)
+  if number > 0
+    return 1
+  end
+  if number < 0
+    return -1
+  end
+  0
+end`,
+                moderate: `def classify_triangle(a, b, c)
+  if a <= 0 || b <= 0 || c <= 0
+    return "invalid"
+  end
+  if a + b <= c || b + c <= a || a + c <= b
+    return "invalid"
+  end
+  if a == b && b == c
+    return "equilateral"
+  end
+  if a == b || b == c || a == c
+    return "isosceles"
+  end
+  "scalene"
+end`,
+                complex: `def process_order(order)
+  raise ArgumentError, "Invalid order" if order.nil? || order[:items].nil? || order[:items].empty?
+  
+  total = 0
+  has_discount = false
+  
+  order[:items].each do |item|
+    if item[:quantity] > 0 && item[:price] > 0
+      total += item[:quantity] * item[:price]
+      
+      if item[:quantity] >= 10 || item[:is_promo]
+        has_discount = true
+      end
+    end
+  end
+  
+  if has_discount && total > 100
+    total *= 0.9
+  elsif order[:member_level] == 'gold'
+    total *= 0.85
+  elsif order[:member_level] == 'silver'
+    total *= 0.95
+  end
+  
+  total
+end`
+            },
+
+            // ─────────────────────────────────────────────────────────────────────────
+            // PHP
+            // ─────────────────────────────────────────────────────────────────────────
+            php: {
+                simple: `function getSign(int $number): int {
+    if ($number > 0) {
+        return 1;
+    }
+    if ($number < 0) {
+        return -1;
+    }
+    return 0;
+}`,
+                moderate: `function classifyTriangle(int $a, int $b, int $c): string {
+    if ($a <= 0 || $b <= 0 || $c <= 0) {
+        return "invalid";
+    }
+    if ($a + $b <= $c || $b + $c <= $a || $a + $c <= $b) {
+        return "invalid";
+    }
+    if ($a === $b && $b === $c) {
+        return "equilateral";
+    }
+    if ($a === $b || $b === $c || $a === $c) {
+        return "isosceles";
+    }
+    return "scalene";
+}`,
+                complex: `function processOrder(?array $order): float {
+    if (empty($order) || empty($order['items'])) {
+        throw new InvalidArgumentException("Invalid order");
+    }
+    
+    $total = 0;
+    $hasDiscount = false;
+    
+    foreach ($order['items'] as $item) {
+        if ($item['quantity'] > 0 && $item['price'] > 0) {
+            $total += $item['quantity'] * $item['price'];
+            
+            if ($item['quantity'] >= 10 || ($item['is_promo'] ?? false)) {
+                $hasDiscount = true;
+            }
+        }
+    }
+    
+    if ($hasDiscount && $total > 100) {
+        $total *= 0.9;
+    } elseif (($order['member_level'] ?? '') === 'gold') {
+        $total *= 0.85;
+    } elseif (($order['member_level'] ?? '') === 'silver') {
+        $total *= 0.95;
+    }
+    
+    return $total;
+}`
+            },
+
+            // ─────────────────────────────────────────────────────────────────────────
+            // Perl
+            // ─────────────────────────────────────────────────────────────────────────
+            perl: {
+                simple: `sub get_sign {
+    my ($number) = @_;
+    if ($number > 0) {
+        return 1;
+    }
+    if ($number < 0) {
+        return -1;
+    }
+    return 0;
+}`,
+                moderate: `sub classify_triangle {
+    my ($a, $b, $c) = @_;
+    if ($a <= 0 || $b <= 0 || $c <= 0) {
+        return "invalid";
+    }
+    if ($a + $b <= $c || $b + $c <= $a || $a + $c <= $b) {
+        return "invalid";
+    }
+    if ($a == $b && $b == $c) {
+        return "equilateral";
+    }
+    if ($a == $b || $b == $c || $a == $c) {
+        return "isosceles";
+    }
+    return "scalene";
+}`,
+                complex: `sub process_order {
+    my ($order) = @_;
+    die "Invalid order" unless $order && $order->{items} && @{$order->{items}};
+    
+    my $total = 0;
+    my $has_discount = 0;
+    
+    foreach my $item (@{$order->{items}}) {
+        if ($item->{quantity} > 0 && $item->{price} > 0) {
+            $total += $item->{quantity} * $item->{price};
+            
+            if ($item->{quantity} >= 10 || $item->{is_promo}) {
+                $has_discount = 1;
+            }
+        }
+    }
+    
+    if ($has_discount && $total > 100) {
+        $total *= 0.9;
+    } elsif ($order->{member_level} eq 'gold') {
+        $total *= 0.85;
+    } elsif ($order->{member_level} eq 'silver') {
+        $total *= 0.95;
+    }
+    
+    return $total;
+}`
+            },
+
+            // ─────────────────────────────────────────────────────────────────────────
+            // Swift
+            // ─────────────────────────────────────────────────────────────────────────
+            swift: {
+                simple: `func getSign(_ number: Int) -> Int {
+    if number > 0 {
+        return 1
+    }
+    if number < 0 {
+        return -1
+    }
+    return 0
+}`,
+                moderate: `func classifyTriangle(_ a: Int, _ b: Int, _ c: Int) -> String {
+    if a <= 0 || b <= 0 || c <= 0 {
+        return "invalid"
+    }
+    if a + b <= c || b + c <= a || a + c <= b {
+        return "invalid"
+    }
+    if a == b && b == c {
+        return "equilateral"
+    }
+    if a == b || b == c || a == c {
+        return "isosceles"
+    }
+    return "scalene"
+}`,
+                complex: `func processOrder(_ order: Order?) throws -> Double {
+    guard let order = order, !order.items.isEmpty else {
+        throw OrderError.invalidOrder
+    }
+    
+    var total = 0.0
+    var hasDiscount = false
+    
+    for item in order.items {
+        if item.quantity > 0 && item.price > 0 {
+            total += Double(item.quantity) * item.price
+            
+            if item.quantity >= 10 || item.isPromo {
+                hasDiscount = true
+            }
+        }
+    }
+    
+    if hasDiscount && total > 100 {
+        total *= 0.9
+    } else if order.memberLevel == "gold" {
+        total *= 0.85
+    } else if order.memberLevel == "silver" {
+        total *= 0.95
+    }
+    
+    return total
+}`
+            },
+
+            // ─────────────────────────────────────────────────────────────────────────
+            // Objective-C
+            // ─────────────────────────────────────────────────────────────────────────
+            objectivec: {
+                simple: `- (NSInteger)getSign:(NSInteger)number {
+    if (number > 0) {
+        return 1;
+    }
+    if (number < 0) {
+        return -1;
+    }
+    return 0;
+}`,
+                moderate: `- (NSString *)classifyTriangle:(NSInteger)a b:(NSInteger)b c:(NSInteger)c {
+    if (a <= 0 || b <= 0 || c <= 0) {
+        return @"invalid";
+    }
+    if (a + b <= c || b + c <= a || a + c <= b) {
+        return @"invalid";
+    }
+    if (a == b && b == c) {
+        return @"equilateral";
+    }
+    if (a == b || b == c || a == c) {
+        return @"isosceles";
+    }
+    return @"scalene";
+}`,
+                complex: `- (double)processOrder:(NSDictionary *)order error:(NSError **)error {
+    if (!order || !order[@"items"] || [order[@"items"] count] == 0) {
+        if (error) *error = [NSError errorWithDomain:@"OrderError" code:1 userInfo:nil];
+        return -1;
+    }
+    
+    double total = 0;
+    BOOL hasDiscount = NO;
+    
+    for (NSDictionary *item in order[@"items"]) {
+        NSInteger quantity = [item[@"quantity"] integerValue];
+        double price = [item[@"price"] doubleValue];
+        
+        if (quantity > 0 && price > 0) {
+            total += quantity * price;
+            
+            if (quantity >= 10 || [item[@"isPromo"] boolValue]) {
+                hasDiscount = YES;
+            }
+        }
+    }
+    
+    if (hasDiscount && total > 100) {
+        total *= 0.9;
+    } else if ([order[@"memberLevel"] isEqualToString:@"gold"]) {
+        total *= 0.85;
+    } else if ([order[@"memberLevel"] isEqualToString:@"silver"]) {
+        total *= 0.95;
+    }
+    
+    return total;
+}`
+            },
+
+            // ─────────────────────────────────────────────────────────────────────────
+            // R
+            // ─────────────────────────────────────────────────────────────────────────
+            r: {
+                simple: `get_sign <- function(number) {
+  if (number > 0) {
+    return(1)
+  }
+  if (number < 0) {
+    return(-1)
+  }
+  return(0)
+}`,
+                moderate: `classify_triangle <- function(a, b, c) {
+  if (a <= 0 || b <= 0 || c <= 0) {
+    return("invalid")
+  }
+  if (a + b <= c || b + c <= a || a + c <= b) {
+    return("invalid")
+  }
+  if (a == b && b == c) {
+    return("equilateral")
+  }
+  if (a == b || b == c || a == c) {
+    return("isosceles")
+  }
+  return("scalene")
+}`,
+                complex: `process_order <- function(order) {
+  if (is.null(order) || is.null(order$items) || length(order$items) == 0) {
+    stop("Invalid order")
+  }
+  
+  total <- 0
+  has_discount <- FALSE
+  
+  for (item in order$items) {
+    if (item$quantity > 0 && item$price > 0) {
+      total <- total + item$quantity * item$price
+      
+      if (item$quantity >= 10 || isTRUE(item$is_promo)) {
+        has_discount <- TRUE
+      }
+    }
+  }
+  
+  if (has_discount && total > 100) {
+    total <- total * 0.9
+  } else if (identical(order$member_level, "gold")) {
+    total <- total * 0.85
+  } else if (identical(order$member_level, "silver")) {
+    total <- total * 0.95
+  }
+  
+  return(total)
+}`
+            },
+
+            // ─────────────────────────────────────────────────────────────────────────
+            // MATLAB
+            // ─────────────────────────────────────────────────────────────────────────
+            matlab: {
+                simple: `function result = getSign(number)
+    if number > 0
+        result = 1;
+    elseif number < 0
+        result = -1;
+    else
+        result = 0;
+    end
+end`,
+                moderate: `function result = classifyTriangle(a, b, c)
+    if a <= 0 || b <= 0 || c <= 0
+        result = 'invalid';
+        return;
+    end
+    if a + b <= c || b + c <= a || a + c <= b
+        result = 'invalid';
+        return;
+    end
+    if a == b && b == c
+        result = 'equilateral';
+    elseif a == b || b == c || a == c
+        result = 'isosceles';
+    else
+        result = 'scalene';
+    end
+end`,
+                complex: `function total = processOrder(order)
+    if isempty(order) || ~isfield(order, 'items') || isempty(order.items)
+        error('Invalid order');
+    end
+    
+    total = 0;
+    hasDiscount = false;
+    
+    for i = 1:length(order.items)
+        item = order.items(i);
+        if item.quantity > 0 && item.price > 0
+            total = total + item.quantity * item.price;
+            
+            if item.quantity >= 10 || item.isPromo
+                hasDiscount = true;
+            end
+        end
+    end
+    
+    if hasDiscount && total > 100
+        total = total * 0.9;
+    elseif strcmp(order.memberLevel, 'gold')
+        total = total * 0.85;
+    elseif strcmp(order.memberLevel, 'silver')
+        total = total * 0.95;
+    end
+end`
+            },
+
+            // ─────────────────────────────────────────────────────────────────────────
+            // Bash
+            // ─────────────────────────────────────────────────────────────────────────
+            bash: {
+                simple: `get_sign() {
+    local number=$1
+    if [[ $number -gt 0 ]]; then
+        echo 1
+    elif [[ $number -lt 0 ]]; then
+        echo -1
+    else
+        echo 0
+    fi
+}`,
+                moderate: `classify_triangle() {
+    local a=$1 b=$2 c=$3
+    if [[ $a -le 0 || $b -le 0 || $c -le 0 ]]; then
+        echo "invalid"
+        return
+    fi
+    if [[ $((a + b)) -le $c || $((b + c)) -le $a || $((a + c)) -le $b ]]; then
+        echo "invalid"
+        return
+    fi
+    if [[ $a -eq $b && $b -eq $c ]]; then
+        echo "equilateral"
+    elif [[ $a -eq $b || $b -eq $c || $a -eq $c ]]; then
+        echo "isosceles"
+    else
+        echo "scalene"
+    fi
+}`,
+                complex: `process_order() {
+    local -n order_ref=$1
+    
+    if [[ -z "\${order_ref[*]}" ]]; then
+        echo "Error: Invalid order" >&2
+        return 1
+    fi
+    
+    local total=0
+    local has_discount=0
+    
+    for item in "\${order_ref[@]}"; do
+        local quantity price is_promo
+        IFS=: read -r quantity price is_promo <<< "$item"
+        
+        if [[ $quantity -gt 0 && $price -gt 0 ]]; then
+            ((total += quantity * price))
+            
+            if [[ $quantity -ge 10 || $is_promo -eq 1 ]]; then
+                has_discount=1
+            fi
+        fi
+    done
+    
+    if [[ $has_discount -eq 1 && $total -gt 100 ]]; then
+        total=$((total * 90 / 100))
+    elif [[ "\${order_ref[member]}" == "gold" ]]; then
+        total=$((total * 85 / 100))
+    elif [[ "\${order_ref[member]}" == "silver" ]]; then
+        total=$((total * 95 / 100))
+    fi
+    
+    echo $total
+}`
+            },
+
+            // ─────────────────────────────────────────────────────────────────────────
+            // PowerShell
+            // ─────────────────────────────────────────────────────────────────────────
+            powershell: {
+                simple: `function Get-Sign {
+    param([int]$Number)
+    
+    if ($Number -gt 0) {
+        return 1
+    }
+    if ($Number -lt 0) {
+        return -1
+    }
+    return 0
+}`,
+                moderate: `function Get-TriangleType {
+    param([int]$a, [int]$b, [int]$c)
+    
+    if ($a -le 0 -or $b -le 0 -or $c -le 0) {
+        return "invalid"
+    }
+    if ($a + $b -le $c -or $b + $c -le $a -or $a + $c -le $b) {
+        return "invalid"
+    }
+    if ($a -eq $b -and $b -eq $c) {
+        return "equilateral"
+    }
+    if ($a -eq $b -or $b -eq $c -or $a -eq $c) {
+        return "isosceles"
+    }
+    return "scalene"
+}`,
+                complex: `function Process-Order {
+    param([hashtable]$Order)
+    
+    if (-not $Order -or -not $Order.Items -or $Order.Items.Count -eq 0) {
+        throw "Invalid order"
+    }
+    
+    $total = 0
+    $hasDiscount = $false
+    
+    foreach ($item in $Order.Items) {
+        if ($item.Quantity -gt 0 -and $item.Price -gt 0) {
+            $total += $item.Quantity * $item.Price
+            
+            if ($item.Quantity -ge 10 -or $item.IsPromo) {
+                $hasDiscount = $true
+            }
+        }
+    }
+    
+    if ($hasDiscount -and $total -gt 100) {
+        $total *= 0.9
+    }
+    elseif ($Order.MemberLevel -eq 'gold') {
+        $total *= 0.85
+    }
+    elseif ($Order.MemberLevel -eq 'silver') {
+        $total *= 0.95
+    }
+    
+    return $total
+}`
+            }
+        };
+
+        // ═══════════════════════════════════════════════════════════════════════════
+        // UTILITY FUNCTIONS
+        // ═══════════════════════════════════════════════════════════════════════════
+        
+        function stripComments(code, language) {
+            // Remove single-line and multi-line comments based on language
+            const commentPatterns = {
+                // C-style languages
+                c: [/\/\/.*$/gm, /\/\*[\s\S]*?\*\//g],
+                cpp: [/\/\/.*$/gm, /\/\*[\s\S]*?\*\//g],
+                java: [/\/\/.*$/gm, /\/\*[\s\S]*?\*\//g],
+                javascript: [/\/\/.*$/gm, /\/\*[\s\S]*?\*\//g],
+                typescript: [/\/\/.*$/gm, /\/\*[\s\S]*?\*\//g],
+                csharp: [/\/\/.*$/gm, /\/\*[\s\S]*?\*\//g],
+                go: [/\/\/.*$/gm, /\/\*[\s\S]*?\*\//g],
+                rust: [/\/\/.*$/gm, /\/\*[\s\S]*?\*\//g],
+                swift: [/\/\/.*$/gm, /\/\*[\s\S]*?\*\//g],
+                kotlin: [/\/\/.*$/gm, /\/\*[\s\S]*?\*\//g],
+                scala: [/\/\/.*$/gm, /\/\*[\s\S]*?\*\//g],
+                php: [/\/\/.*$/gm, /#.*$/gm, /\/\*[\s\S]*?\*\//g],
+                objectivec: [/\/\/.*$/gm, /\/\*[\s\S]*?\*\//g],
+                // Hash-style comments
+                python: [/#.*$/gm, /'''[\s\S]*?'''|"""[\s\S]*?"""/g],
+                ruby: [/#.*$/gm, /=begin[\s\S]*?=end/g],
+                perl: [/#.*$/gm, /=pod[\s\S]*?=cut/g],
+                r: [/#.*$/gm],
+                bash: [/#.*$/gm],
+                powershell: [/#.*$/gm, /<#[\s\S]*?#>/g],
+                matlab: [/%.*$/gm, /%\{[\s\S]*?%\}/g]
+            };
+            
+            const patterns = commentPatterns[language] || [/\/\/.*$/gm, /\/\*[\s\S]*?\*\//g, /#.*$/gm];
+            let stripped = code;
+            
+            // First, protect strings from comment removal
+            const stringPlaceholders = [];
+            stripped = stripped.replace(/(["'`])(?:(?!\1|\\).|\\.)*\1/g, (match) => {
+                stringPlaceholders.push(match);
+                return `__STRING_${stringPlaceholders.length - 1}__`;
+            });
+            
+            // Remove comments
+            for (const pattern of patterns) {
+                stripped = stripped.replace(pattern, '');
+            }
+            
+            // Restore strings
+            stripped = stripped.replace(/__STRING_(\d+)__/g, (_, index) => stringPlaceholders[index]);
+            
+            return stripped;
+        }
+
+        function calculateMaxNesting(code, language) {
+            const lines = code.split('\n');
+            let maxDepth = 0;
+            let currentDepth = 0;
+            
+            // Language-specific nesting characters
+            const openChars = language === 'python' ? null : ['{', '('];
+            const closeChars = language === 'python' ? null : ['}', ')'];
+            
+            if (language === 'python') {
+                // Python uses indentation
+                let baseIndent = null;
+                for (const line of lines) {
+                    const trimmed = line.trimStart();
+                    if (trimmed && !trimmed.startsWith('#')) {
+                        const indent = line.length - trimmed.length;
+                        if (baseIndent === null) baseIndent = indent;
+                        const depth = Math.floor((indent - baseIndent) / 4);
+                        maxDepth = Math.max(maxDepth, depth);
+                    }
+                }
+            } else {
+                for (const line of lines) {
+                    for (const char of line) {
+                        if (char === '{') {
+                            currentDepth++;
+                            maxDepth = Math.max(maxDepth, currentDepth);
+                        } else if (char === '}') {
+                            currentDepth = Math.max(0, currentDepth - 1);
+                        }
+                    }
+                }
+            }
+            
+            return maxDepth;
+        }
+
+        function countSLOC(code) {
+            return code.split('\n')
+                .filter(line => line.trim() && !line.trim().match(/^(\/\/|#|\/\*|\*|%|--|')/))
+                .length;
+        }
+
+        // ═══════════════════════════════════════════════════════════════════════════
+        // MAIN ANALYSIS FUNCTION
+        // ═══════════════════════════════════════════════════════════════════════════
+        
+        function analyzeCode() {
+            const code = document.getElementById('code-input').value;
+            const language = document.getElementById('language-select').value;
+            const langPatterns = patterns[language];
+            
+            // Strip comments for analysis
+            const cleanCode = stripComments(code, language);
+
+            // Count decision points
+            const decisions = [];
+            let decisionCount = 0;
+
+            for (const [type, pattern] of Object.entries(langPatterns)) {
+                // Reset regex lastIndex
+                pattern.lastIndex = 0;
+                const matches = cleanCode.match(pattern) || [];
+                if (matches.length > 0) {
+                    decisionCount += matches.length;
+                    decisions.push({ type, count: matches.length });
+                }
+            }
+
+            // Calculate Cyclomatic Complexity (CC = D + 1)
+            const cc = decisionCount + 1;
+            
+            // Calculate Cognitive Complexity (with nesting penalty)
+            let cogc = 0;
+            const lines = cleanCode.split('\n');
+            let currentNesting = 0;
+            
+            // Language-specific nesting detection
+            const usesIndent = ['python', 'yaml'].includes(language);
+            
+            for (const line of lines) {
+                if (usesIndent) {
+                    // Python-style: use indentation
+                    const trimmed = line.trimStart();
+                    const indent = line.length - trimmed.length;
+                    currentNesting = Math.floor(indent / 4);
+                } else {
+                    // Brace-based languages
+                    const opens = (line.match(/\{/g) || []).length;
+                    const closes = (line.match(/\}/g) || []).length;
+                    currentNesting += opens;
+                    
+                    // Check for control flow keywords (excluding logical operators)
+                    for (const [type, pattern] of Object.entries(langPatterns)) {
+                        if (['and', 'or', 'nullish', 'elvis', 'nullcoalesce', 'optional_chain', 'safe_call', 'question_mark', 'pipe'].includes(type)) continue;
+                        pattern.lastIndex = 0;
+                        const matches = line.match(pattern) || [];
+                        cogc += matches.length * (1 + Math.max(0, currentNesting - 1));
+                    }
+                    
+                    // Logical operators add 1 per sequence (not per operator)
+                    if (line.match(/&&|\|\||(?<!\w)and(?!\w)|(?<!\w)or(?!\w)|-and|-or/)) {
+                        cogc += 1;
+                    }
+                    
+                    currentNesting -= closes;
+                    if (currentNesting < 0) currentNesting = 0;
+                }
+            }
+            
+            // Python-specific cognitive calculation
+            if (usesIndent) {
+                let prevIndent = 0;
+                for (const line of lines) {
+                    const trimmed = line.trimStart();
+                    if (!trimmed) continue;
+                    
+                    const indent = line.length - trimmed.length;
+                    const nestLevel = Math.floor(indent / 4);
+                    
+                    for (const [type, pattern] of Object.entries(langPatterns)) {
+                        if (['and', 'or'].includes(type)) continue;
+                        pattern.lastIndex = 0;
+                        const matches = line.match(pattern) || [];
+                        cogc += matches.length * (1 + nestLevel);
+                    }
+                    
+                    if (line.match(/\band\b|\bor\b/)) {
+                        cogc += 1;
+                    }
+                    
+                    prevIndent = indent;
+                }
+            }
+            
+            // Calculate statistics
+            const loc = code.split('\n').length;
+            const sloc = countSLOC(code);
+            const maxDepth = calculateMaxNesting(cleanCode, language);
+
+            // Update UI
+            updateMetric('cc', cc, decisionCount);
+            updateMetric('cogc', cogc);
+            updateDecisionsList(decisions);
+            updateStats(loc, sloc, maxDepth);
+            
+            // Enhanced features
+            updateSuggestions(cc, cogc, maxDepth);
+            storeResults(cc, cogc, loc, sloc, maxDepth, decisions);
+        }
+
+        function updateMetric(type, value, decisionCount) {
+            const valueEl = document.getElementById(`${type}-value`);
+            const barEl = document.getElementById(`${type}-bar`);
+            const interpEl = document.getElementById(`${type}-interpretation`);
+            
+            valueEl.textContent = value;
+            
+            let severity, interpretation, barWidth;
+            
+            if (type === 'cc') {
+                if (value <= 10) {
+                    severity = 'low';
+                    interpretation = '✓ Simple — Low risk, easy to test and maintain';
+                    barWidth = (value / 10) * 100;
+                } else if (value <= 20) {
+                    severity = 'moderate';
+                    interpretation = '⚠ Moderate — Consider breaking into smaller functions';
+                    barWidth = 50 + ((value - 10) / 10) * 30;
+                } else {
+                    severity = 'high';
+                    interpretation = '✗ High — Refactoring strongly recommended';
+                    barWidth = 80 + Math.min((value - 20) / 30, 1) * 20;
+                }
+                
+                document.getElementById('cc-formula').innerHTML = 
+                    `CC = D + 1 = ${decisionCount} + 1 = <span class="formula-highlight">${value}</span>`;
+            } else {
+                if (value <= 10) {
+                    severity = 'low';
+                    interpretation = '✓ Low cognitive load — Easy to understand';
+                    barWidth = (value / 10) * 100;
+                } else if (value <= 20) {
+                    severity = 'moderate';
+                    interpretation = '⚠ Moderate cognitive load — Some mental effort required';
+                    barWidth = 50 + ((value - 10) / 10) * 30;
+                } else {
+                    severity = 'high';
+                    interpretation = '✗ High cognitive load — Difficult to comprehend';
+                    barWidth = 80 + Math.min((value - 20) / 30, 1) * 20;
+                }
+            }
+            
+            barEl.style.width = `${Math.min(barWidth, 100)}%`;
+            barEl.className = `metric-bar-fill severity-${severity}`;
+            interpEl.textContent = interpretation;
+        }
+
+        function updateDecisionsList(decisions) {
+            const listEl = document.getElementById('decisions-list');
+            
+            if (decisions.length === 0) {
+                listEl.innerHTML = '<p style="color: var(--text-muted); font-size: 0.8rem;">No decision points detected</p>';
+                return;
+            }
+            
+            // Sort by count descending
+            decisions.sort((a, b) => b.count - a.count);
+            
+            let html = '';
+            for (const { type, count } of decisions) {
+                html += `
+                    <div class="decision-item">
+                        <span class="decision-type">${type}</span>
+                        <span class="decision-count">×${count}</span>
+                    </div>
+                `;
+            }
+            
+            listEl.innerHTML = html;
+        }
+
+        function updateStats(loc, sloc, maxDepth) {
+            document.getElementById('stat-loc').textContent = loc;
+            document.getElementById('stat-sloc').textContent = sloc;
+            document.getElementById('stat-depth').textContent = maxDepth;
+        }
+
+        function updateSnippetDescription(description) {
+            document.getElementById('lang-snippet').textContent = '📝 ' + description;
+        }
+
+        function onLanguageChange() {
+            const language = document.getElementById('language-select').value;
+            const info = languageInfo[language];
+            
+            // Update language info display
+            document.getElementById('lang-name').textContent = info.name;
+            document.getElementById('lang-paradigm').textContent = info.paradigm;
+            document.getElementById('lang-info').querySelector('.lang-icon').textContent = info.icon;
+            
+            // Load the language-specific example code
+            if (languageExamples[language]) {
+                document.getElementById('code-input').value = languageExamples[language];
+                currentExampleType = 'lang';
+                updateSnippetDescription(info.snippet);
+            } else if (levelExamples[language]) {
+                // Fallback to complex level example
+                document.getElementById('code-input').value = levelExamples[language].complex;
+                currentExampleType = 'complex';
+                updateSnippetDescription(exampleSnippets.complex);
+            }
+            
+            analyzeCode();
+        }
+
+        function loadExample(name) {
+            const language = document.getElementById('language-select').value;
+            
+            if (name === 'lang') {
+                // Load the full language-specific example (processData function)
+                document.getElementById('code-input').value = languageExamples[language] || levelExamples[language].complex;
+                currentExampleType = 'lang';
+                updateSnippetDescription(languageInfo[language].snippet);
+            } else {
+                // Load Simple/Moderate/Complex in the CURRENT language
+                const langExamples = levelExamples[language];
+                if (langExamples && langExamples[name]) {
+                    document.getElementById('code-input').value = langExamples[name];
+                    currentExampleType = name;
+                    updateSnippetDescription(exampleSnippets[name]);
+                } else {
+                    // Fallback to JavaScript if language not found
+                    document.getElementById('code-input').value = levelExamples.javascript[name];
+                    currentExampleType = name;
+                    updateSnippetDescription(exampleSnippets[name]);
+                }
+            }
+            
+            analyzeCode();
+        }
+
+        // ═══════════════════════════════════════════════════════════════════════════
+        // INITIALIZATION
+        // ═══════════════════════════════════════════════════════════════════════════
+        
+        document.addEventListener('DOMContentLoaded', () => {
+            onLanguageChange();
+            analyzeCode();
+        });
+        
+        // Auto-analyze on input and update snippet for custom code
+        document.getElementById('code-input').addEventListener('input', debounce(() => {
+            currentExampleType = 'custom';
+            updateSnippetDescription('Custom code — your own implementation');
+            if (autoAnalyzeEnabled) {
+                analyzeCode();
+            }
+        }, 300));
+        
+        function debounce(func, wait) {
+            let timeout;
+            return function executedFunction(...args) {
+                const later = () => {
+                    clearTimeout(timeout);
+                    func(...args);
+                };
+                clearTimeout(timeout);
+                timeout = setTimeout(later, wait);
+            };
+        }
+
+        // ═══════════════════════════════════════════════════════════════════════════
+        // MODAL HANDLING
+        // ═══════════════════════════════════════════════════════════════════════════
+        
+        function openModal(modalId) {
+            const modal = document.getElementById(`modal-${modalId}`);
+            if (modal) {
+                modal.classList.add('active');
+                document.body.style.overflow = 'hidden'; // Prevent background scroll
+            }
+        }
+
+        function closeModal(modalId) {
+            const modal = document.getElementById(`modal-${modalId}`);
+            if (modal) {
+                modal.classList.remove('active');
+                document.body.style.overflow = ''; // Restore scroll
+            }
+        }
+
+        function closeModalOnOverlay(event) {
+            // Only close if clicking the overlay itself, not the modal content
+            if (event.target.classList.contains('modal-overlay')) {
+                event.target.classList.remove('active');
+                document.body.style.overflow = '';
+            }
+        }
+
+        // Close modal on Escape key
+        document.addEventListener('keydown', (event) => {
+            if (event.key === 'Escape') {
+                document.querySelectorAll('.modal-overlay.active').forEach(modal => {
+                    modal.classList.remove('active');
+                });
+                document.body.style.overflow = '';
+            }
+            // Ctrl+Enter to analyze
+            if (event.ctrlKey && event.key === 'Enter') {
+                event.preventDefault();
+                analyzeCode();
+            }
+        });
+
+        // ═══════════════════════════════════════════════════════════════════════════
+        // AUTO-ANALYZE TOGGLE
+        // ═══════════════════════════════════════════════════════════════════════════
+        let autoAnalyzeEnabled = true;
+
+        function toggleAutoAnalyze() {
+            autoAnalyzeEnabled = !autoAnalyzeEnabled;
+            const toggle = document.getElementById('auto-analyze-toggle');
+            toggle.classList.toggle('active', autoAnalyzeEnabled);
+            showToast(autoAnalyzeEnabled ? 'Auto-analyze enabled' : 'Auto-analyze disabled', 'info');
+        }
+
+        // ═══════════════════════════════════════════════════════════════════════════
+        // TOAST NOTIFICATIONS
+        // ═══════════════════════════════════════════════════════════════════════════
+        function showToast(message, type = 'info') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            const icons = { success: '✓', error: '✕', info: 'ℹ' };
+            toast.innerHTML = `<span class="toast-icon">${icons[type] || 'ℹ'}</span><span class="toast-message">${message}</span>`;
+            container.appendChild(toast);
+            setTimeout(() => toast.remove(), 3000);
+        }
+
+        // ═══════════════════════════════════════════════════════════════════════════
+        // SUGGESTIONS LOGIC
+        // ═══════════════════════════════════════════════════════════════════════════
+        function updateSuggestions(cc, cogc, maxDepth) {
+            const panel = document.getElementById('suggestions-panel');
+            const list = document.getElementById('suggestions-list');
+            const suggestions = [];
+
+            if (cc > 10) {
+                suggestions.push({
+                    type: cc > 20 ? 'critical' : 'warning',
+                    title: 'High Cyclomatic Complexity',
+                    text: `CC of ${cc} exceeds the recommended limit of 10. Consider extracting methods, using polymorphism, or breaking down complex conditionals.`
+                });
+            }
+
+            if (cogc > 15) {
+                suggestions.push({
+                    type: 'warning',
+                    title: 'High Cognitive Complexity',
+                    text: `CogC of ${cogc} indicates code that's hard to understand. Reduce nesting levels, use early returns, and break down complex conditions.`
+                });
+            }
+
+            if (maxDepth > 4) {
+                suggestions.push({
+                    type: 'warning',
+                    title: 'Deep Nesting Detected',
+                    text: `Maximum nesting depth of ${maxDepth} makes code hard to follow. Use guard clauses, extract helper functions, or consider refactoring.`
+                });
+            }
+
+            if (cc <= 10 && cogc <= 10 && maxDepth <= 3) {
+                suggestions.push({
+                    type: 'good',
+                    title: '✓ Code Quality: Good',
+                    text: 'This code has low complexity and should be easy to understand, test, and maintain. Well done!'
+                });
+            }
+
+            if (suggestions.length > 0) {
+                panel.classList.add('visible');
+                list.innerHTML = suggestions.map(s => `
+                    <div class="suggestion-item ${s.type}">
+                        <div class="suggestion-title">${s.title}</div>
+                        <div class="suggestion-text">${s.text}</div>
+                    </div>
+                `).join('');
+            } else {
+                panel.classList.remove('visible');
+            }
+        }
+
+        // ═══════════════════════════════════════════════════════════════════════════
+        // EXPORT FUNCTIONS
+        // ═══════════════════════════════════════════════════════════════════════════
+        let lastAnalysisResults = null;
+
+        function storeResults(cc, cogc, loc, sloc, depth, decisions) {
+            lastAnalysisResults = {
+                language: document.getElementById('language-select').value,
+                languageName: languageInfo[document.getElementById('language-select').value].name,
+                cyclomaticComplexity: cc,
+                cognitiveComplexity: cogc,
+                linesOfCode: loc,
+                sourceLinesOfCode: sloc,
+                maxNestingDepth: depth,
+                decisionPoints: decisions,
+                timestamp: new Date().toISOString()
+            };
+        }
+
+        function copyResultsSummary() {
+            if (!lastAnalysisResults) {
+                showToast('Analyze code first', 'error');
+                return;
+            }
+            const r = lastAnalysisResults;
+            const text = `═══════════════════════════════════════
+COMPLEXITY ANALYSIS REPORT
+═══════════════════════════════════════
+Language: ${r.languageName}
+Date: ${new Date(r.timestamp).toLocaleString()}
+
+METRICS
+───────────────────────────────────────
+Cyclomatic Complexity (CC): ${r.cyclomaticComplexity}
+Cognitive Complexity (CogC): ${r.cognitiveComplexity}
+Lines of Code (LOC): ${r.linesOfCode}
+Source Lines (SLOC): ${r.sourceLinesOfCode}
+Max Nesting Depth: ${r.maxNestingDepth}
+
+DECISION POINTS
+───────────────────────────────────────
+${r.decisionPoints.map(d => `${d.type}: ${d.count}`).join('\n')}
+═══════════════════════════════════════`;
+            
+            navigator.clipboard.writeText(text).then(() => {
+                showToast('Summary copied to clipboard!', 'success');
+            }).catch(() => {
+                showToast('Failed to copy', 'error');
+            });
+        }
+
+        function exportJSON() {
+            if (!lastAnalysisResults) {
+                showToast('Analyze code first', 'error');
+                return;
+            }
+            const dataStr = JSON.stringify(lastAnalysisResults, null, 2);
+            const blob = new Blob([dataStr], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `complexity-analysis-${Date.now()}.json`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            showToast('JSON exported!', 'success');
+        }
+
+        function copyCode() {
+            const code = document.getElementById('code-input').value;
+            if (!code.trim()) {
+                showToast('No code to copy', 'error');
+                return;
+            }
+            navigator.clipboard.writeText(code).then(() => {
+                showToast('Code copied to clipboard!', 'success');
+            }).catch(() => {
+                showToast('Failed to copy', 'error');
+            });
+        }
+    </script>
+</body>
+</html>
